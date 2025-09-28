@@ -3,6 +3,7 @@ import { Form } from "antd";
 import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate } from "react-router-dom";
+import { LockOutlined } from "@ant-design/icons";
 
 export const ResetPasswordForm = () => {
   const [form] = Form.useForm();
@@ -11,8 +12,7 @@ export const ResetPasswordForm = () => {
   const navigate = useNavigate();
 
   // --- Regex kiểm tra độ mạnh của mật khẩu ---
-  const passwordRegex =
-    /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>])[^\s]{8,20}$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>])[^\s]{8,20}$/;
 
   // --- Khi submit form ---
   const handleSubmit = (values: any) => {
@@ -42,7 +42,6 @@ export const ResetPasswordForm = () => {
       {/* --- Mật khẩu mới --- */}
       <Form.Item
         name="password"
-        label="Mật khẩu mới"
         rules={[
           { required: true, message: "Vui lòng nhập mật khẩu mới" },
           {
@@ -53,13 +52,17 @@ export const ResetPasswordForm = () => {
         ]}
         hasFeedback
       >
-        <InputField type="password" placeholder="Nhập mật khẩu mới" />
+        <InputField
+          className="h-13"
+          prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
+          type="password"
+          placeholder="Nhập mật khẩu"
+        />
       </Form.Item>
 
       {/* --- Xác nhận mật khẩu --- */}
       <Form.Item
         name="confirmPassword"
-        label="Xác nhận mật khẩu mới"
         dependencies={["password"]}
         hasFeedback
         rules={[
@@ -69,21 +72,25 @@ export const ResetPasswordForm = () => {
               if (!value || getFieldValue("password") === value) {
                 return Promise.resolve();
               }
-              return Promise.reject(
-                new Error("Mật khẩu xác nhận không khớp")
-              );
+              return Promise.reject(new Error("Mật khẩu xác nhận không khớp"));
             },
           }),
         ]}
       >
-        <InputField type="password" placeholder="Xác nhận mật khẩu mới" />
+        <InputField
+          className="h-13"
+          prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
+          type="password"
+          placeholder="Xác nhận mật khẩu"
+        />
       </Form.Item>
 
       {/* --- Nút đổi mật khẩu --- */}
       <Form.Item className="!pt-5">
-        <ButtonPrimary onClick={(handleSubmit)}>Đổi mật khẩu</ButtonPrimary>
+        <ButtonPrimary className="!h-12 w-full" htmlType="submit">
+          Đổi mật khẩu
+        </ButtonPrimary>
       </Form.Item>
-
 
       {/* --- Thông báo thành công --- */}
       {success && (

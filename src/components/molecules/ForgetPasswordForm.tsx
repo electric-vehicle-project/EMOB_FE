@@ -2,6 +2,7 @@ import { Form } from "antd";
 import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate, Link } from "react-router-dom";
+import { MailOutlined } from "@ant-design/icons";
 
 interface FormValues {
   email: string;
@@ -27,7 +28,6 @@ export const ForgetPasswordForm = () => {
       {/* --- Trường nhập email --- */}
       <Form.Item
         name="email"
-        label="Email"
         rules={[
           { required: true, message: "Email không được để trống" },
           {
@@ -36,26 +36,33 @@ export const ForgetPasswordForm = () => {
           },
         ]}
       >
-        <InputField placeholder="Nhập địa chỉ email" />
+        <InputField
+          prefix={
+            <MailOutlined
+              style={{
+                color: "#627254",
+                fontSize: 19,
+              }}
+            />
+          }
+          className="h-13"
+          placeholder="Nhập địa chỉ email"
+        />
       </Form.Item>
 
       {/* --- Nút gửi OTP --- */}
       <Form.Item className="!pt-5">
         <Link to="/auth/forget-password-otp">
-          <ButtonPrimary>Gửi OTP</ButtonPrimary>
+          <ButtonPrimary className="!h-12 w-full">Gửi OTP</ButtonPrimary>
         </Link>
       </Form.Item>
 
       {/* --- Liên kết trở về đăng nhập --- */}
       <div className="flex justify-center">
         <Link to="/auth/login">
-          <p className="text-sm text-[#627254] hover:underline">
-            Đăng nhập
-          </p>
+          <p className="text-sm text-[#627254] hover:underline">Đăng nhập</p>
         </Link>
       </div>
-
-
     </Form>
   );
 };

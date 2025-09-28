@@ -17,14 +17,14 @@ export const ButtonGoogle = () => {
       {/* Nút Google */}
       <Button
         onClick={handleOpenPopup}
-        className="!h-12 w-full !bg-white !text-[#627254] hover:!bg-[#627254]  hover:!text-white"
+        className="!h-12 w-full !bg-white !text-[#627254] hover:!bg-[var(--default-color)]  hover:!text-white"
         type="default"
       >
         <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google Logo"
-            className="w-5 h-5"
-          />
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          alt="Google Logo"
+          className="w-5 h-5"
+        />
         <p className="font-medium">Đăng nhập với Google</p>
       </Button>
 
@@ -43,9 +43,7 @@ export const ButtonGoogle = () => {
             className="w-12 h-12"
           />
           <h2 className="text-lg font-semibold">Đăng nhập với Google</h2>
-          <p className="text-sm text-gray-600">
-            bla bla bla
-          </p>
+          <p className="text-sm text-gray-600">bla bla bla</p>
           <button
             onClick={handleClosePopup}
             style={{

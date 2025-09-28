@@ -1,17 +1,17 @@
+import { FC, ReactNode } from "react";
 import { Button as AntButton } from "antd";
-import type { FC, ReactNode } from "react";
+import type { ButtonProps as AntButtonProps } from "antd";
 
-interface Props {
-  children: ReactNode;
-  href?: string;
-  onClick?: () => void;
+interface ButtonProps extends Omit<AntButtonProps, "type"> {
   type?: "primary" | "default" | "dashed" | "link" | "text";
-  danger?: boolean;
-  className?: string; // ✅ sửa lại tên đúng
+  children: ReactNode;
+  className?: string;
 }
 
-export const Button: FC<Props> = ({ children, className, ...rest }) => (
-  <AntButton {...rest} className={className}>
-    {children}
-  </AntButton>
-);
+export const Button: FC<ButtonProps> = ({ children, className, ...rest }) => {
+  return (
+    <AntButton className={className} {...rest}>
+      {children}
+    </AntButton>
+  );
+};

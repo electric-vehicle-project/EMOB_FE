@@ -6,13 +6,14 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 export const OTPForm = () => {
   const [form] = Form.useForm();
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+  const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [countdown, setCountdown] = useState(120);
   const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email; // mock email
 
-  // --- Đếm ngược thời gian ---
+  // --- Countdown ---
   useEffect(() => {
     if (!canResend && countdown > 0) {
       const timer = setInterval(() => setCountdown((prev) => prev - 1), 1000);
@@ -25,33 +26,59 @@ export const OTPForm = () => {
   const handleResendOTP = () => {
     setCountdown(120);
     setCanResend(false);
-    //sau này có thể gọi API resend OTP ở đây
+    setOtp(["", "", "", "", ""]);
+    inputsRef.current[0]?.focus();
+    // TODO: Call API to resend OTP
   };
 
-  // --- Khi người dùng nhập mỗi ô ---
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const value = e.target.value;
-    if (/^[0-9]$/.test(value)) {
-      if (index < inputsRef.current.length - 1) {
-        inputsRef.current[index + 1]?.focus();
-      }
-    } else {
-      e.target.value = "";
+  // --- Handle input change ---
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const value = e.target.value.replace(/\D/g, ""); // only digits
+    if (!value) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // auto focus next
+    if (index < inputsRef.current.length - 1) {
+      inputsRef.current[index + 1]?.focus();
     }
 
-    //cập nhật lại giá trị tổng OTP cho form
-    const otp = inputsRef.current.map((input) => input?.value || "").join("");
-    form.setFieldValue("otp", otp);
+    // auto validate
+    if (newOtp.join("").length === 5) {
+      form.validateFields(["otp"]);
+    }
   };
 
-  // --- Khi bấm xác nhận ---
-  interface FormValues {
-    otp: string;
-  }
+  // --- Handle Backspace ---
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    if (e.key === "Backspace") {
+      const newOtp = [...otp];
 
-  const handleConfirm = (values: FormValues) => {
-    if (values.otp && values.otp.length === 5) {
-      //giả lập thành công
+      // Nếu ô hiện tại rỗng → focus về trước
+      if (!newOtp[index] && index > 0) {
+        inputsRef.current[index - 1]?.focus();
+        newOtp[index - 1] = ""; // Xóa ô trước luôn nếu cần
+        setOtp(newOtp);
+      } else {
+        // Xóa ký tự hiện tại
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    }
+  };
+
+  // --- Submit ---
+  const handleConfirm = () => {
+    const otpValue = otp.join("");
+    if (otpValue.length === 5) {
       navigate("/auth/reset-password", { state: { email } });
     }
   };
@@ -66,41 +93,46 @@ export const OTPForm = () => {
       onFinish={handleConfirm}
       className="space-y-3"
     >
-      {/* --- Nhập mã OTP --- */}
+      {/* OTP Inputs */}
       <Form.Item
         name="otp"
         label="Nhập mã xác thực"
         rules={[
-          { required: true, message: "Vui lòng nhập mã OTP" },
           {
-            len: 5,
-            message: "Mã OTP gồm 5 chữ số",
+            validator: () => {
+              const otpValue = otp.join("");
+              if (!otpValue) return Promise.reject("Vui lòng nhập mã OTP");
+              if (otpValue.length !== 5)
+                return Promise.reject("Mã OTP gồm 5 chữ số");
+              return Promise.resolve();
+            },
           },
         ]}
       >
         <div className="flex justify-between px-10 py-2">
-          {[0, 1, 2, 3, 4].map((_, index) => (
+          {otp.map((digit, index) => (
             <input
               key={index}
-              ref={(el) => { inputsRef.current[index] = el }}
+              ref={(el) => (inputsRef.current[index] = el)}
               type="text"
               maxLength={1}
-              className="w-14 h-14 text-white text-center text-xl bg-[#96a987] rounded-[15px] focus:outline-none"
+              value={digit}
               onChange={(e) => handleChange(e, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              className="w-14 h-14 text-white text-center text-xl bg-[#96a987] rounded-[15px] focus:outline-none"
             />
           ))}
         </div>
       </Form.Item>
 
-      {/* --- Nút xác nhận --- */}
+      {/* Confirm Button */}
       <Form.Item className="!pt-5">
-        <Link to="/auth/reset-password">
-          <ButtonPrimary>Xác nhận</ButtonPrimary>
-        </Link>
-
+        <ButtonPrimary className="!h-12 w-full" htmlType="submit">
+          Xác nhận
+        </ButtonPrimary>
       </Form.Item>
 
-      {/* --- Gửi lại OTP và quay về đăng nhập --- */}
+      {/* Resend OTP & Login link */}
       <div className="flex justify-between items-center px-5">
         <p className="text-sm text-[#627254]">
           {canResend ? (
@@ -123,9 +155,7 @@ export const OTPForm = () => {
         </p>
 
         <Link to="/auth/login">
-          <p className="text-sm text-[#627254] hover:underline">
-            Đăng nhập
-          </p>
+          <p className="text-sm text-[#627254] hover:underline">Đăng nhập</p>
         </Link>
       </div>
     </Form>

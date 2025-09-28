@@ -23,17 +23,13 @@ const HomePage: React.FC = () => {
           className="z-20"
           onClick={() => navigate("/auth/login")}
           style={{
-            width: "200px",
-            height: "60px",
-            fontSize: "18px",
+            fontSize: "13px",
             fontWeight: "700",
-            borderRadius: "12px",
           }}
         >
           ĐĂNG NHẬP
         </Button>
       </div>
-
 
       {/* chữ EMOB */}
       <h1

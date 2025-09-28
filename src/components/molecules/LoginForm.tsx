@@ -3,6 +3,7 @@ import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { ButtonGoogle } from "../atoms/ButtonGoogle";
 import { useNavigate, Link } from "react-router-dom";
+import { LockOutlined, UserOutlined } from "@ant-design/icons";
 
 interface LoginFormValues {
   username: string;
@@ -33,36 +34,40 @@ export const LoginForm = () => {
     >
       {/* --- Username Field --- */}
       <Form.Item
-        className=""
         name="username"
-        label="Tên đăng nhập"
-        rules={[
-          { required: true, message: "Vui lòng nhập tên đăng nhập" },
-        ]}
+        rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập" }]}
       >
-        <InputField type="username" placeholder="Tên đăng nhập" />
+        <InputField
+          prefix={<UserOutlined style={{ color: "#627254", fontSize: 19 }} />}
+          className="h-13"
+          type="username"
+          placeholder="Tên đăng nhập"
+        />
       </Form.Item>
 
       {/* --- Password Field --- */}
       <Form.Item
         name="password"
-        label="Mật khẩu"
-        rules={[
-          { required: true, message: "Vui lòng nhập mật khẩu" },
-        ]}
+        rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
       >
-        <InputField type="password" placeholder="Mật khẩu" />
+        <InputField
+          className="h-13"
+          prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
+          type="password"
+          placeholder="Mật khẩu"
+        />
       </Form.Item>
 
       {/* --- Ghi nhớ & Quên mật khẩu --- */}
       <div className="flex justify-between items-center px-5">
         <Form.Item name="remember" valuePropName="checked" noStyle>
-          <Checkbox className="text-[#627254]">Ghi nhớ mật khẩu</Checkbox>
+          <Checkbox className="!text-[var(--primary-color)]">
+            Ghi nhớ mật khẩu
+          </Checkbox>
         </Form.Item>
 
-
         <Link to="/auth/forget-password">
-          <p className="text-sm text-[#627254]">
+          <p className="text-sm font-bold text-[var(--primary-color)]">
             Quên mật khẩu?
           </p>
         </Link>
@@ -70,7 +75,7 @@ export const LoginForm = () => {
 
       {/* --- Nút đăng nhập --- */}
       <Form.Item>
-        <ButtonPrimary >Đăng nhập</ButtonPrimary>
+        <ButtonPrimary className="!h-12 w-full">Đăng nhập</ButtonPrimary>
       </Form.Item>
 
       {/* --- Đăng nhập bằng Google --- */}
