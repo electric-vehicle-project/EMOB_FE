@@ -1,6 +1,8 @@
 import { createBrowserRouter, Outlet } from "react-router-dom";
-import { AuthProtect } from "../component/organism/AuthProtect";
+import { AuthProtect } from "../components/organisms/AuthProtect";
 import TestPage from "../page/TestPage";
+import { LoginPage } from "../page/LoginPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -28,5 +30,9 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <h1>Home</h1>,
+  },
+  {
+    path: "/login",
+    element: <LoginPage />,
   },
 ]);
