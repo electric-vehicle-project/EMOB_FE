@@ -1,8 +1,17 @@
-import { Button } from "../atoms/Button";
 import { Link } from "react-router-dom";
 
-export const BackHomeLink = () => (
-  <Link to="/">
-    <Button>Quay Về Trang Chủ</Button>
-  </Link>
-);
+interface ButtonLinkProps {
+  to: string;
+  children: React.ReactNode;
+}
+
+export const ButtonLink: React.FC<ButtonLinkProps> = ({ to, children }) => {
+  return (
+    <Link
+      to={to}
+      className="text-base font-medium underline underline-offset-4 hover:text-green-700 transition"
+    >
+      {children}
+    </Link>
+  );
+};

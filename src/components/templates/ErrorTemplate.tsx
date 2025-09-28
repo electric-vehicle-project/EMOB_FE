@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Logo } from "../molecules/Logo";
 
 export const ErrorTemplate = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col min-h-screen bg-gray-100">
+  <div className="flex flex-col h-screen bg-gray-100">
     <div className="flex items-start p-4">
       <Logo />
     </div>
