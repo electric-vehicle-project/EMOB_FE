@@ -3,17 +3,20 @@ import type { ThemeConfig } from "antd";
 export const theme: ThemeConfig = {
   components: {
     Button: {
-      // Màu primary
+      // Màu Default (Mặc định)
+      defaultBg: "#24282B", // nền
+      defaultColor: "#D9D9D9", // chữ
+
+      defaultHoverBg: "#3a3b64", // nền hover
+      defaultHoverColor: "#D9D9D9", // chữ hover
+
+      controlOutline: "none",
+
+      // Màu Primary
       colorPrimary: "#627254",
       colorPrimaryHover: "#525e46",
       colorPrimaryActive: "#414d38",
       colorPrimaryBg: "#627254",
-      controlTmpOutline: "rgba(98, 114, 84, 1)",
-
-      //Màu default
-      colorBgSolid: "#24282B",
-      defaultHoverBg: "#262626",
-      defaultHoverColor: "#D9D9D9",
     },
   },
 };
