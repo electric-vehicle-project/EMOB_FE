@@ -13,7 +13,6 @@ function MenuDashboard({ items }: { items: MenuItem[] }) {
   };
 
   const currentPath = getComparePath(location.pathname);
-  console.log(currentPath);
   // Kiểm tra xem menu item có active không
   const normalizePath = (path?: string) => {
     if (!path) return "";

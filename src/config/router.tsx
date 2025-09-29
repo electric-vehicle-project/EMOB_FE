@@ -3,10 +3,11 @@ import TestPage from "../page/TestPage";
 import DashboardLayout from "../layout/DashboardLayout";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
+import { ROUTES } from "../model/routePaths";
 
 export const routes: RouteObject[] = [
   {
-    path: "/admin",
+    path: ROUTES.ADMIN,
     element: <DashboardLayout />,
     children: [
       {
@@ -27,11 +28,11 @@ export const routes: RouteObject[] = [
     ],
   },
   {
-    path: "/",
+    path:ROUTES.HOME,
     element: <HomePage />,
   },
   {
-    path: "/*",
+    path: ROUTES.NOTFOUND,
     element: <NotFoundPage />,
   },
 ];

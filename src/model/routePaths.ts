@@ -3,4 +3,5 @@ export const ROUTES = {
   ADMIN: "/admin",
   LOGIN: "/login",
   REGISTER: "/register",
+  NOTFOUND: "/*",
 };
