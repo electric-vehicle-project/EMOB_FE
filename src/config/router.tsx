@@ -1,10 +1,8 @@
-import {
-  createBrowserRouter,
-  Outlet,
-  type RouteObject,
-} from "react-router-dom";
+import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import TestPage from "../page/TestPage";
 import DashboardLayout from "../layout/DashboardLayout";
+import HomePage from "../page/HomePage";
+import { NotFoundPage } from "../page/404Page";
 
 export const routes: RouteObject[] = [
   {
@@ -12,7 +10,7 @@ export const routes: RouteObject[] = [
     element: <DashboardLayout />,
     children: [
       {
-        path: "test",
+        path: "1",
         element: <TestPage />,
         children: [
           {
@@ -48,12 +46,12 @@ export const routes: RouteObject[] = [
     ],
   },
   {
-    path: "/*",
-    element: <h1>Not Found</h1>,
+    path: "/",
+    element: <HomePage />,
   },
   {
-    path: "/",
-    element: <h1>Home</h1>,
+    path: "/*",
+    element: <NotFoundPage />,
   },
 ];
 export const router = createBrowserRouter(routes);

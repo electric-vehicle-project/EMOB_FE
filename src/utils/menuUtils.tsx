@@ -13,7 +13,7 @@ export interface FlattenedRoute {
 }
 
 // Hàm factory tạo MenuItem
-function getItem(
+export function getItem(
   label: React.ReactNode,
   key: string,
   icon?: React.ReactNode,
@@ -23,7 +23,7 @@ function getItem(
     key,
     icon,
     children,
-    label: <Link to={key}>{label}</Link>,
+    label,
   };
 }
 
