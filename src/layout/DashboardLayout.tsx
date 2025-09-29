@@ -1,10 +1,7 @@
 import { Button, Col, Row } from "antd";
-import React, { type ReactNode } from "react";
 import { CiLogout } from "react-icons/ci";
 import { Outlet } from "react-router-dom";
-import { router, routes } from "../config/router";
-import { createFlattenedRoutes } from "../utils/getChildrenPaths";
-import { createMenuItems, getItem } from "../utils/menuUtils";
+import { getItem } from "../utils/menuUtils";
 import MenuDashboard from "../components/atoms/MenuDashboard";
 import {
   DesktopOutlined,
