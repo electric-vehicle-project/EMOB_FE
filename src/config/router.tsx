@@ -17,32 +17,13 @@ export const routes: RouteObject[] = [
             path: "test01",
             element: <TestPage />,
           },
-          {
-            path: "test02",
-            element: <TestPage />,
-          },
-          {
-            path: "test03",
-            element: <TestPage />,
-          },
-          {
-            path: "test04",
-            element: <TestPage />,
-          },
         ],
       },
       {
-        path: "test2",
+        path: "test02",
         element: <TestPage />,
       },
-      {
-        path: "test3",
-        element: <TestPage />,
-      },
-      {
-        path: "test4",
-        element: <TestPage />,
-      },
+
     ],
   },
   {
