@@ -1,5 +1,4 @@
 import { Typography } from "antd";
-import { BackHomeLink } from "../molecules/BackHomeLink";
 
 const { Title } = Typography;
 
@@ -15,6 +14,5 @@ export const ErrorContent = () => (
     >
       404
     </Title>
-    <BackHomeLink />
   </div>
 );
