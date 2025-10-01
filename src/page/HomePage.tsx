@@ -18,7 +18,8 @@ const HomePage: React.FC = () => {
         {/* Button */}
         <Button
           type="default"
-          size="large" 
+          size="large"
+          className="z-20"
           style={{
             width: "200px",
             height: "60px",
