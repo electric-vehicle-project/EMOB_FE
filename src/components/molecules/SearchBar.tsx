@@ -1,33 +1,18 @@
+// src/components/molecules/SearchBar.tsx
 import { Input } from "antd";
-import { useMemo, useEffect } from "react";
-import debounce from "lodash/debounce";
 
 interface Props {
-  onSearch: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
   placeholder?: string;
 }
 
-export const SearchBar = ({ onSearch, placeholder }: Props) => {
-  // ✅ tạo debounce function chỉ 1 lần, phụ thuộc vào onSearch
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        onSearch(value);
-      }, 300),
-    [onSearch]
-  );
-
-  // ✅ cleanup khi component unmount
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
-
+export const SearchBar = ({ value, onChange, placeholder }: Props) => {
   return (
     <Input
+      value={value}
       placeholder={placeholder || "Tìm kiếm..."}
-      onChange={(e) => debouncedSearch(e.target.value)}
+      onChange={(e) => onChange(e.target.value)}
       allowClear
     />
   );

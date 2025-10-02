@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { dealerService } from "../../service/dealerService";
 import type { IDealer } from "../../model/Dealer";
 import { DealerTable } from "../molecules/DealerTable";
@@ -6,11 +6,13 @@ import { SearchBar } from "../molecules/SearchBar";
 import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
-import debounce from "lodash/debounce";
+import { useDebounce } from "../../hook/useDebounce";
 
 export const DealerList = () => {
   const [dealers, setDealers] = useState<IDealer[]>([]);
   const [filtered, setFiltered] = useState<IDealer[]>([]);
+  const [search, setSearch] = useState(""); // raw input
+  const debouncedSearch = useDebounce(search, 300); // ✅ debounce
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -25,18 +27,11 @@ export const DealerList = () => {
     loadData();
   }, []);
 
-  // ✅ debounce search 300ms
-  const handleSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        setFiltered(
-          dealers.filter((d) =>
-            d.name.toLowerCase().includes(value.toLowerCase())
-          )
-        );
-      }, 300),
-    [dealers]
-  );
+  // ✅ Filter khi debouncedSearch thay đổi
+  useEffect(() => {
+    const keyword = debouncedSearch.toLowerCase();
+    setFiltered(dealers.filter((d) => d.name.toLowerCase().includes(keyword)));
+  }, [debouncedSearch, dealers]);
 
   const handleSave = async (values: IDealer) => {
     if (editDealer) {
@@ -60,7 +55,11 @@ export const DealerList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <SearchBar onSearch={handleSearch} placeholder="Tìm kiếm đại lý..." />
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Tìm kiếm đại lý..."
+        />
 
         <Button
           type="primary"

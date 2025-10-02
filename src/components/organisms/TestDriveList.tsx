@@ -5,16 +5,18 @@ import { SearchBar } from "../molecules/SearchBar";
 import { TestDriveModal } from "./TestDriveModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
-import { testDriveService } from "../../service/testDriveService"; // ✅ import service
+import { testDriveService } from "../../service/testDriveService";
+import { useDebounce } from "../../hook/useDebounce";
 
 export const TestDriveList = () => {
   const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
   const [filtered, setFiltered] = useState<ITestDrive[]>([]);
+  const [search, setSearch] = useState(""); // raw input
+  const debouncedSearch = useDebounce(search, 300); // ✅ debounce
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<ITestDrive | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // ✅ load data từ service
   const loadData = async () => {
     const data = await testDriveService.getTestDrives();
     setTestDrives(data);
@@ -25,9 +27,9 @@ export const TestDriveList = () => {
     loadData();
   }, []);
 
-  // ✅ Search handler
-  const handleSearch = (value: string) => {
-    const keyword = value.toLowerCase();
+  // ✅ Filter khi debouncedSearch thay đổi
+  useEffect(() => {
+    const keyword = debouncedSearch.toLowerCase();
     setFiltered(
       testDrives.filter(
         (d) =>
@@ -35,9 +37,8 @@ export const TestDriveList = () => {
           d.car.toLowerCase().includes(keyword)
       )
     );
-  };
+  }, [debouncedSearch, testDrives]);
 
-  // ✅ Save (add/edit)
   const handleSave = async (values: ITestDrive) => {
     if (editRecord) {
       await testDriveService.updateTestDrive({ ...editRecord, ...values });
@@ -49,7 +50,6 @@ export const TestDriveList = () => {
     loadData();
   };
 
-  // ✅ Delete
   const handleDelete = async () => {
     if (deleteId) {
       await testDriveService.deleteTestDrive(deleteId);
@@ -60,16 +60,16 @@ export const TestDriveList = () => {
 
   return (
     <div className="space-y-4">
-      {/* Thanh tìm kiếm + nút thêm */}
       <div className="flex justify-between items-center">
         <SearchBar
-          onSearch={handleSearch}
+          value={search}
+          onChange={setSearch}
           placeholder="Tìm kiếm khách hàng hoặc xe..."
         />
         <Button
           type="primary"
           onClick={() => {
-            setEditRecord(undefined); // reset về thêm mới
+            setEditRecord(undefined);
             setModalOpen(true);
           }}
           className="ml-4 px-6"
@@ -78,7 +78,6 @@ export const TestDriveList = () => {
         </Button>
       </div>
 
-      {/* Bảng */}
       <TestDriveTable
         data={filtered}
         onEdit={(record) => {
@@ -88,7 +87,6 @@ export const TestDriveList = () => {
         onDelete={setDeleteId}
       />
 
-      {/* Modal thêm/sửa */}
       <TestDriveModal
         open={modalOpen}
         onClose={() => {
@@ -99,7 +97,6 @@ export const TestDriveList = () => {
         initialValues={editRecord}
       />
 
-      {/* Xác nhận xóa */}
       <DeleteConfirm
         open={!!deleteId}
         onConfirm={handleDelete}
