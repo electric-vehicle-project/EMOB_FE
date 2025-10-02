@@ -60,7 +60,7 @@ export const DealerList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <SearchBar onSearch={handleSearch} placeholder="Tìm đại lý..." />
+        <SearchBar onSearch={handleSearch} placeholder="Tìm kiếm đại lý..." />
 
         <Button
           type="primary"

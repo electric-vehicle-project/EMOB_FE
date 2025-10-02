@@ -5,6 +5,7 @@ import { SearchBar } from "../molecules/SearchBar";
 import { TestDriveModal } from "./TestDriveModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
+import { testDriveService } from "../../service/testDriveService"; // ✅ import service
 
 export const TestDriveList = () => {
   const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
@@ -13,43 +14,20 @@ export const TestDriveList = () => {
   const [editRecord, setEditRecord] = useState<ITestDrive | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // ✅ fake load data ban đầu
+  // ✅ load data từ service
+  const loadData = async () => {
+    const data = await testDriveService.getTestDrives();
+    setTestDrives(data);
+    setFiltered(data);
+  };
+
   useEffect(() => {
-    const initData: ITestDrive[] = [
-      {
-        id: 1,
-        customer: "Nguyễn Văn A",
-        car: "VinFast VF8",
-        date: "2025-10-05",
-        duration: 30,
-        status: "Pending",
-      },
-      {
-        id: 2,
-        customer: "Trần Thị B",
-        car: "Toyota Vios",
-        date: "2025-10-06",
-        duration: 25,
-        status: "Completed",
-      },
-      {
-        id: 3,
-        customer: "Lê Văn C",
-        car: "Honda City",
-        date: "2025-10-07",
-        duration: 15,
-        status: "Cancelled",
-      },
-    ];
-    setTestDrives(initData);
-    setFiltered(initData);
+    loadData();
   }, []);
 
   // ✅ Search handler
-  // ✅ Search handler
   const handleSearch = (value: string) => {
     const keyword = value.toLowerCase();
-
     setFiltered(
       testDrives.filter(
         (d) =>
@@ -60,36 +38,23 @@ export const TestDriveList = () => {
   };
 
   // ✅ Save (add/edit)
-  const handleSave = (values: ITestDrive) => {
+  const handleSave = async (values: ITestDrive) => {
     if (editRecord) {
-      // sửa
-      setTestDrives((prev) =>
-        prev.map((d) => (d.id === editRecord.id ? { ...d, ...values } : d))
-      );
+      await testDriveService.updateTestDrive({ ...editRecord, ...values });
     } else {
-      // thêm mới
-      setTestDrives((prev) => [
-        ...prev,
-        { ...values, id: prev.length + 1 }, // fake id
-      ]);
+      await testDriveService.createTestDrive(values);
     }
-
-    setFiltered((prev) =>
-      editRecord
-        ? prev.map((d) => (d.id === editRecord.id ? { ...d, ...values } : d))
-        : [...prev, { ...values, id: prev.length + 1 }]
-    );
-
     setModalOpen(false);
     setEditRecord(undefined);
+    loadData();
   };
 
   // ✅ Delete
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteId) {
-      setTestDrives((prev) => prev.filter((d) => d.id !== deleteId));
-      setFiltered((prev) => prev.filter((d) => d.id !== deleteId));
+      await testDriveService.deleteTestDrive(deleteId);
       setDeleteId(null);
+      loadData();
     }
   };
 
@@ -97,7 +62,10 @@ export const TestDriveList = () => {
     <div className="space-y-4">
       {/* Thanh tìm kiếm + nút thêm */}
       <div className="flex justify-between items-center">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar
+          onSearch={handleSearch}
+          placeholder="Tìm kiếm khách hàng hoặc xe..."
+        />
         <Button
           type="primary"
           onClick={() => {
