@@ -27,20 +27,17 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
     {
       title: "E-mail",
       dataIndex: "email",
-      sorter: (a, b) => a.email.localeCompare(b.email),
-      sortDirections: ["ascend", "descend"] as SortOrder[],
+      // ❌ Bỏ sort
     },
     {
       title: "Số điện thoại",
       dataIndex: "phone",
-      sorter: (a, b) => a.phone.localeCompare(b.phone),
-      sortDirections: ["ascend", "descend"] as SortOrder[],
+      // ❌ Bỏ sort
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
-      sorter: (a, b) => a.address.localeCompare(b.address),
-      sortDirections: ["ascend", "descend"] as SortOrder[],
+      // ❌ Bỏ sort
     },
     {
       title: "Trạng thái",
