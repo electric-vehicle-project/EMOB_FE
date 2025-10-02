@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { dealerService } from "../../service/dealerService";
 import type { IDealer } from "../../model/Dealer";
 import { DealerTable } from "../molecules/DealerTable";
@@ -6,6 +6,7 @@ import { SearchBar } from "../molecules/SearchBar";
 import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
+import debounce from "lodash/debounce";
 
 export const DealerList = () => {
   const [dealers, setDealers] = useState<IDealer[]>([]);
@@ -24,11 +25,18 @@ export const DealerList = () => {
     loadData();
   }, []);
 
-  const handleSearch = (value: string) => {
-    setFiltered(
-      dealers.filter((d) => d.name.toLowerCase().includes(value.toLowerCase()))
-    );
-  };
+  // ✅ debounce search 300ms
+  const handleSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setFiltered(
+          dealers.filter((d) =>
+            d.name.toLowerCase().includes(value.toLowerCase())
+          )
+        );
+      }, 300),
+    [dealers]
+  );
 
   const handleSave = async (values: IDealer) => {
     if (editDealer) {
@@ -52,7 +60,7 @@ export const DealerList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={handleSearch} placeholder="Tìm đại lý..." />
 
         <Button
           type="primary"

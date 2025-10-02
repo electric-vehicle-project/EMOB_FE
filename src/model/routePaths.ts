@@ -5,4 +5,5 @@ export const ROUTES = {
   REGISTER: "/register",
   NOTFOUND: "/*",
   DEALERS: "dealers",
+  TESTDRIVE: "testdrive",
 };
