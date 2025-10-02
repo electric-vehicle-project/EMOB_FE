@@ -5,17 +5,22 @@ export const theme: ThemeConfig = {
     fontFamily: "Inter, sans-serif"
   },
   components: {
+    Input: {
+      borderRadius: 9999,
+      colorBgContainer: "white",
+    },
+
     Button: {
       // Primary
       colorPrimary: "#627254",
       colorPrimaryHover: "#525e46",
       colorPrimaryActive: "#414d38",
       colorPrimaryBg: "#627254",
-      controlTmpOutline: "rgba(98, 114, 84, 1)",
-
+      borderRadius: 9999,
+      
       // Default
       colorBgSolid: "#24282B",
-      defaultHoverBg: "#262626",
+      defaultHoverBg: "#627254",
       defaultHoverColor: "#D9D9D9",
     },
     Checkbox: {

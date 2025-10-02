@@ -2,43 +2,70 @@ import { AuthCard } from "../organisms/AuthCard";
 
 export const AuthTemplate = () => {
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-white overflow-hidden">
-      {/* -------- Layer 1: Decorative Pictures -------- */}
-      <img
-        src="src\assets\images\Rectangle 481.png"
-        alt="decor"
-        className="absolute top-0 left-0 w-auto h-auto object-contain"
-      />
-      <img
-        src="src\assets\images\Rectangle 480.png"
-        alt="decor"
-        className="absolute bottom-0 right-0 w-auto h-auto object-contain"
-      />
+    <>
+      <div className="relative flex items-center justify-center min-h-screen overflow-hidden">
 
-      {/* -------- Layer 2: Main Container -------- */}
-      <div className="relative flex w-6/7 h-[80vh] bg-[#627254] rounded-[20px] shadow-2xl overflow-hidden">
-        
-        {/* Branding Section (2/7) */}
-        <div className="w-2/6 flex flex-col  justify-top text-white p-10">
-          <h1 className="text-8xl font-bold tracking-[.20em] font-[Josefin_Slab] mb-4 mt-4 items-center">EMOB</h1>
-          <p className="text-4xl  font-[Rhodium_Libre] mb-8 items-left">
-            Build green
-            <br />
-            Go green
-          </p>
-        </div>
+        {/* -------- Layer 1: Decorative Pictures -------- */}
+        <img
+          src="src\assets\images\Rectangle 481.png"
+          alt="decor"
+          className="fixed top-0 left-0 w-[100vh] h-auto"
+        />
+        <img
+          src="src\assets\images\Rectangle 480.png"
+          alt="decor"
+          className="fixed bottom-0 right-0 w-[100vh] h-auto"
+        />
 
-        {/* Login Form Section (5/7) */}
-        <div className="w-4/6 bg-[#DDDDDD] rounded-[20px] flex items-top justify-end">
-          <div className="w-full max-w-xl rounded-[20px] mr-15">
+        {/* -------- Layer 2: Main Container -------- */}
+        <div className="relative flex w-6/7 min-w-[300px] bg-[#627254] rounded-[20px] shadow-2xl shadow-gray-950 overflow-hidden ">
+          {/* Branding Section (2/6) */}
+          <div className="hidden md:w-2/6 h-[80vh] md:flex flex-col justify-top text-white p-5 items-center">
+            <h1 className="!pt-5 !md:pt-10 sm:text-xl md:text-3xl lg:text-6xl xl:text-8xl font-bold tracking-[.20em] font-[Josefin_Slab]">
+              EMOB
+            </h1>
+            <p className="sm:text-2lg md:text-xl lg:text-2xl xl:text-4xl font-[Rhodium_Libre] !items-left">
+              Build green
+              <br />
+              Go green
+            </p>
+          </div>
+
+          {/* Login Form Section (4/6) */}
+          <div className="w-full md:flex flex-col md:w-4/6 bg-[#DDDDDD] rounded-[20px] items-end">
+            <div className="relative flex flex-row justify-center bg-[#627254] text-white p-5 w-full h-fit md:hidden ">
+              <h1 className="sm:text-xl md:text-2xl lg:text-4xl xl:text-6xl font-bold tracking-[.20em] font-[Josefin_Slab] items-center">
+                EMOB
+              </h1>
+            </div>
             <AuthCard />
+            <div className="relative flex flex-row justify-center bg-[#627254] text-white p-5 w-full h-fit md:hidden">
+              <p>
+                Build green
+                <br />
+                Go green
+              </p>
+            </div>
           </div>
         </div>
-        
-        <img className="absolute bottom-0 left-5 w-150 h-1/2.6 object-contain" src="src\assets\images\E-BIKE main.png" alt="e-bike" />
-        <img className="absolute bottom-50 left-55 w-1/2 h-1/2 object-contain" src="src\assets\images\leafs-2.png" alt="" />
-        
+
+        <img
+          src="src\assets\images\green leaf 2.png"
+          alt="leaf"
+          className="hidden md:flex absolute bottom-[50%] left-[40%]  w-[15%] h-auto object-contain z-50 scale-x-[-1] rotate-[30deg]"
+        />
+        <img
+          src="src\assets\images\green battery 2 .png"
+          alt="battery"
+          className="hidden md:flex absolute bottom-[10%] left-[3%]  w-[25%] h-auto object-contain z-50"
+        />
+        <img
+          src="src\assets\images\E-BIKE main.png"
+          alt="e-bike"
+          className="hidden md:flex absolute bottom-[8%] left-[12%]  w-[45%] h-auto object-contain z-50"
+        />
       </div>
-    </div>
+
+    </>
   );
 };

@@ -9,17 +9,17 @@ type Props = {
 export const InputField: React.FC<Props> = ({ type = "text", placeholder }) => {
   return type === "password" ? (
     <Input.Password
+      className="!h-full w-full"
       prefix={<LockOutlined />}
       placeholder={placeholder}
-      size="large"
-      className="rounded-full"
+
     />
   ) : (
     <Input
+      className="!h-full w-full"
       prefix={<UserOutlined />}
       placeholder={placeholder}
-      size="large"
-      className="rounded-full"
+
     />
   );
 };

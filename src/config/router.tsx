@@ -1,5 +1,5 @@
 import { createBrowserRouter, Outlet } from "react-router-dom";
-import { AuthProtect } from "../components/organisms/AuthProtect";
+// import { AuthProtect } from "../components/organisms/AuthProtect";
 import TestPage from "../page/TestPage";
 import { LoginPage } from "../page/LoginPage";
 
@@ -16,9 +16,9 @@ export const router = createBrowserRouter([
       {
         path: "test",
         element: (
-          <AuthProtect>
-            <TestPage />
-          </AuthProtect>
+
+          <TestPage />
+
         ),
       },
     ],
