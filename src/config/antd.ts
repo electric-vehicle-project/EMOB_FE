@@ -13,6 +13,7 @@ export const theme: ThemeConfig = {
       hoverBorderColor: "#525e46",
       colorText: "var(--primary-color)",
       colorTextPlaceholder: "#bfbfbf",
+
     },
 
     Button: {

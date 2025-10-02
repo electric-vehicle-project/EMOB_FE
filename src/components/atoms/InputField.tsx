@@ -29,5 +29,6 @@ export const InputField: React.FC<InputFieldProps> = ({
     return <Input.Password {...commonProps} />;
   }
 
+  // type "text" và "username" đều dùng Input thường
   return <Input {...commonProps} />;
 };
