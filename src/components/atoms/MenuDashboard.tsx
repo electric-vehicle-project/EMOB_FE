@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import type { MenuItem } from "../../utils/menuUtils";
 
@@ -39,7 +39,7 @@ function MenuDashboard({ items }: { items: MenuItem[] }) {
     <>
       {/* Menu chính */}
 
-      {items.map((item, index) => (
+      {items.map((item) => (
         <div key={item.key} className="relative mb-2 group">
           <button
             onMouseEnter={() => setActiveMenu(item.key)}
@@ -75,11 +75,11 @@ function MenuDashboard({ items }: { items: MenuItem[] }) {
               onMouseEnter={() => setActiveMenu(item.key)}
               onMouseLeave={() => setActiveMenu(null)}
             >
-              {item.children.map((child, idx) => (
+              {item.children?.map((child, idx) => (
                 <div
                   key={child.key}
                   className={`w-full flex items-center gap-3 text-left transition-colors ${
-                    idx !== item.children.length - 1
+                    idx !== (item.children?.length || 0) - 1
                       ? "border-b border-gray-100"
                       : ""
                   } ${
