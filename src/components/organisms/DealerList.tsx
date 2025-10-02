@@ -59,12 +59,13 @@ export const DealerList = () => {
           value={search}
           onChange={setSearch}
           placeholder="Tìm kiếm đại lý..."
+          className="hover-lift"
         />
 
         <Button
           type="primary"
           onClick={() => setModalOpen(true)}
-          className="ml-4 px-6"
+          className="ml-4 px-6 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
         >
           Thêm đại lý mới
         </Button>
