@@ -5,3 +5,37 @@
   --default-color: #24282b;
   --natural-color: #dddddd;
 }
+
+/* Subtle focus glow using primary color */
+.focus-glow-primary:focus-within,
+.focus-glow-primary:focus {
+  box-shadow: 0 0 0 3px rgba(98, 114, 84, 0.25);
+}
+
+/* Gentle lift on hover */
+.hover-lift {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Fade-in utility */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 300ms ease both;
+}
+
+/* Sidebar collapse without unmounting (override Ant Grid width) */
+.collapsed-col {
+  flex: 0 0 0 !important;
+  max-width: 0 !important;
+  overflow: hidden;
+}
+.expanded-col {
+  flex: 1 1 auto !important;
+  max-width: 100% !important;
+}
