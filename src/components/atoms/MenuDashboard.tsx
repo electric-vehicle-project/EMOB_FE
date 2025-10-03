@@ -11,7 +11,6 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const location = useLocation();
   const current = normalize(location.pathname);
-
   const isActive = (item: MenuItem) => {
     if (item.key && normalize(item.key) === current) return true;
     if (item.children?.length) {
@@ -76,7 +75,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
             {/* Submenu (fade + slide mượt) */}
             {item.children?.length && (
               <div
-                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200]
+                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200] overflow-hidden
                   transition-all duration-500 ease-in-out transform
                   ${
                     activeKey === item.key
@@ -96,7 +95,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
                       className={`flex items-center gap-3 px-4 py-3 transition-colors duration-300
                         ${
                           childActive
-                            ? "!bg-[var(--default-color)] text-white"
+                            ? "bg-[var(--default-color)] text-white"
                             : "hover:!bg-[#dceccb] text-[var(--default-color)]"
                         }`}
                       style={{ transitionDelay: `${idx * 60}ms` }}
