@@ -10,22 +10,45 @@ dayjs.extend(relativeTime);
 // Set default timezone
 dayjs.tz.setDefault("Asia/Ho_Chi_Minh");
 
-export const getCurrentDateTime = () => {
+/**
+ * Lấy ngày giờ hiện tại theo local của máy
+ * @returns {string} - ví dụ "September 21st 2025, 9:30:15 am"
+ */
+export const getCurrentDateTime = (): string => {
   return dayjs().format("MMMM Do YYYY, h:mm:ss a");
 };
 
-export const getDifTime = (dateStart: string) => {
+/**
+ * Tính khoảng thời gian từ `dateStart` đến hiện tại dưới dạng relative time
+ * @param {string} dateStart - ngày giờ bắt đầu, format "MMMM Do YYYY, h:mm:ss a"
+ * @returns {string} - ví dụ "2 hours ago", "3 days ago"
+ */
+export const getDifTime = (dateStart: string): string => {
   return dayjs(dateStart, "MMMM Do YYYY, h:mm:ss a").fromNow();
 };
 
-export const getCurrentDateTimeVietnam = () => {
+/**
+ * Lấy ngày giờ hiện tại theo múi giờ Việt Nam
+ * @returns {string} - ví dụ "September 21st 2025, 9:30:15 am"
+ */
+export const getCurrentDateTimeVietnam = (): string => {
   return dayjs().tz("Asia/Ho_Chi_Minh").format("MMMM Do YYYY, h:mm:ss a");
 };
 
-export const formatDateVietnam = (date: string | Date | number) => {
+/**
+ * Định dạng ngày theo múi giờ Việt Nam, chỉ lấy ngày/tháng/năm
+ * @param {string | Date | number} date - ngày cần định dạng
+ * @returns {string} - ví dụ "September 21st 2025"
+ */
+export const formatDateVietnam = (date: string | Date | number): string => {
   return dayjs(date).tz("Asia/Ho_Chi_Minh").format("MMMM Do YYYY");
 };
 
-export const formatDateTimeVietnam = (date: string | Date | number) => {
+/**
+ * Định dạng ngày giờ đầy đủ theo múi giờ Việt Nam
+ * @param {string | Date | number} date - ngày cần định dạng
+ * @returns {string} - ví dụ "September 21st 2025, 9:30:15 am"
+ */
+export const formatDateTimeVietnam = (date: string | Date | number): string => {
   return dayjs(date).tz("Asia/Ho_Chi_Minh").format("MMMM Do YYYY, h:mm:ss a");
 };
