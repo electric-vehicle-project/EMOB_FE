@@ -36,7 +36,7 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: ROUTES.LOGIN,
-        element: <h1>Login form,reset password form</h1>,
+        element: <h1>login form, resetpassword form</h1>,
       },
     ],
   },

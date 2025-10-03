@@ -6,7 +6,7 @@ type Props = {
 };
 
 export const ButtonPrimary: React.FC<Props> = ({ children, onClick }) => (
-  <Button type="primary" block size="large" onClick={onClick}>
+  <Button type="primary" className="!h-full w-full" onClick={onClick}>
     {children}
   </Button>
 );

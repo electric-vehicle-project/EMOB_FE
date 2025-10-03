@@ -5,6 +5,11 @@ export const theme: ThemeConfig = {
     fontFamily: "Inter, sans-serif"
   },
   components: {
+    Input: {
+      borderRadius: 9999,
+      colorBgContainer: "white",
+    },
+
     Button: {
       // Màu Default (Mặc định)
       defaultBg: "#24282B", // nền
@@ -26,6 +31,12 @@ export const theme: ThemeConfig = {
       colorPrimaryHover: "#525e46",
       colorPrimaryActive: "#414d38",
       colorPrimaryBg: "#627254",
+      borderRadius: 9999,
+      
+      // Default
+      colorBgSolid: "#24282B",
+      defaultHoverBg: "#627254",
+      defaultHoverColor: "#D9D9D9",
     },
     Checkbox: {
       colorPrimary: "#627254",
