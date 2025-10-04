@@ -9,16 +9,17 @@ import {
   Select,
   Popconfirm,
   message,
+  InputNumber,
+  DatePicker,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 
-// interface/type phải import bằng 'import type' do cấu hình TS của dự án
 import type { ICustomer } from "../model/Customer";
 import { MembershipLevel, Gender, CustomerStatus } from "../model/Customer";
 
 export const CustomerPage = () => {
-  // dữ liệu tạm để FE chạy độc lập; sau này thay bằng gọi API
   const [customers, setCustomers] = useState<ICustomer[]>([
     {
       customerID: "C001",
@@ -48,70 +49,85 @@ export const CustomerPage = () => {
     },
   ]);
 
-  // text tìm kiếm
   const [search, setSearch] = useState("");
-
-  // điều khiển mở/đóng modal form
   const [modalOpen, setModalOpen] = useState(false);
-
-  // nếu khác null → đang sửa; null → đang thêm mới
   const [editing, setEditing] = useState<ICustomer | null>(null);
-
-  // form instance của AntD để get/set dữ liệu form
   const [form] = Form.useForm();
+  const navigate = useNavigate();
 
-  // lọc danh sách theo tên/email/điện thoại (đơn giản, chạy trên mảng tạm)
-  const filtered = customers.filter(
-    (c) =>
-      c.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
+  const membershipColorMap: Record<string, string> = {
+    GOLD: "gold",
+    SILVER: "#bfbfbf",
+    PLATINUM: "purple",
+  };
+
+  // Regex + validator
+  const NAME_REGEX = /^[\p{L}\s'.-]{2,50}$/u;
+  const PHONE_REGEX = /^(0\d{9}|\+84\d{9})$/;
+  const ADDRESS_REGEX = /^[\p{L}\d\s.,#/-]{5,100}$/u; // fixed: bỏ lỗi range
+
+  // lọc danh sách
+  const filtered = customers.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.customerID.toLowerCase().includes(q) ||
+      c.fullName.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
       c.phone.includes(search)
-  );
+    );
+  });
 
-  // lưu form: nếu có 'editing' → cập nhật; ngược lại → thêm mới
   const handleSave = () => {
     form.validateFields().then((values) => {
+      const payload = {
+        ...values,
+        dateOfBirth: values.dateOfBirth
+          ? values.dateOfBirth.format("YYYY-MM-DD")
+          : undefined,
+      };
+
       if (editing) {
-        // update theo customerID
         setCustomers((prev) =>
           prev.map((c) =>
-            c.customerID === editing.customerID ? { ...editing, ...values } : c
+            c.customerID === editing.customerID ? { ...editing, ...payload } : c
           )
         );
         message.success("Cập nhật khách hàng thành công");
       } else {
-        // tạo ID đơn giản từ độ dài mảng (tạm); thực tế server sẽ trả về ID
         const newCustomer: ICustomer = {
           customerID: `C${customers.length + 1}`.padStart(4, "0"),
-          loyaltyPoints: 0, // mặc định
-          ...values, // các field còn lại lấy từ form
+          loyaltyPoints: 0,
+          ...payload,
         };
         setCustomers((prev) => [...prev, newCustomer]);
         message.success("Thêm khách hàng thành công");
       }
 
-      // đóng modal + dọn state
       setModalOpen(false);
       setEditing(null);
       form.resetFields();
     });
   };
 
-  // xoá theo ID; thực tế sẽ gọi API delete rồi refetch
   const handleDelete = (id: string) => {
     setCustomers((prev) => prev.filter((c) => c.customerID !== id));
     message.success("Xoá khách hàng thành công");
   };
 
-  // cấu hình cột cho bảng
+  // === Cột bảng ===
   const columns: ColumnsType<ICustomer> = [
-    { title: "ID", dataIndex: "customerID", key: "customerID", width: 100 },
-
-    // tên là link → sang trang chi tiết /admin/customers/:id
+    {
+      title: "ID",
+      dataIndex: "customerID",
+      key: "customerID",
+      width: 100,
+      sorter: (a, b) => a.customerID.localeCompare(b.customerID),
+    },
     {
       title: "Tên",
       dataIndex: "fullName",
       key: "fullName",
+      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
       render: (text, record) => (
         <Link
           to={`/admin/customers/${record.customerID}`}
@@ -121,56 +137,113 @@ export const CustomerPage = () => {
         </Link>
       ),
     },
-
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "SĐT", dataIndex: "phone", key: "phone" },
-
-    // hiển thị membership bằng Tag đơn giản
     {
       title: "Membership",
       dataIndex: "membershipLevel",
       key: "membershipLevel",
-      render: (v: string) => <Tag>{v}</Tag>,
+      filters: Object.values(MembershipLevel).map((m) => ({
+        text: m,
+        value: m,
+      })),
+      onFilter: (value, record) => record.membershipLevel === value,
+      render: (v: string) => (
+        <Tag color={membershipColorMap[v] || "default"}>{v}</Tag>
+      ),
     },
-
-    // tô màu status để dễ nhìn
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
+      filters: [
+        { text: "ACTIVE", value: "ACTIVE" },
+        { text: "INACTIVE", value: "INACTIVE" },
+        { text: "BANNED", value: "BANNED" },
+      ],
+      onFilter: (value, record) => record.status === value,
       render: (v: string) => {
         const color =
           v === "ACTIVE" ? "green" : v === "INACTIVE" ? "orange" : "red";
         return <Tag color={color}>{v}</Tag>;
       },
     },
-
-    // action: sửa/xoá
     {
       title: "Hành động",
       key: "actions",
       render: (_, record) => (
-        <div className="space-x-2">
+        <div className="flex items-center space-x-2">
+          {/* Nút sửa */}
           <Button
-            type="primary" // lấy màu primary đã cấu hình (#627254)
-            size="small"
+            type="primary"
+            size="middle"
             onClick={() => {
-              setEditing(record); // bật chế độ edit
-              form.setFieldsValue(record); // đổ dữ liệu lên form
+              setEditing(record);
+              form.setFieldsValue({
+                ...record,
+                dateOfBirth: record.dateOfBirth
+                  ? dayjs(record.dateOfBirth, "YYYY-MM-DD")
+                  : undefined,
+              });
               setModalOpen(true);
             }}
           >
             Sửa
           </Button>
 
+          {/* Nút xoá: hover -> nền đỏ + chữ trắng */}
           <Popconfirm
             title="Xác nhận xoá?"
             onConfirm={() => handleDelete(record.customerID)}
           >
-            <Button danger size="small">
+            <Button
+              size="middle"
+              style={{
+                color: "#dc3545", // chữ đỏ
+                borderColor: "#dc3545",
+                backgroundColor: "transparent",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc3545";
+                e.currentTarget.style.color = "#fff";
+                e.currentTarget.style.borderColor = "#dc3545";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#dc3545";
+                e.currentTarget.style.borderColor = "#dc3545";
+              }}
+            >
               Xoá
             </Button>
           </Popconfirm>
+
+          {/* Nút 3 chấm: kiểu chữ nhật, đồng bộ với các nút khác */}
+          <Button
+            type="primary"
+            size="middle"
+            style={{
+              backgroundColor: "#627254", // màu primary project
+              border: "none",
+              color: "#fff",
+              fontSize: 20, // icon to rõ
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: 48,
+              transition: "background-color 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#4f5f44"; // hover tối hơn
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#627254";
+            }}
+            onClick={() => navigate(`/admin/customers/${record.customerID}`)}
+          >
+            ⋮
+          </Button>
         </div>
       ),
     },
@@ -182,18 +255,17 @@ export const CustomerPage = () => {
 
       {/* thanh công cụ: search + thêm */}
       <div className="flex justify-between mb-4">
-        <Input.Search
-          placeholder="Tìm kiếm theo tên, email, SĐT"
+        <Input
+          placeholder="Tìm kiếm theo ID, tên, email, SĐT"
           onChange={(e) => setSearch(e.target.value)}
-          // viền search theo màu project; nếu muốn global thì sửa trong config/antd.ts
-          style={{ width: 300, borderColor: "#627254" }}
+          style={{ width: 360, borderColor: "#627254" }}
           allowClear
         />
-
         <Button
           type="primary"
+          size="large"
           onClick={() => {
-            setEditing(null); // chuyển về chế độ create
+            setEditing(null);
             form.resetFields();
             setModalOpen(true);
           }}
@@ -202,10 +274,9 @@ export const CustomerPage = () => {
         </Button>
       </div>
 
-      {/* bảng danh sách */}
       <Table rowKey="customerID" columns={columns} dataSource={filtered} />
 
-      {/* modal: dùng chung cho thêm và sửa */}
+      {/* modal thêm/sửa */}
       <Modal
         title={editing ? "Sửa khách hàng" : "Thêm khách hàng"}
         open={modalOpen}
@@ -214,55 +285,165 @@ export const CustomerPage = () => {
           setEditing(null);
         }}
         onOk={handleSave}
+        width={720}
       >
         <Form layout="vertical" form={form}>
-          {/* các field bắt buộc: tên, email (validate email), SĐT */}
-          <Form.Item name="fullName" label="Tên" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-
+          {/* --- Các field --- */}
           <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ type: "email", required: true }]}
+            name="fullName"
+            label="Tên"
+            rules={[
+              { required: true, message: "Vui lòng nhập tên khách hàng" },
+              {
+                pattern: NAME_REGEX,
+                message: "Tên chỉ gồm chữ, khoảng trắng và . ' - (2–50 ký tự)",
+              },
+            ]}
           >
             <Input />
           </Form.Item>
 
-          <Form.Item name="phone" label="SĐT" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Vui lòng nhập email" },
+                { type: "email", message: "Email không hợp lệ" },
+              ]}
+            >
+              <Input />
+            </Form.Item>
 
-          {/* field không bắt buộc */}
-          <Form.Item name="address" label="Địa chỉ">
-            <Input />
-          </Form.Item>
+            <Form.Item
+              name="phone"
+              label="SĐT"
+              rules={[
+                { required: true, message: "Vui lòng nhập số điện thoại" },
+                {
+                  pattern: PHONE_REGEX,
+                  message:
+                    "Số điện thoại phải 10 số bắt đầu bằng 0 hoặc +84xxxxxxxxx",
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
 
-          {/* enum dạng select: map từ const object → options */}
+            <Form.Item
+              name="address"
+              label="Địa chỉ"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (!value || value.length === 0) return Promise.resolve();
+                    if (!ADDRESS_REGEX.test(value))
+                      return Promise.reject(
+                        new Error("Địa chỉ không được chứa ký tự đặc biệt lạ")
+                      );
+                    if (value.length < 5 || value.length > 100)
+                      return Promise.reject(
+                        new Error("Địa chỉ phải từ 5 đến 100 ký tự")
+                      );
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+
+            <Form.Item
+              name="gender"
+              label="Giới tính"
+              rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}
+            >
+              <Select
+                options={Object.values(Gender).map((g) => ({
+                  label: g,
+                  value: g,
+                }))}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="membershipLevel"
+              label="Membership"
+              rules={[{ required: true, message: "Vui lòng chọn membership" }]}
+            >
+              <Select
+                options={Object.values(MembershipLevel).map((m) => ({
+                  label: m,
+                  value: m,
+                }))}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="loyaltyPoints"
+              label="Điểm tích luỹ"
+              rules={[
+                { required: true, message: "Vui lòng nhập điểm tích luỹ" },
+                {
+                  validator: (_, value) => {
+                    if (value === null || value === undefined)
+                      return Promise.resolve();
+                    if (!Number.isInteger(value))
+                      return Promise.reject(
+                        new Error("Điểm tích luỹ phải là số nguyên")
+                      );
+                    if (value < 0)
+                      return Promise.reject(
+                        new Error("Điểm tích luỹ không được nhỏ hơn 0")
+                      );
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <InputNumber min={0} className="w-full" />
+            </Form.Item>
+
+            <Form.Item
+              name="dateOfBirth"
+              label="Ngày sinh"
+              rules={[
+                { required: true, message: "Vui lòng chọn ngày sinh" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (value.isAfter(dayjs(), "day"))
+                      return Promise.reject(
+                        new Error("Ngày sinh không được ở tương lai")
+                      );
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <DatePicker className="w-full" format="YYYY-MM-DD" />
+            </Form.Item>
+
+            <Form.Item
+              name="status"
+              label="Trạng thái"
+              rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
+            >
+              <Select
+                options={Object.values(CustomerStatus).map((s) => ({
+                  label: s,
+                  value: s,
+                }))}
+              />
+            </Form.Item>
+          </div>
+
           <Form.Item
-            name="membershipLevel"
-            label="Membership"
-            rules={[{ required: true }]}
+            name="note"
+            label="Ghi chú"
+            rules={[{ max: 300, message: "Ghi chú tối đa 300 ký tự" }]}
           >
-            <Select
-              options={Object.values(MembershipLevel).map((m) => ({
-                label: m,
-                value: m,
-              }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="status"
-            label="Trạng thái"
-            rules={[{ required: true }]}
-          >
-            <Select
-              options={Object.values(CustomerStatus).map((s) => ({
-                label: s,
-                value: s,
-              }))}
-            />
+            <Input.TextArea rows={3} />
           </Form.Item>
         </Form>
       </Modal>
