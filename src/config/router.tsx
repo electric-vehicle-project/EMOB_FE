@@ -5,6 +5,8 @@ import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
 import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
+import { CustomerPage } from "../page/CustomerPage";
+import { CustomerDetailPage } from "../page/CustomerDetailPage";
 
 export const routes: RouteObject[] = [
   {
@@ -20,12 +22,12 @@ export const routes: RouteObject[] = [
         element: <DealerPage />,
       },
       {
-        path: "test", // => /admin/test
-        element: <TestPage />,
+        path: ROUTES.CUSTOMERS, // => /admin/test
+        element: <CustomerPage />,
       },
       {
-        path: "test/test01", // => /admin/test/test01
-        element: <TestPage />,
+        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/test/test01
+        element: <CustomerDetailPage />,
       },
     ],
   },
