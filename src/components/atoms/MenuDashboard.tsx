@@ -9,10 +9,7 @@ const normalize = (p?: string) => (p ? p.replace(/^\/+|\/+$/g, "") : "");
 
 function MenuDashboard({ items, collapsed, showLabels }: Props) {
   const location = useLocation();
-  const current = useMemo(
-    () => normalize(location.pathname),
-    [location.pathname]
-  );
+  const current = normalize(location.pathname);
 
   const isActive = (item: MenuItem) => {
     if (item.key && normalize(item.key) === current) return true;
@@ -68,9 +65,15 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
 
             {item.children?.length && (
               <div
-                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200] submenu-pop
-                  opacity-0 invisible -translate-y-2 transition-all duration-500 ease-in-out
-                  group-hover:opacity-100 group-hover:visible group-hover:translate-y-0`}
+                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200]
+                  transition-all duration-500 ease-in-out transform
+                  ${
+                    activeKey === item.key
+                      ? "opacity-100 visible translate-y-0"
+                      : "opacity-0 invisible -translate-y-2"
+                  }`}
+                onMouseEnter={() => setActiveKey(item.key || null)}
+                onMouseLeave={() => setActiveKey(null)}
               >
                 {item.children.map((child, idx) => {
                   const childActive =
@@ -82,7 +85,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
                       className={`flex items-center gap-3 px-4 py-3 transition-colors duration-300
                         ${
                           childActive
-                            ? "!bg-[var(--default-color)] text-white"
+                            ? "bg-[var(--default-color)] text-white"
                             : "hover:!bg-[#dceccb] text-[var(--default-color)]"
                         }`}
                       style={{ transitionDelay: `${idx * 60}ms` }}
