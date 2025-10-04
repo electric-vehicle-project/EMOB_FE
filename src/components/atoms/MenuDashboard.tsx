@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Tooltip } from "antd";
 import type { MenuItem } from "../../utils/menuUtils";
@@ -8,6 +8,7 @@ type Props = { items: MenuItem[]; collapsed?: boolean; showLabels?: boolean };
 const normalize = (p?: string) => (p ? p.replace(/^\/+|\/+$/g, "") : "");
 
 function MenuDashboard({ items, collapsed, showLabels }: Props) {
+  const [activeKey, setActiveKey] = useState<string | null>(null); // ✅ Thêm dòng này
   const location = useLocation();
   const current = normalize(location.pathname);
 
