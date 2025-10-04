@@ -60,11 +60,12 @@ export const TestDriveList = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchBar
           value={search}
           onChange={setSearch}
           placeholder="Tìm kiếm khách hàng hoặc xe..."
+          className="w-full sm:max-w-[420px]"
         />
         <Button
           type="primary"
@@ -72,7 +73,7 @@ export const TestDriveList = () => {
             setEditRecord(undefined);
             setModalOpen(true);
           }}
-          className="ml-4 px-6"
+          className="w-full sm:w-auto sm:ml-4 px-6"
         >
           Thêm lịch lái thử
         </Button>
@@ -101,6 +102,7 @@ export const TestDriveList = () => {
         open={!!deleteId}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
+        message="Bạn có chắc chắn muốn xóa khách hàng này?"
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Tooltip } from "antd";
 import type { MenuItem } from "../../utils/menuUtils";
@@ -20,36 +20,29 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
   };
 
   return (
-    <>
+    <div className="menu-stagger">
       {items.map((item, index) => {
         const active = isActive(item);
+        const hasChildren = item.children?.length;
 
-        // Nút chính
         const BaseBtn = (
           <div
-            onMouseEnter={() => setActiveKey(item.key || null)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer
-              transition-all duration-500 ease-in-out
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer btn-press with-ripple hover-lift smooth-transform
+              transition-all duration-500 ease-smooth
               ${
                 active
                   ? "!bg-[var(--default-color)] text-white shadow-md"
-                  : "!bg-[var(--primary-color)] !text-green-100 hover:!bg-[#525e46]"
+                  : "btn-glass-dark ripple-dark !text-white"
               }`}
-            style={{
-              transitionDelay: `${index * 80}ms`, // stagger animation
-            }}
           >
-            {/* Icon */}
             <span className="text-[20px] text-white">{item.icon}</span>
 
-            {/* Label (fade + scale) */}
             <span
-              className={`text-sm font-medium text-white transform origin-left
-                transition-all duration-500 ease-in-out
+              className={`menu-label-box text-sm font-medium text-white transform origin-left menu-label-transition
                 ${
                   !collapsed && showLabels
-                    ? "opacity-100 scale-x-100 w-auto"
-                    : "opacity-0 scale-x-0 w-0"
+                    ? "opacity-100 scale-x-100"
+                    : "opacity-0 scale-x-0"
                 }`}
               style={{
                 transitionDelay:
@@ -61,31 +54,45 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
           </div>
         );
 
+        // Wrapper dựa vào có children hay không
+        const ButtonWrapper = hasChildren ? (
+          collapsed ? (
+            <Tooltip title={item.label} placement="right">
+              {BaseBtn}
+            </Tooltip>
+          ) : (
+            BaseBtn
+          )
+        ) : collapsed ? (
+          <Tooltip title={item.label} placement="right">
+            <Link to={item.key || "#"}>{BaseBtn}</Link>
+          </Tooltip>
+        ) : (
+          <Link to={item.key || "#"}>{BaseBtn}</Link>
+        );
+
         return (
-          <div key={item.key} className="relative mb-2">
-            {/* Tooltip khi thu gọn */}
-            {collapsed ? (
-              <Tooltip title={item.label} placement="right">
-                <Link to={item.key || "#"}>{BaseBtn}</Link>
-              </Tooltip>
-            ) : (
-              <Link to={item.key || "#"}>{BaseBtn}</Link>
-            )}
+          <div
+            key={item.key}
+            className="group relative mb-2"
+            onMouseEnter={() => hasChildren && setActiveKey(item.key || null)}
+            onMouseLeave={() => setActiveKey(null)}
+          >
+            {ButtonWrapper}
 
             {/* Submenu (fade + slide mượt) */}
-            {item.children?.length && (
+            {hasChildren && (
               <div
-                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200] overflow-hidden
+                className={`absolute left-full top-0 ml-2 w-60 rounded-xl shadow-xl z-[1200] overflow-hidden
+                  bg-[rgba(0,0,0,0.38)] border border-[rgba(255,255,255,0.08)] backdrop-blur-[4px]
                   transition-all duration-500 ease-in-out transform
                   ${
                     activeKey === item.key
                       ? "opacity-100 visible translate-y-0"
                       : "opacity-0 invisible -translate-y-2"
                   }`}
-                onMouseEnter={() => setActiveKey(item.key || null)}
-                onMouseLeave={() => setActiveKey(null)}
               >
-                {item.children.map((child, idx) => {
+                {item.children!.map((child, idx) => {
                   const childActive =
                     child.key && normalize(child.key) === current;
                   return (
@@ -96,7 +103,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
                         ${
                           childActive
                             ? "bg-[var(--default-color)] text-white"
-                            : "hover:!bg-[#dceccb] text-[var(--default-color)]"
+                            : "hover:bg-[rgba(255,255,255,0.1)] text-white"
                         }`}
                       style={{ transitionDelay: `${idx * 60}ms` }}
                     >
@@ -110,8 +117,8 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
           </div>
         );
       })}
-    </>
+    </div>
   );
 }
 
-export default MenuDashboard;
+export default memo(MenuDashboard);

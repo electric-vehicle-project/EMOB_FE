@@ -23,17 +23,20 @@ export const TestDriveTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       title: "Khách hàng",
       dataIndex: "customer",
       sorter: (a, b) => a.customer.localeCompare(b.customer),
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
     {
       title: "Xe",
       dataIndex: "car",
-      sorter: (a, b) => a.car.localeCompare(b.car), // ✅ thêm sort cho xe
+      sorter: (a, b) => a.car.localeCompare(b.car),
+      responsive: ["sm", "md", "lg", "xl"],
     },
     {
       title: "Ngày",
       dataIndex: "date",
       sorter: (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
       render: (value: string) => formatDateVietnam(value),
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
     {
       title: "Thời lượng (phút)",
@@ -41,6 +44,7 @@ export const TestDriveTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       sorter: (a, b) => a.duration - b.duration,
       align: "center",
       render: (value: number) => `${value} phút`,
+      responsive: ["md", "lg", "xl"],
     },
     {
       title: "Trạng thái",
@@ -76,12 +80,13 @@ export const TestDriveTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             return <Tag>{status}</Tag>;
         }
       },
+      responsive: ["sm", "md", "lg", "xl"],
     },
     {
       title: "Thao tác",
       align: "center",
       render: (_, record) => (
-        <div className="flex justify-between items-center w-[180px] mx-auto">
+        <div className="flex justify-center items-center gap-2 flex-wrap mx-auto">
           <Button
             type="primary"
             icon={<EditOutlined />}
@@ -101,6 +106,7 @@ export const TestDriveTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
           </Button>
         </div>
       ),
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
   ];
 
@@ -110,6 +116,8 @@ export const TestDriveTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       dataSource={data}
       columns={columns}
       pagination={{ pageSize: 5 }}
+      scroll={{ x: true }}
+      size="middle"
     />
   );
 };

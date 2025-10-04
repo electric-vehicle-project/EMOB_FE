@@ -7,11 +7,16 @@ interface Props {
   onClick?: () => void;
   type?: "primary" | "default" | "dashed" | "link" | "text";
   danger?: boolean;
-  className?: string; // ✅ sửa lại tên đúng
+  className?: string;
 }
 
 export const Button: FC<Props> = ({ children, className, ...rest }) => (
-  <AntButton {...rest} className={className}>
+  <AntButton
+    {...rest}
+    className={`hover-lift hover-elevate btn-press with-ripple ${
+      className ? className : ""
+    }`}
+  >
     {children}
   </AntButton>
 );
