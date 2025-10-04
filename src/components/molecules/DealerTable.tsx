@@ -27,17 +27,14 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
     {
       title: "E-mail",
       dataIndex: "email",
-      // ❌ Bỏ sort
     },
     {
       title: "Số điện thoại",
       dataIndex: "phone",
-      // ❌ Bỏ sort
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
-      // ❌ Bỏ sort
     },
     {
       title: "Trạng thái",
@@ -78,7 +75,7 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             type="primary"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
-            className="rounded-md bg-[#627254] border-none hover:opacity-90"
+            className="rounded-md bg-[#627254] border-none hover:opacity-90 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Sửa
           </Button>
@@ -87,7 +84,7 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             type="primary"
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record.id)}
-            className="rounded-md"
+            className="rounded-md transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Xóa
           </Button>
@@ -102,6 +99,7 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       dataSource={data}
       columns={columns}
       pagination={{ pageSize: 5 }}
+      rowClassName={() => "transition-colors duration-200 hover:bg-[#f7f9f4]"}
     />
   );
 };

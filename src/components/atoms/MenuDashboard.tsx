@@ -1,122 +1,116 @@
 import { useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { Tooltip } from "antd";
 import type { MenuItem } from "../../utils/menuUtils";
 
-function MenuDashboard({ items }: { items: MenuItem[] }) {
-  console.log(items);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const location = useLocation();
-  // Lấy phần key từ / thứ 2 trở đi
-  const getComparePath = (key: string) => {
-    const parts = key.split("/").filter(Boolean); // Bỏ empty strings
-    return parts.length > 1 ? `/${parts.slice(1).join("/")}` : key;
-  };
+type Props = { items: MenuItem[]; collapsed?: boolean; showLabels?: boolean };
 
-  const currentPath = getComparePath(location.pathname);
-  // Kiểm tra xem menu item có active không
-  const normalizePath = (path?: string) => {
-    if (!path) return "";
-    return path.replace(/^\/+|\/+$/g, ""); // bỏ hết / đầu và cuối
-  };
+const normalize = (p?: string) => (p ? p.replace(/^\/+|\/+$/g, "") : "");
+
+function MenuDashboard({ items, collapsed, showLabels }: Props) {
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const location = useLocation();
+  const current = normalize(location.pathname);
 
   const isActive = (item: MenuItem) => {
-    const current = normalizePath(currentPath);
-
-    // Kiểm tra key trực tiếp
-    if (item.key && normalizePath(item.key) === current) return true;
-
-    // Kiểm tra children
-    if (item.children) {
-      return item.children.some(
-        (child) => child.key && normalizePath(child.key) === current
-      );
+    if (item.key && normalize(item.key) === current) return true;
+    if (item.children?.length) {
+      return item.children.some((c) => c.key && normalize(c.key) === current);
     }
-
     return false;
   };
 
   return (
     <>
-      {/* Menu chính */}
+      {items.map((item, index) => {
+        const active = isActive(item);
 
-      {items.map((item) => (
-        <div key={item.key} className="relative mb-2 group">
-          <button
-            onMouseEnter={() => setActiveMenu(item.key)}
-            className={`w-full  rounded-lg text-left transition-all duration-200 ${
-              isActive(item)
-                ? "bg-[var(--default-color)] text-white shadow-lg"
-                : "bg-[var(--primary-color)] text-green-100 hover:bg-[#525e46]"
-            }`}
+        // Nút chính
+        const BaseBtn = (
+          <div
+            onMouseEnter={() => setActiveKey(item.key || null)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer
+              transition-all duration-500 ease-in-out
+              ${
+                active
+                  ? "!bg-[var(--default-color)] text-white shadow-md"
+                  : "!bg-[var(--primary-color)] !text-green-100 hover:!bg-[#525e46]"
+              }`}
+            style={{
+              transitionDelay: `${index * 80}ms`, // stagger animation
+            }}
           >
-            {!item.children ? (
-              <Link
-                to={item.key}
-                className="flex items-center gap-2 px-4 py-4 w-full"
-              >
-                <span className="text-[20px] text-white">{item.icon}</span>
-                <span className="text-sm text-white font-medium">
-                  {item.label}
-                </span>
-              </Link>
+            {/* Icon */}
+            <span className="text-[20px] text-white">{item.icon}</span>
+
+            {/* Label */}
+            <span
+              className={`text-sm font-medium text-white transform origin-left
+                transition-all duration-500 ease-in-out
+                ${
+                  !collapsed && showLabels
+                    ? "opacity-100 scale-x-100 w-auto"
+                    : "opacity-0 scale-x-0 w-0"
+                }`}
+              style={{
+                transitionDelay:
+                  !collapsed && showLabels ? `${150 + index * 80}ms` : "0ms",
+              }}
+            >
+              {item.label}
+            </span>
+          </div>
+        );
+
+        return (
+          <div key={item.key} className="relative mb-2">
+            {/* Tooltip khi thu gọn */}
+            {collapsed ? (
+              <Tooltip title={item.label} placement="right">
+                <Link to={item.key || "#"}>{BaseBtn}</Link>
+              </Tooltip>
             ) : (
-              <div className="flex items-center gap-2 px-4 py-4 w-full">
-                <span className="text-[20px] text-white">{item.icon}</span>
-                <span className="text-sm text-white font-medium">
-                  {item.label}
-                </span>
+              <Link to={item.key || "#"}>{BaseBtn}</Link>
+            )}
+
+            {/* Submenu */}
+            {item.children?.length && (
+              <div
+                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200] overflow-hidden
+                  transition-all duration-500 ease-in-out transform
+                  ${
+                    activeKey === item.key
+                      ? "opacity-100 visible translate-y-0"
+                      : "opacity-0 invisible -translate-y-2"
+                  }`}
+                onMouseEnter={() => setActiveKey(item.key || null)}
+                onMouseLeave={() => setActiveKey(null)}
+              >
+                {item.children.map((child, idx) => {
+                  const childActive =
+                    child.key && normalize(child.key) === current;
+                  return (
+                    <Link
+                      key={child.key || idx}
+                      to={child.key || "#"}
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-300
+                        ${
+                          childActive
+                            ? "bg-[var(--default-color)] text-white"
+                            : "hover:!bg-[#dceccb] text-[var(--default-color)]"
+                        }`}
+                      style={{ transitionDelay: `${idx * 60}ms` }}
+                    >
+                      <span className="text-[18px]">{child.icon}</span>
+                      <span>{child.label}</span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
-          </button>
-
-          {item.children && activeMenu === item.key && (
-            <div
-              className="absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50"
-              onMouseEnter={() => setActiveMenu(item.key)}
-              onMouseLeave={() => setActiveMenu(null)}
-            >
-              {item.children?.map((child, idx) => (
-                <div
-                  key={child.key}
-                  className={`w-full flex items-center gap-3 text-left transition-colors ${
-                    idx !== (item.children?.length || 0) - 1
-                      ? "border-b border-gray-100"
-                      : ""
-                  } ${
-                    child.key && child.key === location.pathname
-                      ? "bg-[var(--default-color)] "
-                      : "hover:bg-[#dceccb] text-gray-700 hover:text-green-800"
-                  }`}
-                >
-                  <Link
-                    to={child.key || "#"}
-                    className="flex items-center gap-2 px-4 py-3 w-full"
-                  >
-                    <span
-                      className={`text-[20px] ${
-                        child.key && child.key === location.pathname
-                          ? " text-white"
-                          : "text-[var(--default-color)]"
-                      }`}
-                    >
-                      {child.icon}
-                    </span>
-                    <span
-                      className={`text-sm ${
-                        child.key && child.key === location.pathname
-                          ? " text-white"
-                          : "text-[var(--default-color)]"
-                      } font-medium`}
-                    >
-                      {child.label}
-                    </span>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </>
   );
 }
