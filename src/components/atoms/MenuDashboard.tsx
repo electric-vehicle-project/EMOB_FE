@@ -83,7 +83,8 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
             {/* Submenu (fade + slide mượt) */}
             {hasChildren && (
               <div
-                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200] overflow-hidden
+                className={`absolute left-full top-0 ml-2 w-60 rounded-xl shadow-xl z-[1200] overflow-hidden
+                  bg-[rgba(0,0,0,0.38)] border border-[rgba(255,255,255,0.08)] backdrop-blur-[4px]
                   transition-all duration-500 ease-in-out transform
                   ${
                     activeKey === item.key
@@ -102,7 +103,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
                         ${
                           childActive
                             ? "bg-[var(--default-color)] text-white"
-                            : "hover:!bg-[#dceccb] text-[var(--default-color)]"
+                            : "hover:bg-[rgba(255,255,255,0.1)] text-white"
                         }`}
                       style={{ transitionDelay: `${idx * 60}ms` }}
                     >
