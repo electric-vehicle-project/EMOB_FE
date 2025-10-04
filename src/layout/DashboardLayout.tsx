@@ -19,10 +19,10 @@ function DashboardLayout() {
   const [showLabels, setShowLabels] = useState(true);
 
   const items = [
-    getItem("Option 1", "/option1", <PieChartOutlined />),
+    getItem("Option 1", "/admin/dealers", <PieChartOutlined />),
     getItem("Option 2", "/option2", <DesktopOutlined />),
-    getItem("User", "/user", <UserOutlined />, [
-      getItem("Tom", "/user/tom"),
+    getItem("User", "/admin/user", <UserOutlined />, [
+      getItem("Tom", "/admin/test/test01"),
       getItem("Bill", "/user/bill"),
       getItem("Alex", "/user/alex"),
     ]),

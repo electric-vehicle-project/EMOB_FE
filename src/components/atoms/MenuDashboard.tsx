@@ -8,10 +8,9 @@ type Props = { items: MenuItem[]; collapsed?: boolean; showLabels?: boolean };
 const normalize = (p?: string) => (p ? p.replace(/^\/+|\/+$/g, "") : "");
 
 function MenuDashboard({ items, collapsed, showLabels }: Props) {
-  const [activeKey, setActiveKey] = useState<string | null>(null); // ✅ Thêm dòng này
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const location = useLocation();
   const current = normalize(location.pathname);
-
   const isActive = (item: MenuItem) => {
     if (item.key && normalize(item.key) === current) return true;
     if (item.children?.length) {
@@ -24,6 +23,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
     <div className="menu-stagger">
       {items.map((item, index) => {
         const active = isActive(item);
+        const hasChildren = item.children?.length;
 
         const BaseBtn = (
           <div
@@ -54,29 +54,44 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
           </div>
         );
 
-        return (
-          <div key={item.key} className="group relative mb-2">
-            {collapsed ? (
-              <Tooltip title={item.label} placement="right">
-                <Link to={item.key || "#"}>{BaseBtn}</Link>
-              </Tooltip>
-            ) : (
-              <Link to={item.key || "#"}>{BaseBtn}</Link>
-            )}
+        // Wrapper dựa vào có children hay không
+        const ButtonWrapper = hasChildren ? (
+          collapsed ? (
+            <Tooltip title={item.label} placement="right">
+              {BaseBtn}
+            </Tooltip>
+          ) : (
+            BaseBtn
+          )
+        ) : collapsed ? (
+          <Tooltip title={item.label} placement="right">
+            <Link to={item.key || "#"}>{BaseBtn}</Link>
+          </Tooltip>
+        ) : (
+          <Link to={item.key || "#"}>{BaseBtn}</Link>
+        );
 
-            {item.children?.length && (
+        return (
+          <div
+            key={item.key}
+            className="group relative mb-2"
+            onMouseEnter={() => hasChildren && setActiveKey(item.key || null)}
+            onMouseLeave={() => setActiveKey(null)}
+          >
+            {ButtonWrapper}
+
+            {/* Submenu (fade + slide mượt) */}
+            {hasChildren && (
               <div
-                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200]
+                className={`absolute left-full top-0 ml-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 z-[1200] overflow-hidden
                   transition-all duration-500 ease-in-out transform
                   ${
                     activeKey === item.key
                       ? "opacity-100 visible translate-y-0"
                       : "opacity-0 invisible -translate-y-2"
                   }`}
-                onMouseEnter={() => setActiveKey(item.key || null)}
-                onMouseLeave={() => setActiveKey(null)}
               >
-                {item.children.map((child, idx) => {
+                {item.children!.map((child, idx) => {
                   const childActive =
                     child.key && normalize(child.key) === current;
                   return (
