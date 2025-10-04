@@ -13,7 +13,9 @@ interface Props {
 export const Button: FC<Props> = ({ children, className, ...rest }) => (
   <AntButton
     {...rest}
-    className={`hover-lift hover-elevate btn-press with-ripple ${className ? className : ""}`}
+    className={`hover-lift hover-elevate btn-press with-ripple ${
+      className ? className : ""
+    }`}
   >
     {children}
   </AntButton>

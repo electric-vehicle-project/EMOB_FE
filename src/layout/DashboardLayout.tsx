@@ -37,7 +37,7 @@ function DashboardLayout() {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (sidebarOpen) {
-      timer = setTimeout(() => setShowLabels(true), 300);
+      timer = setTimeout(() => setShowLabels(true), 500);
     } else {
       setShowLabels(false);
     }
