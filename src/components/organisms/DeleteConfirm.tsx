@@ -4,16 +4,18 @@ interface Props {
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  message: string;
 }
 
-export const DeleteConfirm = ({ open, onConfirm, onCancel }: Props) => (
+export const DeleteConfirm = ({ open, onConfirm, onCancel, message }: Props) => (
   <Modal
     open={open}
     onOk={onConfirm}
     onCancel={onCancel}
     okText="Xóa"
+    cancelText="Hủy"
     okButtonProps={{ danger: true }}
   >
-    Bạn có chắc chắn muốn xóa dealer này?
+    {message}
   </Modal>
 );
