@@ -23,18 +23,22 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       dataIndex: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
       sortDirections: ["ascend", "descend"] as SortOrder[],
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
     {
       title: "E-mail",
       dataIndex: "email",
+      responsive: ["sm", "md", "lg", "xl"],
     },
     {
       title: "Số điện thoại",
       dataIndex: "phone",
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
+      responsive: ["md", "lg", "xl"],
     },
     {
       title: "Trạng thái",
@@ -65,12 +69,13 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             return <Tag>{status}</Tag>;
         }
       },
+      responsive: ["sm", "md", "lg", "xl"],
     },
     {
       title: "Thao tác",
       align: "center",
       render: (_: undefined, record: IDealer) => (
-        <div className="flex justify-between items-center w-[180px] mx-auto">
+        <div className="flex justify-center items-center gap-2 flex-wrap mx-auto">
           <Button
             type="primary"
             icon={<EditOutlined />}
@@ -90,6 +95,7 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
           </Button>
         </div>
       ),
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
   ];
 
@@ -100,6 +106,8 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       columns={columns}
       pagination={{ pageSize: 5 }}
       rowClassName={() => "transition-colors duration-200 hover:bg-[#f7f9f4]"}
+      scroll={{ x: true }}
+      size="middle"
     />
   );
 };
