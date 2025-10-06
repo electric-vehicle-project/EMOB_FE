@@ -18,25 +18,24 @@ export const routes: RouteObject[] = [
   },
 
   {
-    path: "/admin",
+    path: ROUTES.ADMIN,
     element: <DashboardLayout />,
     children: [
-      { path: "dealers", element: <DealerPage /> },       //admin/dealers
-      { path: "testdrive", element: <TestDrivePage /> },  //admin/testdrive
-      { path: "test", element: <TestPage /> },            //admin/test
-      { path: "test/test01", element: <TestPage /> },     //admin/test/test01
+      { path: ROUTES.DEALERS, element: <DealerPage /> },        // /dashboard/dealers
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },   // /dashboard/testdrive
+      { path: "test", element: <TestPage /> },                  // /dashboard/test
+      { path: "test/test01", element: <TestPage /> },           // /dashboard/test/test01
     ],
   },
 
-
   {
-    path: "/dashboard",
+    path: ROUTES.DASHBOARD,
     element: <DashboardLayout />,
     children: [
-      { path: "profile/info", element: <InfoPage /> },                    //dashboard/profile/info
-      { path: "profile/changeInfo", element: <ChangeInfoPage /> },        //dashboard/profile/changeInfo
-      { path: "profile/resetpassword", element: <ResetPasswordPage /> },  //dashboard/profile/resetpassword
-      { path: "profile/viewSchedule", element: <ViewSchedulePage /> },    //dashboard/profile/viewSchedule
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },            // /dashboard/profile/info
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },    // /dashboard/profile/changeInfo
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },  // /dashboard/profile/resetpassword
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },// /dashboard/profile/viewSchedule
     ],
   },
 
