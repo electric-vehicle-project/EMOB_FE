@@ -1,7 +1,7 @@
 import { LoginForm } from "../molecules/LoginForm";
 
-export const AuthCard = () => (
-  <div className="bg-[#DDDDDD] rounded-xl w-full !p-10 md:justify-top md:w-4/6">
+export const LoginCard = () => (
+  <div className="bg-[#DDDDDD]">
     <h2 className="!pb-5 font-bold text-16lg md:text-1.5xl lg:text-2xl xl:text-4xl  tracking-[.20em] font-[Rhodium_Libre]">
       Welcome back to
     </h2>

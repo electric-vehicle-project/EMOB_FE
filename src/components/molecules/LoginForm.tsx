@@ -5,7 +5,7 @@ import { ButtonGoogle } from "../atoms/ButtonGoogle";
 
 export const LoginForm = () => {
   return (
-    <Form layout="vertical" className="space-y-5 lg:space-y-10">
+    <Form layout="vertical" className="space-y-5 lg:space-y-8">
       <div className="h-8 sm:h-9 md:h-10 lg:h-12 ">
         <InputField type="text" placeholder="Tên đăng nhập" />
       </div>
@@ -15,8 +15,8 @@ export const LoginForm = () => {
       </div>
 
       <div className="flex justify-between items-center">
-        <Checkbox>Ghi nhớ mật khẩu</Checkbox>
-        <a className="text-sm ">Quên mật khẩu?</a>
+        <Checkbox className="text-[#627254]">Ghi nhớ mật khẩu</Checkbox>
+        <a className="text-sm text-[#627254]">Quên mật khẩu?</a>
       </div>
 
       <div className="h-8 sm:h-9 md:h-10 lg:h-12">

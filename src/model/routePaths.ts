@@ -1,12 +1,11 @@
 export const ROUTES = {
   HOME: "/",
+  NOTFOUND: "/*",
+  AUTH: "/auth",
   ADMIN: "/admin",
   LOGIN: "login",
-  REGISTER: "/register",
-  NOTFOUND: "/*",
+  FORGET_PASSWORD: "forget-password",
+  FORGET_PASSWORD_OTP: "forget-password-otp",
   DEALERS: "dealers",
-
-  AUTH: "/auth",
-
   TESTDRIVE: "testdrive",
 };

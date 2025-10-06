@@ -1,13 +1,14 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
+import { LoginCard } from "../components/organisms/LoginCard"; 
+import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
+import { OTPCard } from "../components/organisms/OPTCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
 import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
-
 import AuthLayout from "../layout/AuthLayout";
-
 import { TestDrivePage } from "../page/TestDrivePage";
 
 export const routes: RouteObject[] = [
@@ -43,7 +44,15 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: ROUTES.LOGIN,
-        element: <h1>login form, resetpassword form</h1>,
+        element: <LoginCard />,
+      },
+      {
+        path: ROUTES.FORGET_PASSWORD,
+        element: <ForgetPasswordCard />,
+      },
+      {
+        path: ROUTES.FORGET_PASSWORD_OTP,
+        element: <OTPCard />,
       },
     ],
   },
