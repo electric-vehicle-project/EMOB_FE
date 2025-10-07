@@ -2,7 +2,6 @@ import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import TestPage from "../page/TestPage";
 import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
 import { CustomerPage } from "../page/CustomerPage";
@@ -22,11 +21,11 @@ export const routes: RouteObject[] = [
         element: <DealerPage />,
       },
       {
-        path: ROUTES.CUSTOMERS, // => /admin/test
+        path: ROUTES.CUSTOMERS, // => /admin/customers
         element: <CustomerPage />,
       },
       {
-        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/test/test01
+        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
         element: <CustomerDetailPage />,
       },
     ],
