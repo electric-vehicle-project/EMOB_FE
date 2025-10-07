@@ -1,25 +1,25 @@
-import { useState, useEffect } from "react";
-import type { ITestDrive } from "../../model/TestDrive";
-import { TestDriveTable } from "../molecules/TestDriveTable";
-import { SearchBar } from "../molecules/SearchBar";
-import { TestDriveModal } from "./TestDriveModal";
+import { useEffect, useState } from "react";
+import type { IReport } from "../../model/report";
+import { ReportTable } from "../molecules/ReportTable";
+import { ReportModal } from "./ReportModal";
 import { DeleteConfirm } from "./DeleteConfirm";
+import { SearchBar } from "../molecules/SearchBar";
 import { Button } from "../atoms/Button";
-import { testDriveService } from "../../service/testDriveService";
 import { useDebounce } from "../../hook/useDebounce";
+import { reportService } from "../../service/reportService";
 
-export const TestDriveList = () => {
-  const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
-  const [filtered, setFiltered] = useState<ITestDrive[]>([]);
-  const [search, setSearch] = useState(""); // raw input
-  const debouncedSearch = useDebounce(search, 300); // ✅ debounce
+export const ReportList = () => {
+  const [reports, setReports] = useState<IReport[]>([]);
+  const [filtered, setFiltered] = useState<IReport[]>([]);
+  const [search, setSearch] = useState("");
+  const debounced = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editRecord, setEditRecord] = useState<ITestDrive | undefined>();
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [editRecord, setEditRecord] = useState<IReport | undefined>();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const loadData = async () => {
-    const data = await testDriveService.getTestDrives();
-    setTestDrives(data);
+    const data = await reportService.getReports();
+    setReports(data);
     setFiltered(data);
   };
 
@@ -27,23 +27,22 @@ export const TestDriveList = () => {
     loadData();
   }, []);
 
-  // ✅ Filter khi debouncedSearch thay đổi
   useEffect(() => {
-    const keyword = debouncedSearch.toLowerCase();
+    const kw = debounced.toLowerCase();
     setFiltered(
-      testDrives.filter(
-        (d) =>
-          d.customer.toLowerCase().includes(keyword) ||
-          d.car.toLowerCase().includes(keyword)
+      reports.filter(
+        (r) =>
+          r.title.toLowerCase().includes(kw) ||
+          r.reportBy.name.toLowerCase().includes(kw)
       )
     );
-  }, [debouncedSearch, testDrives]);
+  }, [debounced, reports]);
 
-  const handleSave = async (values: ITestDrive) => {
+  const handleSave = async (values: IReport) => {
     if (editRecord) {
-      await testDriveService.updateTestDrive({ ...editRecord, ...values });
+      await reportService.updateReport({ ...editRecord, ...values });
     } else {
-      await testDriveService.createTestDrive(values);
+      await reportService.createReport(values);
     }
     setModalOpen(false);
     setEditRecord(undefined);
@@ -52,7 +51,7 @@ export const TestDriveList = () => {
 
   const handleDelete = async () => {
     if (deleteId) {
-      await testDriveService.deleteTestDrive(deleteId);
+      await reportService.deleteReport(deleteId);
       setDeleteId(null);
       loadData();
     }
@@ -64,7 +63,7 @@ export const TestDriveList = () => {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Tìm kiếm khách hàng hoặc xe..."
+          placeholder="Tìm kiếm theo tiêu đề hoặc khách hàng..."
           className="w-full sm:max-w-[420px]"
         />
         <Button
@@ -75,11 +74,11 @@ export const TestDriveList = () => {
           }}
           className="w-full sm:w-auto sm:ml-4 px-6"
         >
-          Thêm lịch lái thử
+          Thêm phản hồi
         </Button>
       </div>
 
-      <TestDriveTable
+      <ReportTable
         data={filtered}
         onEdit={(record) => {
           setEditRecord(record);
@@ -88,7 +87,7 @@ export const TestDriveList = () => {
         onDelete={setDeleteId}
       />
 
-      <TestDriveModal
+      <ReportModal
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);
@@ -102,7 +101,7 @@ export const TestDriveList = () => {
         open={!!deleteId}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
-        message="Bạn có chắc chắn muốn xóa khách hàng này?"
+        message="Bạn có chắc chắn muốn xóa phản hồi này?"
       />
     </div>
   );
