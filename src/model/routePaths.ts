@@ -7,6 +7,7 @@ export const ROUTES = {
   NOTFOUND: "/*",
   DEALERS: "dealers",
   CUSTOMERS: "customers",
+  CUSTOMER_DETAIL: "customers/:id",
   TESTDRIVE: "testdrive",
   PROFILE: "profile",
   PROFILE_INFO: "profile/info",
