@@ -9,6 +9,12 @@ export interface CardWrapperProps {
   variant?: "profile" | "dashboard";
 }
 
+/**
+ * CardWrapper
+ * Thẻ bao bọc dùng chung cho cả trang hồ sơ (profile) và dashboard.
+ * - variant = "profile" dùng cho các trang trong mục hồ sơ
+ * - variant = "dashboard" dùng cho các trang quản trị
+ */
 const CardWrapper: React.FC<CardWrapperProps> = ({
   title,
   subtitle,

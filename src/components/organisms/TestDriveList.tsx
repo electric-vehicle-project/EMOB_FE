@@ -13,12 +13,15 @@ import { useDebounce } from "../../hook/useDebounce";
 export const TestDriveList = () => {
   const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
   const [filtered, setFiltered] = useState<ITestDrive[]>([]);
-  const [search, setSearch] = useState(""); // raw input
-  const debouncedSearch = useDebounce(search, 300); // ✅ debounce
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<ITestDrive | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  /**
+   * Tải danh sách lịch lái thử từ server và cập nhật cả danh sách gốc lẫn danh sách đã lọc
+   */
   const loadData = async () => {
     const data = await testDriveService.getTestDrives();
     setTestDrives(data);
@@ -29,7 +32,6 @@ export const TestDriveList = () => {
     loadData();
   }, []);
 
-  // ✅ Filter khi debouncedSearch thay đổi
   useEffect(() => {
     const keyword = debouncedSearch.toLowerCase();
     setFiltered(
@@ -41,6 +43,10 @@ export const TestDriveList = () => {
     );
   }, [debouncedSearch, testDrives]);
 
+  /**
+   * Lưu lịch lái thử: nếu có bản ghi đang sửa thì cập nhật, ngược lại tạo mới
+   * Hiển thị thông báo theo kết quả và reload danh sách
+   */
   const handleSave = async (values: ITestDrive) => {
     try {
       if (editRecord) {
@@ -58,6 +64,9 @@ export const TestDriveList = () => {
     }
   };
 
+  /**
+   * Xóa lịch lái thử theo id đã chọn và hiển thị thông báo kết quả
+   */
   const handleDelete = async () => {
     if (!deleteId) return;
     try {

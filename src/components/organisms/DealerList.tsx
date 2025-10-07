@@ -13,12 +13,15 @@ import { useDebounce } from "../../hook/useDebounce";
 export const DealerList = () => {
   const [dealers, setDealers] = useState<IDealer[]>([]);
   const [filtered, setFiltered] = useState<IDealer[]>([]);
-  const [search, setSearch] = useState(""); // raw input
-  const debouncedSearch = useDebounce(search, 300); // ✅ debounce
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  /**
+   * Tải danh sách đại lý từ server và cập nhật cả danh sách gốc lẫn danh sách đã lọc
+   */
   const loadData = async () => {
     const data = await dealerService.getDealers();
     setDealers(data);
@@ -29,12 +32,16 @@ export const DealerList = () => {
     loadData();
   }, []);
 
-  // ✅ Filter khi debouncedSearch thay đổi
+  // Lọc danh sách theo từ khóa đã được debounce để tránh lọc quá thường xuyên
   useEffect(() => {
     const keyword = debouncedSearch.toLowerCase();
     setFiltered(dealers.filter((d) => d.name.toLowerCase().includes(keyword)));
   }, [debouncedSearch, dealers]);
 
+  /**
+   * Lưu thông tin đại lý: nếu có "editDealer" thì cập nhật, ngược lại tạo mới
+   * Hiển thị thông báo theo kết quả và reload danh sách
+   */
   const handleSave = async (values: IDealer) => {
     try {
       if (editDealer) {
@@ -47,11 +54,14 @@ export const DealerList = () => {
       setModalOpen(false);
       setEditDealer(undefined);
       loadData();
-    } catch (err) {
+    } catch {
       message.error("Đã xảy ra lỗi, vui lòng thử lại!");
     }
   };
 
+  /**
+   * Xóa đại lý theo id đã chọn và hiển thị thông báo kết quả
+   */
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -59,7 +69,7 @@ export const DealerList = () => {
       message.success("Xóa thành công!");
       setDeleteId(null);
       loadData();
-    } catch (err) {
+    } catch {
       message.error("Đã xảy ra lỗi, vui lòng thử lại!");
     }
   };

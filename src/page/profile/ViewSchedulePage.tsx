@@ -33,7 +33,6 @@ const ViewSchedulePage: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      // Nếu service có getByAccountId thì dùng, nếu không thì lấy tất cả rồi lọc
       const svc = testDriveService as unknown as {
         getByAccountId?: (id: string | number) => Promise<ScheduleItem[]>;
         getTestDrives?: () => Promise<ScheduleItem[]>;
