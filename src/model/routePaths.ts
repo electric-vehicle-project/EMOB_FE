@@ -7,5 +7,6 @@ export const ROUTES = {
   FORGET_PASSWORD: "forget-password",
   FORGET_PASSWORD_OTP: "forget-password-otp",
   DEALERS: "dealers",
+  CUSTOMERS: "customers",
   TESTDRIVE: "testdrive",
 };

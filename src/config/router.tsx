@@ -1,15 +1,13 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
-import { LoginCard } from "../components/organisms/LoginCard"; 
-import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
-import { OTPCard } from "../components/organisms/OPTCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import TestPage from "../page/TestPage";
 import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
-import AuthLayout from "../layout/AuthLayout";
+import { CustomerPage } from "../page/CustomerPage";
+import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
+import TestPage from "../page/TestPage";
 
 export const routes: RouteObject[] = [
   {
@@ -29,30 +27,16 @@ export const routes: RouteObject[] = [
         element: <TestDrivePage />,
       },
       {
+        path: ROUTES.CUSTOMERS, // => /admin/customers
+        element: <CustomerPage />,
+      },
+      {
         path: "test", // => /admin/test
         element: <TestPage />,
       },
       {
-        path: "test/test01", // => /admin/test/test01
-        element: <TestPage />,
-      },
-    ],
-  },
-  {
-    path: ROUTES.AUTH, // bắt tất cả path không khớp
-    element: <AuthLayout />,
-    children: [
-      {
-        path: ROUTES.LOGIN,
-        element: <LoginCard />,
-      },
-      {
-        path: ROUTES.FORGET_PASSWORD,
-        element: <ForgetPasswordCard />,
-      },
-      {
-        path: ROUTES.FORGET_PASSWORD_OTP,
-        element: <OTPCard />,
+        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
+        element: <CustomerDetailPage />,
       },
     ],
   },
