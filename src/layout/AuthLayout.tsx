@@ -47,8 +47,8 @@ function AuthLayout() {
                       alt=""
                     />
                     <img
-                      className="absolute -top-20 scale-65 -right-[60%]"
-                      src="/public/leafs-2.png"
+                      className="absolute -top-2 -right-[40%] scale-x-[-1] rotate-25 h-35"
+                      src="/public/green leaf 2.png"
                       alt=""
                     />
                     <img
