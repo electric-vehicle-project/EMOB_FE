@@ -2,10 +2,12 @@ import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import TestPage from "../page/TestPage";
 import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
+import { CustomerPage } from "../page/CustomerPage";
+import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
+import TestPage from "../page/TestPage";
 
 export const routes: RouteObject[] = [
   {
@@ -25,12 +27,16 @@ export const routes: RouteObject[] = [
         element: <TestDrivePage />,
       },
       {
+        path: ROUTES.CUSTOMERS, // => /admin/customers
+        element: <CustomerPage />,
+      },
+      {
         path: "test", // => /admin/test
         element: <TestPage />,
       },
       {
-        path: "test/test01", // => /admin/test/test01
-        element: <TestPage />,
+        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
+        element: <CustomerDetailPage />,
       },
     ],
   },
