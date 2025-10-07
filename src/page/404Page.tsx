@@ -1,4 +1,5 @@
 import { ButtonLink } from "../components/atoms/BackHomeLink";
+
 import { ErrorTemplate } from "../components/template/ErrorTemplate";
 
 export const NotFoundPage = () => (

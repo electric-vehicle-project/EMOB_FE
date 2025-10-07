@@ -82,7 +82,7 @@ export const ReportTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             onClick={() => onEdit(record)}
             className="rounded-md bg-[#627254] border-none hover:opacity-90"
           >
-            Sửa
+            Chi tiết
           </Button>
           <Button
             danger
