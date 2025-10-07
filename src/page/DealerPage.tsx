@@ -1,11 +1,14 @@
 import { DealerList } from "../components/organisms/DealerList";
+import CardWrapper from "../components/template/CardWrapper";
 
 export const DealerPage = () => {
   return (
-    <div className="p-6 bg-white shadow rounded-lg">
-      {/* Chỉ giữ tiêu đề */}
-      <h1 className="text-xl font-bold mb-4">Quản lý đại lý</h1>
+    <CardWrapper
+      title="Quản lý đại lý"
+      subtitle="Theo dõi và quản lý thông tin các đại lý trong hệ thống"
+      variant="dashboard"
+    >
       <DealerList />
-    </div>
+    </CardWrapper>
   );
 };

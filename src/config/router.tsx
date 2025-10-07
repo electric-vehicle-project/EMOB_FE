@@ -23,14 +23,11 @@ export const routes: RouteObject[] = [
     path: ROUTES.ADMIN,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> },        // /dashboard/dealers
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },   // /dashboard/testdrive
-      { path: "test", element: <TestPage /> },                  // /dashboard/test
-      { path: "test/test01", element: <TestPage /> },   
-      {
-        path: ROUTES.CUSTOMERS, // => /admin/customers
-        element: <CustomerPage />,
-      },
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /admin/testdrive
+      { path: "test", element: <TestPage /> }, // /admin/test
+      { path: "test/test01", element: <TestPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // => /admin/customers
     ],
   },
 
@@ -38,11 +35,10 @@ export const routes: RouteObject[] = [
     path: ROUTES.DASHBOARD,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },            // /dashboard/profile/info
-      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },    // /dashboard/profile/changeInfo
-      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },  // /dashboard/profile/resetpassword
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },// /dashboard/profile/viewSchedule
-
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> }, // /dashboard/profile/info
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> }, // /dashboard/profile/changeInfo
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> }, // /dashboard/profile/resetpassword
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> }, // /dashboard/profile/viewSchedule
 
       {
         path: "test", // => /admin/test

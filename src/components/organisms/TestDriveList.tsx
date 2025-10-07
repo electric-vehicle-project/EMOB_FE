@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { message } from "antd";
 import type { ITestDrive } from "../../model/TestDrive";
 import { TestDriveTable } from "../molecules/TestDriveTable";
 import { SearchBar } from "../molecules/SearchBar";
@@ -40,32 +42,47 @@ export const TestDriveList = () => {
   }, [debouncedSearch, testDrives]);
 
   const handleSave = async (values: ITestDrive) => {
-    if (editRecord) {
-      await testDriveService.updateTestDrive({ ...editRecord, ...values });
-    } else {
-      await testDriveService.createTestDrive(values);
+    try {
+      if (editRecord) {
+        await testDriveService.updateTestDrive({ ...editRecord, ...values });
+        message.success("Cập nhật thông tin thành công!");
+      } else {
+        await testDriveService.createTestDrive(values);
+        message.success("Thêm mới thành công!");
+      }
+      setModalOpen(false);
+      setEditRecord(undefined);
+      loadData();
+    } catch {
+      message.error("Đã xảy ra lỗi, vui lòng thử lại!");
     }
-    setModalOpen(false);
-    setEditRecord(undefined);
-    loadData();
   };
 
   const handleDelete = async () => {
-    if (deleteId) {
+    if (!deleteId) return;
+    try {
       await testDriveService.deleteTestDrive(deleteId);
+      message.success("Xóa thành công!");
       setDeleteId(null);
       loadData();
+    } catch {
+      message.error("Đã xảy ra lỗi, vui lòng thử lại!");
     }
   };
 
   return (
-    <div className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="space-y-4"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchBar
           value={search}
           onChange={setSearch}
           placeholder="Tìm kiếm khách hàng hoặc xe..."
-          className="w-full sm:max-w-[420px]"
+          className="w-full sm:max-w-[420px] hover:-translate-y-0.5 transition-transform duration-200"
         />
         <Button
           type="primary"
@@ -73,20 +90,22 @@ export const TestDriveList = () => {
             setEditRecord(undefined);
             setModalOpen(true);
           }}
-          className="w-full sm:w-auto sm:ml-4 px-6"
+          className="!bg-[#627254] hover:!bg-[#525e46] active:!bg-[#414d38] text-white rounded-xl px-6 py-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
         >
           Thêm lịch lái thử
         </Button>
       </div>
 
-      <TestDriveTable
-        data={filtered}
-        onEdit={(record) => {
-          setEditRecord(record);
-          setModalOpen(true);
-        }}
-        onDelete={setDeleteId}
-      />
+      <div className="overflow-x-auto rounded-2xl shadow-md hover:shadow-lg p-0 transition-all duration-300 ease-out hover:-translate-y-1">
+        <TestDriveTable
+          data={filtered}
+          onEdit={(record) => {
+            setEditRecord(record);
+            setModalOpen(true);
+          }}
+          onDelete={setDeleteId}
+        />
+      </div>
 
       <TestDriveModal
         open={modalOpen}
@@ -104,6 +123,6 @@ export const TestDriveList = () => {
         onCancel={() => setDeleteId(null)}
         message="Bạn có chắc chắn muốn xóa khách hàng này?"
       />
-    </div>
+    </motion.div>
   );
 };

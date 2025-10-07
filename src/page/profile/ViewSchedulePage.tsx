@@ -1,10 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { DatePicker, Table, Tag, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import { testDriveService } from "../../service/testDriveService";
 import { useCurrentUser as getCurrentUser } from "../../utils/getCurrentUser";
-import ProfileCardWrapper from "../../components/molecules/ProfileCardWrapper";
+import CardWrapper from "../../components/template/CardWrapper";
 
 import type { Dayjs } from "dayjs";
 
@@ -39,7 +44,9 @@ const ViewSchedulePage: React.FC = () => {
       } else if (typeof svc.getTestDrives === "function") {
         const all = await svc.getTestDrives();
         list = Array.isArray(all)
-          ? all.filter((d) => (user?.accountId ? d.accountId === String(user.accountId) : true))
+          ? all.filter((d) =>
+              user?.accountId ? d.accountId === String(user.accountId) : true
+            )
           : [];
       }
       if (mounted) setRawData(list);
@@ -53,7 +60,9 @@ const ViewSchedulePage: React.FC = () => {
     let data = rawData;
     if (query.trim()) {
       const q = query.toLowerCase();
-      data = data.filter((d) => d.car.toLowerCase().includes(q) || String(d.id).includes(q));
+      data = data.filter(
+        (d) => d.car.toLowerCase().includes(q) || String(d.id).includes(q)
+      );
     }
     if (range && range[0] && range[1]) {
       const start = range[0]!.startOf("day").toDate().getTime();
@@ -91,15 +100,21 @@ const ViewSchedulePage: React.FC = () => {
         switch (status) {
           case "Pending":
             return (
-              <Tag color="gold" icon={<ClockCircleOutlined />}>Pending</Tag>
+              <Tag color="gold" icon={<ClockCircleOutlined />}>
+                Pending
+              </Tag>
             );
           case "Completed":
             return (
-              <Tag color="green" icon={<CheckCircleOutlined />}>Completed</Tag>
+              <Tag color="green" icon={<CheckCircleOutlined />}>
+                Completed
+              </Tag>
             );
           case "Cancelled":
             return (
-              <Tag color="red" icon={<CloseCircleOutlined />}>Cancelled</Tag>
+              <Tag color="red" icon={<CloseCircleOutlined />}>
+                Cancelled
+              </Tag>
             );
           default:
             return <Tag>{status}</Tag>;
@@ -109,11 +124,13 @@ const ViewSchedulePage: React.FC = () => {
   ];
 
   return (
-    <ProfileCardWrapper title="" maxWidth="max-w-6xl">
+    <CardWrapper title="" maxWidth="max-w-6xl" variant="profile">
       <div className="mb-6">
         <div className="border-l-4 border-[#627254] pl-3 mb-4">
           <h1 className="text-2xl font-bold text-[#414d38]">Lịch lái thử xe</h1>
-          <p className="text-gray-500 text-base">Theo dõi lịch lái thử xe của bạn</p>
+          <p className="text-gray-500 text-base">
+            Theo dõi lịch lái thử xe của bạn
+          </p>
         </div>
       </div>
 
@@ -128,7 +145,9 @@ const ViewSchedulePage: React.FC = () => {
         />
         <DatePicker.RangePicker
           className="w-full lg:w-auto"
-          onChange={(v) => setRange((v as [Dayjs | null, Dayjs | null]) || null)}
+          onChange={(v) =>
+            setRange((v as [Dayjs | null, Dayjs | null]) || null)
+          }
         />
       </div>
       <div className="mt-4">
@@ -145,10 +164,8 @@ const ViewSchedulePage: React.FC = () => {
           />
         </div>
       </div>
-    </ProfileCardWrapper>
+    </CardWrapper>
   );
 };
 
 export default ViewSchedulePage;
-
-
