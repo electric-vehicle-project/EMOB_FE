@@ -23,14 +23,12 @@ export const routes: RouteObject[] = [
     path: ROUTES.ADMIN,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> },        // /dashboard/dealers
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },   // /dashboard/testdrive
-      { path: "test", element: <TestPage /> },                  // /dashboard/test
-      { path: "test/test01", element: <TestPage /> },   
-      {
-        path: ROUTES.CUSTOMERS, // => /admin/customers
-        element: <CustomerPage />,
-      },
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /dashboard/dealers
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /dashboard/testdrive
+      { path: "test", element: <TestPage /> }, // /dashboard/test
+      { path: "test/test01", element: <TestPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /admin/customers
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /admin/customers/id
     ],
   },
 
@@ -38,19 +36,14 @@ export const routes: RouteObject[] = [
     path: ROUTES.DASHBOARD,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },            // /dashboard/profile/info
-      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },    // /dashboard/profile/changeInfo
-      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },  // /dashboard/profile/resetpassword
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },// /dashboard/profile/viewSchedule
-
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> }, // /dashboard/profile/info
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> }, // /dashboard/profile/changeInfo
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> }, // /dashboard/profile/resetpassword
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> }, // /dashboard/profile/viewSchedule
 
       {
         path: "test", // => /admin/test
         element: <TestPage />,
-      },
-      {
-        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
-        element: <CustomerDetailPage />,
       },
     ],
   },
