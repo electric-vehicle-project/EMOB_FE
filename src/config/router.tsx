@@ -6,6 +6,8 @@ import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
 import { CustomerPage } from "../page/CustomerPage";
 import { CustomerDetailPage } from "../page/CustomerDetailPage";
+import { TestDrivePage } from "../page/TestDrivePage";
+import TestPage from "../page/TestPage";
 
 export const routes: RouteObject[] = [
   {
@@ -21,8 +23,16 @@ export const routes: RouteObject[] = [
         element: <DealerPage />,
       },
       {
+        path: ROUTES.TESTDRIVE, // => /admin/testdrive
+        element: <TestDrivePage />,
+      },
+      {
         path: ROUTES.CUSTOMERS, // => /admin/customers
         element: <CustomerPage />,
+      },
+      {
+        path: "test", // => /admin/test
+        element: <TestPage />,
       },
       {
         path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)

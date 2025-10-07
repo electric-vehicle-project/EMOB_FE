@@ -23,21 +23,22 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       dataIndex: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
       sortDirections: ["ascend", "descend"] as SortOrder[],
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
     {
       title: "E-mail",
       dataIndex: "email",
-      // ❌ Bỏ sort
+      responsive: ["sm", "md", "lg", "xl"],
     },
     {
       title: "Số điện thoại",
       dataIndex: "phone",
-      // ❌ Bỏ sort
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
-      // ❌ Bỏ sort
+      responsive: ["md", "lg", "xl"],
     },
     {
       title: "Trạng thái",
@@ -68,17 +69,18 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             return <Tag>{status}</Tag>;
         }
       },
+      responsive: ["sm", "md", "lg", "xl"],
     },
     {
       title: "Thao tác",
       align: "center",
       render: (_: undefined, record: IDealer) => (
-        <div className="flex justify-between items-center w-[180px] mx-auto">
+        <div className="flex justify-center items-center gap-2 flex-wrap mx-auto">
           <Button
             type="primary"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
-            className="rounded-md bg-[#627254] border-none hover:opacity-90"
+            className="rounded-md bg-[#627254] border-none hover:opacity-90 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Sửa
           </Button>
@@ -87,12 +89,13 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
             type="primary"
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record.id)}
-            className="rounded-md"
+            className="rounded-md transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Xóa
           </Button>
         </div>
       ),
+      responsive: ["xs", "sm", "md", "lg", "xl"],
     },
   ];
 
@@ -102,6 +105,9 @@ export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       dataSource={data}
       columns={columns}
       pagination={{ pageSize: 5 }}
+      rowClassName={() => "transition-colors duration-200 hover:bg-[#f7f9f4]"}
+      scroll={{ x: true }}
+      size="middle"
     />
   );
 };
