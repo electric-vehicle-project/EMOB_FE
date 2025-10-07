@@ -5,6 +5,8 @@ import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
 import { DealerPage } from "../page/DealerPage";
 import { ROUTES } from "../model/routePaths";
+import { CustomerPage } from "../page/CustomerPage";
+import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
 import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
@@ -24,7 +26,11 @@ export const routes: RouteObject[] = [
       { path: ROUTES.DEALERS, element: <DealerPage /> },        // /dashboard/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },   // /dashboard/testdrive
       { path: "test", element: <TestPage /> },                  // /dashboard/test
-      { path: "test/test01", element: <TestPage /> },           // /dashboard/test/test01
+      { path: "test/test01", element: <TestPage /> },   
+      {
+        path: ROUTES.CUSTOMERS, // => /admin/customers
+        element: <CustomerPage />,
+      },
     ],
   },
 
@@ -36,6 +42,16 @@ export const routes: RouteObject[] = [
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },    // /dashboard/profile/changeInfo
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },  // /dashboard/profile/resetpassword
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },// /dashboard/profile/viewSchedule
+
+
+      {
+        path: "test", // => /admin/test
+        element: <TestPage />,
+      },
+      {
+        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
+        element: <CustomerDetailPage />,
+      },
     ],
   },
 
