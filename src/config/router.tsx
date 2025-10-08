@@ -3,9 +3,8 @@ import DashboardLayout from "../layout/DashboardLayout";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
-import { DealerPage } from "../page/DealerPage"; // CRUD Dealer
 import { ROUTES } from "../model/routePaths";
-import { TestDrivePage } from "../page/TestDrivePage";
+import ReportPage from "../page/ReportPage";
 
 export const routes: RouteObject[] = [
   {
@@ -17,16 +16,8 @@ export const routes: RouteObject[] = [
     element: <DashboardLayout />,
     children: [
       {
-        path: ROUTES.DEALERS, // => /admin/dealers
-        element: <DealerPage />,
-      },
-      {
-        path: ROUTES.TESTDRIVE, // => /admin/testdrive
-        element: <TestDrivePage />,
-      },
-      {
-        path: "test", // => /admin/test
-        element: <TestPage />,
+        path: ROUTES.REPORT, // => /admin/report
+        element: <ReportPage />,
       },
       {
         path: "test/test01", // => /admin/test/test01

@@ -6,4 +6,5 @@ export const ROUTES = {
   NOTFOUND: "/*",
   DEALERS: "dealers",
   TESTDRIVE: "testdrive",
+  REPORT: "report"
 };
