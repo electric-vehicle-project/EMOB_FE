@@ -3,6 +3,9 @@ import DashboardLayout from "../layout/DashboardLayout";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
+
+
+import ReportPage from "../page/ReportPage";
 import { DealerPage } from "../page/DealerPage";
 import { ROUTES } from "../model/routePaths";
 import { CustomerPage } from "../page/CustomerPage";
@@ -12,6 +15,7 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+
 
 export const routes: RouteObject[] = [
   {
@@ -28,6 +32,10 @@ export const routes: RouteObject[] = [
       { path: "test", element: <TestPage /> },                  // /dashboard/test
       { path: "test/test01", element: <TestPage /> },   
       {
+
+        path: ROUTES.REPORT, // => /admin/report
+        element: <ReportPage />,
+      },{
         path: ROUTES.CUSTOMERS, // => /admin/customers
         element: <CustomerPage />,
       },
@@ -47,6 +55,7 @@ export const routes: RouteObject[] = [
       {
         path: "test", // => /admin/test
         element: <TestPage />,
+
       },
       {
         path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
