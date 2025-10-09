@@ -35,8 +35,6 @@ export const theme: ThemeConfig = {
       
       // Default
       colorBgSolid: "#24282B",
-      defaultHoverBg: "#627254",
-      defaultHoverColor: "#D9D9D9",
     },
     Checkbox: {
       colorPrimary: "#627254",

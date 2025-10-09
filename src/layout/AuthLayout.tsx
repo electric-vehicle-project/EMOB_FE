@@ -66,7 +66,7 @@ function AuthLayout() {
             
             {/* -------- 2.2 Login Card (remain-side ) -------- */}
             <Col span={12} className="bg-[var(--natural-color)] py-5 pr-5 rounded-r-[20px]">
-              <div className="w-full h-full !pt-[10px]">
+              <div className="w-full h-full !pt-[20px] !pr-[10px] !pl-[10px] !pb-[20px]">
                 <Outlet />
               </div>
             </Col>
