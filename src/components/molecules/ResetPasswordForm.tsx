@@ -74,10 +74,11 @@ export const ResetPasswordForm = () => {
 
       {/* Thông báo thành công */}
       {success && (
-        <p className="text-[#627254] text-center font-medium pt-2">
-          Đổi mật khẩu thành công! Chuyển hướng về trang đăng nhập sau{" "}
-          <span className="font-semibold">{countdown}</span> giây...
-        </p>
+        <div className="text-[#627254] text-center font-medium pt-2">
+          <p>Đổi mật khẩu thành công! </p>
+          <p>  Chuyển hướng về trang đăng nhập sau{" "}
+          <span className="font-semibold">{countdown}</span> giây...</p>
+        </div>
       )}
     </Form>
   );
