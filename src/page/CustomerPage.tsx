@@ -15,6 +15,13 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 
 import type { ICustomer } from "../model/Customer";
 import { MembershipLevel, Gender, CustomerStatus } from "../model/Customer";
@@ -55,6 +62,7 @@ export const CustomerPage = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
+  // UI map
   const membershipColorMap: Record<string, string> = {
     GOLD: "gold",
     SILVER: "#bfbfbf",
@@ -64,9 +72,9 @@ export const CustomerPage = () => {
   // Regex + validator
   const NAME_REGEX = /^[\p{L}\s'.-]{2,50}$/u;
   const PHONE_REGEX = /^(0\d{9}|\+84\d{9})$/;
-  const ADDRESS_REGEX = /^[\p{L}\d\s.,#/-]{5,100}$/u; // fixed: bỏ lỗi range
+  const ADDRESS_REGEX = /^[\p{L}\d\s.,#/-]{5,100}$/u;
 
-  // lọc danh sách
+  // filter search
   const filtered = customers.filter((c) => {
     const q = search.toLowerCase();
     return (
@@ -114,7 +122,33 @@ export const CustomerPage = () => {
     message.success("Xoá khách hàng thành công");
   };
 
-  // === Cột bảng ===
+  const renderStatusTag = (status?: string) => {
+    const s = (status ?? "").toString().trim().toLowerCase();
+    switch (s) {
+      case "active":
+        return (
+          <Tag color="green" icon={<CheckCircleOutlined />}>
+            Active
+          </Tag>
+        );
+      case "inactive":
+        return (
+          <Tag color="volcano" icon={<CloseCircleOutlined />}>
+            Inactive
+          </Tag>
+        );
+      case "banned":
+        return (
+          <Tag color="red" icon={<StopOutlined />}>
+            Banned
+          </Tag>
+        );
+      default:
+        return <Tag>{status ?? "—"}</Tag>;
+    }
+  };
+
+  // Columns
   const columns: ColumnsType<ICustomer> = [
     {
       title: "ID",
@@ -122,6 +156,7 @@ export const CustomerPage = () => {
       key: "customerID",
       width: 100,
       sorter: (a, b) => a.customerID.localeCompare(b.customerID),
+      align: "center",
     },
     {
       title: "Tên",
@@ -138,44 +173,46 @@ export const CustomerPage = () => {
       ),
     },
     { title: "Email", dataIndex: "email", key: "email" },
-    { title: "SĐT", dataIndex: "phone", key: "phone" },
+    { title: "SĐT", dataIndex: "phone", key: "phone", width: 200 },
     {
       title: "Membership",
       dataIndex: "membershipLevel",
       key: "membershipLevel",
+      align: "center",
+      width: 180,
       filters: Object.values(MembershipLevel).map((m) => ({
         text: m,
         value: m,
       })),
       onFilter: (value, record) => record.membershipLevel === value,
       render: (v: string) => (
-        <Tag color={membershipColorMap[v] || "default"}>{v}</Tag>
+        <Tag color={membershipColorMap[v] || "default"} className="px-3 py-1">
+          {v}
+        </Tag>
       ),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
+      align: "center",
+      width: 180,
       filters: [
         { text: "ACTIVE", value: "ACTIVE" },
         { text: "INACTIVE", value: "INACTIVE" },
         { text: "BANNED", value: "BANNED" },
       ],
       onFilter: (value, record) => record.status === value,
-      render: (v: string) => {
-        const color =
-          v === "ACTIVE" ? "green" : v === "INACTIVE" ? "orange" : "red";
-        return <Tag color={color}>{v}</Tag>;
-      },
+      render: (v: string) => renderStatusTag(v),
     },
     {
       title: "Hành động",
       key: "actions",
+      align: "center",
       render: (_, record) => (
-        <div className="flex items-center space-x-2">
-          {/* Nút sửa */}
+        <div className="flex items-center justify-center gap-2">
           <Button
-            type="primary"
+            icon={<EditOutlined />}
             size="middle"
             onClick={() => {
               setEditing(record);
@@ -187,55 +224,38 @@ export const CustomerPage = () => {
               });
               setModalOpen(true);
             }}
+            className="h-8 px-3 rounded-md transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              backgroundColor: "#627254",
+              color: "#fff",
+              border: "none",
+            }}
           >
             Sửa
           </Button>
 
-          {/* Nút xoá: hover -> nền đỏ + chữ trắng */}
           <Popconfirm
             title="Xác nhận xoá?"
             onConfirm={() => handleDelete(record.customerID)}
           >
             <Button
+              icon={<DeleteOutlined />}
+              type="primary"
+              danger
               size="middle"
-              style={{
-                color: "#dc3545", // chữ đỏ
-                borderColor: "#dc3545",
-                backgroundColor: "transparent",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#dc3545";
-                e.currentTarget.style.color = "#fff";
-                e.currentTarget.style.borderColor = "#dc3545";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#dc3545";
-                e.currentTarget.style.borderColor = "#dc3545";
-              }}
+              className="h-8 px-3 rounded-md"
             >
               Xoá
             </Button>
           </Popconfirm>
 
-          {/* Nút 3 chấm: kiểu chữ nhật, đồng bộ với các nút khác */}
           <Button
             type="primary"
             size="middle"
-            style={{
-              backgroundColor: "#627254", // màu primary project
-              border: "none",
-              color: "#fff",
-              fontSize: 20, // icon to rõ
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              width: 48,
-              transition: "background-color 0.3s ease",
-            }}
+            className="h-8 w-10 rounded-md"
+            style={{ backgroundColor: "#627254", border: "none" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#4f5f44"; // hover tối hơn
+              e.currentTarget.style.backgroundColor = "#4f5f44";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "#627254";
@@ -250,33 +270,49 @@ export const CustomerPage = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white shadow rounded-lg">
       <h1 className="text-xl font-bold mb-4">Quản lý khách hàng</h1>
 
-      {/* thanh công cụ: search + thêm */}
-      <div className="flex justify-between mb-4">
+      {/* Toolbar giống Dealer */}
+      <div className="space-y-3 sm:space-y-0 flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <Input
           placeholder="Tìm kiếm theo ID, tên, email, SĐT"
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: 360, borderColor: "#627254" }}
           allowClear
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:max-w-[420px]"
+          style={{ borderColor: "var(--primary-color, #627254)" }}
         />
+
         <Button
           type="primary"
-          size="large"
+          size="middle"
           onClick={() => {
             setEditing(null);
             form.resetFields();
             setModalOpen(true);
           }}
+          className="w-full sm:w-auto px-6 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+          style={{
+            backgroundColor: "var(--primary-color, #627254)",
+            border: "none",
+          }}
         >
-          + Thêm khách hàng
+          Thêm khách hàng mới
         </Button>
       </div>
 
-      <Table rowKey="customerID" columns={columns} dataSource={filtered} />
+      <Table
+        rowKey="customerID"
+        columns={columns}
+        dataSource={filtered}
+        size="middle"
+        className="rounded-lg [&_.ant-table-thead>tr>th]:text-center"
+        pagination={{ pageSize: 8, showSizeChanger: false }}
+        scroll={{ x: 1100 }}
+        tableLayout="fixed"
+      />
 
-      {/* modal thêm/sửa */}
       <Modal
         title={editing ? "Sửa khách hàng" : "Thêm khách hàng"}
         open={modalOpen}
@@ -285,10 +321,9 @@ export const CustomerPage = () => {
           setEditing(null);
         }}
         onOk={handleSave}
-        width={720}
+        width={840}
       >
         <Form layout="vertical" form={form}>
-          {/* --- Các field --- */}
           <Form.Item
             name="fullName"
             label="Tên"
@@ -300,19 +335,20 @@ export const CustomerPage = () => {
               },
             ]}
           >
-            <Input />
+            <Input allowClear />
           </Form.Item>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Form.Item
               name="email"
               label="Email"
+              className="md:col-span-2"
               rules={[
                 { required: true, message: "Vui lòng nhập email" },
                 { type: "email", message: "Email không hợp lệ" },
               ]}
             >
-              <Input />
+              <Input allowClear />
             </Form.Item>
 
             <Form.Item
