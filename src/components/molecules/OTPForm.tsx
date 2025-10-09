@@ -70,9 +70,11 @@ export const OTPForm = () => {
       </div>
 
       {/* Confirm button */}
-      <div className="h-10 sm:h-12">
-        <ButtonPrimary>Xác nhận</ButtonPrimary>
+
+      <div className="h-12">
+        <Link to="/auth/reset-password"><ButtonPrimary>Xác nhận</ButtonPrimary></Link>
       </div>
+
 
       {/* Helper text + resend */}
       <div className="flex justify-between items-center pt-6">

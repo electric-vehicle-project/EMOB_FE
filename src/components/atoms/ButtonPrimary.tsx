@@ -3,6 +3,7 @@ import { Button } from "antd";
 type Props = {
   children: React.ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
 };
 
 export const ButtonPrimary: React.FC<Props> = ({ children, onClick }) => (

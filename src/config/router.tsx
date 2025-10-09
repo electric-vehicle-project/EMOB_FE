@@ -3,6 +3,7 @@ import DashboardLayout from "../layout/DashboardLayout";
 import { LoginCard } from "../components/organisms/LoginCard"; 
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
 import { OTPCard } from "../components/organisms/OPTCard";
+import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
@@ -53,6 +54,10 @@ export const routes: RouteObject[] = [
       {
         path: ROUTES.FORGET_PASSWORD_OTP,
         element: <OTPCard />,
+      },
+      {
+        path: ROUTES.RESET_PASSWORD,
+        element: <ResetPasswordCard />,
       },
     ],
   },
