@@ -11,7 +11,7 @@ export const ForgetPasswordForm = () => {
       </div>
 
       <div className="h-12">
-        <ButtonPrimary>Gửi OTP</ButtonPrimary>
+        <Link to="/auth/forget-password-otp"><ButtonPrimary>Gửi OTP</ButtonPrimary></Link>
       </div>
 
       <div className="flex justify-center">

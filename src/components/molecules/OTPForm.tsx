@@ -24,7 +24,7 @@ export const OTPForm = () => {
   };
 
   return (
-    <Form layout="vertical" className="space-y-5 ">
+    <Form layout="vertical" className="space-y-3 ">
       {/* OTP input boxes */}
       <div className="flex justify-between pr-10 pl-10 space-y-5">
         {[0, 1, 2, 3, 4].map((_, index) => (

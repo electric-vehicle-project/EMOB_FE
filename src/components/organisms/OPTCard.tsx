@@ -9,7 +9,7 @@ export const OTPCard = () => (
       EMOB!
     </h1>
     <h2 className="text-[#627254] !pt-10 !pb-5 tracking-[.20em]">
-      Nhập mã xác thực OTP gồm 5 chữ số:
+      Nhập mã xác thực OTP được gửi đến E-mail của bạn (mã gồm 5 chữ số):
     </h2>
     <div className="!pt-5"><OTPForm /></div>
     

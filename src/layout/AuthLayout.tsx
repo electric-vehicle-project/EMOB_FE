@@ -42,7 +42,7 @@ function AuthLayout() {
                   {/* -------- Images -------- */}
                   <div className="relative flex justify-center flex-1">
                     <img
-                      className="absolute top-10  scale-125 left-[13%] z-1"
+                      className="absolute top-10  scale-150 left-[13%] z-1"
                       src="/public/E-BIKE main.png"
                       alt=""
                     />
