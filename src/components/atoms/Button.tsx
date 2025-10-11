@@ -4,14 +4,17 @@ import type { ButtonProps as AntButtonProps } from "antd";
 
 interface ButtonProps extends Omit<AntButtonProps, "type"> {
   type?: "primary" | "default" | "dashed" | "link" | "text";
-  children: ReactNode;
+  danger?: boolean;
   className?: string;
 }
 
-export const Button: FC<ButtonProps> = ({ children, className, ...rest }) => {
-  return (
-    <AntButton className={className} {...rest}>
-      {children}
-    </AntButton>
-  );
-};
+export const Button: FC<Props> = ({ children, className, ...rest }) => (
+  <AntButton
+    {...rest}
+    className={`hover-lift hover-elevate btn-press with-ripple ${
+      className ? className : ""
+    }`}
+  >
+    {children}
+  </AntButton>
+);
