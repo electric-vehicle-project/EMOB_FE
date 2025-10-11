@@ -1,5 +1,9 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
+import { LoginCard } from "../components/organisms/LoginCard"; 
+import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
+import { OTPCard } from "../components/organisms/OPTCard";
+import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
@@ -8,6 +12,7 @@ import TestPage from "../page/TestPage";
 import ReportPage from "../page/ReportPage";
 import { DealerPage } from "../page/DealerPage";
 import { ROUTES } from "../model/routePaths";
+import AuthLayout from "../layout/AuthLayout";
 import { CustomerPage } from "../page/CustomerPage";
 import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
