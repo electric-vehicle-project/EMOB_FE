@@ -5,7 +5,7 @@ import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 // ✅ Kế thừa kiểu gốc từ Ant Design để tương thích tuyệt đối
 type Props = (InputProps | PasswordProps) & {
-  type?: "text" | "password";
+  type?: "text" | "password" | "username";
   placeholder: string;
 };
 
@@ -18,21 +18,29 @@ export const InputField: React.FC<Props> = ({
 }) => {
   return type === "password" ? (
     <Input.Password
-      className="!h-full w-full"
+      className="!h-12 w-full !p-4"
       prefix={<LockOutlined />}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      {...(rest as PasswordProps)} // 👈 ép kiểu về PasswordProps
+      {...(rest as PasswordProps)} //ép kiểu về PasswordProps
     />
-  ) : (
+  ) : type === "username" ? (
     <Input
-      className="!h-full w-full"
-      prefix={<UserOutlined />}
+      className="!h-12 w-full !p-4"
+      prefix={<UserOutlined/>}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      {...(rest as InputProps)} // 👈 ép kiểu về InputProps
+      {...(rest as InputProps)} //ép kiểu về InputProps
+    />
+  ) : (
+    <Input
+      className="!h-12 w-full !p-4"
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      {...(rest as InputProps)} //ép kiểu về InputProps
     />
   );
 };
