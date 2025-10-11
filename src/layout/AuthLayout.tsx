@@ -19,14 +19,13 @@ function AuthLayout() {
 
          {/* -------- Layer 2: Floating Auth Card -------- */}
         <div className="relative w-[1000px]  h-screen mx-auto flex justify-center items-center z-10 ">
-          <Row className="bg-[#627254] rounded-[20px]  shadow-2xl shadow-gray-950 z-10 w-full h-[550px]">
+          <Row className="bg-[#627254] rounded-3xl shadow-2xl shadow-gray-950 z-10 w-full h-[550px]">
             
             <Col span={12} className="w-full  pl-5">
               
                {/* -------- 2.1: Branding & Images -------- */}
               <div className="bg-[#627254] flex h-full">
                 <div className="flex flex-col py-10 h-full w-[70%]">
-
                   {/* -------- Branding -------- */}
                   <div>
                     <h1 className=" text-6xl ml-6 font-bold tracking-[.20em] font-[Josefin_Slab] text-[var(--natural-color)]">
@@ -65,8 +64,8 @@ function AuthLayout() {
             </Col>
             
             {/* -------- 2.2 Login Card (remain-side ) -------- */}
-            <Col span={12} className="bg-[var(--natural-color)] py-5 pr-5 rounded-r-[20px]">
-              <div className="w-full h-full !pt-[20px] !pr-[10px] !pl-[10px] !pb-[20px]">
+            <Col span={12} className="bg-[var(--natural-color)] pt-10 pr-5 rounded-r-3xl">
+              <div className="w-full h-full pl-5">
                 <Outlet />
               </div>
             </Col>

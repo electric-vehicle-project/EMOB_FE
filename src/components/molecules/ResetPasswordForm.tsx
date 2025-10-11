@@ -1,83 +1,98 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Form } from "antd";
 import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate } from "react-router-dom";
 
 export const ResetPasswordForm = () => {
-  const [password, setPassword] = useState("");
-  const [confirmPwd, setConfirmPwd] = useState("");
-  const [error, setError] = useState("");
+  const [form] = Form.useForm();
   const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const navigate = useNavigate();
 
-  // --- Kiểm tra khớp mật khẩu theo thời gian thực ---
-  useEffect(() => {
-    if (confirmPwd && password !== confirmPwd) {
-      setError("Mật khẩu xác nhận không khớp");
-    } else {
-      setError("");
-    }
-  }, [password, confirmPwd]);
+  // --- Regex kiểm tra độ mạnh của mật khẩu ---
+  const passwordRegex =
+    /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>])[^\s]{8,20}$/;
 
-  // --- Khi nhấn nút đổi mật khẩu ---
-  const handleSubmit = () => {
-    if (!error && password && confirmPwd) {
-      setSuccess(true);
-      // Bắt đầu đếm ngược 5s trước khi redirect
-      const interval = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-      setTimeout(() => {
-        clearInterval(interval);
-        navigate("/auth/login");
-      }, 5000);
-    }
+  // --- Khi submit form ---
+  const handleSubmit = (values: any) => {
+    // const { password } = values;
+    setSuccess(true);
+
+    // Bắt đầu đếm ngược 5s trước khi chuyển hướng
+    const interval = setInterval(() => setCountdown((prev) => prev - 1), 1000);
+    setTimeout(() => {
+      clearInterval(interval);
+      navigate("/auth/login");
+    }, 5000);
   };
 
+  // --- Khi đang ở trạng thái thành công, dừng form thao tác ---
+  useEffect(() => {
+    if (success) form.resetFields();
+  }, [success]);
 
   return (
-    <Form layout="vertical" className="space-y-6 pt-8">
-      {/* Input mật khẩu mới */}
-      <div className="h-12">
-        <InputField
-          type="password"
-          placeholder="Nhập mật khẩu mới"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
+    <Form
+      layout="vertical"
+      form={form}
+      onFinish={handleSubmit}
+      className="space-y-6 pt-8"
+    >
+      {/* --- Mật khẩu mới --- */}
+      <Form.Item
+        name="password"
+        label="Mật khẩu mới"
+        rules={[
+          { required: true, message: "Vui lòng nhập mật khẩu mới" },
+          {
+            pattern: passwordRegex,
+            message:
+              "Mật khẩu phải từ 8–20 ký tự, có ít nhất 1 chữ hoa, 1 ký tự đặc biệt và không chứa khoảng trắng",
+          },
+        ]}
+        hasFeedback
+      >
+        <InputField type="password" placeholder="Nhập mật khẩu mới" />
+      </Form.Item>
 
-      {/* Input xác nhận mật khẩu */}
-      <div className="h-12">
-        <InputField
-          type="password"
-          placeholder="Xác nhận mật khẩu mới"
-          value={confirmPwd}
-          onChange={(e) => setConfirmPwd(e.target.value)}
-        />
-      </div>
+      {/* --- Xác nhận mật khẩu --- */}
+      <Form.Item
+        name="confirmPassword"
+        label="Xác nhận mật khẩu mới"
+        dependencies={["password"]}
+        hasFeedback
+        rules={[
+          { required: true, message: "Vui lòng xác nhận mật khẩu" },
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              if (!value || getFieldValue("password") === value) {
+                return Promise.resolve();
+              }
+              return Promise.reject(
+                new Error("Mật khẩu xác nhận không khớp")
+              );
+            },
+          }),
+        ]}
+      >
+        <InputField type="password" placeholder="Xác nhận mật khẩu mới" />
+      </Form.Item>
 
-      {/* Hiển thị lỗi */}
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {/* --- Nút đổi mật khẩu --- */}
+      <Form.Item className="!pt-5">
+        <ButtonPrimary onClick={(handleSubmit)}>Đổi mật khẩu</ButtonPrimary>
+      </Form.Item>
 
-      {/* Nút đổi mật khẩu */}
-      
-      <div  className="h-12">
-        <ButtonPrimary
-          onClick={handleSubmit}
-        >
-          Đổi mật khẩu
-        </ButtonPrimary>
-      </div>
 
-      {/* Thông báo thành công */}
+      {/* --- Thông báo thành công --- */}
       {success && (
         <div className="text-[#627254] text-center font-medium pt-2">
-          <p>Đổi mật khẩu thành công! </p>
-          <p>  Chuyển hướng về trang đăng nhập sau{" "}
-          <span className="font-semibold">{countdown}</span> giây...</p>
+          <p>Đổi mật khẩu thành công!</p>
+          <p>
+            Chuyển hướng về trang đăng nhập sau{" "}
+            <span className="font-semibold">{countdown}</span> giây...
+          </p>
         </div>
       )}
     </Form>

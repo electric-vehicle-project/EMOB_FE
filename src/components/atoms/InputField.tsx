@@ -3,7 +3,6 @@ import { Input } from "antd";
 import type { InputProps, PasswordProps } from "antd/es/input";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
-// ✅ Kế thừa kiểu gốc từ Ant Design để tương thích tuyệt đối
 type Props = (InputProps | PasswordProps) & {
   type?: "text" | "password" | "username";
   placeholder: string;
