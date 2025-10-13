@@ -1,10 +1,8 @@
+import { FC, ReactNode } from "react";
 import { Button as AntButton } from "antd";
-import type { FC, ReactNode } from "react";
+import type { ButtonProps as AntButtonProps } from "antd";
 
-interface Props {
-  children: ReactNode;
-  href?: string;
-  onClick?: () => void;
+interface ButtonProps extends Omit<AntButtonProps, "type"> {
   type?: "primary" | "default" | "dashed" | "link" | "text";
   danger?: boolean;
   className?: string;

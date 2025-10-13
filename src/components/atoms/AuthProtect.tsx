@@ -1,19 +1,25 @@
+import type { ReactElement } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 
 interface AuthProtectProps {
-  children: React.ReactElement;
+  children: ReactElement;
 }
 
 export function AuthProtect({
   children,
-}: AuthProtectProps): React.ReactElement {
+}: AuthProtectProps): ReactElement {
   const user = useCurrentUser();
   const location = useLocation();
-  const roleFromPath = location.pathname.split("/")[1];
-  if (user?.role?.toLowerCase() === roleFromPath.toLowerCase()) {
-    return children;
-  } else {
-    return <Navigate to="/*" replace />;
+  const normalizedPathRole =
+    location.pathname.split("/")[1]?.toLowerCase() ?? "";
+  const normalizedUserRole = user?.role?.toLowerCase() ?? "";
+
+  if (normalizedUserRole && normalizedPathRole) {
+    if (normalizedUserRole === normalizedPathRole) {
+      return children;
+    }
   }
+
+  return <Navigate to="/*" replace />;
 }

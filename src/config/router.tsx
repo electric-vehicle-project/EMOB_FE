@@ -1,10 +1,14 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
+import { LoginCard } from "../components/organisms/LoginCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
+
+import ReportPage from "../page/ReportPage";
 import { DealerPage } from "../page/DealerPage";
 import { ROUTES } from "../model/routePaths";
+import AuthLayout from "../layout/AuthLayout";
 import { CustomerPage } from "../page/CustomerPage";
 import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
@@ -18,6 +22,16 @@ export const routes: RouteObject[] = [
     path: ROUTES.HOME,
     element: <HomePage />,
   },
+  {
+    path: ROUTES.AUTH,
+    element: <AuthLayout />,
+    children: [
+      {
+        path: ROUTES.LOGIN,
+        element: <LoginCard />,
+      },
+    ],
+  },
 
   {
     path: ROUTES.ADMIN,
@@ -27,8 +41,14 @@ export const routes: RouteObject[] = [
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /dashboard/testdrive
       { path: "test", element: <TestPage /> }, // /dashboard/test
       { path: "test/test01", element: <TestPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /admin/customers
-      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /admin/customers/id
+      {
+        path: ROUTES.REPORT, // => /admin/report
+        element: <ReportPage />,
+      },
+      {
+        path: ROUTES.CUSTOMERS, // => /admin/customers
+        element: <CustomerPage />,
+      },
     ],
   },
 
