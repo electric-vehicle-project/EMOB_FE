@@ -4,6 +4,8 @@ import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { ButtonGoogle } from "../atoms/ButtonGoogle";
 import { useNavigate, Link } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { loginService } from "../../service/authenticationService";
+import { toast } from "react-toastify";
 
 interface LoginFormValues {
   username: string;
@@ -13,15 +15,32 @@ interface LoginFormValues {
 
 export const LoginForm = () => {
   const navigate = useNavigate();
+  const loginMutation = loginService();
   const [form] = Form.useForm<LoginFormValues>();
 
-  const handleLogin = (values: LoginFormValues) => {
-    const { username, password } = values;
-
-    if (username && password) {
+  const handleLogin = async (values: LoginFormValues) => {
+    const { email, password } = values;
+    console.log(values);
+    if (email && password) {
       // Luồng đang là auto thành công, điều hướng về /x/dashboard với x là role của account vừa log
       // hiện tại mặc định về dashboard
-      navigate("/dashboard");
+      const response = await loginMutation.mutateAsync(
+        {
+          email,
+          password,
+        },
+        {
+          onSuccess: (data) => {
+            // Handle successful login
+            toast.success("Dang nhap thanh cong");
+            navigate("/dashboard");
+          },
+          onError: (error) => {
+            // Handle login error
+            toast.error("Sai thong tin dang nhap");
+          },
+        }
+      );
     }
   };
 
@@ -34,14 +53,13 @@ export const LoginForm = () => {
     >
       {/* --- Username Field --- */}
       <Form.Item
-        name="username"
-        rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập" }]}
+        name="email"
+        rules={[{ required: true, message: "Vui lòng nhập Email" }]}
       >
         <InputField
           prefix={<UserOutlined style={{ color: "#627254", fontSize: 19 }} />}
           className="h-13"
-          type="username"
-          placeholder="Tên đăng nhập"
+          placeholder="Email"
         />
       </Form.Item>
 
@@ -75,7 +93,9 @@ export const LoginForm = () => {
 
       {/* --- Nút đăng nhập --- */}
       <Form.Item>
-        <ButtonPrimary className="!h-12 w-full">Đăng nhập</ButtonPrimary>
+        <ButtonPrimary htmlType="submit" className="!h-12 w-full">
+          Đăng nhập
+        </ButtonPrimary>
       </Form.Item>
 
       {/* --- Đăng nhập bằng Google --- */}
