@@ -1,28 +1,41 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
+import AuthLayout from "../layout/AuthLayout";
+
+// ===== AUTH PAGES =====
 import { LoginCard } from "../components/organisms/LoginCard";
+
+// ===== COMMON PAGES =====
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import TestPage from "../page/TestPage";
 import ReportPage from "../page/ReportPage";
+
+// ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
-import { ROUTES } from "../model/routePaths";
-import AuthLayout from "../layout/AuthLayout";
 import { CustomerPage } from "../page/CustomerPage";
 import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
+
+// ===== PROFILE PAGES =====
 import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+
+// ===== PROMOTION PAGES =====
 import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
 import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
 import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
 
+// ===== ROUTES =====
+import { ROUTES } from "../model/routePaths";
+
+//       ROUTER SETUP
 export const routes: RouteObject[] = [
   {
-    path: ROUTES.HOME,
+    path: ROUTES.HOME, // /
     element: <HomePage />,
   },
 
@@ -32,64 +45,64 @@ export const routes: RouteObject[] = [
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> }, // /auth/login
-      // nếu sau này có register: { path: ROUTES.REGISTER, element: <RegisterPage /> },
     ],
   },
 
   // ==== ADMIN ====
   {
-    path: ROUTES.ADMIN,
+    path: ROUTES.ADMIN, // /admin
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
-      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
-      { path: "test", element: <TestPage /> },
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /admin/testdrive
+      { path: ROUTES.REPORT, element: <ReportPage /> }, // /admin/report
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /admin/customers
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /admin/customers/:id
+      { path: "test", element: <TestPage /> }, // /admin/test
     ],
   },
 
   // ==== DEALER STAFF ====
   {
-    path: ROUTES.DEALER_STAFF,
+    path: ROUTES.DEALER_STAFF, // /dealer-staff
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
-      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /dealer-staff/promotions
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /dealer-staff/promotions/create
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /dealer-staff/promotions/edit/:id
     ],
   },
 
   // ==== EVM STAFF ====
   {
-    path: ROUTES.EVM_STAFF,
+    path: ROUTES.EVM_STAFF, // /evm-staff
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
-      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> }, // /evm-staff/promotions
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /evm-staff/promotions/create
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /evm-staff/promotions/edit/:id
     ],
   },
 
-  // ==== DASHBOARD ====
+  // ==== DASHBOARD (PROFILE) ====
   {
-    path: ROUTES.DASHBOARD,
+    path: ROUTES.DASHBOARD, // /dashboard
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
-      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
-      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-      { path: "test", element: <TestPage /> },
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> }, // /dashboard/profile/info
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> }, // /dashboard/profile/changeInfo
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> }, // /dashboard/profile/resetpassword
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> }, // /dashboard/profile/viewschedule
+      { path: "test", element: <TestPage /> }, // /dashboard/test
     ],
   },
 
   // ==== 404 ====
   {
-    path: ROUTES.NOTFOUND,
+    path: ROUTES.NOTFOUND, // *
     element: <NotFoundPage />,
   },
 ];
 
+//       EXPORT ROUTER
 export const router = createBrowserRouter(routes);
