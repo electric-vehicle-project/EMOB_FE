@@ -14,7 +14,7 @@ export const ROUTES = {
   DEALERS: "dealers",
   CUSTOMERS: "customers",
   TESTDRIVE: "testdrive",
-  REPORT: "report"
+  REPORT: "report",
   PROFILE: "profile",
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
