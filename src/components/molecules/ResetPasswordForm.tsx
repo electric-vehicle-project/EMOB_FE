@@ -53,7 +53,7 @@ export const ResetPasswordForm = () => {
         hasFeedback
       >
         <InputField
-          className="h-13"
+          className="h-13 !p-5"
           prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
           type="password"
           placeholder="Nhập mật khẩu"
@@ -78,7 +78,7 @@ export const ResetPasswordForm = () => {
         ]}
       >
         <InputField
-          className="h-13"
+          className="h-13 !p-5"
           prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
           type="password"
           placeholder="Xác nhận mật khẩu"

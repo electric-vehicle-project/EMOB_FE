@@ -96,7 +96,6 @@ export const OTPForm = () => {
       {/* OTP Inputs */}
       <Form.Item
         name="otp"
-        label="Nhập mã xác thực"
         rules={[
           {
             validator: () => {

@@ -33,6 +33,19 @@ export const routes: RouteObject[] = [
         path: ROUTES.LOGIN,
         element: <LoginCard />,
       },
+      {
+        path: ROUTES.FORGET_PASSWORD,
+        element: <ForgetPasswordCard />,
+      },
+      {
+        path: ROUTES.FORGET_PASSWORD_OTP,
+        element: <OTPCard/>,
+      },
+      {
+        path: ROUTES.RESET_PASSWORD,
+        element: <ResetPasswordCard />,
+      },
+      
     ],
   },
 

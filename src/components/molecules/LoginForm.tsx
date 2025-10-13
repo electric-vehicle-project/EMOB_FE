@@ -39,7 +39,7 @@ export const LoginForm = () => {
       >
         <InputField
           prefix={<UserOutlined style={{ color: "#627254", fontSize: 19 }} />}
-          className="h-13"
+          className="h-13 !p-5"
           type="username"
           placeholder="Tên đăng nhập"
         />
@@ -51,7 +51,7 @@ export const LoginForm = () => {
         rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
       >
         <InputField
-          className="h-13"
+          className="h-13 !p-5"
           prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
           type="password"
           placeholder="Mật khẩu"
@@ -67,7 +67,7 @@ export const LoginForm = () => {
         </Form.Item>
 
         <Link to="/auth/forget-password">
-          <p className="text-sm font-bold text-[var(--primary-color)]">
+          <p className="text-sm text-[var(--primary-color)] hover:underline">
             Quên mật khẩu?
           </p>
         </Link>
