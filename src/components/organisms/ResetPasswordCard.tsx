@@ -8,6 +8,8 @@ export const ResetPasswordCard = () => (
     <h1 className="font-bold text-7xl tracking-[.20em] font-[jsMath-cmbx10] items-left text-[#627254]">
       EMOB!
     </h1>
-    <ResetPasswordForm />
+
+    <div className="!pt-10"><ResetPasswordForm /></div>
+
   </div>
 );

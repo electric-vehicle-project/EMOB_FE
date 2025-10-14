@@ -2,11 +2,7 @@ export const ROUTES = {
   HOME: "/",
   ADMIN: "/admin",
   DASHBOARD: "/dashboard",
-  LOGIN: "/login",
-  REGISTER: "/register",
-  NOTFOUND: "/*",
   AUTH: "/auth",
-  ADMIN: "/admin",
   LOGIN: "login",
   FORGET_PASSWORD: "forget-password",
   FORGET_PASSWORD_OTP: "forget-password-otp",
@@ -20,4 +16,5 @@ export const ROUTES = {
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
   PROFILE_SCHEDULE: "profile/viewSchedule",
+  NOTFOUND: "/*",
 };
