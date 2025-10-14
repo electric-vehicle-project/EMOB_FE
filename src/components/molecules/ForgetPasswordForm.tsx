@@ -45,7 +45,7 @@ export const ForgetPasswordForm = () => {
               }}
             />
           }
-          className="h-13"
+          className="h-13 !p-5"
           placeholder="Nhập địa chỉ email"
         />
       </Form.Item>

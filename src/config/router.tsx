@@ -44,7 +44,22 @@ export const routes: RouteObject[] = [
     path: ROUTES.AUTH, // /auth
     element: <AuthLayout />,
     children: [
-      { path: ROUTES.LOGIN, element: <LoginCard /> }, // /auth/login
+      {
+        path: ROUTES.LOGIN,
+        element: <LoginCard />,
+      },
+      // {
+      //   path: ROUTES.FORGET_PASSWORD,
+      //   element: <ForgetPasswordCard />,
+      // },
+      // {
+      //   path: ROUTES.FORGET_PASSWORD_OTP,
+      //   element: <OTPCard/>,
+      // },
+      // {
+      //   path: ROUTES.RESET_PASSWORD,
+      //   element: <ResetPasswordCard />,
+      // },
     ],
   },
 

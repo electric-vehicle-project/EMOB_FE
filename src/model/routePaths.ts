@@ -1,16 +1,15 @@
 export const ROUTES = {
   HOME: "/",
+  ADMIN: "/admin",
+  DASHBOARD: "/dashboard",
   AUTH: "/auth",
   LOGIN: "login",
   REGISTER: "register",
 
-  ADMIN: "/admin",
   DEALER_STAFF: "/dealer-staff",
   EVM_STAFF: "/evm-staff",
-  DASHBOARD: "/dashboard",
-  DEALER_MANAGER: "/dealer-manager",
 
-  NOTFOUND: "/*",
+  DEALER_MANAGER: "/dealer-manager",
 
   // ====== ADMIN MODULES ======
   DEALERS: "dealers",
@@ -29,4 +28,5 @@ export const ROUTES = {
   PROMOTIONS: "promotions",
   PROMOTION_CREATE: "promotions/create",
   PROMOTION_EDIT: "promotions/:id/edit",
+  NOTFOUND: "/*",
 };
