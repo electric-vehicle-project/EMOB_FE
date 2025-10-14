@@ -6,7 +6,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { useLoginMutation } from "../../service/authenticationService";
 import { useDispatch } from "react-redux";
-import { login as loginAction } from "../../redux/features/userSlice";
+import { login } from "../../redux/features/userSlice";
+import { toast } from "react-toastify";
 
 interface LoginFormValues {
   username: string;
@@ -27,29 +28,33 @@ export const LoginForm = () => {
       {
         onSuccess: (res) => {
           //lưu token & refreshToken
-          localStorage.setItem("token", res.data.result.token);
-          localStorage.setItem("refreshToken", res.data.result.refreshToken);
+          const { token, refreshToken, ...user } = res.data.result;
+          localStorage.setItem("token", token);
+          localStorage.setItem("refreshToken", refreshToken);
 
           //lưu thông tin user vào Redux store
-          dispatch(loginAction(res));
+          dispatch(login(user));
 
           //thông báo & điều hướng
-          message.success("Đăng nhập thành công!");
-          navigate(`/${res.data.result.role}`);
+          toast.success("Đăng nhập thành công!");
+          navigate(`/${user.role}`);
         },
         onError: (error: any) => {
           console.error("Login failed:", error);
           form.setFields([
             {
               name: "username",
-              errors: ["Tên đăng nhập hoặc mật khẩu không đúng"],
+              errors: [""],
+            },
+            {
+              name: "password",
+              errors: ["Tên đăng nhập hoặc mật khẩu không đúng "],
             },
           ]);
         },
       }
     );
   };
-
 
   return (
     <Form
