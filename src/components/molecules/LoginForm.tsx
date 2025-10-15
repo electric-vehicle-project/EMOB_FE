@@ -1,4 +1,4 @@
-import { Checkbox, Form, message } from "antd";
+import { Checkbox, Form } from "antd";
 import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { ButtonGoogle } from "../atoms/ButtonGoogle";
@@ -27,6 +27,7 @@ export const LoginForm = () => {
       { email: username, password },
       {
         onSuccess: (res) => {
+
           //lưu token & refreshToken
           const { token, refreshToken, ...user } = res.data.result;
           localStorage.setItem("token", token);
@@ -38,7 +39,9 @@ export const LoginForm = () => {
           //thông báo & điều hướng
           toast.success("Đăng nhập thành công!");
           navigate(`/${user.role}`);
+
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
           console.error("Login failed:", error);
           form.setFields([

@@ -50,6 +50,7 @@ export const createQueryWithPathParamHook =
   };
 
 // ==========POST===============
+
 export const createMutationHook =
   (queryKey: string, url: string) =>
   (
@@ -66,6 +67,24 @@ export const createMutationHook =
       },
     });
   };
+
+// export const createMutationHook =
+//   (queryKey: string, url: string) =>
+//   (id?: string): UseMutationResult<any, AxiosError<{ message: string }>, any> => {
+//     const queryClient = useQueryClient();
+
+//     return useMutation({
+//       mutationFn: async (data: any) => {
+//         const res = await api.post(`${url}${id ? `/${id}` : ""}`, data);
+//         return res.data;
+//       },
+//       onSuccess: () => {
+//         queryClient.invalidateQueries({
+//           queryKey: id ? [queryKey, id] : [queryKey],
+//         });
+//       },
+//     });
+//   };
 
 // ==========PUT===============
 export const updateMutationHook =
