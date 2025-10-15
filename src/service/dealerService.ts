@@ -1,38 +1,25 @@
-import type { IDealer } from "../model/Dealer";
+// src/service/dealerService.ts
+import {
+  createQueryHook,
+  createQueryWithPathParamHook,
+  createMutationHook,
+  updateMutationHook,
+  deleteMutationHook,
+} from "../hook/useApi";
 
-let dealers: IDealer[] = [
-  {
-    id: 1,
-    name: "Dealer A",
-    email: "a@mail.com",
-    phone: "0123456789",
-    address: "Hà Nội",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Dealer B",
-    email: "b@mail.com",
-    phone: "0987654321",
-    address: "TP.HCM",
-    status: "Active",
-  },
-];
+const BASE_URL = "/dealer";
 
-export const dealerService = {
-  getDealers: async (): Promise<IDealer[]> => {
-    return Promise.resolve(dealers);
-  },
-  createDealer: async (dealer: IDealer): Promise<void> => {
-    dealers.push({ ...dealer, id: Date.now() });
-    return Promise.resolve();
-  },
-  updateDealer: async (dealer: IDealer): Promise<void> => {
-    dealers = dealers.map((d) => (d.id === dealer.id ? dealer : d));
-    return Promise.resolve();
-  },
-  deleteDealer: async (id: number): Promise<void> => {
-    dealers = dealers.filter((d) => d.id !== id);
-    return Promise.resolve();
-  },
-};
+//  GET: Lấy toàn bộ đại lý
+export const useGetDealers = createQueryHook("dealers", BASE_URL);
+
+//  GET: Lấy đại lý theo ID
+export const useGetDealerById = createQueryWithPathParamHook("dealer", BASE_URL);
+
+//  POST: Tạo mới đại lý
+export const useCreateDealer = createMutationHook("dealers", BASE_URL);
+
+//  PUT: Cập nhật đại lý
+export const useUpdateDealer = updateMutationHook("dealers", BASE_URL);
+
+//  DELETE: Xóa đại lý
+export const useDeleteDealer = deleteMutationHook("dealers", BASE_URL);

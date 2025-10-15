@@ -1,8 +1,8 @@
 import { Modal } from "antd";
-import { DealerForm } from "../molecules/DealerForm";
-import type { IDealer } from "../../model/Dealer";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
+import { DealerForm } from "../molecules/DealerForm";
+import type { IDealer } from "../../model/Dealer";
 
 interface Props {
   open: boolean;
@@ -19,16 +19,25 @@ export const DealerModal = ({
 }: Props) => {
   const [form] = useForm<IDealer>();
 
-  // Reset hoặc set giá trị khi open modal
+  // ✅ Reset hoặc set giá trị khi mở modal
   useEffect(() => {
     if (open) {
       if (initialValues) {
-        form.setFieldsValue(initialValues); // Sửa Dealer
+        form.setFieldsValue({
+          name: initialValues.name,
+          contactInfo: initialValues.contactInfo,
+          country: initialValues.country,
+        });
       } else {
-        form.resetFields(); // Thêm Dealer
+        form.resetFields();
       }
     }
   }, [open, initialValues, form]);
+
+  // ✅ Submit form
+  const handleSubmit = (values: IDealer) => {
+    onSubmit(values);
+  };
 
   return (
     <Modal
@@ -36,9 +45,16 @@ export const DealerModal = ({
       title={initialValues ? "Sửa thông tin đại lý" : "Thêm đại lý mới"}
       onCancel={onClose}
       okText="Lưu"
+      cancelText="Hủy"
       onOk={() => form.submit()}
+      destroyOnClose
+      maskClosable={false}
     >
-      <DealerForm form={form} onFinish={onSubmit} isEdit={!!initialValues} />
+      <DealerForm
+        form={form}
+        onFinish={handleSubmit}
+        isEdit={!!initialValues}
+      />
     </Modal>
   );
 };
