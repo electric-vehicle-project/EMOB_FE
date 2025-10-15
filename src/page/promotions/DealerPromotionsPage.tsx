@@ -1,6 +1,15 @@
-// ⬆️ giữ nguyên các import sẵn có...
 import { useMemo, useState } from "react";
-import { Button, Card, Select, Table, Tabs, Tag, Tooltip } from "antd";
+import {
+  Button,
+  Card,
+  message,
+  Popconfirm,
+  Select,
+  Table,
+  Tabs,
+  Tag,
+  Tooltip,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -12,7 +21,10 @@ import {
   StopOutlined,
 } from "@ant-design/icons";
 
-import { usePromotionList } from "../../service/promotionService";
+import {
+  usePromotionDelete,
+  usePromotionList,
+} from "../../service/promotionService";
 import { ROUTES } from "../../model/routePaths";
 import {
   canCreate,
@@ -26,10 +38,8 @@ import type {
   PromotionType,
 } from "../../model/Promotion";
 
-// đọc role  từ Redux store
 import { useSelector } from "react-redux";
 
-// ===== helpers =====
 const buildPath = (...parts: string[]) =>
   "/" +
   parts
@@ -42,7 +52,6 @@ type TabKey = "all" | "active" | "pending" | "expired";
 export default function DealerPromotionsPage() {
   const navigate = useNavigate();
 
-  // Lấy role từ store. Viết kiểu không phụ thuộc exact shape.
   type RootLike = {
     user?: { role?: Role; current?: { role?: Role } };
     auth?: { user?: { role?: Role } };
@@ -71,6 +80,18 @@ export default function DealerPromotionsPage() {
       return rows.filter((p: Promotion) => p.status === "EXPIRED");
     return rows;
   }, [rows, tab]);
+
+  const { mutateAsync: deletePromotion } = usePromotionDelete();
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePromotion(id);
+      message.success("Đã xoá khuyến mãi thành công");
+    } catch (err) {
+      console.error(err);
+      message.error("Không thể xoá khuyến mãi, vui lòng thử lại");
+    }
+  };
 
   const goCreate = () =>
     navigate(buildPath(ROUTES.DEALER_STAFF, ROUTES.PROMOTION_CREATE));
@@ -195,7 +216,7 @@ export default function DealerPromotionsPage() {
       key: "action",
       align: "center",
       render: (_, record) => {
-        if (scopeView === "GLOBAL") return null; // Dealer chỉ thao tác LOCAL
+        if (scopeView === "GLOBAL") return null;
         return (
           <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
             <Button
@@ -212,11 +233,19 @@ export default function DealerPromotionsPage() {
               Sửa
             </Button>
 
-            {/* ✅ chỉ hiện nút Xoá khi có role & được phép */}
             {role && canDelete(role, record.scope) && (
-              <Button icon={<DeleteOutlined />} danger size="middle">
-                Xoá
-              </Button>
+              <Popconfirm
+                title="Xoá khuyến mãi?"
+                description="Bạn có chắc chắn muốn xoá khuyến mãi này không?"
+                okText="Xoá"
+                cancelText="Huỷ"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => handleDelete(record.id)}
+              >
+                <Button icon={<DeleteOutlined />} danger size="middle">
+                  Xoá
+                </Button>
+              </Popconfirm>
             )}
           </div>
         );
@@ -261,7 +290,6 @@ export default function DealerPromotionsPage() {
               style={{ width: 240 }}
             />
 
-            {/* ✅ chỉ hiện khi có role & được phép */}
             {scopeView === "LOCAL" && role && canCreate(role, "LOCAL") && (
               <Button
                 type="primary"
