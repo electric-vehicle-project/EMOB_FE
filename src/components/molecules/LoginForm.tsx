@@ -51,7 +51,7 @@ export const LoginForm = () => {
             },
             {
               name: "password",
-              errors: ["Tên đăng nhập hoặc mật khẩu không đúng "],
+              errors: ["Tên đăng nhập hoặc mật khẩu không đúng"],
             },
           ]);
         },
