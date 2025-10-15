@@ -16,25 +16,24 @@ import {
 } from "../../service/dealerService";
 
 export const DealerList = () => {
-  // ===== STATE =====
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // ===== API HOOKS =====
+  // ✅ API hooks
   const { data: dealers = [], refetch, isLoading } = useGetDealers();
   const createDealer = useCreateDealer();
   const updateDealer = useUpdateDealer();
   const deleteDealer = useDeleteDealer();
 
-  // ===== FILTER TÌM KIẾM (client-side) =====
+  // ✅ Lọc theo từ khóa
   const filtered = dealers.filter((d: IDealer) =>
     d.name.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
-  // ===== HANDLE SAVE =====
+  // ✅ Lưu (thêm hoặc sửa)
   const handleSave = async (values: IDealer) => {
     try {
       if (editDealer?.id) {
@@ -54,9 +53,11 @@ export const DealerList = () => {
           country: values.country,
         });
         toast.success("Thêm đại lý mới thành công!");
+
+        // 🟢 Đồng bộ lại danh sách
+        refetch();
       }
 
-      refetch();
       setModalOpen(false);
       setEditDealer(undefined);
     } catch (error: unknown) {
@@ -67,7 +68,7 @@ export const DealerList = () => {
     }
   };
 
-  // ===== HANDLE DELETE =====
+  // ✅ Xóa
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -81,7 +82,6 @@ export const DealerList = () => {
     }
   };
 
-  // ===== JSX =====
   return (
     <Spin
       spinning={
@@ -112,7 +112,7 @@ export const DealerList = () => {
           </Button>
         </div>
 
-        {/* Bảng đại lý (đã có sort & filter trong bảng) */}
+        {/* Bảng dữ liệu */}
         <DealerTable
           data={filtered}
           onEdit={(d) => {
@@ -133,7 +133,7 @@ export const DealerList = () => {
           initialValues={editDealer}
         />
 
-        {/* Modal xác nhận xóa */}
+        {/* Xác nhận xóa */}
         <DeleteConfirm
           open={!!deleteId}
           onConfirm={handleDelete}

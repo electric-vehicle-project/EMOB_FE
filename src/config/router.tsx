@@ -1,93 +1,88 @@
+// src/router/router.tsx
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
+
+// 🔐 Auth Components
 import { LoginCard } from "../components/organisms/LoginCard";
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
 import { OTPCard } from "../components/organisms/OPTCard";
 import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
+import AuthLayout from "../layout/AuthLayout";
+
+// 📄 General Pages
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import TestPage from "../page/TestPage";
-
 import ReportPage from "../page/ReportPage";
 import { DealerPage } from "../page/DealerPage";
-import { ROUTES } from "../model/routePaths";
-import AuthLayout from "../layout/AuthLayout";
 import { CustomerPage } from "../page/CustomerPage";
 import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
+
+// 👤 Profile Pages
 import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+
+// ⚡ EV Management
+import { VehiclePage } from "../page/EVM/VehiclePage";
+import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
+
+// 📦 Route Constants
+import { ROUTES } from "../model/routePaths";
 
 export const routes: RouteObject[] = [
   {
     path: ROUTES.HOME,
     element: <HomePage />,
   },
+
+  // ========== AUTH ==========
   {
     path: ROUTES.AUTH,
     element: <AuthLayout />,
     children: [
-      {
-        path: ROUTES.LOGIN,
-        element: <LoginCard />,
-      },
-      {
-        path: ROUTES.FORGET_PASSWORD,
-        element: <ForgetPasswordCard />,
-      },
-      {
-        path: ROUTES.FORGET_PASSWORD_OTP,
-        element: <OTPCard/>,
-      },
-      {
-        path: ROUTES.RESET_PASSWORD,
-        element: <ResetPasswordCard />,
-      },
-      
+      { path: ROUTES.LOGIN, element: <LoginCard /> },
+      { path: ROUTES.FORGET_PASSWORD, element: <ForgetPasswordCard /> },
+      { path: ROUTES.FORGET_PASSWORD_OTP, element: <OTPCard /> },
+      { path: ROUTES.RESET_PASSWORD, element: <ResetPasswordCard /> },
     ],
   },
 
+  // ========== ADMIN DASHBOARD ==========
   {
     path: ROUTES.ADMIN,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /dashboard/dealers
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /dashboard/testdrive
-      { path: "test", element: <TestPage /> }, // /dashboard/test
-      { path: "test/test01", element: <TestPage /> },
-      {
-        path: ROUTES.REPORT, // => /admin/report
-        element: <ReportPage />,
-      },
-      {
-        path: ROUTES.CUSTOMERS, // => /admin/customers
-        element: <CustomerPage />,
-      },
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
+      // ⚠️ Không còn trang riêng cho chỉnh giá xe
     ],
   },
 
+  // ========== EVM DASHBOARD (chung cho Admin + Staff) ==========
   {
     path: ROUTES.DASHBOARD,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> }, // /dashboard/profile/info
-      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> }, // /dashboard/profile/changeInfo
-      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> }, // /dashboard/profile/resetpassword
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> }, // /dashboard/profile/viewSchedule
+      // Hồ sơ người dùng
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
 
-      {
-        path: "test", // => /admin/test
-        element: <TestPage />,
-      },
-      {
-        path: `${ROUTES.CUSTOMERS}/:id`, // => /admin/customers/(id)
-        element: <CustomerDetailPage />,
-      },
+      // ⚡ Quản lý xe điện
+      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+
+      // Chi tiết khách hàng
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
+  // ========== 404 ==========
   {
     path: ROUTES.NOTFOUND,
     element: <NotFoundPage />,
