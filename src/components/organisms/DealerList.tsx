@@ -24,15 +24,12 @@ export const DealerList = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // ===== API HOOKS =====
-  const { data: dealers = [], refetch, isLoading } = useGetDealers();
+  const { data = [], refetch, isLoading } = useGetDealers();
   const createDealer = useCreateDealer();
   const updateDealer = useUpdateDealer();
   const deleteDealer = useDeleteDealer();
-
-  // ===== FILTER TÌM KIẾM (client-side) =====
-  const filtered = dealers.filter((d: IDealer) =>
-    d.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const dealers = data.result?.data;
+  console.log(dealers);
 
   // ===== HANDLE SAVE =====
   const handleSave = async (values: IDealer) => {
@@ -113,14 +110,16 @@ export const DealerList = () => {
         </div>
 
         {/* Bảng đại lý (đã có sort & filter trong bảng) */}
-        <DealerTable
-          data={filtered}
-          onEdit={(d) => {
-            setEditDealer(d);
-            setModalOpen(true);
-          }}
-          onDelete={(id) => setDeleteId(id)}
-        />
+        {!isLoading && (
+          <DealerTable
+            data={dealers}
+            onEdit={(d) => {
+              setEditDealer(d);
+              setModalOpen(true);
+            }}
+            onDelete={(id) => setDeleteId(id)}
+          />
+        )}
 
         {/* Modal thêm/sửa */}
         <DealerModal
