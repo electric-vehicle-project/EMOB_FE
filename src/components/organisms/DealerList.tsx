@@ -22,13 +22,13 @@ export const DealerList = () => {
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // ✅ API hooks
+  // ===== API HOOKS =====
   const { data: dealers = [], refetch, isLoading } = useGetDealers();
   const createDealer = useCreateDealer();
   const updateDealer = useUpdateDealer();
   const deleteDealer = useDeleteDealer();
 
-  // ✅ Lọc theo từ khóa
+  // ===== FILTER TÌM KIẾM (client-side) =====
   const filtered = dealers.filter((d: IDealer) =>
     d.name.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
@@ -112,7 +112,7 @@ export const DealerList = () => {
           </Button>
         </div>
 
-        {/* Bảng dữ liệu */}
+        {/* Bảng đại lý (đã có sort & filter trong bảng) */}
         <DealerTable
           data={filtered}
           onEdit={(d) => {

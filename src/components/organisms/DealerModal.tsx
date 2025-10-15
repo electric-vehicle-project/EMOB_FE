@@ -47,8 +47,6 @@ export const DealerModal = ({
       okText="Lưu"
       cancelText="Hủy"
       onOk={() => form.submit()}
-      destroyOnClose
-      maskClosable={false}
     >
       <DealerForm
         form={form}
