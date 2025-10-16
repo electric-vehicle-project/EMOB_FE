@@ -75,7 +75,7 @@ export const routes: RouteObject[] = [
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /admin/customers/:id
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> }, // /admin/promotions
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /admin/promotions/create
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /admin/promotions/edit/:id
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /admin /promotions/edit/:id
       { path: "test", element: <TestPage /> }, // /admin/test
     ],
   },

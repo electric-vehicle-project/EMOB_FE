@@ -39,6 +39,7 @@ export const LoginForm = () => {
           toast.success("Đăng nhập thành công!");
           navigate(`/${user.role}`);
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
           console.error("Login failed:", error);
           form.setFields([
