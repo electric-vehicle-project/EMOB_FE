@@ -7,7 +7,6 @@ import { SearchBar } from "../molecules/SearchBar";
 import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
-import { useDebounce } from "../../hook/useDebounce";
 import {
   useGetDealers,
   useCreateDealer,
@@ -16,24 +15,21 @@ import {
 } from "../../service/dealerService";
 
 export const DealerList = () => {
+  // ===== STATE =====
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // ===== API HOOKS =====
-  const { data: dealers = [], refetch, isLoading } = useGetDealers();
+  const { data = [], refetch, isLoading } = useGetDealers();
   const createDealer = useCreateDealer();
   const updateDealer = useUpdateDealer();
   const deleteDealer = useDeleteDealer();
+  const dealers = data.result?.data;
+  console.log(dealers);
 
-  // ===== FILTER TÌM KIẾM (client-side) =====
-  const filtered = dealers.filter((d: IDealer) =>
-    d.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
-
-  // ✅ Lưu (thêm hoặc sửa)
+  // ===== HANDLE SAVE =====
   const handleSave = async (values: IDealer) => {
     try {
       if (editDealer?.id) {
@@ -53,11 +49,9 @@ export const DealerList = () => {
           country: values.country,
         });
         toast.success("Thêm đại lý mới thành công!");
-
-        // 🟢 Đồng bộ lại danh sách
-        refetch();
       }
 
+      refetch();
       setModalOpen(false);
       setEditDealer(undefined);
     } catch (error: unknown) {
@@ -68,7 +62,7 @@ export const DealerList = () => {
     }
   };
 
-  // ✅ Xóa
+  // ===== HANDLE DELETE =====
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -82,6 +76,7 @@ export const DealerList = () => {
     }
   };
 
+  // ===== JSX =====
   return (
     <Spin
       spinning={
@@ -113,14 +108,16 @@ export const DealerList = () => {
         </div>
 
         {/* Bảng đại lý (đã có sort & filter trong bảng) */}
-        <DealerTable
-          data={filtered}
-          onEdit={(d) => {
-            setEditDealer(d);
-            setModalOpen(true);
-          }}
-          onDelete={(id) => setDeleteId(id)}
-        />
+        {!isLoading && (
+          <DealerTable
+            data={dealers}
+            onEdit={(d) => {
+              setEditDealer(d);
+              setModalOpen(true);
+            }}
+            onDelete={(id) => setDeleteId(id)}
+          />
+        )}
 
         {/* Modal thêm/sửa */}
         <DealerModal
@@ -133,7 +130,7 @@ export const DealerList = () => {
           initialValues={editDealer}
         />
 
-        {/* Xác nhận xóa */}
+        {/* Modal xác nhận xóa */}
         <DeleteConfirm
           open={!!deleteId}
           onConfirm={handleDelete}
