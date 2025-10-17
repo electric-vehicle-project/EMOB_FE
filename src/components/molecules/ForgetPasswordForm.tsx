@@ -4,6 +4,7 @@ import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined } from "@ant-design/icons";
 import { useForgetPasswordMutation } from "../../service/authenticationService";
+import { ROUTES } from "../../model/routePaths";
 
 interface ForgetPasswordFormValues {
   email: string;
@@ -22,15 +23,15 @@ export const ForgetPasswordForm = () => {
       { email },
       {
         onSuccess: () => {
-          navigate(`/auth/forget-password-otp`);
+          navigate(`/auth/forget-password-otp`, { state: { email } });
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-          console.error("Login failed:", error);
+          console.error("Email verify failed:", error);
           form.setFields([
             {
               name: "email",
-              errors: ["Email không tồn tại, vui lòng nhập lại."],
+              errors: ["Email không tồn tại, vui lòng thử  lại."],
             },
           ]);
         },
@@ -83,7 +84,7 @@ export const ForgetPasswordForm = () => {
 
       {/* --- Liên kết trở về đăng nhập --- */}
       <div className="flex justify-center">
-        <Link to="/auth/login">
+        <Link to={ROUTES.AUTH + '/' + ROUTES.LOGIN}>
           <p className="text-sm text-[#627254] hover:underline">Đăng nhập</p>
         </Link>
       </div>

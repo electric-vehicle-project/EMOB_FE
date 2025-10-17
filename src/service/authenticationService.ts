@@ -9,3 +9,7 @@ export const useRefreshMutation = createMutationHook("refresh", "/auth/refresh")
 export const useForgetPasswordMutation = createMutationHook("forget-password", "auth/forgot-password");
 
 export const useResetPasswordMutation = createMutationHook("reset-password", "/auth/reset-password");
+
+// export const useVerifyOtpMutation = (otp?: string) => createMutationHook("verify-otp", `/auth/verify-?otp=${otp}""`);
+
+export const useVerifyOtpMutation = createMutationHook("verify-otp", "/auth/verify-otp?otp=${otp}");

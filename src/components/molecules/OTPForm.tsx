@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Form } from "antd";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useVerifyOtpMutation } from "../../service/authenticationService";
+import { ROUTES } from "../../model/routePaths";
+import { toast } from "react-toastify";
 
 export const OTPForm = () => {
   const [form] = Form.useForm();
@@ -12,6 +15,7 @@ export const OTPForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email; // mock email
+
 
   // --- Countdown ---
   useEffect(() => {
@@ -28,7 +32,6 @@ export const OTPForm = () => {
     setCanResend(false);
     setOtp(["", "", "", "", ""]);
     inputsRef.current[0]?.focus();
-    // TODO: Call API to resend OTP
   };
 
   // --- Handle input change ---
@@ -75,13 +78,40 @@ export const OTPForm = () => {
     }
   };
 
+
+  const otpValue = otp.join("");
+  const { mutate: verifyOtpMutation } = useVerifyOtpMutation(otpValue);
+
   // --- Submit ---
   const handleConfirm = () => {
-    const otpValue = otp.join("");
-    if (otpValue.length === 5) {
-      navigate("/auth/reset-password", { state: { email } });
+
+    if (otpValue.length !== 5) {
+      toast.warning("Mã OTP phải gồm 5 chữ số");
+      return;
     }
+
+    verifyOtpMutation(
+      { email }, // body JSON
+      {
+        onSuccess: (res: any) => {
+          const token = res?.data?.result?.token;
+          if (token) {
+            localStorage.setItem("token", token);
+            toast.success("Xác thực OTP thành công!");
+            navigate(ROUTES.RESET_PASSWORD, { state: { token } });
+          } else {
+            toast.error("Phản hồi không hợp lệ từ server!");
+          }
+        },
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.toast || "Mã OTP không hợp lệ hoặc đã hết hạn!";
+          toast.error(msg);
+        },
+      },
+    );
   };
+
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -112,7 +142,7 @@ export const OTPForm = () => {
           {otp.map((digit, index) => (
             <input
               key={index}
-              ref={(el) => (inputsRef.current[index] = el)}
+              ref={(el) => { inputsRef.current[index] = el }}
               type="text"
               maxLength={1}
               value={digit}

@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { logout } from "../redux/features/userSlice"; //action từ slice
 import { useLogoutMutation } from "../service/authenticationService"; //hook API logout
+import { ROUTES } from "../model/routePaths";
 
 
 function DashboardLayout() {
@@ -46,13 +47,6 @@ function DashboardLayout() {
   const handleLogout = () => {
     const token = localStorage.getItem("token");
 
-    if (!token) {
-      toast.warn("Không tìm thấy token!");
-      dispatch(logout());
-      navigate("/auth/login", { replace: true });
-      return;
-    }
-
     logoutMutation(
       { token },
       {
@@ -61,7 +55,7 @@ function DashboardLayout() {
             localStorage.removeItem("refreshToken");
             dispatch(logout());
             toast.success("Đăng xuất thành công!");
-            navigate("/");
+            navigate(ROUTES.HOME);
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
