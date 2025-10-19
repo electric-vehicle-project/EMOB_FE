@@ -1,14 +1,15 @@
-// src/pages/EvmPromotionsPage.tsx
 import { useState } from "react";
 import { Button, Popconfirm, Table, Tabs, message, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import type { RootState } from "../../redux/store";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+
+import type { RootState } from "../../redux/store";
 import {
   usePromotionDelete,
   usePromotionList,
 } from "../../service/promotionService";
+import { ROUTES } from "../../model/routePaths";
 
 // ===== Kiểu dữ liệu chuẩn cho promotion =====
 interface Promotion {
@@ -22,6 +23,8 @@ interface Promotion {
 
 export default function EvmPromotionsPage() {
   const navigate = useNavigate();
+
+  // ===== Lấy role từ Redux =====
   const role = useSelector((state: RootState) => {
     const u = state.user as { role?: string } | null;
     return u?.role ?? null;
@@ -30,7 +33,7 @@ export default function EvmPromotionsPage() {
   const [tabKey, setTabKey] = useState("Tất cả");
   const [page, setPage] = useState(0);
 
-  // Gọi API
+  // ===== Gọi API danh sách khuyến mãi GLOBAL =====
   const {
     data: promotionData,
     isLoading,
@@ -38,11 +41,9 @@ export default function EvmPromotionsPage() {
   } = usePromotionList("GLOBAL", page, 10);
 
   const deletePromotion = usePromotionDelete();
-
-  // Dữ liệu trả về từ backend
   const promotions: Promotion[] = promotionData?.result?.data ?? [];
 
-  // ===== Xử lý xóa =====
+  // ===== Xử lý xoá =====
   const handleDelete = async (id: string) => {
     try {
       await deletePromotion.mutateAsync(id);
@@ -53,8 +54,13 @@ export default function EvmPromotionsPage() {
     }
   };
 
-  // ===== Chuyển sang trang chỉnh sửa =====
-  const handleEdit = (id: string) => navigate(`/admin/promotions/${id}/edit`);
+  // ===== Điều hướng sang trang sửa =====
+  const handleEdit = (id: string) => {
+    if (role === "EVM_STAFF")
+      navigate(`${ROUTES.EVM_STAFF}/promotions/edit/${id}`);
+    else if (role === "ADMIN")
+      navigate(`${ROUTES.ADMIN}/promotions/edit/${id}`);
+  };
 
   // ===== Tabs =====
   const items = [
@@ -120,6 +126,7 @@ export default function EvmPromotionsPage() {
           >
             Sửa
           </Button>
+
           {role === "ADMIN" && (
             <Popconfirm
               title="Xác nhận xoá"
@@ -147,19 +154,23 @@ export default function EvmPromotionsPage() {
     },
   ];
 
-  // ===== Render chính =====
+  // ===== Render =====
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Khuyến mãi toàn hệ thống</h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          style={{ backgroundColor: "#627254" }}
-          onClick={() => navigate("/admin/promotions/create")}
-        >
-          Tạo khuyến mãi
-        </Button>
+
+        {/* Nút tạo chỉ dành cho EVM_STAFF */}
+        {role === "EVM_STAFF" && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            style={{ backgroundColor: "#627254" }}
+            onClick={() => navigate(`${ROUTES.EVM_STAFF}/promotions/create`)}
+          >
+            Tạo khuyến mãi
+          </Button>
+        )}
       </div>
 
       <Tabs items={items} activeKey={tabKey} onChange={setTabKey} />

@@ -27,6 +27,6 @@ export const ROUTES = {
   // ====== PROMOTIONS ======
   PROMOTIONS: "promotions",
   PROMOTION_CREATE: "promotions/create",
-  PROMOTION_EDIT: "promotions/:id/edit",
+  PROMOTION_EDIT: "promotions/edit/:id",
   NOTFOUND: "/*",
 };
