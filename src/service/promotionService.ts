@@ -1,3 +1,4 @@
+// src/service/promotionService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -5,44 +6,49 @@ import {
   updateMutationHook,
   deleteMutationHook,
 } from "../hook/useApi";
-import type { PromotionPage, PromotionScope } from "../model/Promotion";
-import type { UseQueryOptions } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
 
-const BASE = "/api/promotion";
+const BASE_URL = "/promotion";
 
-// ======= LIST =======
-export const usePromotionList = (
-  scope: PromotionScope,
-  page = 1,
-  size = 10,
-  options?: UseQueryOptions<
-    { code: number; message: string; result: PromotionPage },
-    AxiosError<{ message: string }>
-  >
-) =>
-  createQueryHook(
-    `promotions:list:${scope}:${page}:${size}`,
-    `${BASE}/view-all/${scope}`
-  )(options, { page: Math.max(page - 1, 0), size });
+// ======= Lấy danh sách khuyến mãi theo phạm vi (GLOBAL / LOCAL) =======
+export const usePromotionList = (scope: string, page = 0, size = 10) =>
+  createQueryHook("promotionList", `${BASE_URL}/view-all/{scope}`)(
+    {},
+    { scope, page, size }
+  );
 
-// ======= DETAIL =======
-export const usePromotionDetail = (
-  id?: string,
-  options?: UseQueryOptions<
-    { code: number; message: string; result: unknown },
-    AxiosError<{ message: string }>
-  >
-) => createQueryWithPathParamHook("promotions:detail", BASE)(id, options);
+// ======= Lấy danh sách khuyến mãi của đại lý =======
+export const usePromotionHistory = (dealerId: string) =>
+  createQueryHook("promotionHistory", `${BASE_URL}/history`)(
+    {},
+    { id: dealerId }
+  );
 
-// ======= CREATE =======
-export const usePromotionCreate = (id?: string) =>
-  createMutationHook("promotions:list:invalidate", BASE)(id);
+// ======= Lấy chi tiết khuyến mãi =======
+export const usePromotionById = createQueryWithPathParamHook(
+  "promotionDetail",
+  BASE_URL
+);
 
-// ======= UPDATE =======
-export const usePromotionUpdate = (id?: string) =>
-  updateMutationHook("promotions:detail", BASE)(id);
+// ======= Tạo mới khuyến mãi =======
+export const usePromotionCreate = createMutationHook(
+  "promotionCreate",
+  BASE_URL
+);
 
-// ======= DELETE =======
-export const usePromotionDelete = (id?: string) =>
-  deleteMutationHook("promotions:list:invalidate", BASE)(id);
+// ======= Cập nhật khuyến mãi (EVM/Dealer Staff) =======
+export const usePromotionUpdate = updateMutationHook(
+  "promotionUpdate",
+  BASE_URL
+);
+
+// ======= Cập nhật giá trị (Admin/Manager duyệt) =======
+export const usePromotionUpdateValue = updateMutationHook(
+  "promotionUpdateValue",
+  `${BASE_URL}/value`
+);
+
+// ======= Xoá khuyến mãi =======
+export const usePromotionDelete = deleteMutationHook(
+  "promotionDelete",
+  BASE_URL
+);

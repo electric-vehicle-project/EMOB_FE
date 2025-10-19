@@ -1,3 +1,4 @@
+// src/pages/EvmPromotionsPage.tsx
 import { useState } from "react";
 import { Button, Popconfirm, Table, Tabs, message, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -27,13 +28,21 @@ export default function EvmPromotionsPage() {
   });
 
   const [tabKey, setTabKey] = useState("Tất cả");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
 
-  const { data, isLoading, refetch } = usePromotionList("GLOBAL", page, 10);
+  // Gọi API
+  const {
+    data: promotionData,
+    isLoading,
+    refetch,
+  } = usePromotionList("GLOBAL", page, 10);
+
   const deletePromotion = usePromotionDelete();
 
-  const promotions: Promotion[] = data?.result?.data ?? [];
+  // Dữ liệu trả về từ backend
+  const promotions: Promotion[] = promotionData?.result?.data ?? [];
 
+  // ===== Xử lý xóa =====
   const handleDelete = async (id: string) => {
     try {
       await deletePromotion.mutateAsync(id);
@@ -44,8 +53,10 @@ export default function EvmPromotionsPage() {
     }
   };
 
+  // ===== Chuyển sang trang chỉnh sửa =====
   const handleEdit = (id: string) => navigate(`/admin/promotions/${id}/edit`);
 
+  // ===== Tabs =====
   const items = [
     { key: "Tất cả", label: "Tất cả" },
     { key: "Đang hoạt động", label: "Đang hoạt động" },
@@ -53,6 +64,7 @@ export default function EvmPromotionsPage() {
     { key: "Hết hạn", label: "Hết hạn" },
   ];
 
+  // ===== Cột của bảng =====
   const columns = [
     {
       title: "Tên khuyến mãi",
@@ -134,6 +146,7 @@ export default function EvmPromotionsPage() {
     },
   ];
 
+  // ===== Render chính =====
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -156,9 +169,9 @@ export default function EvmPromotionsPage() {
           columns={columns}
           rowKey={(record) => record.id}
           pagination={{
-            current: page,
+            current: page + 1,
             pageSize: 10,
-            onChange: (p) => setPage(p),
+            onChange: (p) => setPage(p - 1),
           }}
           locale={{ emptyText: "Không có khuyến mãi nào." }}
         />
