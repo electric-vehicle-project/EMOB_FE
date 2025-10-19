@@ -1,3 +1,4 @@
+// src/pages/PromotionEditPage.tsx
 import { useEffect, useState } from "react";
 import {
   Form,
@@ -21,8 +22,9 @@ import type { RootState } from "../../redux/store";
 import type { Role } from "../../utils/promotionPermissions";
 
 import {
-  usePromotionDetail,
+  usePromotionById,
   usePromotionUpdate,
+  usePromotionUpdateValue,
 } from "../../service/promotionService";
 import { getAllElectricVehicles } from "../../service/electricVehicleService";
 
@@ -31,7 +33,7 @@ const { RangePicker } = DatePicker;
 interface PromotionFormValues {
   name: string;
   description?: string;
-  type: "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT";
+  type?: "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT";
   value?: number;
   minPrice?: number;
   duration?: [dayjs.Dayjs, dayjs.Dayjs];
@@ -42,7 +44,7 @@ interface PromotionDetail {
   id: string;
   name: string;
   description?: string;
-  type: PromotionFormValues["type"];
+  type?: PromotionFormValues["type"];
   value?: number;
   minPrice?: number;
   startDate: string;
@@ -60,17 +62,23 @@ export default function PromotionEditPage() {
     role: string;
   }>;
   const role = (user.role || "ADMIN") as Role;
+  const isStaff = ["DEALER_STAFF", "EVM_STAFF"].includes(role);
+  const isManager = ["DEALER_MANAGER", "ADMIN"].includes(role);
 
-  const { data, isLoading } = usePromotionDetail(id);
-  const { mutateAsync: updatePromotion, isPending } = usePromotionUpdate();
+  // ===== API HOOKS =====
+  const { data, isLoading } = usePromotionById(id ?? "");
+  const { mutateAsync: updateBasic, isPending: isUpdatingBasic } =
+    usePromotionUpdate();
+  const { mutateAsync: updateValue, isPending: isUpdatingValue } =
+    usePromotionUpdateValue();
 
   const [vehicleOptions, setVehicleOptions] = useState<
     { id: string; name: string }[]
   >([]);
 
-  // Lấy danh sách xe điện
+  // ===== FETCH VEHICLE OPTIONS =====
   useEffect(() => {
-    const fetchOptions = async () => {
+    const fetchVehicles = async () => {
       try {
         const vehicles = await getAllElectricVehicles();
         if (Array.isArray(vehicles)) setVehicleOptions(vehicles);
@@ -78,10 +86,10 @@ export default function PromotionEditPage() {
         console.error("Error fetching vehicles:", err);
       }
     };
-    fetchOptions();
+    fetchVehicles();
   }, []);
 
-  // Đổ dữ liệu vào form khi fetch thành công
+  // ===== SET FORM DEFAULT VALUES =====
   useEffect(() => {
     if (data?.result) {
       const p = data.result as PromotionDetail;
@@ -99,29 +107,35 @@ export default function PromotionEditPage() {
 
   const handleBack = () => navigate(-1);
 
+  // ===== HANDLE SUBMIT =====
   const handleSubmit = async (values: PromotionFormValues) => {
     try {
       const [start, end] = values.duration || [];
 
-      // Chuẩn bị payload
-      const payload = {
-        id: id as string,
-        data: {
-          name: values.name?.trim(),
-          description: values.description?.trim() || "",
-          type: values.type,
-          minPrice: values.minPrice ?? 0,
-          startDate: start?.toISOString(),
-          endDate: end?.toISOString(),
-          electricVehiclesId: values.electricVehiclesId ?? [],
-          ...// chỉ thêm value nếu không phải staff
-          (!["DEALER_STAFF", "EVM_STAFF"].includes(role)
-            ? { value: values.value ?? 0 }
-            : {}),
-        },
-      };
+      if (isStaff) {
+        // Staff chỉ được sửa name, description
+        await updateBasic({
+          id: id as string,
+          data: {
+            name: values.name?.trim(),
+            description: values.description?.trim() || "",
+          },
+        });
+      } else if (isManager) {
+        // Manager/Admin được update value, minPrice, v.v...
+        await updateValue({
+          id: id as string,
+          data: {
+            value: values.value ?? 0,
+            minPrice: values.minPrice ?? 0,
+            type: values.type ?? "PERCENTAGE",
+            startDate: start?.toISOString(),
+            endDate: end?.toISOString(),
+            electricVehiclesId: values.electricVehiclesId ?? [],
+          },
+        });
+      }
 
-      await updatePromotion(payload);
       message.success("Cập nhật khuyến mãi thành công!");
       handleBack();
     } catch (err) {
@@ -155,6 +169,7 @@ export default function PromotionEditPage() {
               <Input
                 placeholder="Nhập tên khuyến mãi"
                 style={{ borderRadius: 8 }}
+                disabled={!isStaff && !isManager}
               />
             </Form.Item>
           </Col>
@@ -162,6 +177,7 @@ export default function PromotionEditPage() {
           <Col span={12}>
             <Form.Item label="Loại khuyến mãi" name="type">
               <Select
+                disabled={isStaff}
                 options={[
                   { label: "Giảm theo phần trăm (%)", value: "PERCENTAGE" },
                   { label: "Giảm cố định (VNĐ)", value: "AMOUNT" },
@@ -178,8 +194,9 @@ export default function PromotionEditPage() {
             <Form.Item label="Giá trị (Value)" name="value">
               <InputNumber
                 className="w-full"
+                min={0}
                 style={{ width: "100%", borderRadius: 8 }}
-                disabled={["DEALER_STAFF", "EVM_STAFF"].includes(role)}
+                disabled={isStaff}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 parser={
                   ((v: string | undefined) =>
@@ -195,6 +212,7 @@ export default function PromotionEditPage() {
                 className="w-full"
                 min={0}
                 style={{ width: "100%", borderRadius: 8 }}
+                disabled={isStaff}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 parser={
                   ((v: string | undefined) =>
@@ -211,6 +229,7 @@ export default function PromotionEditPage() {
               <Select
                 mode="multiple"
                 allowClear
+                disabled={isStaff}
                 placeholder="Chọn xe điện áp dụng"
                 options={vehicleOptions.map((v) => ({
                   label: v.name,
@@ -222,7 +241,7 @@ export default function PromotionEditPage() {
 
           <Col span={12}>
             <Form.Item label="Thời gian áp dụng" name="duration">
-              <RangePicker className="w-full" showTime />
+              <RangePicker className="w-full" showTime disabled={isStaff} />
             </Form.Item>
           </Col>
         </Row>
@@ -240,7 +259,11 @@ export default function PromotionEditPage() {
         </Row>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={isPending}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isUpdatingBasic || isUpdatingValue}
+          >
             Cập nhật khuyến mãi
           </Button>
         </Form.Item>

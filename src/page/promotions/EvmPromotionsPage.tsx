@@ -115,6 +115,7 @@ export default function EvmPromotionsPage() {
           <Button
             icon={<EditOutlined />}
             size="middle"
+            type="primary"
             onClick={() => handleEdit(record.id)}
           >
             Sửa
