@@ -1,12 +1,28 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Form, InputNumber, Button, message } from "antd";
-import { useUpdateVehiclePrices } from "../../service/vehicleService";
+import { Card, Form, InputNumber, Button, message, Spin } from "antd";
+import {
+  useUpdateVehiclePrices,
+  useGetVehicleById,
+} from "../../service/vehicleService";
+import { useEffect } from "react";
 
 export const VehiclePriceUpdatePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const updatePrices = useUpdateVehiclePrices();
+  const { data, isLoading } = useGetVehicleById(id ?? "");
+  const vehicle = data?.result;
+
+  // ✅ Đổ giá cũ vào form
+  useEffect(() => {
+    if (vehicle) {
+      form.setFieldsValue({
+        importPrice: vehicle.importPrice,
+        retailPrice: vehicle.retailPrice,
+      });
+    }
+  }, [vehicle, form]);
 
   const handleSubmit = async (values: {
     importPrice: number;
@@ -21,13 +37,44 @@ export const VehiclePriceUpdatePage = () => {
     }
   };
 
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-[80vh]">
+        <Spin size="large" />
+      </div>
+    );
+
   return (
-    <div className="p-6">
+    <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
       <Card
-        title="Cập nhật giá xe"
-        extra={<Button onClick={() => navigate(-1)}>Quay lại</Button>}
-        className="max-w-[480px] mx-auto shadow-md"
+        title={
+          <div className="flex justify-between items-center">
+            <span>Cập nhật giá xe</span>
+            <Button onClick={() => navigate(-1)}>Quay lại</Button>
+          </div>
+        }
+        className="w-full max-w-lg shadow-md rounded-2xl"
       >
+        <div className="mb-6 text-gray-600 text-sm">
+          <p>
+            <strong>
+              {vehicle?.brand} {vehicle?.model}
+            </strong>
+          </p>
+          <p>
+            Giá nhập hiện tại:{" "}
+            <span className="font-semibold">
+              {vehicle?.importPrice?.toLocaleString("vi-VN") ?? "Chưa có"} ₫
+            </span>
+          </p>
+          <p>
+            Giá bán lẻ hiện tại:{" "}
+            <span className="font-semibold">
+              {vehicle?.retailPrice?.toLocaleString("vi-VN") ?? "Chưa có"} ₫
+            </span>
+          </p>
+        </div>
+
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             label="Giá nhập (VNĐ)"

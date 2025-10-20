@@ -15,12 +15,12 @@ import {
   Tag,
   Modal,
 } from "antd";
-import { useQueryClient } from "@tanstack/react-query"; // ✅ Thêm dòng này
+import { useQueryClient } from "@tanstack/react-query";
 
 export const VehicleDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient(); // ✅ tạo queryClient để invalidate cache
+  const queryClient = useQueryClient();
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
@@ -29,6 +29,7 @@ export const VehicleDetailPage = () => {
   const deleteVehicle = useDeleteVehicle();
   const vehicle = data?.result;
 
+  // ✅ Loading state
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-[70vh]">
@@ -36,18 +37,26 @@ export const VehicleDetailPage = () => {
       </div>
     );
 
+  // ✅ Không tìm thấy xe
   if (!vehicle)
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <Card className="max-w-3xl w-full text-center shadow-md rounded-2xl">
           <p className="mb-4">Không tìm thấy xe.</p>
-          <Button type="primary" onClick={() => navigate(-1)}>
+          {/* ✅ Luôn quay về danh sách thay vì history back */}
+          <Button
+            type="primary"
+            onClick={() =>
+              navigate("/dashboard/evm/vehicle", { replace: true })
+            }
+          >
             Quay lại
           </Button>
         </Card>
       </div>
     );
 
+  // ✅ Xử lý xóa
   const handleDelete = () => {
     Modal.confirm({
       title: "Xác nhận xóa xe",
@@ -58,10 +67,8 @@ export const VehicleDetailPage = () => {
       centered: true,
       async onOk() {
         try {
-          console.log("🟡 Xóa xe ID:", id);
           await deleteVehicle.mutateAsync(id!);
-
-          // ✅ Invalidate tất cả query liên quan + refetch ngay lập tức
+          // Invalidate + refetch danh sách
           await queryClient.invalidateQueries({
             queryKey: ["vehicles"],
             exact: false,
@@ -70,23 +77,46 @@ export const VehicleDetailPage = () => {
             queryKey: ["vehicles"],
             exact: false,
           });
-
           message.success("🚮 Xe đã được xóa thành công!");
-          navigate("/dashboard/evm/vehicle");
-        } catch (err: any) {
-          console.error("❌ Delete error:", err?.response?.data || err);
-          message.error(err?.response?.data?.message || "❌ Không thể xóa xe!");
+          // ✅ Về danh sách và không quay lại được trang detail nữa
+          navigate("/dashboard/evm/vehicle", { replace: true });
+        } catch (error: unknown) {
+          // ❌ không dùng any: unknown + thu hẹp kiểu
+          const errMsg =
+            typeof error === "object" &&
+            error !== null &&
+            "response" in error &&
+            (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+              ? (error as { response: { data: { message: string } } }).response
+                  .data.message
+              : "❌ Không thể xóa xe!";
+          console.error("❌ Delete error:", error);
+          message.error(errMsg);
         }
       },
     });
   };
 
+  // ✅ Chuẩn hóa mảng ảnh để tránh lỗi key/url
+  const imageList: string[] = Array.isArray(vehicle.images)
+    ? vehicle.images
+        .map((u: unknown) => (typeof u === "string" ? u : ""))
+        .filter((u: string) => !!u && /^https?:\/\//i.test(u)) // chỉ nhận URL hợp lệ http/https
+    : [];
+
   return (
     <div className="flex justify-center items-start min-h-[90vh] py-10 bg-gray-50">
       <Card
-        title={`${vehicle.brand} – ${vehicle.model}`}
+        title={`${vehicle.brand ?? "—"} – ${vehicle.model ?? "—"}`}
         extra={
-          <Button type="default" onClick={() => navigate(-1)}>
+          // ✅ Nút quay lại luôn về trang quản lý xe (không back về edit)
+          <Button
+            type="default"
+            onClick={() =>
+              navigate("/dashboard/evm/vehicle", { replace: true })
+            }
+          >
             Quay lại
           </Button>
         }
@@ -94,9 +124,27 @@ export const VehicleDetailPage = () => {
       >
         <Space direction="vertical" className="w-full">
           <Image.PreviewGroup>
-            {vehicle.images?.map((url) => (
-              <Image key={url} width={220} src={url} />
-            ))}
+            {imageList.length > 0 ? (
+              imageList.map((url) => (
+                <Image
+                  key={url}
+                  width={220}
+                  src={url}
+                  alt="vehicle"
+                  // Fallback nếu ảnh lỗi
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://via.placeholder.com/220x140?text=No+Image";
+                  }}
+                />
+              ))
+            ) : (
+              <Image
+                width={220}
+                src="https://via.placeholder.com/220x140?text=No+Image"
+                alt="vehicle"
+              />
+            )}
           </Image.PreviewGroup>
 
           <Descriptions
@@ -104,37 +152,57 @@ export const VehicleDetailPage = () => {
             column={2}
             className="mt-4 bg-white rounded-xl"
           >
-            <Descriptions.Item label="Hãng">{vehicle.brand}</Descriptions.Item>
-            <Descriptions.Item label="Mẫu">{vehicle.model}</Descriptions.Item>
+            <Descriptions.Item label="Hãng">
+              {vehicle.brand ?? "—"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Mẫu">
+              {vehicle.model ?? "—"}
+            </Descriptions.Item>
             <Descriptions.Item label="Dung lượng pin">
-              {vehicle.batteryKwh} kWh
+              {typeof vehicle.batteryKwh === "number"
+                ? `${vehicle.batteryKwh} kWh`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Tầm hoạt động">
-              {vehicle.rangeKm} km
+              {typeof vehicle.rangeKm === "number"
+                ? `${vehicle.rangeKm} km`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Thời gian sạc">
-              {vehicle.chargeTimeHr} giờ
+              {typeof vehicle.chargeTimeHr === "number"
+                ? `${vehicle.chargeTimeHr} giờ`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Công suất">
-              {vehicle.powerKw} kW
+              {typeof vehicle.powerKw === "number"
+                ? `${vehicle.powerKw} kW`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Khối lượng">
-              {vehicle.weightKg} kg
+              {typeof vehicle.weightKg === "number"
+                ? `${vehicle.weightKg} kg`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Tốc độ tối đa">
-              {vehicle.topSpeedKmh} km/h
+              {typeof vehicle.topSpeedKmh === "number"
+                ? `${vehicle.topSpeedKmh} km/h`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Giá nhập">
-              {vehicle.importPrice?.toLocaleString("vi-VN")} ₫
+              {typeof vehicle.importPrice === "number"
+                ? `${vehicle.importPrice.toLocaleString("vi-VN")} ₫`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Giá bán lẻ">
-              {vehicle.retailPrice?.toLocaleString("vi-VN")} ₫
+              {typeof vehicle.retailPrice === "number"
+                ? `${vehicle.retailPrice.toLocaleString("vi-VN")} ₫`
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Loại">
-              <Tag color="green">{vehicle.type}</Tag>
+              <Tag color="green">{vehicle.type ?? "—"}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Ngày tạo">
-              {vehicle.createdAt}
+              {vehicle.createdAt ?? "—"}
             </Descriptions.Item>
           </Descriptions>
 

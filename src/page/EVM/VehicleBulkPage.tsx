@@ -50,10 +50,10 @@ export const VehicleBulkPage = () => {
     try {
       setIsSubmitting(true);
       await bulkCreate.mutateAsync({
-        vehicleId: vehicleId ?? "", // đảm bảo luôn có string
+        vehicleId: vehicleId ?? "",
         quantity: values.quantity,
         color: values.color,
-        manufactureYear: Number(dayjs(values.productionYear).format("YYYY")), // backend thường nhận field này là "manufactureYear"
+        productionYear: dayjs(values.productionYear).format("YYYY-01-01"), // ✅ đúng swagger
         status: values.status,
       });
       message.success(
@@ -69,41 +69,28 @@ export const VehicleBulkPage = () => {
 
   const vehicleInfo = vehicleData?.result;
 
-  // Màu sắc + icon cho mỗi trạng thái
   const statusStyles: Record<
     FormValues["status"],
     { label: string; color: string; emoji: string }
   > = {
-    NORMAL: {
-      label: "Xe mới (bình thường)",
-      color: "#4CAF50", // xanh lá
-      emoji: "🟢",
-    },
+    NORMAL: { label: "Xe mới (bình thường)", color: "#4CAF50", emoji: "🟢" },
     SPECIAL: {
       label: "Xe trưng bày / đặc biệt",
-      color: "#9C27B0", // tím
+      color: "#9C27B0",
       emoji: "🟣",
     },
     OLD_STOCK: {
       label: "Xe tồn kho cũ / chuyển kho",
-      color: "#FF9800", // cam
+      color: "#FF9800",
       emoji: "🟠",
     },
-    TEST_DRIVE: {
-      label: "Xe lái thử",
-      color: "#2196F3", // xanh dương
-      emoji: "🔵",
-    },
+    TEST_DRIVE: { label: "Xe lái thử", color: "#2196F3", emoji: "🔵" },
     RESERVED: {
       label: "Xe đã được đặt giữ chỗ",
-      color: "#FFEB3B", // vàng
+      color: "#FFEB3B",
       emoji: "🟡",
     },
-    SOLD: {
-      label: "Xe đã bán cho khách hàng",
-      color: "#F44336", // đỏ
-      emoji: "🔴",
-    },
+    SOLD: { label: "Xe đã bán cho khách hàng", color: "#F44336", emoji: "🔴" },
   };
 
   return (

@@ -1,16 +1,10 @@
 import { useState, useMemo } from "react";
 import { Spin, Row, Col } from "antd";
-import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { SearchBar } from "../../molecules/SearchBar";
 import { Button } from "../../atoms/Button";
 import { useDebounce } from "../../../hook/useDebounce";
-import {
-  useGetVehicles,
-  useCreateVehicle,
-  useUpdateVehicle,
-  useDeleteVehicle,
-} from "../../../service/vehicleService";
+import { useGetVehicles } from "../../../service/vehicleService";
 import type { IVehicle } from "../../../model/Vehicle";
 import { VehicleCard } from "../../molecules/VehicleCard";
 
@@ -22,10 +16,13 @@ export const VehicleList = () => {
   const { data: vehiclesData, isLoading } = useGetVehicles();
   const vehicles = useMemo(() => {
     const all = vehiclesData?.result?.data ?? [];
-    // ✅ lọc cả trường snake_case và camelCase
-    return Array.isArray(all)
-      ? all.filter((v) => v.isDeleted === false || v.is_deleted === 0)
-      : [];
+    if (!Array.isArray(all)) return [];
+    // ✅ Hợp nhất các trường có thể có từ backend
+    return all.filter((v) => {
+      const deleted =
+        v.isDeleted === true || v.is_deleted === 1 || v.is_Deleted === 1; // ✅ thêm trường đúng với DB
+      return !deleted; // chỉ lấy xe chưa bị xóa
+    });
   }, [vehiclesData]);
 
   const filtered = useMemo(() => {
