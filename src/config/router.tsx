@@ -79,6 +79,17 @@ export const routes: RouteObject[] = [
     ],
   },
 
+  // ==== MANAGER ====
+  {
+    path: ROUTES.MANAGER, // /manager
+    element: <DashboardLayout />,
+    children: [
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /manager/promotions
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /manager/promotions/create
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /manager/promotions/edit/:id
+    ],
+  },
+
   // ==== DEALER STAFF ====
   {
     path: ROUTES.DEALER_STAFF, // /dealer-staff

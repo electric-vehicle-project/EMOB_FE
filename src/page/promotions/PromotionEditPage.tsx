@@ -63,7 +63,7 @@ export default function PromotionEditPage() {
   }>;
   const role = (user.role || "ADMIN") as Role;
   const isStaff = ["DEALER_STAFF", "EVM_STAFF"].includes(role);
-  const isManager = ["DEALER_MANAGER", "ADMIN"].includes(role);
+  const isManager = ["MANAGER", "ADMIN"].includes(role);
 
   // ===== API HOOKS =====
   const { data, isLoading } = usePromotionById(id ?? "");

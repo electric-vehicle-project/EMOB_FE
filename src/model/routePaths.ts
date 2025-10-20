@@ -8,8 +8,7 @@ export const ROUTES = {
 
   DEALER_STAFF: "/dealer-staff",
   EVM_STAFF: "/evm-staff",
-
-  DEALER_MANAGER: "/dealer-manager",
+  MANAGER: "/manager",
 
   // ====== ADMIN MODULES ======
   DEALERS: "dealers",
