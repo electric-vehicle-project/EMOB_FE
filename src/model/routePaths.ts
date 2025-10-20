@@ -1,12 +1,10 @@
-// src/model/routePaths.ts
 export const ROUTES = {
-  // Hệ thống chính
   HOME: "/",
   ADMIN: "/admin",
   DASHBOARD: "/dashboard",
+  AUTH: "/auth",
 
   // Auth
-  AUTH: "/auth",
   LOGIN: "login",
   FORGET_PASSWORD: "forget-password",
   FORGET_PASSWORD_OTP: "forget-password-otp",
@@ -19,17 +17,20 @@ export const ROUTES = {
   REPORT: "report",
 
   // Hồ sơ người dùng
-  PROFILE: "profile",
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
   PROFILE_SCHEDULE: "profile/viewSchedule",
 
-  // Quản lý xe điện (Electric Vehicle Management)
-  EVM: "evm",
-  EVM_VEHICLE: "evm/vehicle", // Trang chính CRUD xe điện
-  EVM_VEHICLE_BULK: "evm/vehicle/bulk", // Trang nhập hàng loạt đơn vị xe (vehicle units)
+  // EVM
+  EVM_VEHICLE: "evm/vehicle",
+  EVM_VEHICLE_BULK: "evm/vehicle/bulk",
+  EVM_VEHICLE_RULES: "evm/price-rules",
+  EVM_VEHICLE_NEW: "evm/vehicle/new",
+  EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
+  EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
+  EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
 
-  // Trang lỗi
-  NOTFOUND: "/*",
+  // 404
+  NOTFOUND: "*",
 };

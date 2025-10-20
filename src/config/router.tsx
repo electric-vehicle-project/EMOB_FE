@@ -1,9 +1,9 @@
-// src/router/router.tsx
 import { createBrowserRouter } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import AuthLayout from "../layout/AuthLayout";
+import { ROUTES } from "../model/routePaths";
 
-// 🔐 Auth
+// 🔐 Auth Pages
 import { LoginCard } from "../components/organisms/LoginCard";
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
 import { OTPCard } from "../components/organisms/OPTCard";
@@ -31,58 +31,66 @@ import { VehicleDetailPage } from "../page/EVM/VehicleDetailPage";
 import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
+import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <HomePage /> },
+  // 🏠 Trang chủ
+  { path: ROUTES.HOME, element: <HomePage /> },
 
-  // AUTH
+  // 🔐 AUTH
   {
-    path: "auth",
+    path: ROUTES.AUTH,
     element: <AuthLayout />,
     children: [
-      { path: "login", element: <LoginCard /> },
-      { path: "forget-password", element: <ForgetPasswordCard /> },
-      { path: "forget-password-otp", element: <OTPCard /> },
-      { path: "reset-password", element: <ResetPasswordCard /> },
+      { path: ROUTES.LOGIN, element: <LoginCard /> },
+      { path: ROUTES.FORGET_PASSWORD, element: <ForgetPasswordCard /> },
+      { path: ROUTES.FORGET_PASSWORD_OTP, element: <OTPCard /> },
+      { path: ROUTES.RESET_PASSWORD, element: <ResetPasswordCard /> },
     ],
   },
 
-  // ADMIN
+  // 👑 ADMIN DASHBOARD
   {
-    path: "admin",
+    path: ROUTES.ADMIN,
     element: <DashboardLayout />,
     children: [
-      { path: "dealers", element: <DealerPage /> },
-      { path: "customers", element: <CustomerPage /> },
-      { path: "testdrive", element: <TestDrivePage /> },
-      { path: "report", element: <ReportPage /> },
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
     ],
   },
 
-  // DASHBOARD
+  // ⚡ EVM DASHBOARD
   {
-    path: "dashboard",
+    path: ROUTES.DASHBOARD,
     element: <DashboardLayout />,
     children: [
-      // Profile
-      { path: "profile/info", element: <InfoPage /> },
-      { path: "profile/changeInfo", element: <ChangeInfoPage /> },
-      { path: "profile/resetpassword", element: <ResetPasswordPage /> },
-      { path: "profile/viewSchedule", element: <ViewSchedulePage /> },
+      // 👤 Profile
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
 
-      // Vehicle Management
-      { path: "evm/vehicle", element: <VehiclePage /> },
-      { path: "evm/vehicle/bulk", element: <VehicleBulkPage /> },
-      { path: "evm/vehicle/new", element: <VehicleCreatePage /> },
-      { path: "evm/vehicle/:id", element: <VehicleDetailPage /> },
-      { path: "evm/vehicle/edit/:id", element: <VehicleEditPage /> },
-      { path: "evm/vehicle/prices/:id", element: <VehiclePriceUpdatePage /> },
+      // ⚡ Vehicle Management
+      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
+      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      {
+        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+        element: <VehiclePriceUpdatePage />,
+      },
 
-      // Customer detail
-      { path: "customers/:id", element: <CustomerDetailPage /> },
+      // ✅ Price Rules
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+
+      // 👥 Customer Detail
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
-  // 404
-  { path: "*", element: <NotFoundPage /> },
+  // 🚫 404
+  { path: ROUTES.NOTFOUND, element: <NotFoundPage /> },
 ]);
