@@ -101,7 +101,7 @@ export const OTPForm = () => {
           if (token) {
             localStorage.setItem("token", token);
             toast.success("Xác thực OTP thành công!");
-            navigate(ROUTES.RESET_PASSWORD, { state: { token } });
+            navigate(ROUTES.AUTH + "/" + ROUTES.RESET_PASSWORD, { state: { token } });
           } else {
             toast.error("Phản hồi không hợp lệ từ server!");
           }
