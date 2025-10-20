@@ -8,12 +8,6 @@ import {
 
 const BASE_URL = "/vehicle";
 
-/**
- * =============================
- * 🚗 VEHICLE (MẪU XE ĐIỆN)
- * =============================
- */
-
 // Lấy toàn bộ danh sách xe điện
 export const useGetVehicles = createQueryHook("vehicles", BASE_URL);
 
@@ -29,25 +23,14 @@ export const useCreateVehicle = createMutationHook("vehicles", BASE_URL);
 // Cập nhật thông tin xe điện
 export const useUpdateVehicle = updateMutationHook("vehicles", BASE_URL);
 
-// Xoá xe điện
+// ✅ Xóa xe điện (soft delete flag true)
 export const useDeleteVehicle = deleteMutationHook("vehicles", BASE_URL);
 
-/**
- * =============================
- * 💰 GIÁ XE (ADMIN)
- * =============================
- * PUT /api/vehicle/{id}/prices
- */
+// Cập nhật giá nhập / giá bán (chỉ Admin)
 export const useUpdateVehiclePrices = updateMutationHook(
   "vehiclePrices",
   `${BASE_URL}`
 );
-
-/**
- * =============================
- * 📦 VEHICLE UNITS (ĐƠN VỊ XE NHẬP KHO)
- * =============================
- */
 
 // Tạo hàng loạt Vehicle Units (Bulk)
 export const useBulkCreateVehicleUnits = createMutationHook(
@@ -55,7 +38,7 @@ export const useBulkCreateVehicleUnits = createMutationHook(
   `${BASE_URL}/bulk`
 );
 
-// Lấy danh sách các Vehicle Units của 1 mẫu xe cụ thể
+// Lấy danh sách Vehicle Units theo ID
 export const useGetVehicleUnitsByVehicleId = createQueryWithPathParamHook(
   "vehicleUnits",
   `${BASE_URL}`

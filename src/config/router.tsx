@@ -28,6 +28,11 @@ import ViewSchedulePage from "../page/profile/ViewSchedulePage";
 import { VehiclePage } from "../page/EVM/VehiclePage";
 import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
 
+import { VehicleDetailPage } from "../page/EVM/VehicleDetailPage";
+import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
+import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
+import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
+
 // 📦 Route Constants
 import { ROUTES } from "../model/routePaths";
 
@@ -76,7 +81,16 @@ export const routes: RouteObject[] = [
       // ⚡ Quản lý xe điện
       { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
-
+      { path: `${ROUTES.EVM_VEHICLE}/:id`, element: <VehicleDetailPage /> },
+      { path: `${ROUTES.EVM_VEHICLE}/edit/:id`, element: <VehicleEditPage /> },
+      {
+        path: `${ROUTES.EVM_VEHICLE}/prices/:id`,
+        element: <VehiclePriceUpdatePage />,
+      },
+      {
+        path: "/dashboard/evm/vehicle/new",
+        element: <VehicleCreatePage />,
+      },
       // Chi tiết khách hàng
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],

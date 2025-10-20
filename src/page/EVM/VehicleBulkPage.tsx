@@ -50,10 +50,10 @@ export const VehicleBulkPage = () => {
     try {
       setIsSubmitting(true);
       await bulkCreate.mutateAsync({
-        vehicleId,
+        vehicleId: vehicleId ?? "", // đảm bảo luôn có string
         quantity: values.quantity,
         color: values.color,
-        productionYear: dayjs(values.productionYear).format("YYYY-01-01"),
+        manufactureYear: Number(dayjs(values.productionYear).format("YYYY")), // backend thường nhận field này là "manufactureYear"
         status: values.status,
       });
       message.success(

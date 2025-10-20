@@ -1,4 +1,5 @@
-import { Form, Input, InputNumber, Select } from "antd";
+import { Form, Input, InputNumber, Select, Upload } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import type { FormInstance } from "antd";
 import type { IVehicle } from "../../model/Vehicle";
 
@@ -73,6 +74,26 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
           <Option value="TRUCK">Xe tải điện</Option>
           <Option value="OTHER">Khác</Option>
         </Select>
+      </Form.Item>
+
+      {/* 🖼️ Upload hình ảnh */}
+      <Form.Item
+        label="Hình ảnh xe"
+        name="images"
+        valuePropName="fileList"
+        getValueFromEvent={(e) => e.fileList}
+      >
+        <Upload
+          listType="picture-card"
+          multiple
+          beforeUpload={() => false}
+          accept="image/*"
+        >
+          <div>
+            <PlusOutlined />
+            <div style={{ marginTop: 8 }}>Tải lên</div>
+          </div>
+        </Upload>
       </Form.Item>
     </Form>
   );
