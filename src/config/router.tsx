@@ -2,7 +2,7 @@ import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import { LoginCard } from "../components/organisms/LoginCard";
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
-import { OTPCard } from "../components/organisms/OPTCard";
+import { OTPCard } from "../components/organisms/OTPCard";
 import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
