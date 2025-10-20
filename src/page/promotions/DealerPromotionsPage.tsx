@@ -31,6 +31,7 @@ import { ROUTES } from "../../model/routePaths";
 import {
   canCreate,
   canDelete,
+  canEdit,
   type Role,
 } from "../../utils/promotionPermissions";
 import type {
@@ -171,10 +172,16 @@ export default function DealerPromotionsPage() {
   // ===== NAVIGATIONS =====
   const goCreate = () =>
     navigate(buildPath(ROUTES.DEALER_STAFF, ROUTES.PROMOTION_CREATE));
-  const goEdit = (id: string) =>
-    navigate(
-      buildPath(ROUTES.DEALER_STAFF, ROUTES.PROMOTION_EDIT.replace(":id", id))
-    );
+  const goEdit = (id: string) => {
+    if (role === "MANAGER")
+      navigate(
+        buildPath(ROUTES.MANAGER, ROUTES.PROMOTION_EDIT.replace(":id", id))
+      );
+    else
+      navigate(
+        buildPath(ROUTES.DEALER_STAFF, ROUTES.PROMOTION_EDIT.replace(":id", id))
+      );
+  };
 
   // ===== COLUMN CONFIG =====
   const columns: ColumnsType<Promotion> = [
@@ -247,7 +254,7 @@ export default function DealerPromotionsPage() {
       align: "center",
       render: (_, record) => {
         const canEditThis =
-          scopeView === "LOCAL" && canCreate(role as Role, "LOCAL");
+          scopeView === "LOCAL" && canEdit(role as Role, "LOCAL");
         const canDeleteThis =
           scopeView === "LOCAL" && canDelete(role as Role, "LOCAL");
 
