@@ -45,7 +45,7 @@ function DashboardLayout() {
   ];
 
   const handleLogout = () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("refreshToken");
 
     logoutMutation(
       { token },
