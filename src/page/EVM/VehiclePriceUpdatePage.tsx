@@ -4,6 +4,7 @@ import {
   useUpdateVehiclePrices,
   useGetVehicleById,
 } from "../../service/vehicleService";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useEffect } from "react";
 
 export const VehiclePriceUpdatePage = () => {
@@ -13,8 +14,18 @@ export const VehiclePriceUpdatePage = () => {
   const updatePrices = useUpdateVehiclePrices();
   const { data, isLoading } = useGetVehicleById(id ?? "");
   const vehicle = data?.result;
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
-  // ✅ Đổ giá cũ vào form
+  // ✅ Nếu không phải Admin thì chặn luôn
+  useEffect(() => {
+    if (role !== "ADMIN") {
+      message.warning("⚠️ Chỉ Admin mới có quyền cập nhật giá!");
+      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+    }
+  }, [role, navigate, id]);
+
+  // ✅ Gán giá trị ban đầu cho form
   useEffect(() => {
     if (vehicle) {
       form.setFieldsValue({
@@ -24,16 +35,38 @@ export const VehiclePriceUpdatePage = () => {
     }
   }, [vehicle, form]);
 
+  // ✅ Xử lý cập nhật giá
   const handleSubmit = async (values: {
     importPrice: number;
     retailPrice: number;
   }) => {
+    // So sánh giá trị cũ & mới
+    const oldImport = vehicle?.importPrice ?? 0;
+    const oldRetail = vehicle?.retailPrice ?? 0;
+    const sameImport = values.importPrice === oldImport;
+    const sameRetail = values.retailPrice === oldRetail;
+
+    if (sameImport && sameRetail) {
+      message.info({
+        content: "Không có thay đổi nào để cập nhật.",
+        duration: 2.5,
+      });
+      return;
+    }
+
     try {
       await updatePrices.mutateAsync({ id: id!, data: values });
-      message.success("✅ Cập nhật giá thành công!");
+      message.success({
+        content: "💰 Giá xe đã được cập nhật thành công!",
+        duration: 2.5,
+      });
       navigate(`/dashboard/evm/vehicle/${id}`);
-    } catch {
-      message.error("❌ Không thể cập nhật giá!");
+    } catch (error) {
+      console.error("❌ Update error:", error);
+      message.error({
+        content: "Không thể cập nhật giá. Vui lòng thử lại sau.",
+        duration: 2.5,
+      });
     }
   };
 
@@ -49,7 +82,7 @@ export const VehiclePriceUpdatePage = () => {
       <Card
         title={
           <div className="flex justify-between items-center">
-            <span>Cập nhật giá xe</span>
+            <span className="font-semibold text-lg">Cập nhật giá xe</span>
             <Button onClick={() => navigate(-1)}>Quay lại</Button>
           </div>
         }
@@ -79,7 +112,7 @@ export const VehiclePriceUpdatePage = () => {
           <Form.Item
             label="Giá nhập (VNĐ)"
             name="importPrice"
-            rules={[{ required: true, message: "Nhập giá nhập!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập giá nhập!" }]}
           >
             <InputNumber
               min={0}
@@ -91,7 +124,7 @@ export const VehiclePriceUpdatePage = () => {
           <Form.Item
             label="Giá bán lẻ (VNĐ)"
             name="retailPrice"
-            rules={[{ required: true, message: "Nhập giá bán lẻ!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập giá bán lẻ!" }]}
           >
             <InputNumber
               min={0}

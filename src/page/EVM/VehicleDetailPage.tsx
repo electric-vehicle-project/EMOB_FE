@@ -4,18 +4,16 @@ import {
   useDeleteVehicle,
 } from "../../service/vehicleService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import {
-  Button,
-  Card,
-  Descriptions,
-  Image,
-  message,
-  Space,
-  Spin,
-  Tag,
-  Modal,
-} from "antd";
+import { Button, Card, Image, message, Spin, Tag, Modal, Divider } from "antd";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  RollbackOutlined,
+  PlusOutlined,
+  DollarOutlined,
+} from "@ant-design/icons";
 
 export const VehicleDetailPage = () => {
   const { id } = useParams();
@@ -29,6 +27,8 @@ export const VehicleDetailPage = () => {
   const deleteVehicle = useDeleteVehicle();
   const vehicle = data?.result;
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   // ✅ Loading state
   if (isLoading)
     return (
@@ -37,13 +37,13 @@ export const VehicleDetailPage = () => {
       </div>
     );
 
-  // ✅ Không tìm thấy xe
   if (!vehicle)
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <Card className="max-w-3xl w-full text-center shadow-md rounded-2xl">
-          <p className="mb-4">Không tìm thấy xe.</p>
-          {/* ✅ Luôn quay về danh sách thay vì history back */}
+          <p className="mb-4 text-lg font-medium text-gray-700">
+            Không tìm thấy xe.
+          </p>
           <Button
             type="primary"
             onClick={() =>
@@ -56,7 +56,15 @@ export const VehicleDetailPage = () => {
       </div>
     );
 
-  // ✅ Xử lý xóa
+  const imageList: string[] = Array.isArray(vehicle.images)
+    ? vehicle.images.filter((u: string) => !!u && /^https?:\/\//i.test(u))
+    : [];
+
+  const mainImage =
+    selectedImage ||
+    imageList[0] ||
+    "https://via.placeholder.com/500x350?text=No+Image";
+
   const handleDelete = () => {
     Modal.confirm({
       title: "Xác nhận xóa xe",
@@ -68,176 +76,171 @@ export const VehicleDetailPage = () => {
       async onOk() {
         try {
           await deleteVehicle.mutateAsync(id!);
-          // Invalidate + refetch danh sách
-          await queryClient.invalidateQueries({
-            queryKey: ["vehicles"],
-            exact: false,
-          });
-          await queryClient.refetchQueries({
-            queryKey: ["vehicles"],
-            exact: false,
-          });
+          await queryClient.invalidateQueries({ queryKey: ["vehicles"] });
           message.success("🚮 Xe đã được xóa thành công!");
-          // ✅ Về danh sách và không quay lại được trang detail nữa
           navigate("/dashboard/evm/vehicle", { replace: true });
-        } catch (error: unknown) {
-          // ❌ không dùng any: unknown + thu hẹp kiểu
-          const errMsg =
-            typeof error === "object" &&
-            error !== null &&
-            "response" in error &&
-            (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message
-              ? (error as { response: { data: { message: string } } }).response
-                  .data.message
-              : "❌ Không thể xóa xe!";
-          console.error("❌ Delete error:", error);
-          message.error(errMsg);
+        } catch {
+          message.error("❌ Không thể xóa xe!");
         }
       },
     });
   };
 
-  // ✅ Chuẩn hóa mảng ảnh để tránh lỗi key/url
-  const imageList: string[] = Array.isArray(vehicle.images)
-    ? vehicle.images
-        .map((u: unknown) => (typeof u === "string" ? u : ""))
-        .filter((u: string) => !!u && /^https?:\/\//i.test(u)) // chỉ nhận URL hợp lệ http/https
-    : [];
+  const canEdit = role === "EVM_STAFF";
+  const canUpdatePrice = role === "ADMIN";
 
   return (
-    <div className="flex justify-center items-start min-h-[90vh] py-10 bg-gray-50">
-      <Card
-        title={`${vehicle.brand ?? "—"} – ${vehicle.model ?? "—"}`}
-        extra={
-          // ✅ Nút quay lại luôn về trang quản lý xe (không back về edit)
-          <Button
-            type="default"
-            onClick={() =>
-              navigate("/dashboard/evm/vehicle", { replace: true })
-            }
-          >
-            Quay lại
-          </Button>
-        }
-        className="w-full max-w-5xl shadow-md rounded-2xl"
-      >
-        <Space direction="vertical" className="w-full">
-          <Image.PreviewGroup>
-            {imageList.length > 0 ? (
-              imageList.map((url) => (
-                <Image
-                  key={url}
-                  width={220}
-                  src={url}
-                  alt="vehicle"
-                  // Fallback nếu ảnh lỗi
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://via.placeholder.com/220x140?text=No+Image";
-                  }}
-                />
-              ))
-            ) : (
-              <Image
-                width={220}
-                src="https://via.placeholder.com/220x140?text=No+Image"
-                alt="vehicle"
-              />
-            )}
-          </Image.PreviewGroup>
-
-          <Descriptions
-            bordered
-            column={2}
-            className="mt-4 bg-white rounded-xl"
-          >
-            <Descriptions.Item label="Hãng">
-              {vehicle.brand ?? "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Mẫu">
-              {vehicle.model ?? "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Dung lượng pin">
-              {typeof vehicle.batteryKwh === "number"
-                ? `${vehicle.batteryKwh} kWh`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tầm hoạt động">
-              {typeof vehicle.rangeKm === "number"
-                ? `${vehicle.rangeKm} km`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian sạc">
-              {typeof vehicle.chargeTimeHr === "number"
-                ? `${vehicle.chargeTimeHr} giờ`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Công suất">
-              {typeof vehicle.powerKw === "number"
-                ? `${vehicle.powerKw} kW`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Khối lượng">
-              {typeof vehicle.weightKg === "number"
-                ? `${vehicle.weightKg} kg`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tốc độ tối đa">
-              {typeof vehicle.topSpeedKmh === "number"
-                ? `${vehicle.topSpeedKmh} km/h`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Giá nhập">
-              {typeof vehicle.importPrice === "number"
-                ? `${vehicle.importPrice.toLocaleString("vi-VN")} ₫`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Giá bán lẻ">
-              {typeof vehicle.retailPrice === "number"
-                ? `${vehicle.retailPrice.toLocaleString("vi-VN")} ₫`
-                : "—"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Loại">
-              <Tag color="green">{vehicle.type ?? "—"}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo">
-              {vehicle.createdAt ?? "—"}
-            </Descriptions.Item>
-          </Descriptions>
-
-          <div className="flex justify-end gap-3 mt-6">
-            {role === "EVM_STAFF" && (
-              <>
-                <Button
-                  type="primary"
-                  onClick={() => navigate(`/dashboard/evm/vehicle/edit/${id}`)}
-                >
-                  Chỉnh sửa
-                </Button>
-                <Button
-                  onClick={() =>
-                    navigate(`/dashboard/evm/vehicle/bulk?vehicleId=${id}`)
-                  }
-                >
-                  Thêm đơn vị
-                </Button>
-                <Button danger onClick={handleDelete}>
-                  Xóa xe
-                </Button>
-              </>
-            )}
-
-            {role === "ADMIN" && (
-              <Button
-                type="primary"
-                onClick={() => navigate(`/dashboard/evm/vehicle/prices/${id}`)}
-              >
-                Cập nhật giá
-              </Button>
+    <div className="flex justify-center min-h-[90vh] bg-gray-50 py-10 px-4">
+      <Card className="w-full max-w-6xl shadow-lg rounded-2xl border border-gray-200 p-6">
+        <div className="flex flex-col lg:flex-row gap-10">
+          {/* 🖼️ Hình ảnh sản phẩm */}
+          <div className="flex-1 flex flex-col items-center">
+            <Image
+              src={mainImage}
+              alt="vehicle"
+              width={450}
+              height={320}
+              className="rounded-xl shadow-sm object-cover border border-gray-100"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "https://via.placeholder.com/450x320?text=No+Image";
+              }}
+            />
+            {/* Thumbnail preview */}
+            {imageList.length > 1 && (
+              <div className="flex gap-3 mt-4 flex-wrap justify-center">
+                {imageList.map((url) => (
+                  <img
+                    key={url}
+                    src={url}
+                    onClick={() => setSelectedImage(url)}
+                    className={`w-20 h-20 object-cover rounded-md cursor-pointer border ${
+                      selectedImage === url
+                        ? "border-green-600 ring-2 ring-green-500"
+                        : "border-gray-200"
+                    }`}
+                    alt="thumbnail"
+                  />
+                ))}
+              </div>
             )}
           </div>
-        </Space>
+
+          {/* 📋 Thông tin sản phẩm */}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold mb-2 text-gray-900">
+              {vehicle.brand ?? "—"}{" "}
+              <span className="text-gray-600">– {vehicle.model ?? "—"}</span>
+            </h1>
+            <p className="text-sm text-gray-500 mb-4">
+              Mã xe: <span className="font-mono">{vehicle.id}</span>
+            </p>
+
+            <Divider />
+
+            <div className="grid grid-cols-2 gap-y-2 text-gray-700 text-base">
+              <p>
+                <strong>Dung lượng pin:</strong> {vehicle.batteryKwh ?? "—"} kWh
+              </p>
+              <p>
+                <strong>Tầm hoạt động:</strong> {vehicle.rangeKm ?? "—"} km
+              </p>
+              <p>
+                <strong>Thời gian sạc:</strong> {vehicle.chargeTimeHr ?? "—"}{" "}
+                giờ
+              </p>
+              <p>
+                <strong>Công suất:</strong> {vehicle.powerKw ?? "—"} kW
+              </p>
+              <p>
+                <strong>Khối lượng:</strong> {vehicle.weightKg ?? "—"} kg
+              </p>
+              <p>
+                <strong>Tốc độ tối đa:</strong> {vehicle.topSpeedKmh ?? "—"}{" "}
+                km/h
+              </p>
+              <p>
+                <strong>Giá nhập:</strong>{" "}
+                <span className="font-semibold text-green-700">
+                  {vehicle.importPrice
+                    ? vehicle.importPrice.toLocaleString("vi-VN") + " ₫"
+                    : "—"}
+                </span>
+              </p>
+              <p>
+                <strong>Giá bán lẻ:</strong>{" "}
+                <span className="font-semibold text-red-600">
+                  {vehicle.retailPrice
+                    ? vehicle.retailPrice.toLocaleString("vi-VN") + " ₫"
+                    : "—"}
+                </span>
+              </p>
+              <p>
+                <strong>Loại:</strong>{" "}
+                <Tag color="green" className="ml-2">
+                  {vehicle.type ?? "—"}
+                </Tag>
+              </p>
+              <p>
+                <strong>Ngày tạo:</strong> {vehicle.createdAt ?? "—"}
+              </p>
+            </div>
+
+            <Divider />
+
+            {/* 🔘 Buttons */}
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Button icon={<RollbackOutlined />} onClick={() => navigate(-1)}>
+                Quay lại
+              </Button>
+
+              {canEdit && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={() =>
+                      navigate(`/dashboard/evm/vehicle/edit/${id}`)
+                    }
+                    style={{ backgroundColor: "#627254" }}
+                  >
+                    Chỉnh sửa
+                  </Button>
+
+                  <Button
+                    icon={<PlusOutlined />}
+                    onClick={() =>
+                      navigate(`/dashboard/evm/vehicle/bulk?vehicleId=${id}`)
+                    }
+                  >
+                    Thêm đơn vị
+                  </Button>
+
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={handleDelete}
+                  >
+                    Xóa xe
+                  </Button>
+                </>
+              )}
+
+              {canUpdatePrice && (
+                <Button
+                  type="primary"
+                  icon={<DollarOutlined />}
+                  onClick={() =>
+                    navigate(`/dashboard/evm/vehicle/prices/${id}`)
+                  }
+                  style={{ backgroundColor: "#3a5a40" }}
+                >
+                  Cập nhật giá
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </Card>
     </div>
   );

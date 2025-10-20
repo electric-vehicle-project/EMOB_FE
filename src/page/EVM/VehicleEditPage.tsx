@@ -4,9 +4,10 @@ import {
   useGetVehicleById,
   useUpdateVehicle,
 } from "../../service/vehicleService";
-import { VehicleForm } from "../../components/molecules/VehicleForm";
+import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
 import type { IVehicle } from "../../model/Vehicle";
 import { useEffect, useRef } from "react";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 export const VehicleEditPage = () => {
   const { id } = useParams();
@@ -15,17 +16,25 @@ export const VehicleEditPage = () => {
   const updateVehicle = useUpdateVehicle();
   const vehicle = data?.result;
   const [form] = Form.useForm<IVehicle>();
-  const initialValuesRef = useRef<IVehicle | null>(null); // ✅ lưu giá trị ban đầu
+  const initialValuesRef = useRef<IVehicle | null>(null);
 
-  // ✅ Điền dữ liệu xe khi load xong
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+
+  useEffect(() => {
+    if (role !== "EVM_STAFF") {
+      message.warning("Tài khoản của bạn không có quyền chỉnh sửa xe!");
+      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+    }
+  }, [role, navigate, id]);
+
   useEffect(() => {
     if (vehicle) {
       form.setFieldsValue(vehicle);
-      initialValuesRef.current = vehicle; // lưu lại để so sánh
+      initialValuesRef.current = vehicle;
     }
   }, [vehicle, form]);
 
-  // ✅ So sánh dữ liệu hiện tại với ban đầu
   const isFormChanged = (): boolean => {
     const current = form.getFieldsValue();
     const initial = initialValuesRef.current;
@@ -33,32 +42,27 @@ export const VehicleEditPage = () => {
     return JSON.stringify(current) !== JSON.stringify(initial);
   };
 
-  // ✅ Lưu
   const handleSave = async (values: IVehicle) => {
     if (!isFormChanged()) {
-      message.info("⚠️ Bạn chưa thay đổi thông tin nào.");
+      message.warning("Không có thay đổi nào để lưu.");
       return;
     }
 
     try {
       await updateVehicle.mutateAsync({ id: id!, data: values });
-      message.success("✅ Cập nhật xe thành công!");
+      message.success("✅ Đã lưu thay đổi xe thành công!");
       navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error("❌ Không thể cập nhật xe!");
     }
   };
 
-  // ✅ Hủy
   const handleCancel = () => {
     if (!isFormChanged()) {
-      // Nếu chưa chỉnh gì, về luôn
       navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
       return;
     }
 
-    // Nếu có chỉnh → hỏi confirm
     Modal.confirm({
       title: "Bạn có chắc muốn hủy chỉnh sửa?",
       content: "Mọi thay đổi chưa lưu sẽ bị mất.",
@@ -68,7 +72,6 @@ export const VehicleEditPage = () => {
     });
   };
 
-  // ✅ Loading
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-[70vh]">
@@ -76,7 +79,6 @@ export const VehicleEditPage = () => {
       </div>
     );
 
-  // ✅ Không có xe
   if (!vehicle)
     return (
       <div className="flex justify-center items-center h-[80vh]">
@@ -92,7 +94,6 @@ export const VehicleEditPage = () => {
       </div>
     );
 
-  // ✅ Giao diện chính
   return (
     <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
       <Card

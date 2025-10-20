@@ -1,36 +1,56 @@
 import { Card, message, Button, Space, Form } from "antd";
 import { useNavigate } from "react-router-dom";
-import { VehicleForm } from "../../components/molecules/VehicleForm";
-import { useCreateVehicle } from "../../service/vehicleService";
+import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
+import {
+  useCreateVehicle,
+  useUploadVehicleImages,
+} from "../../service/vehicleService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import type { IVehicle } from "../../model/Vehicle";
-import { useQueryClient } from "@tanstack/react-query"; // ✅ thêm
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const createVehicle = useCreateVehicle();
-  const queryClient = useQueryClient(); // ✅ thêm
+  const uploadImages = useUploadVehicleImages();
+
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
+  useEffect(() => {
+    if (role !== "EVM_STAFF") {
+      message.warning("Tài khoản của bạn không có quyền thêm xe mới!");
+      navigate("/dashboard/evm/vehicle", { replace: true });
+    }
+  }, [role, navigate]);
+
   const handleCreate = async (values: IVehicle) => {
     try {
-      // ✅ Chuẩn hóa hình ảnh trước khi gửi
-      const imageUrls =
-        values.images
-          ?.map((file: string | { url?: string; thumbUrl?: string }) => {
-            if (typeof file === "string") return file;
-            if (file.url) return file.url;
-            if (file.thumbUrl && file.thumbUrl.startsWith("data:image"))
-              return null; // bỏ base64, vì BE không nhận
-            return null;
-          })
-          .filter(Boolean) ?? [];
+      const formData = new FormData();
+      ((values.images as (File | { originFileObj?: File })[]) || []).forEach(
+        (file: File | { originFileObj?: File }) => {
+          const origin =
+            "originFileObj" in file ? file.originFileObj || file : file;
+          if (origin instanceof File) formData.append("files", origin);
+        }
+      );
+
+      let imageUrls: string[] = [];
+      if (formData.has("files")) {
+        const uploadRes = await uploadImages.mutateAsync(formData);
+        imageUrls =
+          uploadRes?.data?.result || uploadRes?.result || uploadRes || [];
+      }
 
       const payload = {
         ...values,
-        images: imageUrls,
+        images: imageUrls.length
+          ? imageUrls
+          : ["https://via.placeholder.com/300x200?text=Vehicle"],
         type:
           typeof values.type === "object" &&
           values.type !== null &&
@@ -39,25 +59,14 @@ export const VehicleCreatePage = () => {
             : values.type,
       };
 
-      console.log("📦 Payload gửi BE:", JSON.stringify(payload, null, 2));
-
       await createVehicle.mutateAsync(payload);
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
 
       message.success("✅ Thêm xe mới thành công!");
       navigate("/dashboard/evm/vehicle");
     } catch (err: unknown) {
-      const errorMsg =
-        typeof err === "object" &&
-        err !== null &&
-        "response" in err &&
-        (err as { response?: { data?: { message?: string } } }).response?.data
-          ?.message
-          ? (err as { response: { data: { message: string } } }).response.data
-              .message
-          : "❌ Không thể thêm xe!";
       console.error("❌ Lỗi khi tạo xe:", err);
-      message.error(errorMsg);
+      message.error("❌ Không thể thêm xe!");
     }
   };
 
@@ -72,15 +81,16 @@ export const VehicleCreatePage = () => {
         <VehicleForm
           form={form}
           onFinish={handleCreate}
-          canEditPrices={role !== "EVM_STAFF"}
+          canEditPrices={false}
         />
+
         <div className="flex justify-end gap-3 mt-6">
           <Space>
             <Button onClick={handleCancel}>Hủy</Button>
             <Button
               type="primary"
               onClick={() => form.submit()}
-              loading={createVehicle.isPending}
+              loading={createVehicle.isPending || uploadImages.isPending}
             >
               Tạo xe
             </Button>

@@ -1,5 +1,5 @@
 import { Card, Tag } from "antd";
-import type { IVehicle } from "../../model/Vehicle";
+import type { IVehicle } from "../../../model/Vehicle";
 
 interface Props {
   vehicle: IVehicle;

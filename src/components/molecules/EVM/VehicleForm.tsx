@@ -1,7 +1,7 @@
 import { Form, Input, InputNumber, Select, Upload } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import type { FormInstance } from "antd";
-import type { IVehicle } from "../../model/Vehicle";
+import type { IVehicle } from "../../../model/Vehicle";
 
 interface Props {
   form: FormInstance<IVehicle>;

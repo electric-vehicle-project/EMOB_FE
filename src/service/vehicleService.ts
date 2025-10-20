@@ -36,8 +36,6 @@ export const useDeleteVehicle = deleteMutationHook("vehicles", BASE_URL);
 // 💰 Cập nhật giá nhập / giá bán (chuẩn useApi + đúng endpoint Swagger)
 export const useUpdateVehiclePrices = () => {
   // Giữ pattern của nhóm (có thể dùng baseHook nếu sau này mở rộng)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const baseHook = updateMutationHook("vehiclePrices", BASE_URL);
 
   const queryClient = useQueryClient();
 
