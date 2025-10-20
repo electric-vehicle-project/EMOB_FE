@@ -79,22 +79,25 @@ export const OTPForm = () => {
   };
 
 
-  const otpValue = otp.join("");
-  const { mutate: verifyOtpMutation } = useVerifyOtpMutation(otpValue);
+  const otpCode = otp.join("");
+  const { mutate: verifyOtpMutation } = useVerifyOtpMutation();
 
   // --- Submit ---
   const handleConfirm = () => {
 
-    if (otpValue.length !== 5) {
+    if (otpCode.length !== 5) {
       toast.warning("Mã OTP phải gồm 5 chữ số");
       return;
     }
 
     verifyOtpMutation(
-      { email }, // body JSON
+      { otpCode,email  }, // body JSON
       {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (res: any) => {
-          const token = res?.data?.result?.token;
+          const token = res.data.result.token;
+          console.log("token",{token});
+          
           if (token) {
             localStorage.setItem("token", token);
             toast.success("Xác thực OTP thành công!");
@@ -103,6 +106,7 @@ export const OTPForm = () => {
             toast.error("Phản hồi không hợp lệ từ server!");
           }
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (err: any) => {
           const msg =
             err?.response?.data?.toast || "Mã OTP không hợp lệ hoặc đã hết hạn!";
