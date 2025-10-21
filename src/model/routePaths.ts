@@ -5,7 +5,9 @@ export const ROUTES = {
   AUTH: "/auth",
   LOGIN: "login",
   REGISTER: "register",
-
+  FORGET_PASSWORD: "forget-password",
+  FORGET_PASSWORD_OTP: "forget-password-otp",
+  RESET_PASSWORD: "reset-password",
   DEALER_STAFF: "/dealer-staff",
   EVM_STAFF: "/evm-staff",
   MANAGER: "/manager",

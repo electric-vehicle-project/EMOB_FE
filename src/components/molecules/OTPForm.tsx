@@ -28,25 +28,22 @@ export const OTPForm = () => {
     }
   }, [countdown, canResend]);
 
-
-
   // --- gửi lại OTP ---
   const { mutate: resendOtpMutation } = useResendOtpMutation();
 
   const handleResendOTP = () => {
-    setCanResend(false);
-    console.log("test");
-    
+
     resendOtpMutation(
       { email },
       {
         onSuccess: () => {
           setCountdown(60 * 2);
+          setCanResend(false);
           toast.success("Đã gửi lại mã OTP!");
         },
         onError: (err: any) => {
-          setCanResend(true);
           setCountdown(5);
+          setCanResend(true);
           const msg =
             err?.response?.data?.toast || "Gửi lại thất bại. Vui lòng thử lại!";
           toast.error(msg);
@@ -60,7 +57,7 @@ export const OTPForm = () => {
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
-    const value = e.target.value.replace(/\D/g, ""); 
+    const value = e.target.value.replace(/\D/g, "");
     if (!value) return;
 
     const newOtp = [...otp];
@@ -114,7 +111,6 @@ export const OTPForm = () => {
     verifyOtpMutation(
       { otpCode, email }, // body JSON
       {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (res: any) => {
           const token = res.data.result.token;
           console.log("token", { token });
@@ -127,7 +123,6 @@ export const OTPForm = () => {
             toast.error("Phản hồi không hợp lệ từ server!");
           }
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (err: any) => {
           const msg =
             err?.response?.data?.toast || "Mã OTP không hợp lệ hoặc đã hết hạn!";
