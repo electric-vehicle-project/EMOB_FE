@@ -4,7 +4,7 @@ import {
   Input,
   Button,
   Select,
-  message,
+  message as antdMessage,
   Space,
   Spin,
   Typography,
@@ -16,8 +16,8 @@ import type { RootState } from "../../redux/store";
 import type { Role } from "../../utils/promotionPermissions";
 
 import { usePromotionCreate } from "../../service/promotionService";
-import { getAllDealers } from "../../service/dealerService";
-import { getAllElectricVehicles } from "../../service/electricVehicleService";
+import { useGetDealers } from "../../service/dealerService";
+import { useGetVehicles } from "../../service/vehicleService";
 
 const { Title } = Typography;
 
@@ -52,24 +52,43 @@ export default function PromotionCreatePage() {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // ===== Fetch danh sách dealer & vehicle =====
+  // ===== GỌI API CHỈ KHI ROLE LÀ EVM_STAFF HOẶC ADMIN =====
+  const { data: dealersData, isLoading: loadingDealers } = useGetDealers(
+    {},
+    { enabled: isEvmStaff || role === "ADMIN" } // tránh 403
+  );
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles();
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [dealers, vehicles] = await Promise.all([
-          getAllDealers(),
-          getAllElectricVehicles(),
-        ]);
-        if (Array.isArray(dealers)) setDealerOptions(dealers);
-        if (Array.isArray(vehicles)) setVehicleOptions(vehicles);
-      } catch (err) {
-        console.error("Error fetching select data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (vehiclesData) {
+      const vehicles =
+        vehiclesData?.result?.data ??
+        vehiclesData?.result ??
+        vehiclesData ??
+        [];
+
+      setVehicleOptions(
+        vehicles.map((v: { id: string; name: string }) => ({
+          id: v.id,
+          name: v.name,
+        }))
+      );
+    }
+
+    if (dealersData) {
+      const dealers =
+        dealersData?.result?.data ?? dealersData?.result ?? dealersData ?? [];
+
+      setDealerOptions(
+        dealers.map((d: { id: string; name: string }) => ({
+          id: d.id,
+          name: d.name,
+        }))
+      );
+    }
+
+    if (vehiclesData || dealersData) setLoading(false);
+  }, [dealersData, vehiclesData]);
 
   // ===== Khởi tạo giá trị mặc định cho DEALER_STAFF =====
   useEffect(() => {
@@ -83,21 +102,27 @@ export default function PromotionCreatePage() {
     try {
       const payload = {
         dealerId: isDealerStaff ? [user.dealerId!] : values.dealerId ?? [],
-        electricVehiclesId: values.electricVehiclesId,
+        electricVehiclesId: values.electricVehiclesId ?? [],
         name: values.name.trim(),
         description: values.description?.trim() || "",
       };
 
+      console.log("📦 Payload gửi BE:", payload);
+
       await createPromotion(payload);
-      message.success("Tạo khuyến mãi thành công!");
+      antdMessage.success("Tạo khuyến mãi thành công!");
       navigate(-1);
-    } catch (err) {
-      console.error(err);
-      message.error("Tạo khuyến mãi thất bại!");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("❌ Lỗi tạo khuyến mãi:", err.message);
+      } else {
+        console.error("❌ Lỗi tạo khuyến mãi:", err);
+      }
+      antdMessage.error("Tạo khuyến mãi thất bại!");
     }
   };
 
-  if (loading) {
+  if (loading || loadingDealers || loadingVehicles) {
     return (
       <div style={{ textAlign: "center", marginTop: 100 }}>
         <Spin size="large" />
@@ -105,9 +130,9 @@ export default function PromotionCreatePage() {
     );
   }
 
-  // ===== Nếu không phải DEALER_STAFF hoặc EVM_STAFF =====
-  if (!isDealerStaff && !isEvmStaff) {
-    message.warning("Bạn không có quyền truy cập trang này!");
+  // ===== Kiểm tra quyền truy cập =====
+  if (!isDealerStaff && !isEvmStaff && role !== "ADMIN") {
+    antdMessage.warning("Bạn không có quyền truy cập trang này!");
     navigate(-1);
     return null;
   }
@@ -139,7 +164,7 @@ export default function PromotionCreatePage() {
           />
         </Form.Item>
 
-        {/* ELECTRIC VEHICLE ID */}
+        {/* ELECTRIC VEHICLE IDS */}
         <Form.Item
           label="Xe điện áp dụng"
           name="electricVehiclesId"

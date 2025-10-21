@@ -1,5 +1,4 @@
-// src/pages/PromotionEditPage.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Form,
   Input,
@@ -12,6 +11,7 @@ import {
   message,
   Space,
   Spin,
+  Tag,
 } from "antd";
 import type { InputNumberProps } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
@@ -26,30 +26,46 @@ import {
   usePromotionUpdate,
   usePromotionUpdateValue,
 } from "../../service/promotionService";
-import { getAllElectricVehicles } from "../../service/electricVehicleService";
+
+import { useGetDealers } from "../../service/dealerService";
+import { useGetVehicles } from "../../service/vehicleService";
 
 const { RangePicker } = DatePicker;
+
+type PromoType = "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT";
+
+interface DealerOption {
+  id: string;
+  name: string;
+}
+
+interface VehicleOption {
+  id: string;
+  name: string;
+}
 
 interface PromotionFormValues {
   name: string;
   description?: string;
-  type?: "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT";
+  type?: PromoType;
   value?: number;
-  minPrice?: number;
+  minValue?: number;
   duration?: [dayjs.Dayjs, dayjs.Dayjs];
-  electricVehiclesId?: string[];
+  dealerIds?: string[];
+  electricVehicleIds?: string[];
 }
 
 interface PromotionDetail {
   id: string;
   name: string;
   description?: string;
-  type?: PromotionFormValues["type"];
-  value?: number;
-  minPrice?: number;
-  startDate: string;
-  endDate: string;
-  electricVehiclesId?: string[];
+  type: PromoType;
+  value: number;
+  minValue: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  dealerIds?: string[];
+  electricVehicleIds?: string[];
 }
 
 export default function PromotionEditPage() {
@@ -57,13 +73,18 @@ export default function PromotionEditPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
+  // ===== USER & ROLE =====
   const user = useSelector((s: RootState) => s.user ?? {}) as Partial<{
     id: string;
-    role: string;
+    role: Role;
   }>;
+
   const role = (user.role || "ADMIN") as Role;
-  const isStaff = ["DEALER_STAFF", "EVM_STAFF"].includes(role);
-  const isManager = ["MANAGER", "ADMIN"].includes(role);
+  const isDealerStaff = role === "DEALER_STAFF";
+  const isEvmStaff = role === "EVM_STAFF";
+  const isManager = role === "MANAGER" || role === "ADMIN";
+
+  const canFetchDealers = isEvmStaff || role === "ADMIN";
 
   // ===== API HOOKS =====
   const { data, isLoading } = usePromotionById(id ?? "");
@@ -72,85 +93,108 @@ export default function PromotionEditPage() {
   const { mutateAsync: updateValue, isPending: isUpdatingValue } =
     usePromotionUpdateValue();
 
-  const [vehicleOptions, setVehicleOptions] = useState<
-    { id: string; name: string }[]
-  >([]);
+  const { data: dealersData, isLoading: loadingDealers } = useGetDealers({
+    enabled: canFetchDealers,
+  } as any);
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
+    enabled: canFetchDealers,
+  } as any);
 
-  // ===== FETCH VEHICLE OPTIONS =====
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        const vehicles = await getAllElectricVehicles();
-        if (Array.isArray(vehicles)) setVehicleOptions(vehicles);
-      } catch (err) {
-        console.error("Error fetching vehicles:", err);
-      }
-    };
-    fetchVehicles();
-  }, []);
+  // ===== OPTIONS FILTER =====
+  const dealerOptions = useMemo(() => {
+    if (!canFetchDealers) return [];
+    const list: DealerOption[] =
+      dealersData?.result?.data ?? dealersData?.result ?? dealersData ?? [];
+    const usedIds = data?.result?.dealerIds ?? [];
+    return list
+      .filter((d) => !usedIds.includes(d.id))
+      .map((d) => ({ label: d.name, value: d.id }));
+  }, [dealersData, data, canFetchDealers]);
 
-  // ===== SET FORM DEFAULT VALUES =====
+  const vehicleOptions = useMemo(() => {
+    if (!canFetchDealers) return [];
+    const list: VehicleOption[] =
+      vehiclesData?.result?.data ?? vehiclesData?.result ?? vehiclesData ?? [];
+    const usedIds = data?.result?.electricVehicleIds ?? [];
+    return list
+      .filter((v) => !usedIds.includes(v.id))
+      .map((v) => ({ label: v.name, value: v.id }));
+  }, [vehiclesData, data, canFetchDealers]);
+
+  // ===== INITIAL FORM =====
   useEffect(() => {
-    if (data?.result) {
-      const p = data.result as PromotionDetail;
-      form.setFieldsValue({
-        name: p.name,
-        description: p.description,
-        type: p.type,
-        value: p.value,
-        minPrice: p.minPrice,
-        duration: [dayjs(p.startDate), dayjs(p.endDate)],
-        electricVehiclesId: p.electricVehiclesId ?? [],
-      });
-    }
+    if (!data?.result) return;
+    const p = data.result as PromotionDetail;
+
+    // ✅ Fix Invalid Date
+    const start =
+      p.startDate && dayjs(p.startDate).isValid()
+        ? dayjs(p.startDate)
+        : undefined;
+    const end =
+      p.endDate && dayjs(p.endDate).isValid() ? dayjs(p.endDate) : undefined;
+
+    form.setFieldsValue({
+      name: p.name,
+      description: p.description,
+      type: p.type,
+      value: p.value,
+      minValue: p.minValue,
+      duration: start && end ? [start, end] : undefined,
+      dealerIds: [],
+      electricVehicleIds: [],
+    });
   }, [data, form]);
 
   const handleBack = () => navigate(-1);
 
-  // ===== HANDLE SUBMIT =====
+  // ===== SUBMIT =====
   const handleSubmit = async (values: PromotionFormValues) => {
     try {
       const [start, end] = values.duration || [];
 
-      if (isStaff) {
-        // Staff chỉ được sửa name, description
+      if (isDealerStaff || isEvmStaff) {
         await updateBasic({
           id: id as string,
           data: {
             name: values.name?.trim(),
             description: values.description?.trim() || "",
+            dealerIds: isDealerStaff ? [] : values.dealerIds ?? [],
+            electricVehicleIds: values.electricVehicleIds ?? [],
           },
         });
-      } else if (isManager) {
-        // Manager/Admin được update value, minPrice, v.v...
+      }
+
+      if (isManager) {
         await updateValue({
           id: id as string,
           data: {
             value: values.value ?? 0,
-            minPrice: values.minPrice ?? 0,
+            minPrice: values.minValue ?? 0, // ✅ BE dùng minPrice
             type: values.type ?? "PERCENTAGE",
             startDate: start?.toISOString(),
             endDate: end?.toISOString(),
-            electricVehiclesId: values.electricVehiclesId ?? [],
           },
         });
       }
 
       message.success("Cập nhật khuyến mãi thành công!");
-      handleBack();
-    } catch (err) {
-      console.error(err);
+      navigate(-1);
+    } catch (error: unknown) {
+      console.error(error);
       message.error("Cập nhật khuyến mãi thất bại!");
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (canFetchDealers && (loadingDealers || loadingVehicles))) {
     return (
       <div style={{ textAlign: "center", marginTop: 100 }}>
         <Spin size="large" />
       </div>
     );
   }
+
+  const p = (data?.result ?? {}) as PromotionDetail;
 
   return (
     <div style={{ padding: 24 }}>
@@ -165,11 +209,15 @@ export default function PromotionEditPage() {
       >
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label="Tên khuyến mãi" name="name">
+            <Form.Item
+              label="Tên khuyến mãi"
+              name="name"
+              rules={[{ required: true, message: "Vui lòng nhập tên" }]}
+            >
               <Input
                 placeholder="Nhập tên khuyến mãi"
+                disabled={isManager}
                 style={{ borderRadius: 8 }}
-                disabled={!isStaff && !isManager}
               />
             </Form.Item>
           </Col>
@@ -177,7 +225,7 @@ export default function PromotionEditPage() {
           <Col span={12}>
             <Form.Item label="Loại khuyến mãi" name="type">
               <Select
-                disabled={isStaff}
+                disabled={!isEvmStaff && !isDealerStaff}
                 options={[
                   { label: "Giảm theo phần trăm (%)", value: "PERCENTAGE" },
                   { label: "Giảm cố định (VNĐ)", value: "AMOUNT" },
@@ -191,65 +239,102 @@ export default function PromotionEditPage() {
 
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label="Giá trị (Value)" name="value">
+            <Form.Item label="Giá trị (%) hoặc VNĐ" name="value">
               <InputNumber
-                className="w-full"
                 min={0}
+                disabled={!isManager}
                 style={{ width: "100%", borderRadius: 8 }}
-                disabled={isStaff}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 parser={
                   ((v: string | undefined) =>
-                    v?.replace(/,/g, "") || "") as InputNumberProps["parser"]
+                    v ? v.replace(/,/g, "") : "") as InputNumberProps["parser"]
                 }
               />
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item label="Đơn tối thiểu (VNĐ)" name="minPrice">
+            <Form.Item label="Đơn tối thiểu (VNĐ)" name="minValue">
               <InputNumber
-                className="w-full"
                 min={0}
+                disabled={!isManager}
                 style={{ width: "100%", borderRadius: 8 }}
-                disabled={isStaff}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 parser={
                   ((v: string | undefined) =>
-                    v?.replace(/,/g, "") || "") as InputNumberProps["parser"]
+                    v ? v.replace(/,/g, "") : "") as InputNumberProps["parser"]
                 }
               />
             </Form.Item>
           </Col>
         </Row>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item label="Xe điện áp dụng" name="electricVehiclesId">
-              <Select
-                mode="multiple"
-                allowClear
-                disabled={isStaff}
-                placeholder="Chọn xe điện áp dụng"
-                options={vehicleOptions.map((v) => ({
-                  label: v.name,
-                  value: v.id,
-                }))}
-              />
-            </Form.Item>
-          </Col>
+        {canFetchDealers && (
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Thêm Dealer áp dụng" name="dealerIds">
+                <Select
+                  mode="multiple"
+                  allowClear
+                  options={dealerOptions}
+                  placeholder="Chọn dealer mới để áp dụng thêm"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Thêm mẫu xe áp dụng" name="electricVehicleIds">
+                <Select
+                  mode="multiple"
+                  allowClear
+                  options={vehicleOptions}
+                  placeholder="Chọn xe mới để áp dụng thêm"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
 
+        {(p.dealerIds?.length || p.electricVehicleIds?.length) && (
+          <Row gutter={16}>
+            <Col span={12}>
+              <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                Dealer hiện đang áp dụng:
+              </div>
+              <Space wrap>
+                {(p.dealerIds ?? []).map((d) => (
+                  <Tag key={d}>{d}</Tag>
+                ))}
+              </Space>
+            </Col>
+            <Col span={12}>
+              <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                Mẫu xe hiện đang áp dụng:
+              </div>
+              <Space wrap>
+                {(p.electricVehicleIds ?? []).map((v) => (
+                  <Tag key={v}>{v}</Tag>
+                ))}
+              </Space>
+            </Col>
+          </Row>
+        )}
+
+        <Row gutter={16}>
           <Col span={12}>
             <Form.Item label="Thời gian áp dụng" name="duration">
-              <RangePicker className="w-full" showTime disabled={isStaff} />
+              <RangePicker
+                className="w-full"
+                showTime
+                disabled={!isManager}
+                format="YYYY-MM-DD HH:mm"
+                placeholder={["Chưa có ngày bắt đầu", "Chưa có ngày kết thúc"]}
+              />
             </Form.Item>
           </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={24}>
+          <Col span={12}>
             <Form.Item label="Mô tả" name="description">
               <Input.TextArea
+                disabled={isManager}
                 rows={3}
                 placeholder="Mô tả chi tiết khuyến mãi"
                 style={{ resize: "none", borderRadius: 8 }}
