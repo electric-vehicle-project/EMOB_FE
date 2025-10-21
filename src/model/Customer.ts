@@ -25,15 +25,15 @@ export type CustomerStatus =
   (typeof CustomerStatus)[keyof typeof CustomerStatus];
 
 export interface ICustomer {
-  customerID: string;
-  note?: string;
-  membershipLevel: MembershipLevel;
-  loyaltyPoints: number;
-  email: string;
-  phone: string;
+  id: string;
   fullName: string;
-  gender: Gender;
+  email: string;
+  phoneNumber: string;
   address: string;
-  dateOfBirth: string; // YYYY-MM-DD
-  status: CustomerStatus;
+  note?: string;
+  dateOfBirth: string; // hoặc Date nếu bạn xử lý qua dayjs
+  gender: "MALE" | "FEMALE";
+  loyaltyPoints: number;
+  memberShipLevel: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
+  status?: "ACTIVE" | "INACTIVE" | "BANNED";
 }
