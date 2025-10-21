@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { Form } from "antd";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { useVerifyOtpMutation } from "../../service/authenticationService";
+import { useResendOtpMutation, useVerifyOtpMutation } from "../../service/authenticationService";
 import { ROUTES } from "../../model/routePaths";
 import { toast } from "react-toastify";
 
@@ -10,7 +11,7 @@ export const OTPForm = () => {
   const [form] = Form.useForm();
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const [otp, setOtp] = useState(["", "", "", "", ""]);
-  const [countdown, setCountdown] = useState(120);
+  const [countdown, setCountdown] = useState(60 * 2);
   const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,11 +28,31 @@ export const OTPForm = () => {
     }
   }, [countdown, canResend]);
 
+
+
+  // --- gửi lại OTP ---
+  const { mutate: resendOtpMutation } = useResendOtpMutation();
+
   const handleResendOTP = () => {
-    setCountdown(120);
     setCanResend(false);
-    setOtp(["", "", "", "", ""]);
-    inputsRef.current[0]?.focus();
+    console.log("test");
+    
+    resendOtpMutation(
+      { email },
+      {
+        onSuccess: () => {
+          setCountdown(60 * 2);
+          toast.success("Đã gửi lại mã OTP!");
+        },
+        onError: (err: any) => {
+          setCanResend(true);
+          setCountdown(5);
+          const msg =
+            err?.response?.data?.toast || "Gửi lại thất bại. Vui lòng thử lại!";
+          toast.error(msg);
+        },
+      },
+    );
   };
 
   // --- Handle input change ---
@@ -39,7 +60,7 @@ export const OTPForm = () => {
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
-    const value = e.target.value.replace(/\D/g, ""); // only digits
+    const value = e.target.value.replace(/\D/g, ""); 
     if (!value) return;
 
     const newOtp = [...otp];
@@ -91,13 +112,13 @@ export const OTPForm = () => {
     }
 
     verifyOtpMutation(
-      { otpCode,email  }, // body JSON
+      { otpCode, email }, // body JSON
       {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (res: any) => {
           const token = res.data.result.token;
-          console.log("token",{token});
-          
+          console.log("token", { token });
+
           if (token) {
             localStorage.setItem("token", token);
             toast.success("Xác thực OTP thành công!");
@@ -187,7 +208,7 @@ export const OTPForm = () => {
           )}
         </p>
 
-        <Link to="/auth/login">
+        <Link to={ROUTES.AUTH + "/" + ROUTES.LOGIN}>
           <p className="text-sm text-[#627254] hover:underline">Đăng nhập</p>
         </Link>
       </div>

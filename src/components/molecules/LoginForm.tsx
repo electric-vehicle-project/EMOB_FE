@@ -38,7 +38,7 @@ export const LoginForm = () => {
 
           //thông báo & điều hướng
           toast.success("Đăng nhập thành công!");
-          navigate(`/${user.role}`);
+          navigate(`/${user.role.toLowerCase()}`);
 
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
