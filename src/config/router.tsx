@@ -13,8 +13,8 @@ import ReportPage from "../page/ReportPage";
 
 // ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
-import { CustomerPage } from "../page/CustomerPage";
-import { CustomerDetailPage } from "../page/CustomerDetailPage";
+import { CustomerPage } from "../page/customer/CustomerPage";
+import { CustomerDetailPage } from "../page/customer/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
 
 // ===== PROFILE PAGES =====
@@ -31,6 +31,8 @@ import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
 
 // ===== ROUTES =====
 import { ROUTES } from "../model/routePaths";
+import { CustomerCreatePage } from "../page/customer/CustomerCreatePage";
+import { CustomerEditPage } from "../page/customer/CustomerEditPage";
 
 //       ROUTER SETUP
 export const routes: RouteObject[] = [
@@ -71,8 +73,6 @@ export const routes: RouteObject[] = [
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /admin/testdrive
       { path: ROUTES.REPORT, element: <ReportPage /> }, // /admin/report
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /admin/customers
-      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /admin/customers/:id
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> }, // /admin/promotions
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /admin /promotions/edit/:id
       { path: "test", element: <TestPage /> }, // /admin/test
@@ -87,6 +87,8 @@ export const routes: RouteObject[] = [
       { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /manager/promotions
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /manager/promotions/create
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /manager/promotions/edit/:id
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /manager/customers
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /manager/customers/:id
     ],
   },
 
@@ -98,6 +100,10 @@ export const routes: RouteObject[] = [
       { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /dealer-staff/promotions
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /dealer-staff/promotions/create
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /dealer-staff/promotions/edit/:id
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /dealer-staff/customers
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /dealer-staff/customers/:id
+      { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> }, // /dealer-staff/customers/create
+      { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> }, // /dealer-staff/customers/create
     ],
   },
 

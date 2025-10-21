@@ -9,11 +9,14 @@ export const ROUTES = {
   DEALER_STAFF: "/dealer-staff",
   EVM_STAFF: "/evm-staff",
   MANAGER: "/manager",
-
+  // ====== CUSTOMERS ======
+  CUSTOMERS: "customers",
+  CUSTOMER_CREATE: "customers/create",
+  CUSTOMER_DETAIL: "customers/:id",
+  CUSTOMER_EDIT: "customers/edit/:id",
   // ====== ADMIN MODULES ======
   DEALERS: "dealers",
-  CUSTOMERS: "customers",
-  CUSTOMER_DETAIL: "customers/:id",
+
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
