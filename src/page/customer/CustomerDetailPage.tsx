@@ -15,12 +15,13 @@ import {
   Select,
   DatePicker,
   InputNumber,
-  Popconfirm, // <- thêm Popconfirm
+  Popconfirm,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import { MembershipLevel, CustomerStatus, Gender } from "../../model/Customer";
+import { ROUTES } from "../../model/routePaths";
 
 type Order = {
   orderID: string;
@@ -86,6 +87,11 @@ function useAutoPageSize(rowHeight = 54, headerReserve = 380) {
 export const CustomerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ lấy prefix động từ URL (ví dụ: /dealer-staff, /manager)
+  const prefix =
+    location.pathname.split("/").slice(0, 2).join("/") || ROUTES.DEALER_STAFF;
 
   const [customer, setCustomer] = useState(initialCustomer);
   const [form] = Form.useForm();
@@ -158,9 +164,9 @@ export const CustomerDetailPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Nút quay lại */}
+      {/* ✅ Nút quay lại động */}
       <Button
-        onClick={() => navigate("/admin/customers")}
+        onClick={() => navigate(`${prefix}/customers`)}
         style={{
           backgroundColor: "#627254",
           color: "white",
@@ -236,7 +242,6 @@ export const CustomerDetailPage = () => {
                 Chỉnh sửa
               </Button>
 
-              {/* Xoá khách hàng: hover nền đỏ + chữ trắng, có pop up xác nhận */}
               <Popconfirm
                 title="Xác nhận xoá khách hàng?"
                 description="Hành động này sẽ xoá khách hàng khỏi hệ thống."
@@ -253,8 +258,7 @@ export const CustomerDetailPage = () => {
                   // TODO: Gọi API xoá khách hàng theo ID
                   // await api.delete(`/customers/${customer.customerID}`)
                   message.success("Đã xoá khách hàng");
-                  // TODO: Có thể điều hướng về danh sách:
-                  // navigate("/admin/customers");
+                  navigate(`${prefix}/customers`);
                 }}
               >
                 <Button
@@ -295,7 +299,7 @@ export const CustomerDetailPage = () => {
         </Col>
       </Row>
 
-      {/* Modal CHỈNH SỬA – giống CustomerPage + regex */}
+      {/* Modal CHỈNH SỬA */}
       <Modal
         title="Chỉnh sửa thông tin khách hàng"
         open={isEditOpen}
