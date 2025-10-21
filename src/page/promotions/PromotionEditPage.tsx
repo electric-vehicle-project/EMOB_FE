@@ -32,7 +32,13 @@ import { useGetVehicles } from "../../service/vehicleService";
 
 const { RangePicker } = DatePicker;
 
-type PromoType = "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT";
+type PromoType = "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
+const normalizeType = (t?: string): PromoType => {
+  if (t === "FIXED_AMOUNT") return "FIXED_AMOUNT";
+  if (t === "POINT") return "POINT";
+  // các giá trị cũ như AMOUNT/ACCESSORY/INSTALLMENT_SUPPORT → mặc định %
+  return "PERCENTAGE";
+};
 
 interface DealerOption {
   id: string;
@@ -126,7 +132,6 @@ export default function PromotionEditPage() {
     if (!data?.result) return;
     const p = data.result as PromotionDetail;
 
-    // ✅ Fix Invalid Date
     const start =
       p.startDate && dayjs(p.startDate).isValid()
         ? dayjs(p.startDate)
@@ -137,7 +142,7 @@ export default function PromotionEditPage() {
     form.setFieldsValue({
       name: p.name,
       description: p.description,
-      type: p.type,
+      type: normalizeType(p.type),
       value: p.value,
       minValue: p.minValue,
       duration: start && end ? [start, end] : undefined,
@@ -170,7 +175,7 @@ export default function PromotionEditPage() {
           id: id as string,
           data: {
             value: values.value ?? 0,
-            minPrice: values.minValue ?? 0, // ✅ BE dùng minPrice
+            minPrice: values.minValue ?? 0, // BE dùng minPrice
             type: values.type ?? "PERCENTAGE",
             startDate: start?.toISOString(),
             endDate: end?.toISOString(),
@@ -228,9 +233,8 @@ export default function PromotionEditPage() {
                 disabled={!isManager}
                 options={[
                   { label: "Giảm theo phần trăm (%)", value: "PERCENTAGE" },
-                  { label: "Giảm cố định (VNĐ)", value: "AMOUNT" },
-                  { label: "Tặng phụ kiện", value: "ACCESSORY" },
-                  { label: "Hỗ trợ trả góp", value: "INSTALLMENT_SUPPORT" },
+                  { label: "Giảm cố định (VNĐ)", value: "FIXED_AMOUNT" },
+                  { label: "Điểm Thưởng", value: "POINT" },
                 ]}
               />
             </Form.Item>
