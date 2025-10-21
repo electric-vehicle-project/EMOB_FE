@@ -225,7 +225,7 @@ export default function PromotionEditPage() {
           <Col span={12}>
             <Form.Item label="Loại khuyến mãi" name="type">
               <Select
-                disabled={!isEvmStaff && !isDealerStaff}
+                disabled={!isManager}
                 options={[
                   { label: "Giảm theo phần trăm (%)", value: "PERCENTAGE" },
                   { label: "Giảm cố định (VNĐ)", value: "AMOUNT" },
