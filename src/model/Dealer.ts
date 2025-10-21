@@ -1,9 +1,8 @@
-// src/model/Dealer.ts
 export interface IDealer {
-  id: number;
+  id: string; // hoặc id: string | number nếu bạn muốn linh hoạt
   name: string;
   email: string;
   phone: string;
   address: string;
-  status: "Active" | "Inactive";
+  status: string;
 }
