@@ -32,6 +32,7 @@ export default function PromotionCreatePage() {
   const [form] = Form.useForm<PromotionFormValues>();
   const navigate = useNavigate();
 
+  // ===== USER INFO & ROLE =====
   const user = useSelector((s: RootState) => s.user ?? {}) as Partial<{
     id: string;
     dealerId: string;
@@ -41,9 +42,20 @@ export default function PromotionCreatePage() {
   const role = user.role ?? "EVM_STAFF";
   const isDealerStaff = role === "DEALER_STAFF";
   const isEvmStaff = role === "EVM_STAFF";
+  const isAdmin = role === "ADMIN";
 
+  const canFetchDealers = isEvmStaff || isAdmin;
+
+  // ===== API HOOKS =====
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
+  const { data: dealersData, isLoading: loadingDealers } = useGetDealers({
+    enabled: canFetchDealers, // ✅ chỉ gọi khi có quyền
+  });
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
+    enabled: true, // luôn được phép gọi
+  });
 
+  // ===== STATE LOCAL =====
   const [dealerOptions, setDealerOptions] = useState<
     { id: string; name: string }[]
   >([]);
@@ -52,13 +64,7 @@ export default function PromotionCreatePage() {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // ===== GỌI API CHỈ KHI ROLE LÀ EVM_STAFF HOẶC ADMIN =====
-  const { data: dealersData, isLoading: loadingDealers } = useGetDealers(
-    {},
-    { enabled: isEvmStaff || role === "ADMIN" } // tránh 403
-  );
-  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles();
-
+  // ===== XỬ LÝ DỮ LIỆU TRẢ VỀ =====
   useEffect(() => {
     if (vehiclesData) {
       const vehicles =
@@ -66,7 +72,6 @@ export default function PromotionCreatePage() {
         vehiclesData?.result ??
         vehiclesData ??
         [];
-
       setVehicleOptions(
         vehicles.map((v: { id: string; name: string }) => ({
           id: v.id,
@@ -75,10 +80,9 @@ export default function PromotionCreatePage() {
       );
     }
 
-    if (dealersData) {
+    if (dealersData && canFetchDealers) {
       const dealers =
         dealersData?.result?.data ?? dealersData?.result ?? dealersData ?? [];
-
       setDealerOptions(
         dealers.map((d: { id: string; name: string }) => ({
           id: d.id,
@@ -87,17 +91,17 @@ export default function PromotionCreatePage() {
       );
     }
 
-    if (vehiclesData || dealersData) setLoading(false);
-  }, [dealersData, vehiclesData]);
+    if (vehiclesData || (dealersData && canFetchDealers)) setLoading(false);
+  }, [dealersData, vehiclesData, canFetchDealers]);
 
-  // ===== Khởi tạo giá trị mặc định cho DEALER_STAFF =====
+  // ===== KHỞI TẠO GIÁ TRỊ MẶC ĐỊNH CHO DEALER_STAFF =====
   useEffect(() => {
     if (isDealerStaff && user.dealerId) {
       form.setFieldsValue({ dealerId: [user.dealerId] });
     }
   }, [isDealerStaff, user.dealerId, form]);
 
-  // ===== Submit form =====
+  // ===== SUBMIT FORM =====
   const handleSubmit = async (values: PromotionFormValues) => {
     try {
       const payload = {
@@ -122,6 +126,7 @@ export default function PromotionCreatePage() {
     }
   };
 
+  // ===== LOADING =====
   if (loading || loadingDealers || loadingVehicles) {
     return (
       <div style={{ textAlign: "center", marginTop: 100 }}>
@@ -130,13 +135,14 @@ export default function PromotionCreatePage() {
     );
   }
 
-  // ===== Kiểm tra quyền truy cập =====
-  if (!isDealerStaff && !isEvmStaff && role !== "ADMIN") {
+  // ===== CHECK QUYỀN TRUY CẬP =====
+  if (!isDealerStaff && !isEvmStaff && !isAdmin) {
     antdMessage.warning("Bạn không có quyền truy cập trang này!");
     navigate(-1);
     return null;
   }
 
+  // ===== RENDER UI =====
   return (
     <div style={{ padding: 24 }}>
       <Space style={{ marginBottom: 20 }}>
@@ -154,7 +160,7 @@ export default function PromotionCreatePage() {
           <Select
             mode="multiple"
             allowClear
-            disabled={isDealerStaff}
+            disabled={isDealerStaff} // ✅ staff không chọn được
             placeholder={
               isDealerStaff
                 ? "Tự động gán dealerId của bạn"
