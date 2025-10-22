@@ -3,26 +3,47 @@ import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined } from "@ant-design/icons";
+import { useForgetPasswordMutation } from "../../service/authenticationService";
+import { ROUTES } from "../../model/routePaths";
 
-interface FormValues {
+interface ForgetPasswordFormValues {
   email: string;
 }
 
 export const ForgetPasswordForm = () => {
   const navigate = useNavigate();
-  const [form] = Form.useForm<FormValues>();
 
-  // --- Hàm xử lý gửi OTP ---
-  const handleSendOTP = (values: FormValues) => {
+  const { mutate: forgetPasswordMutation, isPending } = useForgetPasswordMutation();
+  const [form] = Form.useForm<ForgetPasswordFormValues>();
+
+  const handleSendEmail = (values: ForgetPasswordFormValues) => {
     const { email } = values;
-    navigate("/auth/forget-password-otp", { state: { email } });
+
+    forgetPasswordMutation(
+      { email },
+      {
+        onSuccess: () => {
+          navigate(`/auth/forget-password-otp`, { state: { email } });
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
+          console.error("Email verify failed:", error);
+          form.setFields([
+            {
+              name: "email",
+              errors: ["Email không tồn tại, vui lòng thử  lại."],
+            },
+          ]);
+        },
+      }
+    );
   };
 
   return (
     <Form
       layout="vertical"
       form={form}
-      onFinish={handleSendOTP}
+      onFinish={handleSendEmail}
       className="space-y-10"
     >
       {/* --- Trường nhập email --- */}
@@ -45,21 +66,25 @@ export const ForgetPasswordForm = () => {
               }}
             />
           }
-          className="h-13 !p-5"
+          className="h-13 !pl-5 !pr-5"
           placeholder="Nhập địa chỉ email"
         />
       </Form.Item>
 
       {/* --- Nút gửi OTP --- */}
-      <Form.Item className="!pt-5">
-        <Link to="/auth/forget-password-otp">
-          <ButtonPrimary className="!h-12 w-full">Gửi OTP</ButtonPrimary>
-        </Link>
+      <Form.Item className="!pt-10">
+        <ButtonPrimary
+          className="!h-12 w-full"
+          htmlType="submit"
+          disabled={isPending}
+        >
+          {isPending ? "Đang xử lý..." : "Gửi OTP"}
+        </ButtonPrimary>
       </Form.Item>
 
       {/* --- Liên kết trở về đăng nhập --- */}
       <div className="flex justify-center">
-        <Link to="/auth/login">
+        <Link to={ROUTES.AUTH + '/' + ROUTES.LOGIN}>
           <p className="text-sm text-[#627254] hover:underline">Đăng nhập</p>
         </Link>
       </div>

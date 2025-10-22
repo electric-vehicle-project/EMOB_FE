@@ -1,22 +1,33 @@
 export const ROUTES = {
+  
+  // ====== HOMEPAGE ======
   HOME: "/",
+  
+  // ====== ROLE ======
   ADMIN: "/admin",
+  MANAGER: "/manager",
+  DEALER_STAFF: "/dealer_staff",
+  EVM_STAFF: "/evm_staff",
+  
+  // ====== DASHBOARD ======
   DASHBOARD: "/dashboard",
+  
+  // ====== AUTHENTICATION ======
   AUTH: "/auth",
   LOGIN: "login",
   REGISTER: "register",
+  FORGET_PASSWORD: "forget-password",
+  FORGET_PASSWORD_OTP: "forget-password-otp",
+  RESET_PASSWORD: "reset-password",
 
-  DEALER_STAFF: "/dealer-staff",
-  EVM_STAFF: "/evm-staff",
-  MANAGER: "/manager",
   // ====== CUSTOMERS ======
   CUSTOMERS: "customers",
   CUSTOMER_CREATE: "customers/create",
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
+  
   // ====== ADMIN MODULES ======
   DEALERS: "dealers",
-
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
