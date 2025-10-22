@@ -14,6 +14,7 @@ import {
   PlusOutlined,
   DollarOutlined,
 } from "@ant-design/icons";
+import { VehicleUnitListModal } from "./VehicleUnitListModal"; // ✅ thêm modal vào
 
 export const VehicleDetailPage = () => {
   const { id } = useParams();
@@ -28,6 +29,7 @@ export const VehicleDetailPage = () => {
   const vehicle = data?.result;
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [openUnits, setOpenUnits] = useState(false); // ✅ modal state
 
   // ✅ Loading state
   if (isLoading)
@@ -242,6 +244,13 @@ export const VehicleDetailPage = () => {
           </div>
         </div>
       </Card>
+
+      {/* ✅ Modal xem danh sách lô xe */}
+      <VehicleUnitListModal
+        open={openUnits}
+        onClose={() => setOpenUnits(false)}
+        vehicleId={id ?? ""} // ✅ truyền id của xe hiện tại
+      />
     </div>
   );
 };

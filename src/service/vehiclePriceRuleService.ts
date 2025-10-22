@@ -1,7 +1,7 @@
 import {
   createQueryHook,
   createQueryWithPathParamHook,
-  createMutationHook,
+  updateMutationHook,
 } from "../hook/useApi";
 
 // ✅ GET all
@@ -17,7 +17,7 @@ export const useGetVehiclePriceRuleByStatus = createQueryWithPathParamHook(
 );
 
 // ✅ PUT update (Admin)
-export const usePutVehiclePriceRules = createMutationHook(
+export const usePutVehiclePriceRules = updateMutationHook(
   "vehiclePriceRulesUpdate",
   "/vehicle-price-rules"
 );

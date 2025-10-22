@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   Form,
@@ -10,7 +10,6 @@ import {
   message,
   Skeleton,
   Image,
-  Tag,
   Space,
 } from "antd";
 import dayjs from "dayjs";
@@ -20,6 +19,7 @@ import {
   useGetVehicleById,
   useBulkCreateVehicleUnits,
 } from "../../service/vehicleService";
+import api from "../../config/api";
 import { ROUTES } from "../../model/routePaths";
 
 const { Option } = Select;
@@ -35,6 +35,10 @@ export const VehicleBulkPage = () => {
   );
   const bulkCreate = useBulkCreateVehicleUnits();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [multiplier, setMultiplier] = useState<number>(1);
+  const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+
+  const basePrice = vehicleData?.result?.importPrice ?? 0;
 
   type FormValues = {
     quantity: number;
@@ -52,9 +56,24 @@ export const VehicleBulkPage = () => {
       | "SOLD";
   };
 
+  const handleStatusChange = async (status: FormValues["status"]) => {
+    try {
+      const res = await api.get(`/vehicle-price-rules/${status}`);
+      const newMultiplier = res?.data?.result?.multiplier ?? 1;
+      setMultiplier(newMultiplier);
+      setCalculatedPrice(basePrice * newMultiplier);
+    } catch {
+      message.error("Không thể lấy thông tin quy tắc giá!");
+      setMultiplier(1);
+      setCalculatedPrice(basePrice);
+    }
+  };
+
   const handleSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
+      const finalPrice = basePrice * multiplier;
+
       await bulkCreate.mutateAsync({
         vehicleId: vehicleId ?? "",
         quantity: values.quantity,
@@ -64,13 +83,15 @@ export const VehicleBulkPage = () => {
         warrantyStart: values.warrantyStart.format("YYYY-MM-DD"),
         warrantyEnd: values.warrantyEnd.format("YYYY-MM-DD"),
         status: values.status,
+        price: finalPrice,
       });
 
       message.success(
-        `✅ Nhập thành công ${values.quantity} xe màu ${values.color}!`
+        `✅ Nhập ${values.quantity} xe (${
+          values.status
+        }) thành công — Giá mỗi xe: ${finalPrice.toLocaleString()}₫`
       );
 
-      // ✅ Quay về trang danh sách xe
       setTimeout(() => {
         navigate(`${ROUTES.DASHBOARD}/${ROUTES.EVM_VEHICLE}`);
       }, 1000);
@@ -83,14 +104,15 @@ export const VehicleBulkPage = () => {
   };
 
   const vehicleInfo = vehicleData?.result;
-
-  // ✅ Lấy ảnh chính
   const imageList: string[] = Array.isArray(vehicleInfo?.images)
     ? vehicleInfo.images.filter((u: string) => !!u && /^https?:\/\//i.test(u))
     : [];
-
   const mainImage =
     imageList[0] || "https://via.placeholder.com/400x300?text=No+Image";
+
+  useEffect(() => {
+    if (basePrice) setCalculatedPrice(basePrice * multiplier);
+  }, [basePrice, multiplier]);
 
   return (
     <div className="flex justify-center min-h-[90vh] bg-gray-50 py-10 px-4">
@@ -131,12 +153,14 @@ export const VehicleBulkPage = () => {
                   {vehicleInfo.brand} – {vehicleInfo.model}
                 </h3>
                 <p className="text-gray-500 text-sm">
-                  Loại:{" "}
-                  <Tag color="green" className="font-medium">
-                    {vehicleInfo.type}
-                  </Tag>{" "}
-                  | Pin: {vehicleInfo.batteryKwh} kWh | Tầm hoạt động:{" "}
-                  {vehicleInfo.rangeKm} km
+                  Loại: {vehicleInfo.type} | Pin: {vehicleInfo.batteryKwh} kWh |{" "}
+                  Tầm hoạt động: {vehicleInfo.rangeKm} km
+                </p>
+                <p className="text-gray-700 font-medium mt-2">
+                  Giá nhập:{" "}
+                  <span className="text-[#627254]">
+                    {vehicleInfo.importPrice?.toLocaleString()}₫
+                  </span>
                 </p>
               </div>
             </div>
@@ -156,14 +180,37 @@ export const VehicleBulkPage = () => {
                 }}
                 className="space-y-2"
               >
-                <Form.Item
-                  label="Số lượng cần nhập"
-                  name="quantity"
-                  rules={[{ required: true, message: "Nhập số lượng" }]}
-                >
-                  <InputNumber min={1} className="w-full" />
-                </Form.Item>
+                {/* 🔹 Hàng đầu tiên: Số lượng & Giá dự kiến */}
+                <Space direction="horizontal" size="middle" className="w-full">
+                  <Form.Item
+                    label="Số lượng cần nhập"
+                    name="quantity"
+                    className="flex-1"
+                    rules={[{ required: true, message: "Nhập số lượng" }]}
+                  >
+                    <InputNumber min={1} className="w-full" />
+                  </Form.Item>
 
+                  {/* ✅ Ô hiển thị giá dự kiến (read-only, có công thức rõ ràng) */}
+                  <Form.Item
+                    label="Giá dự kiến (Import Price × Multiplier)"
+                    className="flex-1"
+                  >
+                    <InputNumber
+                      value={calculatedPrice}
+                      readOnly
+                      className="w-full"
+                      formatter={(value) =>
+                        `${Number(value || 0).toLocaleString()}`
+                      }
+                    />
+                    <div className="text-xs text-gray-500 mt-1 text-right">
+                      {basePrice.toLocaleString()}₫ × {multiplier}
+                    </div>
+                  </Form.Item>
+                </Space>
+
+                {/* 🔹 Màu sơn */}
                 <Form.Item
                   label="Màu sơn"
                   name="color"
@@ -172,6 +219,7 @@ export const VehicleBulkPage = () => {
                   <Input placeholder="Ví dụ: Trắng, Đen, Xanh..." />
                 </Form.Item>
 
+                {/* 🔹 Năm sản xuất */}
                 <Form.Item
                   label="Năm sản xuất"
                   name="productionYear"
@@ -180,6 +228,7 @@ export const VehicleBulkPage = () => {
                   <DatePicker picker="year" className="w-full" />
                 </Form.Item>
 
+                {/* 🔹 Ngày mua & bảo hành */}
                 <Space direction="horizontal" size="middle" className="w-full">
                   <Form.Item
                     label="Ngày mua (Purchase Date)"
@@ -208,12 +257,13 @@ export const VehicleBulkPage = () => {
                   <DatePicker className="w-full" />
                 </Form.Item>
 
+                {/* 🔹 Tình trạng */}
                 <Form.Item
                   label="Tình trạng ban đầu"
                   name="status"
                   rules={[{ required: true, message: "Chọn tình trạng xe" }]}
                 >
-                  <Select>
+                  <Select onChange={handleStatusChange}>
                     <Option value="NORMAL">Xe mới (bình thường)</Option>
                     <Option value="SPECIAL">Xe trưng bày / đặc biệt</Option>
                     <Option value="OLD_STOCK">
@@ -225,6 +275,7 @@ export const VehicleBulkPage = () => {
                   </Select>
                 </Form.Item>
 
+                {/* 🔹 Submit */}
                 <Button
                   type="primary"
                   htmlType="submit"

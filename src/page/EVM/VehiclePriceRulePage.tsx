@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
 import {
-  Card,
   Table,
   InputNumber,
   Input,
   Tag,
-  Button,
   message,
-  Space,
   Typography,
   Skeleton,
 } from "antd";
-import { useNavigate } from "react-router-dom";
+import type { ColumnsType } from "antd/es/table";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import {
-  useGetVehiclePriceRules,
-  usePutVehiclePriceRules,
-} from "../../service/vehiclePriceRuleService";
+import { useGetVehiclePriceRules } from "../../service/vehiclePriceRuleService";
+import api from "../../config/api";
+import { Button } from "../../components/atoms/Button";
 
 const { Text } = Typography;
 
@@ -27,52 +23,35 @@ interface VehiclePriceRule {
 }
 
 export const VehiclePriceRulePage = () => {
-  const navigate = useNavigate();
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
   const isAdmin = role === "ADMIN";
 
-  // 🧩 Gọi API hooks
   const { data, isLoading, error } = useGetVehiclePriceRules();
-  const updateRules = usePutVehiclePriceRules();
-
   const [rules, setRules] = useState<VehiclePriceRule[]>([]);
-  const [basePrice, setBasePrice] = useState(500_000_000);
 
-  // ✅ Đồng bộ dữ liệu khi fetch xong
+  // ✅ Load data từ API
   useEffect(() => {
     if (data?.result && Array.isArray(data.result)) {
       setRules(data.result);
-    } else {
-      // Nếu chưa có dữ liệu thì hiển thị bộ mặc định
-      setRules([
-        { vehicleStatus: "NORMAL", multiplier: 1.0, note: "Xe tiêu chuẩn" },
-        {
-          vehicleStatus: "SPECIAL",
-          multiplier: 1.2,
-          note: "Xe trưng bày / đặc biệt",
-        },
-        { vehicleStatus: "OLD_STOCK", multiplier: 0.8, note: "Xe tồn kho cũ" },
-        { vehicleStatus: "TEST_DRIVE", multiplier: 0.9, note: "Xe lái thử" },
-        { vehicleStatus: "RESERVED", multiplier: 1.0, note: "Xe được đặt" },
-        { vehicleStatus: "SOLD", multiplier: 1.0, note: "Xe đã bán" },
-      ]);
     }
   }, [data]);
 
-  // ⚠️ Nếu lỗi 400 hoặc 403
+  // ⚠️ Handle error fetch
   useEffect(() => {
     if (error) {
       const err = error as { response?: { status?: number } };
-      if (err.response?.status === 403) {
+      if (err.response?.status === 401) {
+        message.error("🔒 Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!");
+      } else if (err.response?.status === 403) {
         message.error("⛔ Bạn không có quyền truy cập trang này!");
       } else {
-        message.error("❌ Không thể tải dữ liệu Price Rules!");
+        message.error("❌ Không thể tải dữ liệu quy tắc giá!");
       }
     }
   }, [error]);
 
-  // 💾 PUT cập nhật rule (Admin-only)
+  // 💾 Lưu thay đổi
   const handleSave = async () => {
     if (!isAdmin) {
       message.warning("⛔ Chỉ Admin mới được chỉnh sửa quy tắc giá!");
@@ -80,23 +59,24 @@ export const VehiclePriceRulePage = () => {
     }
 
     try {
-      console.log("🔹 Sending rules:", rules);
-      await updateRules.mutateAsync(rules);
+      await api.put("/vehicle-price-rules", rules);
       message.success("✅ Cập nhật quy tắc giá thành công!");
     } catch (err: unknown) {
-      console.error("❌ PUT /vehicle-price-rules failed:", err);
-      const axiosErr = err as { response?: { status?: number } };
-      if (axiosErr?.response?.status === 400) {
-        message.error("⚠️ Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!");
-      } else if (axiosErr?.response?.status === 403) {
+      const status = (err as { response?: { status?: number } })?.response
+        ?.status;
+      if (status === 401) {
+        message.error("🔒 Token không hợp lệ hoặc đã hết hạn!");
+      } else if (status === 403) {
         message.error("⛔ Bạn không có quyền cập nhật!");
+      } else if (status === 400) {
+        message.error("⚠️ Dữ liệu không hợp lệ, vui lòng kiểm tra lại!");
       } else {
         message.error("❌ Lưu thất bại, vui lòng thử lại!");
       }
     }
   };
 
-  // 🧮 Xử lý khi thay đổi multiplier / note
+  // 🧩 Cập nhật rule
   const handleChange = (
     status: string,
     field: keyof VehiclePriceRule,
@@ -109,7 +89,26 @@ export const VehiclePriceRulePage = () => {
     );
   };
 
-  // 🎨 Màu tag cho từng trạng thái
+  // 🟩 Hiển thị trạng thái tiếng Việt
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "NORMAL":
+        return "Xe tiêu chuẩn";
+      case "SPECIAL":
+        return "Xe đặc biệt / trưng bày";
+      case "OLD_STOCK":
+        return "Xe tồn kho cũ";
+      case "TEST_DRIVE":
+        return "Xe lái thử";
+      case "RESERVED":
+        return "Xe được đặt trước";
+      case "SOLD":
+        return "Xe đã bán";
+      default:
+        return status;
+    }
+  };
+
   const getTagColor = (status: string) => {
     switch (status) {
       case "NORMAL":
@@ -129,120 +128,121 @@ export const VehiclePriceRulePage = () => {
     }
   };
 
-  const formatPrice = (v: number) =>
-    v.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+  // 🟦 Hàm chọn màu tag cho role (4 loại)
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case "ADMIN":
+        return "green";
+      case "EVM_STAFF":
+        return "blue";
+      case "DEALER_MANAGER":
+        return "orange";
+      case "DEALER_STAFF":
+        return "purple";
+      default:
+        return "default";
+    }
+  };
 
-  // 🧾 Cấu hình Table
-  const columns = [
+  const columns: ColumnsType<VehiclePriceRule> = [
     {
       title: "Trạng thái xe",
       dataIndex: "vehicleStatus",
+      align: "center",
       render: (status: string) => (
-        <Tag color={getTagColor(status)}>{status}</Tag>
+        <Tag color={getTagColor(status)}>{statusLabel(status)}</Tag>
       ),
     },
     {
-      title: "Hệ số nhân (Multiplier)",
+      title: "Hệ số nhân giá (Multiplier)",
       dataIndex: "multiplier",
+      align: "center",
       render: (val: number, record: VehiclePriceRule) =>
         isAdmin ? (
           <InputNumber
-            min={0.1}
-            max={5}
-            step={0.1}
             value={val}
             onChange={(v) =>
               handleChange(record.vehicleStatus, "multiplier", v)
             }
+            style={{
+              textAlign: "center",
+              width: "80px",
+            }}
           />
         ) : (
           <Text>{val}</Text>
         ),
     },
     {
-      title: "Ghi chú",
+      title: <div style={{ textAlign: "center" }}>Ghi chú</div>,
       dataIndex: "note",
+      align: "center",
       render: (val: string, record: VehiclePriceRule) =>
         isAdmin ? (
-          <Input
+          <Input.TextArea
             value={val}
+            autoSize={{ minRows: 1, maxRows: 3 }}
             onChange={(e) =>
               handleChange(record.vehicleStatus, "note", e.target.value)
             }
+            style={{
+              borderRadius: 8,
+              textAlign: "left",
+              resize: "none",
+              whiteSpace: "pre-wrap",
+            }}
           />
         ) : (
-          <Text>{val}</Text>
+          <Text style={{ whiteSpace: "pre-wrap" }}>{val}</Text>
         ),
-    },
-    {
-      title: "Giá thực tế (Base × Multiplier)",
-      key: "price",
-      render: (_: unknown, record: VehiclePriceRule) => (
-        <Text strong className="text-[#627254]">
-          {formatPrice(basePrice * record.multiplier)}
-        </Text>
-      ),
     },
   ];
 
   return (
-    <div className="flex justify-center min-h-[85vh] bg-gray-50 py-8 px-4">
-      <Card
-        bordered={false}
-        className="w-full max-w-6xl shadow-md rounded-2xl p-6"
-        title={
-          <div className="flex justify-between items-center">
-            <Text strong className="text-lg">
-              ⚙️ Vehicle Price Rule Management
-            </Text>
-            <Button onClick={() => navigate(-1)}>Quay lại</Button>
-          </div>
-        }
-      >
-        {isLoading ? (
-          <Skeleton active paragraph={{ rows: 6 }} />
-        ) : (
-          <>
-            <div className="flex justify-end mb-4">
-              <Space>
-                <Text strong>Giá cơ bản:</Text>
-                <InputNumber
-                  min={10_000_000}
-                  step={10_000_000}
-                  style={{ width: 180 }}
-                  value={basePrice}
-                  onChange={(v) => setBasePrice(v ?? 0)}
-                  disabled={!isAdmin}
-                  formatter={(v) =>
-                    `${Number(v || 0).toLocaleString("vi-VN")} ₫`
-                  }
-                />
-              </Space>
+    <div className="p-6 bg-white shadow rounded-lg">
+      {/* ✅ Tiêu đề giống VehiclePage */}
+      <h1 className="text-2xl font-semibold text-gray-800 mb-4">
+        Quản lý quy tắc giá xe
+      </h1>
+
+      {/* ✅ Thẻ Role đồng bộ hoàn toàn */}
+      <p className="text-gray-600 mb-6">
+        <Tag
+          color={getRoleColor(role)}
+          className="text-base font-medium px-4 py-1"
+        >
+          {role}
+        </Tag>
+      </p>
+
+      {/* ✅ Bảng nội dung */}
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 8 }} />
+      ) : (
+        <>
+          <Table
+            bordered
+            dataSource={rules}
+            pagination={false}
+            rowKey="vehicleStatus"
+            columns={columns}
+            className="rounded-xl overflow-hidden"
+            rowClassName="hover:bg-[#f1f3ef]"
+          />
+
+          {isAdmin && (
+            <div className="flex justify-end mt-6">
+              <Button
+                type="primary"
+                className="!bg-[var(--default-color)] !text-white hover:!bg-[#76885B] rounded-lg"
+                onClick={handleSave}
+              >
+                💾 Lưu thay đổi
+              </Button>
             </div>
-
-            <Table
-              columns={columns}
-              dataSource={rules}
-              pagination={false}
-              rowKey="vehicleStatus"
-              bordered
-            />
-
-            {isAdmin && (
-              <Space className="w-full flex justify-end mt-6">
-                <Button
-                  type="primary"
-                  className="bg-[#627254] hover:bg-[#76885B] text-white"
-                  onClick={handleSave}
-                  loading={updateRules.isPending}
-                >
-                  💾 Lưu thay đổi
-                </Button>
-              </Space>
-            )}
-          </>
-        )}
-      </Card>
+          )}
+        </>
+      )}
     </div>
   );
 };

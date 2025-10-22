@@ -9,7 +9,11 @@ import { useCurrentUser } from "../../../utils/getCurrentUser"; // ✅ thêm
 import type { IVehicle } from "../../../model/Vehicle";
 import { VehicleCard } from "../../molecules/EVM/VehicleCard";
 
-export const VehicleList = () => {
+interface VehicleListProps {
+  onViewUnits?: (vehicleId: string) => void;
+}
+
+export const VehicleList = ({ onViewUnits }: VehicleListProps) => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const navigate = useNavigate();
@@ -71,6 +75,7 @@ export const VehicleList = () => {
               <VehicleCard
                 vehicle={v}
                 onViewDetail={() => navigate(`/dashboard/evm/vehicle/${v.id}`)}
+                onViewUnits={() => onViewUnits?.(v.id)} // ✅ truyền id xe
               />
             </Col>
           ))}

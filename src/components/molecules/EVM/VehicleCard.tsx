@@ -1,12 +1,14 @@
-import { Card, Tag } from "antd";
+import { Card, Tag, Button } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
 import type { IVehicle } from "../../../model/Vehicle";
 
 interface Props {
   vehicle: IVehicle;
   onViewDetail: () => void;
+  onViewUnits?: (vehicleId: string) => void;
 }
 
-export const VehicleCard = ({ vehicle, onViewDetail }: Props) => {
+export const VehicleCard = ({ vehicle, onViewDetail, onViewUnits }: Props) => {
   const img =
     vehicle.images?.[0] || "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -33,6 +35,21 @@ export const VehicleCard = ({ vehicle, onViewDetail }: Props) => {
             : "—"}
         </p>
         <Tag color="green">{vehicle.type}</Tag>
+
+        {/* ✅ Nút xem lô xe */}
+        {onViewUnits && (
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewUnits(vehicle.id!);
+            }}
+            className="mt-2 p-0 h-auto"
+          >
+            Xem lô xe
+          </Button>
+        )}
       </div>
     </Card>
   );
