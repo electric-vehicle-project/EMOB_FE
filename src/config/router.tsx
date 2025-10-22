@@ -21,16 +21,21 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
-import TestPage from "../page/TestPage";
+
 import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
+import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
+import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
+import PromotionEditPage from "../page/promotions/PromotionEditPage";
+import { CustomerCreatePage } from "../page/customer/CustomerCreatePage";
+import { CustomerEditPage } from "../page/customer/CustomerEditPage";
 
 export const routes: RouteObject[] = [
   { path: ROUTES.HOME, element: <HomePage /> },
 
   // Auth layout cho login / reset password
   {
-    path: ROUTES.AUTH, 
+    path: ROUTES.AUTH,
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> },
@@ -40,7 +45,7 @@ export const routes: RouteObject[] = [
     ],
   },
 
-  // ADMIN 
+  // ADMIN
   {
     path: ROUTES.ADMIN,
     element: (
@@ -74,12 +79,11 @@ export const routes: RouteObject[] = [
     ],
   },
 
-
-  // DEALER_MANAGER + DEALER_STAFF
+  // MANAGER + DEALER_STAFF
   {
     path: ROUTES.DASHBOARD,
     element: (
-      <AuthProtect allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}>
+      <AuthProtect allowedRoles={["MANAGER", "DEALER_STAFF"]}>
         <DashboardLayout />
       </AuthProtect>
     ),
@@ -88,7 +92,42 @@ export const routes: RouteObject[] = [
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-      { path: "test", element: <TestPage /> },
+    ],
+  },
+
+  // MANAGER
+  {
+    path: ROUTES.MANAGER, // /manager
+    element: (
+      <AuthProtect allowedRoles={["MANAGER"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /manager/promotions
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /manager/promotions/create
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /manager/promotions/edit/:id
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /manager/customers
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /manager/customers/:id
+    ],
+  },
+
+  // DEALER STAFF
+  {
+    path: ROUTES.DEALER_STAFF, // /dealer-staff
+    element: (
+      <AuthProtect allowedRoles={["DEALER_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /dealer-staff/promotions
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /dealer-staff/promotions/create
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /dealer-staff/promotions/edit/:id
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /dealer-staff/customers
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /dealer-staff/customers/:id
+      { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> }, // /dealer-staff/customers/create
+      { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> }, // /dealer-staff/customers/create
     ],
   },
 

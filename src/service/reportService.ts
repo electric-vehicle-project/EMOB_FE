@@ -1,77 +1,53 @@
-import type { IReport } from "../model/report";
+// ====== CONSTANTS ======
+const QUERY_KEY = "reports";
+const BASE_URL = "/report";
 
-const LS_KEY = "emob_reports";
+// ====== GET all reports (phân trang) ======
+export const useReportList = createQueryHook(QUERY_KEY, `${BASE_URL}/view-all`);
 
-// Fallback tạo UUID nếu môi trường không có crypto.randomUUID
-const uid = () =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : "rpt-" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+// ====== GET report by ID ======
+export const useReportById = createQueryWithPathParamHook(QUERY_KEY, BASE_URL);
 
-const seed: IReport[] = [
-  {
-    reportID: uid(),
-    title: "Lỗi treo màn hình khi đặt lịch lái thử",
-    description: "Nhấn Xác nhận thì đứng ~5s.",
-    reportType: "SystemBug",
-    status: "Pending",
-    reportBy: { name: "Nguyễn Văn A", email: "vana@gmail.com" },
-    createAt: new Date().toISOString().slice(0, 10),
-  },
-  {
-    reportID: uid(),
-    title: "Cải thiện UX trang quản lý đại lý",
-    description: "Nút trên mobile hơi nhỏ, nên tăng hit area.",
-    reportType: "Suggestion",
-    status: "InReview",
-    reportBy: { name: "Trần Thị B" },
-    createAt: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-  },
-];
+// ====== CREATE report ======
+export const useReportCreate = createMutationHook(QUERY_KEY, BASE_URL);
 
-function load(): IReport[] {
-  const raw = localStorage.getItem(LS_KEY);
-  if (!raw) {
-    localStorage.setItem(LS_KEY, JSON.stringify(seed));
-    return [...seed];
-  }
-  try {
-    return JSON.parse(raw) as IReport[];
-  } catch {
-    localStorage.setItem(LS_KEY, JSON.stringify(seed));
-    return [...seed];
-  }
-}
+// ====== UPDATE report ======
+export const useReportUpdate = updateMutationHook(QUERY_KEY, BASE_URL);
 
-function save(data: IReport[]) {
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-}
+// ====== DELETE report ======
+export const useReportDelete = deleteMutationHook(QUERY_KEY, BASE_URL);
 
-export const reportService = {
-  async getReports(): Promise<IReport[]> {
-    return load();
-  },
+// ====== CHANGE STATUS ======
+import { useMutation } from "@tanstack/react-query";
+import api from "../config/api";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  createMutationHook,
+  createQueryHook,
+  createQueryWithPathParamHook,
+  deleteMutationHook,
+  updateMutationHook,
+} from "../hook/useApi";
 
-  async createReport(payload: Omit<IReport, "reportID" | "createAt" | "status"> & { status?: IReport["status"] }): Promise<IReport> {
-    const data = load();
-    const item: IReport = {
-      reportID: uid(),
-      createAt: new Date().toISOString().slice(0, 10),
-      status: payload.status ?? "Pending",
-      ...payload,
-    };
-    data.unshift(item);
-    save(data);
-    return item;
-  },
+/**
+ * PUT /api/report/process-report/{reportId}?status=...
+ * Đổi trạng thái report (PENDING, DELETED, IN_PROGRESS, RESOLVED)
+ */
+export const useReportChangeStatus = () => {
+  const queryClient = useQueryClient();
 
-  async updateReport(updated: IReport): Promise<void> {
-    const data = load().map((r) => (r.reportID === updated.reportID ? { ...updated } : r));
-    save(data);
-  },
-
-  async deleteReport(reportID: string): Promise<void> {
-    const data = load().filter((r) => r.reportID !== reportID);
-    save(data);
-  },
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: "PENDING" | "DELETED" | "IN_PROGRESS" | "RESOLVED";
+    }) => {
+      return api.put(`${BASE_URL}/process-report/${id}?status=${status}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+    },
+  });
 };
