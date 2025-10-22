@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Input, message } from "antd";
-import { accountService } from "../../service/accountService";
+import { useChangePassword } from "../../service/accountService";
 import { Button } from "../../components/atoms/Button";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
@@ -9,15 +9,28 @@ import ProfileCardWrapper from "../../components/molecules/ProfileCardWrapper";
 const ResetPasswordPage: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const changePassword = useChangePassword();
 
-  const onFinish = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+  const onFinish = async (values: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
     if (values.newPassword !== values.confirmPassword) {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    await accountService.changePassword(values.currentPassword, values.newPassword);
-    message.success("Đổi mật khẩu thành công");
-    navigate("/admin/profile/info");
+
+    try {
+      await changePassword.mutateAsync({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      });
+      message.success("Đổi mật khẩu thành công");
+      navigate("/admin/profile/info");
+    } catch {
+      message.error("Đổi mật khẩu thất bại");
+    }
   };
 
   return (
@@ -30,20 +43,43 @@ const ResetPasswordPage: React.FC = () => {
       <div className="flex justify-center">
         <LockOutlined className="text-[var(--primary-color)] text-3xl mx-auto mb-3" />
       </div>
-      <Form layout="vertical" form={form} onFinish={onFinish} requiredMark={false}>
-        <Form.Item name="currentPassword" label="Mật khẩu hiện tại" rules={[{ required: true, message: "Vui lòng nhập mật khẩu hiện tại" }]}>
+      <Form
+        layout="vertical"
+        form={form}
+        onFinish={onFinish}
+        requiredMark={false}
+      >
+        <Form.Item
+          name="currentPassword"
+          label="Mật khẩu hiện tại"
+          rules={[
+            { required: true, message: "Vui lòng nhập mật khẩu hiện tại" },
+          ]}
+        >
           <Input.Password placeholder="Nhập mật khẩu hiện tại" />
         </Form.Item>
-        <Form.Item name="newPassword" label="Mật khẩu mới" rules={[{ required: true, message: "Vui lòng nhập mật khẩu mới" }, { min: 6, message: "Tối thiểu 6 ký tự" }]}>
+        <Form.Item
+          name="newPassword"
+          label="Mật khẩu mới"
+          rules={[
+            { required: true, message: "Vui lòng nhập mật khẩu mới" },
+            { min: 6, message: "Tối thiểu 6 ký tự" },
+          ]}
+        >
           <Input.Password placeholder="Nhập mật khẩu mới" />
         </Form.Item>
-        <Form.Item name="confirmPassword" label="Xác nhận mật khẩu" rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}>
+        <Form.Item
+          name="confirmPassword"
+          label="Xác nhận mật khẩu"
+          rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}
+        >
           <Input.Password placeholder="Nhập lại mật khẩu mới" />
         </Form.Item>
         <div className="flex justify-end items-center mt-6 flex-wrap gap-3">
           <Button
             className="!bg-[#627254] hover:!bg-[#525e46] active:!bg-[#414d38] text-white rounded-xl transition-all duration-300 px-6 py-2"
             onClick={() => form.submit()}
+            loading={changePassword.isPending}
           >
             Đổi mật khẩu
           </Button>
@@ -54,5 +90,3 @@ const ResetPasswordPage: React.FC = () => {
 };
 
 export default ResetPasswordPage;
-
-
