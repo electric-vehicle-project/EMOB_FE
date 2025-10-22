@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { message } from "antd";
-import { dealerService } from "../../service/dealerService";
+import { message, Spin, Empty } from "antd";
 import type { IDealer } from "../../model/Dealer";
 import { DealerTable } from "../molecules/DealerTable";
 import { SearchBar } from "../molecules/SearchBar";
@@ -9,70 +8,132 @@ import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
 import { useDebounce } from "../../hook/useDebounce";
+import {
+  useDealerList,
+  useDealerCreate,
+  useDealerUpdate,
+  useDealerDelete,
+} from "../../service/dealerService";
 
 export const DealerList = () => {
-  const [dealers, setDealers] = useState<IDealer[]>([]);
-  const [filtered, setFiltered] = useState<IDealer[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  /**
-   * Tải danh sách đại lý từ server và cập nhật cả danh sách gốc lẫn danh sách đã lọc
-   */
-  const loadData = async () => {
-    const data = await dealerService.getDealers();
-    setDealers(data);
-    setFiltered(data);
-  };
+  // ✅ Gọi API thật (GET /dealer)
+  const { data, refetch, isLoading, isError, error } = useDealerList(
+    {},
+    { page: 0, size: 100 }
+  );
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // ✅ Chuẩn hóa dữ liệu từ API về model IDealer
+  const dealers: IDealer[] = useMemo(() => {
+    if (!data?.result?.data) return [];
+    return data.result.data.map((d: unknown) => {
+      const dealer = d as {
+        id: string;
+        name: string;
+        contactInfo?: string;
+        address?: string;
+        country?: string;
+      };
+      return {
+        id: dealer.id,
+        name: dealer.name,
+        email: dealer.contactInfo || "",
+        phone: "", // BE chưa có trường phone
+        address: dealer.address || dealer.country || "",
+        status: "Active",
+      };
+    });
+  }, [data]);
 
-  // Lọc danh sách theo từ khóa đã được debounce để tránh lọc quá thường xuyên
-  useEffect(() => {
+  // ✅ Mutation hooks
+  const createDealer = useDealerCreate();
+  const updateDealer = useDealerUpdate();
+  const deleteDealer = useDealerDelete();
+
+  // ✅ Lọc danh sách theo từ khóa
+  const filtered = useMemo(() => {
     const keyword = debouncedSearch.toLowerCase();
-    setFiltered(dealers.filter((d) => d.name.toLowerCase().includes(keyword)));
-  }, [debouncedSearch, dealers]);
+    return dealers.filter((d) => d.name.toLowerCase().includes(keyword));
+  }, [dealers, debouncedSearch]);
 
-  /**
-   * Lưu thông tin đại lý: nếu có "editDealer" thì cập nhật, ngược lại tạo mới
-   * Hiển thị thông báo theo kết quả và reload danh sách
-   */
+  // ✅ Lưu (tạo / cập nhật)
   const handleSave = async (values: IDealer) => {
     try {
       if (editDealer) {
-        await dealerService.updateDealer({ ...editDealer, ...values });
-        message.success("Cập nhật thông tin thành công!");
+        await updateDealer.mutateAsync({
+          id: editDealer.id,
+          data: {
+            name: values.name,
+            contactInfo: values.email,
+            country: values.address,
+            address: values.address,
+          },
+        });
+        message.success("Cập nhật đại lý thành công!");
       } else {
-        await dealerService.createDealer(values);
-        message.success("Thêm mới thành công!");
+        await createDealer.mutateAsync({
+          name: values.name,
+          contactInfo: values.email,
+          country: values.address,
+          address: values.address,
+        });
+        message.success("Tạo mới đại lý thành công!");
       }
       setModalOpen(false);
       setEditDealer(undefined);
-      loadData();
-    } catch {
+      refetch();
+    } catch (err) {
+      console.error(err);
       message.error("Đã xảy ra lỗi, vui lòng thử lại!");
     }
   };
 
-  /**
-   * Xóa đại lý theo id đã chọn và hiển thị thông báo kết quả
-   */
+  // ✅ Xóa
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await dealerService.deleteDealer(deleteId);
+      await deleteDealer.mutateAsync(String(deleteId));
       message.success("Xóa thành công!");
       setDeleteId(null);
-      loadData();
-    } catch {
-      message.error("Đã xảy ra lỗi, vui lòng thử lại!");
+      refetch();
+    } catch (err) {
+      console.error(err);
+      message.error("Không thể xóa đại lý, vui lòng thử lại!");
     }
   };
+
+  // ✅ Hiển thị trạng thái tải
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" tip="Đang tải danh sách đại lý..." />
+      </div>
+    );
+  }
+
+  // ✅ Xử lý lỗi API (nếu có)
+  if (isError) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500 font-medium mb-4">
+          Không thể tải danh sách đại lý.
+        </p>
+        <p className="text-gray-500">{error?.message || "Vui lòng thử lại."}</p>
+        <Button
+          type="primary"
+          onClick={() => refetch()}
+          className="mt-4 !bg-[#627254] hover:!bg-[#525e46]"
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -86,29 +147,38 @@ export const DealerList = () => {
           value={search}
           onChange={setSearch}
           placeholder="Tìm kiếm đại lý..."
-          className="w-full sm:max-w-[420px] hover:-translate-y-0.5 transition-transform duration-200"
+          className="w-full sm:max-w-[420px]"
         />
 
         <Button
           type="primary"
           onClick={() => setModalOpen(true)}
-          className="!bg-[#627254] hover:!bg-[#525e46] active:!bg-[#414d38] text-white rounded-xl px-6 py-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          className="!bg-[#627254] hover:!bg-[#525e46] text-white rounded-xl px-6 py-2"
         >
           Thêm đại lý mới
         </Button>
       </div>
 
+      {/* ✅ Bảng dữ liệu */}
       <div className="overflow-x-auto rounded-2xl shadow-md hover:shadow-lg p-0 transition-all duration-300 ease-out hover:-translate-y-1">
-        <DealerTable
-          data={filtered}
-          onEdit={(d) => {
-            setEditDealer(d);
-            setModalOpen(true);
-          }}
-          onDelete={setDeleteId}
-        />
+        {filtered.length > 0 ? (
+          <DealerTable
+            data={filtered}
+            onEdit={(d) => {
+              setEditDealer(d);
+              setModalOpen(true);
+            }}
+            onDelete={(id) => setDeleteId(id)}
+          />
+        ) : (
+          <Empty
+            description="Không tìm thấy đại lý nào"
+            className="py-10 text-gray-500"
+          />
+        )}
       </div>
 
+      {/* ✅ Modal thêm/sửa */}
       <DealerModal
         open={modalOpen}
         onClose={() => {
@@ -119,6 +189,7 @@ export const DealerList = () => {
         initialValues={editDealer}
       />
 
+      {/* ✅ Modal xác nhận xóa */}
       <DeleteConfirm
         open={!!deleteId}
         onConfirm={handleDelete}
