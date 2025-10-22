@@ -1,7 +1,21 @@
 import type { ThemeConfig } from "antd";
 
 export const theme: ThemeConfig = {
+  token: {
+    fontFamily: "Inter, sans-serif",
+  },
   components: {
+    Input: {
+      borderRadius: 9999,
+      colorBgContainer: "white",
+      activeBorderColor: "#627254",
+      activeShadow: "0 0 0 2px rgba(98, 114, 84, 0.2)",
+      hoverBorderColor: "#525e46",
+      colorText: "var(--primary-color)",
+      colorTextPlaceholder: "#bfbfbf",
+
+    },
+
     Button: {
       // Màu Default (Mặc định)
       defaultBg: "#24282B", // nền
@@ -23,6 +37,14 @@ export const theme: ThemeConfig = {
       colorPrimaryHover: "#525e46",
       colorPrimaryActive: "#414d38",
       colorPrimaryBg: "#627254",
+      borderRadius: 9999,
+
+      // Default
+      colorBgSolid: "#24282B",
+    },
+    Checkbox: {
+      colorPrimary: "#627254",
+      colorPrimaryHover: "#525e46",
     },
   },
 };

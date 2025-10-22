@@ -1,7 +1,9 @@
 import React from "react";
 import { Button } from "antd";
+import { useNavigate } from "react-router-dom";
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div
       className="relative w-full h-screen bg-cover bg-center overflow-hidden"
@@ -15,22 +17,20 @@ const HomePage: React.FC = () => {
           className="w-[5vw] aspect-square rounded-full z-20"
         />
 
-        {/* Button */}
         <Button
           type="default"
           size="large"
           className="z-20"
+          onClick={() => navigate("/auth/login")}
           style={{
-            width: "200px",
-            height: "60px",
-            fontSize: "18px",
+            fontSize: "13px",
             fontWeight: "700",
-            borderRadius: "12px",
           }}
         >
           ĐĂNG NHẬP
         </Button>
       </div>
+
       {/* chữ EMOB */}
       <h1
         className="absolute inset-0 flex items-end justify-center 
