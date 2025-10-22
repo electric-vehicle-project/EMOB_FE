@@ -1,17 +1,16 @@
 export const ROUTES = {
-  
   // ====== HOMEPAGE ======
   HOME: "/",
-  
+
   // ====== ROLE ======
   ADMIN: "/admin",
   MANAGER: "/manager",
   DEALER_STAFF: "/dealer_staff",
   EVM_STAFF: "/evm_staff",
-  
+
   // ====== DASHBOARD ======
   DASHBOARD: "/dashboard",
-  
+
   // ====== AUTHENTICATION ======
   AUTH: "/auth",
 
@@ -28,9 +27,8 @@ export const ROUTES = {
   CUSTOMER_CREATE: "customers/create",
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
-  
+
   // ====== ADMIN MODULES ======
-  DEALERS: "dealers",
   TESTDRIVE: "testdrive",
   REPORT: "report",
 

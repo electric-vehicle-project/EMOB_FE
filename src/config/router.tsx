@@ -16,8 +16,6 @@ import ReportPage from "../page/ReportPage";
 
 // ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
-import { CustomerPage } from "../page/CustomerPage";
-import { CustomerDetailPage } from "../page/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
 
 // 👤 Profile
@@ -25,7 +23,6 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
-import TestPage from "../page/TestPage";
 import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
@@ -37,6 +34,7 @@ import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
 import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
+import { AuthProtect } from "../components/atoms/AuthProtect";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -44,7 +42,7 @@ export const router = createBrowserRouter([
 
   // 🔐 AUTH
   {
-    path: ROUTES.AUTH, 
+    path: ROUTES.AUTH,
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> },
