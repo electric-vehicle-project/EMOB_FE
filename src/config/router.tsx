@@ -1,28 +1,34 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import AuthLayout from "../layout/AuthLayout";
 import { ROUTES } from "../model/routePaths";
 
 // 🔐 Auth Pages
+import { AuthProtect } from "../components/atoms/AuthProtect";
+
 import { LoginCard } from "../components/organisms/LoginCard";
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
-import { OTPCard } from "../components/organisms/OPTCard";
+import { OTPCard } from "../components/organisms/OTPCard";
 import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 
 // 📄 General
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import ReportPage from "../page/ReportPage";
+
+// ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
-import { CustomerPage } from "../page/CustomerPage";
-import { CustomerDetailPage } from "../page/CustomerDetailPage";
+
 import { TestDrivePage } from "../page/TestDrivePage";
 
-// 👤 Profile
+
+
+// ===== PROFILE PAGES =====
 import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+
 
 // ⚡ EV Management
 import { VehiclePage } from "../page/EVM/VehiclePage";
@@ -32,14 +38,16 @@ import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
 import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
+import { CustomerPage } from "../page/customer/CustomerPage";
+import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
-export const router = createBrowserRouter([
-  // 🏠 Trang chủ
+
+export const routes: RouteObject[] = [
   { path: ROUTES.HOME, element: <HomePage /> },
 
-  // 🔐 AUTH
+  // Auth layout cho login / reset password
   {
-    path: ROUTES.AUTH,
+    path: ROUTES.AUTH, 
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> },
@@ -50,21 +58,53 @@ export const router = createBrowserRouter([
   },
 
   // 👑 ADMIN DASHBOARD
+  // ADMIN 
   {
     path: ROUTES.ADMIN,
-    element: <DashboardLayout />,
+    element: (
+      <AuthProtect allowedRoles={["ADMIN"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
       { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
+
+
+  // ⚡ EVM DASHBOARD
+
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
-  // ⚡ EVM DASHBOARD
+  // EVM_STAFF
+  {
+    path: ROUTES.EVM_STAFF,
+    element: (
+      <AuthProtect allowedRoles={["EVM_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
+    ],
+  },
+
+
+  // DEALER_MANAGER + DEALER_STAFF
   {
     path: ROUTES.DASHBOARD,
-    element: <DashboardLayout />,
+    element: (
+      <AuthProtect allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
       // 👤 Profile
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
@@ -93,4 +133,7 @@ export const router = createBrowserRouter([
 
   // 🚫 404
   { path: ROUTES.NOTFOUND, element: <NotFoundPage /> },
-]);
+];
+
+//       EXPORT ROUTER
+export const router = createBrowserRouter(routes);

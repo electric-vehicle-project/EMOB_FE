@@ -4,6 +4,10 @@ import { InputField } from "../atoms/InputField";
 import { ButtonPrimary } from "../atoms/ButtonPrimary";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
+import { useResetPasswordMutation } from "../../service/authenticationService";
+import { ROUTES } from "../../model/routePaths";
+import { toast } from "react-toastify";
+
 
 export const ResetPasswordForm = () => {
   const [form] = Form.useForm();
@@ -11,20 +15,37 @@ export const ResetPasswordForm = () => {
   const [countdown, setCountdown] = useState(5);
   const navigate = useNavigate();
 
+  const { mutate: resetPasswordMutation } = useResetPasswordMutation();
+
   // --- Regex kiểm tra độ mạnh của mật khẩu ---
   const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>])[^\s]{8,20}$/;
 
-  // --- Khi submit form ---
+  // --- Submit ---
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSubmit = (values: any) => {
-    // const { password } = values;
-    setSuccess(true);
+    const { newPassword } = values;
+    resetPasswordMutation(
+      { newPassword }, // body JSON
+      {
+        
+        onSuccess: () => {
+          setSuccess(true);
 
-    // Bắt đầu đếm ngược 5s trước khi chuyển hướng
-    const interval = setInterval(() => setCountdown((prev) => prev - 1), 1000);
-    setTimeout(() => {
-      clearInterval(interval);
-      navigate("/auth/login");
-    }, 5000);
+          // Bắt đầu đếm ngược 5s trước khi chuyển hướng
+          const interval = setInterval(() => setCountdown((prev) => prev - 1), 1000);
+          setTimeout(() => {
+            clearInterval(interval);
+            navigate(ROUTES.AUTH + "/" + ROUTES.LOGIN);
+          }, 5000);
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.toast || "Xảy ra lỗi, vui lòng thử lại sau!";
+          toast.error(msg);
+        },
+      },
+    );
   };
 
   // --- Khi đang ở trạng thái thành công, dừng form thao tác ---
@@ -41,7 +62,7 @@ export const ResetPasswordForm = () => {
     >
       {/* --- Mật khẩu mới --- */}
       <Form.Item
-        name="password"
+        name="newPassword"
         rules={[
           { required: true, message: "Vui lòng nhập mật khẩu mới" },
           {
@@ -53,7 +74,7 @@ export const ResetPasswordForm = () => {
         hasFeedback
       >
         <InputField
-          className="h-13 !p-5"
+          className="h-13 !pl-5 !pr-5"
           prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
           type="password"
           placeholder="Nhập mật khẩu"
@@ -63,13 +84,13 @@ export const ResetPasswordForm = () => {
       {/* --- Xác nhận mật khẩu --- */}
       <Form.Item
         name="confirmPassword"
-        dependencies={["password"]}
+        dependencies={["newPassword"]}
         hasFeedback
         rules={[
           { required: true, message: "Vui lòng xác nhận mật khẩu" },
           ({ getFieldValue }) => ({
             validator(_, value) {
-              if (!value || getFieldValue("password") === value) {
+              if (!value || getFieldValue("newPassword") === value) {
                 return Promise.resolve();
               }
               return Promise.reject(new Error("Mật khẩu xác nhận không khớp"));
@@ -78,7 +99,7 @@ export const ResetPasswordForm = () => {
         ]}
       >
         <InputField
-          className="h-13 !p-5"
+          className="h-13 !pl-5 !pr-5"
           prefix={<LockOutlined style={{ color: "#627254", fontSize: 19 }} />}
           type="password"
           placeholder="Xác nhận mật khẩu"

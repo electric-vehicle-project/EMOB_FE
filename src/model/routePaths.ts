@@ -1,22 +1,39 @@
 export const ROUTES = {
+  // ====== HOMEPAGE ======
   HOME: "/",
+
+  // ====== ROLE ======
   ADMIN: "/admin",
+  MANAGER: "/manager",
+  DEALER_STAFF: "/dealer_staff",
+  EVM_STAFF: "/evm_staff",
+
+  // ====== DASHBOARD ======
   DASHBOARD: "/dashboard",
+
+  // ====== AUTHENTICATION ======
   AUTH: "/auth",
 
   // Auth
   LOGIN: "login",
+  REGISTER: "register",
   FORGET_PASSWORD: "forget-password",
   FORGET_PASSWORD_OTP: "forget-password-otp",
   RESET_PASSWORD: "reset-password",
 
-  // Quản lý dữ liệu
-  DEALERS: "dealers",
+  // ====== CUSTOMERS ======
   CUSTOMERS: "customers",
+  CUSTOMER_CREATE: "customers/create",
+  CUSTOMER_DETAIL: "customers/:id",
+  CUSTOMER_EDIT: "customers/edit/:id",
+
+  // ====== ADMIN MODULES ======
+  DEALERS: "dealers",
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
   // Hồ sơ người dùng
+  // ====== PROFILE ======
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
@@ -33,4 +50,8 @@ export const ROUTES = {
 
   // 404
   NOTFOUND: "*",
+  // ====== PROMOTIONS ======
+  PROMOTIONS: "promotions",
+  PROMOTION_CREATE: "promotions/create",
+  PROMOTION_EDIT: "promotions/edit/:id",
 };
