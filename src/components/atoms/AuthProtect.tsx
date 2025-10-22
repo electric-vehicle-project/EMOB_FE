@@ -42,7 +42,7 @@ export function AuthProtect({
 
   // Nếu có danh sách role được phép
   if (allowedRoles && !allowedRoles.map((r) => r.toLowerCase()).includes(normalizedUserRole)) {
-    return <Navigate to={`/${normalizedUserRole}/dashboard`} replace />;
+    return <Navigate to={`/${normalizedUserRole}/`} replace />;
   }
 
   // Nếu user hợp lệ
