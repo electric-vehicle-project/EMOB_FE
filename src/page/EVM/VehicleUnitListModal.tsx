@@ -14,7 +14,6 @@ interface VehicleUnit {
   purchaseDate: string;
   warrantyStart: string;
   warrantyEnd: string;
-  vehicleId?: string; // ✅ thêm để đón dữ liệu mới từ BE
 }
 
 export const VehicleUnitListModal = ({
@@ -27,47 +26,39 @@ export const VehicleUnitListModal = ({
   vehicleId: string;
 }) => {
   const [units, setUnits] = useState<VehicleUnit[]>([]);
-  const [meta, setMeta] = useState<{ totalElements?: number }>({});
-  const [isFetching, setIsFetching] = useState(false);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
+  const [isSoftLoading, setIsSoftLoading] = useState(false); // ✅ loading mượt
   const size = 10;
 
-  // ✅ Hàm fetch dữ liệu (sẵn sàng cho khi BE thêm vehicleId)
-  const fetchUnits = useCallback(async () => {
-    if (!open) return;
-    setIsFetching(true);
-    try {
-      const res = await api.get("/vehicle/unit/view-all", {
-        params: { page, size },
-      });
+  const fetchUnits = useCallback(
+    async (silent = false) => {
+      if (!open || !vehicleId) return;
+      if (!silent) setIsSoftLoading(true);
+      try {
+        const res = await api.get(
+          `/vehicle/unit/view-all-by-model/${vehicleId}`,
+          {
+            params: { page, size },
+          }
+        );
+        const result = res?.data?.result;
+        setUnits(result?.data ?? []);
+        setTotal(result?.metadata?.totalElements ?? 0);
+      } catch (err) {
+        console.error("❌ Lỗi khi tải danh sách Vehicle Units:", err);
+        setUnits([]);
+      } finally {
+        setTimeout(() => setIsSoftLoading(false), 250); // ✅ delay nhẹ để cảm giác mượt
+      }
+    },
+    [open, vehicleId, page, size]
+  );
 
-      const allData: VehicleUnit[] = res?.data?.result?.data ?? [];
-      const meta = res?.data?.result?.metadata ?? {};
-
-      // ✅ Khi BE chưa có vehicleId → fallback tạm theo VIN prefix
-      // ✅ Khi BE đã có vehicleId → FE tự hoạt động chính xác
-      const filtered = allData.filter((u) => {
-        if (u.vehicleId) return u.vehicleId === vehicleId;
-        // fallback: lọc bằng prefix VIN của modelId
-        return u.vinNumber?.includes(vehicleId.slice(0, 5));
-      });
-
-      setUnits(filtered);
-      setMeta(meta);
-    } catch (err) {
-      console.error("❌ Lỗi khi gọi API Vehicle Units:", err);
-      setUnits([]);
-    } finally {
-      setIsFetching(false);
-    }
-  }, [open, page, size, vehicleId]);
-
-  // 🔁 Gọi API khi mở modal hoặc đổi trang
   useEffect(() => {
     fetchUnits();
   }, [fetchUnits]);
 
-  // 🔁 Reset page khi đổi xe
   useEffect(() => {
     setPage(0);
   }, [vehicleId]);
@@ -138,38 +129,52 @@ export const VehicleUnitListModal = ({
       centered
       destroyOnClose
     >
-      {isFetching ? (
-        <div className="flex justify-center py-10">
-          <Spin size="large" />
-        </div>
-      ) : units.length === 0 ? (
+      {units.length === 0 && !isSoftLoading ? (
         <Empty
           description="Không có lô xe nào thuộc xe này."
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
         <>
-          <Table
-            dataSource={units}
-            columns={columns}
-            rowKey={(r) => r.vehicleUnitId ?? r.vinNumber}
-            pagination={false}
-            bordered
-            size="middle"
-          />
+          {/* ✅ Làm mờ bảng khi đang tải trang mới */}
+          <div
+            className={`transition-all duration-300 ${
+              isSoftLoading ? "opacity-50 pointer-events-none" : "opacity-100"
+            }`}
+          >
+            <Table
+              dataSource={units}
+              columns={columns}
+              rowKey={(r) => r.vehicleUnitId}
+              pagination={false}
+              bordered
+              size="middle"
+            />
+          </div>
+
           <div className="flex justify-between items-center mt-4">
             <span className="text-gray-600">
-              Tổng cộng: {units.length} / {meta?.totalElements ?? 0} xe
+              Tổng cộng: {units.length} / {total} xe
             </span>
             <Pagination
               current={page + 1}
-              total={meta?.totalElements ?? 0}
+              total={total}
               pageSize={size}
-              onChange={(p) => setPage(p - 1)}
+              onChange={(p) => {
+                setPage(p - 1);
+                fetchUnits(true); // ✅ tải nhẹ (soft fetch)
+              }}
               showSizeChanger={false}
             />
           </div>
         </>
+      )}
+
+      {/* ✅ Overlay spinner riêng cho loading lần đầu (mở modal) */}
+      {isSoftLoading && units.length === 0 && (
+        <div className="flex justify-center py-10">
+          <Spin size="large" />
+        </div>
       )}
     </Modal>
   );
