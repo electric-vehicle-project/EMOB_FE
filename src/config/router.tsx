@@ -1,20 +1,19 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import AuthLayout from "../layout/AuthLayout";
+import { ROUTES } from "../model/routePaths";
+import { AuthProtect } from "../components/atoms/AuthProtect";
 
-// ===== AUTH PAGES =====
 import { LoginCard } from "../components/organisms/LoginCard";
-
-// ===== COMMON PAGES =====
+import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
+import { OTPCard } from "../components/organisms/OTPCard";
+import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import TestPage from "../page/TestPage";
 import ReportPage from "../page/ReportPage";
 
 // ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
-import { CustomerPage } from "../page/customer/CustomerPage";
-import { CustomerDetailPage } from "../page/customer/CustomerDetailPage";
 import { TestDrivePage } from "../page/TestDrivePage";
 
 // ===== PROFILE PAGES =====
@@ -22,120 +21,94 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+import TestPage from "../page/TestPage";
+import { CustomerPage } from "../page/customer/CustomerPage";
+import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
-// ===== PROMOTION PAGES =====
-import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
-import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
-import PromotionEditPage from "../page/promotions/PromotionEditPage";
-import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
-
-// ===== ROUTES =====
-import { ROUTES } from "../model/routePaths";
-import { CustomerCreatePage } from "../page/customer/CustomerCreatePage";
-import { CustomerEditPage } from "../page/customer/CustomerEditPage";
-
-//       ROUTER SETUP
 export const routes: RouteObject[] = [
-  {
-    path: ROUTES.HOME, // /
-    element: <HomePage />,
-  },
+  { path: ROUTES.HOME, element: <HomePage /> },
 
-  // ==== AUTH ====
+  // Auth layout cho login / reset password
   {
-    path: ROUTES.AUTH, // /auth
+    path: ROUTES.AUTH, 
     element: <AuthLayout />,
     children: [
-      {
-        path: ROUTES.LOGIN,
-        element: <LoginCard />,
-      },
-      // {
-      //   path: ROUTES.FORGET_PASSWORD,
-      //   element: <ForgetPasswordCard />,
-      // },
-      // {
-      //   path: ROUTES.FORGET_PASSWORD_OTP,
-      //   element: <OTPCard/>,
-      // },
-      // {
-      //   path: ROUTES.RESET_PASSWORD,
-      //   element: <ResetPasswordCard />,
-      // },
+      { path: ROUTES.LOGIN, element: <LoginCard /> },
+      { path: ROUTES.FORGET_PASSWORD, element: <ForgetPasswordCard /> },
+      { path: ROUTES.FORGET_PASSWORD_OTP, element: <OTPCard /> },
+      { path: ROUTES.RESET_PASSWORD, element: <ResetPasswordCard /> },
     ],
   },
 
-  // ==== ADMIN ====
+  // ADMIN 
   {
-    path: ROUTES.ADMIN, // /admin
-    element: <DashboardLayout />,
+    path: ROUTES.ADMIN,
+    element: (
+      <AuthProtect allowedRoles={["ADMIN"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /admin/testdrive
-      { path: ROUTES.REPORT, element: <ReportPage /> }, // /admin/report
-      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> }, // /admin/promotions
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /admin /promotions/edit/:id
-      { path: "test", element: <TestPage /> }, // /admin/test
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
-  // ==== MANAGER ====
+  // EVM_STAFF
   {
-    path: ROUTES.MANAGER, // /manager
-    element: <DashboardLayout />,
+    path: ROUTES.EVM_STAFF,
+    element: (
+      <AuthProtect allowedRoles={["EVM_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
-      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /manager/promotions
-      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /manager/promotions/create
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /manager/promotions/edit/:id
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /manager/customers
-      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /manager/customers/:id
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
-  // ==== DEALER STAFF ====
+
+  // DEALER_MANAGER + DEALER_STAFF
   {
-    path: ROUTES.DEALER_STAFF, // /dealer-staff
-    element: <DashboardLayout />,
+    path: ROUTES.DASHBOARD,
+    element: (
+      <AuthProtect allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
-      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> }, // /dealer-staff/promotions
-      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /dealer-staff/promotions/create
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /dealer-staff/promotions/edit/:id
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> }, // /dealer-staff/customers
-      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> }, // /dealer-staff/customers/:id
-      { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> }, // /dealer-staff/customers/create
-      { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> }, // /dealer-staff/customers/create
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
+      { path: "test", element: <TestPage /> },
     ],
   },
 
-  // ==== EVM STAFF ====
-  {
-    path: ROUTES.EVM_STAFF, // /evm-staff
-    element: <DashboardLayout />,
-    children: [
-      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> }, // /evm-staff/promotions
-      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> }, // /evm-staff/promotions/create
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /evm-staff/promotions/edit/:id
-    ],
-  },
+  // // CUSTOMER
+  // {
+  //   path: "/customer",
+  //   element: (
+  //     <AuthProtect allowedRoles={["CUSTOMER"]}>
+  //       <DashboardLayout />
+  //     </AuthProtect>
+  //   ),
+  //   children: [
+  //     { path: "profile/info", element: <InfoPage /> },
+  //     { path: "profile/changeInfo", element: <ChangeInfoPage /> },
+  //     { path: "profile/resetPassword", element: <ResetPasswordPage /> },
+  //   ],
+  // },
 
-  // ==== DASHBOARD (PROFILE) ====
-  {
-    path: ROUTES.DASHBOARD, // /dashboard
-    element: <DashboardLayout />,
-    children: [
-      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> }, // /dashboard/profile/info
-      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> }, // /dashboard/profile/changeInfo
-      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> }, // /dashboard/profile/resetpassword
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> }, // /dashboard/profile/viewschedule
-      { path: "test", element: <TestPage /> }, // /dashboard/test
-    ],
-  },
-
-  // ==== 404 ====
-  {
-    path: ROUTES.NOTFOUND, // *
-    element: <NotFoundPage />,
-  },
+  //404
+  { path: ROUTES.NOTFOUND, element: <NotFoundPage /> },
 ];
 
 //       EXPORT ROUTER
