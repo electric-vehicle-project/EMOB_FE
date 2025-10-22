@@ -6,13 +6,15 @@ import { ROUTES } from "../model/routePaths";
 // 🔐 Auth Pages
 import { LoginCard } from "../components/organisms/LoginCard";
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
-import { OTPCard } from "../components/organisms/OPTCard";
+import { OTPCard } from "../components/organisms/OTPCard";
 import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 
 // 📄 General
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import ReportPage from "../page/ReportPage";
+
+// ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
 import { CustomerPage } from "../page/CustomerPage";
 import { CustomerDetailPage } from "../page/CustomerDetailPage";
@@ -23,6 +25,9 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+import TestPage from "../page/TestPage";
+import { CustomerPage } from "../page/customer/CustomerPage";
+import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
 // ⚡ EV Management
 import { VehiclePage } from "../page/EVM/VehiclePage";
@@ -39,7 +44,7 @@ export const router = createBrowserRouter([
 
   // 🔐 AUTH
   {
-    path: ROUTES.AUTH,
+    path: ROUTES.AUTH, 
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> },
@@ -52,7 +57,11 @@ export const router = createBrowserRouter([
   // 👑 ADMIN DASHBOARD
   {
     path: ROUTES.ADMIN,
-    element: <DashboardLayout />,
+    element: (
+      <AuthProtect allowedRoles={["ADMIN"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
       { path: ROUTES.DEALERS, element: <DealerPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
@@ -64,7 +73,11 @@ export const router = createBrowserRouter([
   // ⚡ EVM DASHBOARD
   {
     path: ROUTES.DASHBOARD,
-    element: <DashboardLayout />,
+    element: (
+      <AuthProtect allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
       // 👤 Profile
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
