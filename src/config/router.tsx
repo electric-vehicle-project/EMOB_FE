@@ -36,10 +36,17 @@ import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
 import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
 import { AuthProtect } from "../components/atoms/AuthProtect";
 
+import { CustomerCreatePage } from "../page/customer/CustomerCreatePage";
+import { CustomerEditPage } from "../page/customer/CustomerEditPage";
+import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
+import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
+import PromotionEditPage from "../page/promotions/PromotionEditPage";
+import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
+import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
+
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
   { path: ROUTES.HOME, element: <HomePage /> },
-
   // 🔐 AUTH
   {
     path: ROUTES.AUTH,
@@ -65,6 +72,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
     ],
   },
 
@@ -72,7 +81,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.DASHBOARD,
     element: (
-      <AuthProtect allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}>
+      <AuthProtect allowedRoles={["MANAGER", "DEALER_STAFF"]}>
         <DashboardLayout />
       </AuthProtect>
     ),
@@ -102,6 +111,62 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // 🚫 404
-  { path: ROUTES.NOTFOUND, element: <NotFoundPage /> },
+  // ==== MANAGER ====
+  {
+    path: ROUTES.MANAGER, // /manager
+    element: (
+      <AuthProtect allowedRoles={["MANAGER"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
+      { path: ROUTES.DEALER_POINT_RULES, element: <DealerPointRulePage /> },
+    ],
+  },
+
+  // ==== DEALER STAFF ====
+  {
+    path: ROUTES.DEALER_STAFF,
+    element: (
+      <AuthProtect allowedRoles={["DEALER_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
+      { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> },
+      { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> },
+      { path: ROUTES.DEALER_POINT_RULES, element: <DealerPointRulePage /> },
+    ],
+  },
+
+  // ==== EVM STAFF ====
+  {
+    path: ROUTES.EVM_STAFF,
+    element: (
+      <AuthProtect allowedRoles={["EVM_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+    ],
+  },
+
+  // ==== 404 ====
+  {
+    path: ROUTES.NOTFOUND, // *
+    element: <NotFoundPage />,
+  },
 ]);
