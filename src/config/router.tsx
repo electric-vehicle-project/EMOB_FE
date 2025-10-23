@@ -24,13 +24,17 @@ import ViewSchedulePage from "../page/profile/ViewSchedulePage";
 import TestPage from "../page/TestPage";
 import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
+import CreateQuotationPage from "../page/quotation/CreateQuotationModal";
+import UpdateQuotationModal from "../page/quotation/UpdateQuotationModal";
+import QuotationPage from "../page/quotation/QuotationPage";
+import ViewQuotationDetailModal from "../page/quotation/ViewQuotationDetailModal";
 
 export const routes: RouteObject[] = [
   { path: ROUTES.HOME, element: <HomePage /> },
 
   // Auth layout cho login / reset password
   {
-    path: ROUTES.AUTH, 
+    path: ROUTES.AUTH,
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> },
@@ -40,7 +44,7 @@ export const routes: RouteObject[] = [
     ],
   },
 
-  // ADMIN 
+  // ADMIN
   {
     path: ROUTES.ADMIN,
     element: (
@@ -74,7 +78,6 @@ export const routes: RouteObject[] = [
     ],
   },
 
-
   // DEALER_MANAGER + DEALER_STAFF
   {
     path: ROUTES.DASHBOARD,
@@ -89,6 +92,14 @@ export const routes: RouteObject[] = [
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
       { path: "test", element: <TestPage /> },
+      { path: ROUTES.QUOTATION_CREATE, element: <CreateQuotationPage /> },
+      {
+        // path: `${ROUTES.QUOTATION_UPDATE}/:id`,
+        path: `${ROUTES.QUOTATION_UPDATE}`,
+        element: <UpdateQuotationModal />,
+      },
+      { path: ROUTES.QUOTATIONS, element: <QuotationPage /> },
+      { path: ROUTES.QUOTATION_VIEW, element: <ViewQuotationDetailModal /> },
     ],
   },
 
