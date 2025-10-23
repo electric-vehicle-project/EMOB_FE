@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { dealerService } from "../../service/dealerService";
+import { useState } from "react";
+import { Spin } from "antd";
+import { toast } from "react-toastify";
 import type { IDealer } from "../../model/Dealer";
 import { DealerTable } from "../molecules/DealerTable";
 import { SearchBar } from "../molecules/SearchBar";
@@ -7,95 +8,139 @@ import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
 import { useDebounce } from "../../hook/useDebounce";
+import {
+  useGetDealers,
+  useCreateDealer,
+  useUpdateDealer,
+  useDeleteDealer,
+} from "../../service/dealerService";
 
 export const DealerList = () => {
-  const [dealers, setDealers] = useState<IDealer[]>([]);
-  const [filtered, setFiltered] = useState<IDealer[]>([]);
-  const [search, setSearch] = useState(""); // raw input
-  const debouncedSearch = useDebounce(search, 300); // ✅ debounce
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const loadData = async () => {
-    const data = await dealerService.getDealers();
-    setDealers(data);
-    setFiltered(data);
-  };
+  // ===== API HOOKS =====
+  const { data: dealers = [], refetch, isLoading } = useGetDealers();
+  const createDealer = useCreateDealer();
+  const updateDealer = useUpdateDealer();
+  const deleteDealer = useDeleteDealer();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // ===== FILTER TÌM KIẾM (client-side) =====
+  const filtered = dealers.filter((d: IDealer) =>
+    d.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+  );
 
-  // ✅ Filter khi debouncedSearch thay đổi
-  useEffect(() => {
-    const keyword = debouncedSearch.toLowerCase();
-    setFiltered(dealers.filter((d) => d.name.toLowerCase().includes(keyword)));
-  }, [debouncedSearch, dealers]);
-
+  // ✅ Lưu (thêm hoặc sửa)
   const handleSave = async (values: IDealer) => {
-    if (editDealer) {
-      await dealerService.updateDealer({ ...editDealer, ...values });
-    } else {
-      await dealerService.createDealer(values);
+    try {
+      if (editDealer?.id) {
+        await updateDealer.mutateAsync({
+          id: editDealer.id,
+          data: {
+            name: values.name,
+            contactInfo: values.contactInfo,
+            country: values.country,
+          },
+        });
+        toast.success("Cập nhật đại lý thành công!");
+      } else {
+        await createDealer.mutateAsync({
+          name: values.name,
+          contactInfo: values.contactInfo,
+          country: values.country,
+        });
+        toast.success("Thêm đại lý mới thành công!");
+
+        // 🟢 Đồng bộ lại danh sách
+        refetch();
+      }
+
+      setModalOpen(false);
+      setEditDealer(undefined);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(
+        err?.response?.data?.message || "Lỗi khi lưu thông tin đại lý!"
+      );
     }
-    setModalOpen(false);
-    setEditDealer(undefined);
-    loadData();
   };
 
+  // ✅ Xóa
   const handleDelete = async () => {
-    if (deleteId) {
-      await dealerService.deleteDealer(deleteId);
+    if (!deleteId) return;
+    try {
+      await deleteDealer.mutateAsync(deleteId);
+      toast.success("Xóa đại lý thành công!");
+      refetch();
       setDeleteId(null);
-      loadData();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err?.response?.data?.message || "Không thể xóa đại lý!");
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Tìm kiếm đại lý..."
-          className="w-full sm:max-w-[420px] hover-lift"
+    <Spin
+      spinning={
+        isLoading ||
+        createDealer.isPending ||
+        updateDealer.isPending ||
+        deleteDealer.isPending
+      }
+      tip="Đang xử lý..."
+      size="large"
+    >
+      <div className="space-y-4">
+        {/* Thanh tìm kiếm + nút thêm */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm kiếm đại lý..."
+            className="w-full sm:max-w-[420px] hover-lift"
+          />
+
+          <Button
+            type="primary"
+            onClick={() => setModalOpen(true)}
+            className="w-full sm:w-auto sm:ml-4 px-6 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Thêm đại lý mới
+          </Button>
+        </div>
+
+        {/* Bảng đại lý (đã có sort & filter trong bảng) */}
+        <DealerTable
+          data={filtered}
+          onEdit={(d) => {
+            setEditDealer(d);
+            setModalOpen(true);
+          }}
+          onDelete={(id) => setDeleteId(id)}
         />
 
-        <Button
-          type="primary"
-          onClick={() => setModalOpen(true)}
-          className="w-full sm:w-auto sm:ml-4 px-6 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
-        >
-          Thêm đại lý mới
-        </Button>
+        {/* Modal thêm/sửa */}
+        <DealerModal
+          open={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setEditDealer(undefined);
+          }}
+          onSubmit={handleSave}
+          initialValues={editDealer}
+        />
+
+        {/* Xác nhận xóa */}
+        <DeleteConfirm
+          open={!!deleteId}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteId(null)}
+          message="Bạn có chắc chắn muốn xóa đại lý này không?"
+        />
       </div>
-
-      <DealerTable
-        data={filtered}
-        onEdit={(d) => {
-          setEditDealer(d);
-          setModalOpen(true);
-        }}
-        onDelete={setDeleteId}
-      />
-
-      <DealerModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditDealer(undefined);
-        }}
-        onSubmit={handleSave}
-        initialValues={editDealer}
-      />
-
-      <DeleteConfirm
-        open={!!deleteId}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteId(null)}
-        message="Bạn có chắc chắn muốn xóa đại lý này?"
-      />
-    </div>
+    </Spin>
   );
 };
