@@ -44,8 +44,6 @@ export const ROUTES = {
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
 
-  // 404
-  NOTFOUND: "*",
   // ====== PROMOTIONS ======
   PROMOTIONS: "promotions",
   PROMOTION_CREATE: "promotions/create",
@@ -56,4 +54,7 @@ export const ROUTES = {
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
   DEALER_POINT_RULES: "/dealerPoint",
+
+  // 404
+  NOTFOUND: "*",
 };
