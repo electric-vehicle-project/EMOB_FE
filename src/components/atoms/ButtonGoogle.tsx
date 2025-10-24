@@ -1,23 +1,26 @@
-import { Button, Modal } from "antd";
+import { Button } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { supabase } from "../../config/supabase";
 
 export const ButtonGoogle = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const handleGoogleLogin = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin, // hoặc route bạn muốn sau khi login
+      },
+    });
 
-  const handleOpenPopup = () => {
-    setIsOpen(true);
+    if (error) {
+      console.error("Google login error:", error);
+    } else {
+      console.log("Redirecting to Google OAuth:", data);
+    }
   };
-
-  const handleClosePopup = () => {
-    setIsOpen(false);
-  };
-
   return (
     <>
-      {/* Nút Google */}
       <Button
-        onClick={handleOpenPopup}
+        onClick={handleGoogleLogin}
         className="!h-12 w-full !bg-white !text-[#627254] hover:!bg-[var(--default-color)]  hover:!text-white"
         type="default"
       >
@@ -26,38 +29,6 @@ export const ButtonGoogle = () => {
         <p className="font-medium">Đăng nhập với Google</p>
       </Button>
 
-      {/* Popup hiển thị khi nhấn */}
-      <Modal
-        open={isOpen}
-        onCancel={handleClosePopup}
-        footer={null}
-        centered
-        className="text-center"
-      >
-        <div className="flex flex-col items-center space-y-4 py-6">
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google Logo"
-            className="w-12 h-12"
-          />
-          <h2 className="text-lg font-semibold">Đăng nhập với Google</h2>
-          <p className="text-sm text-gray-600">bla bla bla</p>
-          <button
-            onClick={handleClosePopup}
-            style={{
-              backgroundColor: "#627254",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
-          >
-            Đóng
-          </button>
-        </div>
-      </Modal>
     </>
   );
 };
