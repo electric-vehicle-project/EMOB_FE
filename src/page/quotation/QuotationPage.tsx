@@ -1,28 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { Table, Button, message, Popconfirm, Tag, Modal, Select } from "antd";
-import axios from "axios";
+import React, { useState } from "react";
+import { Table, Button, message, Popconfirm, Tag } from "antd";
 import SectionTitle from "../../components/atoms/SectionTitle";
 import type { ColumnsType } from "antd/es/table";
 import type { IQuotationItem } from "../../model/Quotation";
-import CreateQuotationPage from "./CreateQuotationModal";
-import UpdateQuotationPage from "./UpdateQuotationModal";
+
+import CreateQuotationModal from "./CreateQuotationModal";
+import UpdateQuotationModal from "./UpdateQuotationModal";
 import ViewQuotationDetailModal from "./ViewQuotationDetailModal";
-import { Form } from "react-router-dom";
-import SelectInput from "../../components/atoms/SelectInput";
 import ApproveQuotationModal from "./ApproveQuotationModal";
+import {
+  useDeleteQuotation,
+  useQuotationsList,
+} from "../../service/quotationService";
+import { useQueryClient } from "@tanstack/react-query";
 
 const QuotationPage: React.FC = () => {
-  const [data, setData] = useState<IQuotationItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-
-  // Modal states
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(
     null
   );
@@ -30,77 +25,70 @@ const QuotationPage: React.FC = () => {
     null
   );
 
-  /** 🔹 Fetch quotations */
-  const fetchQuotations = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get("/api/quotations", {
-        params: { page, size: pageSize },
-      });
-      setData(res.data.result.data);
-      setTotal(res.data.result.metadata.totalElements);
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to load quotations");
-    } finally {
-      setLoading(false);
-    }
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+
+  /** 🔹 Query: danh sách báo giá */
+  const { data, isLoading, refetch } = useQuotationsList(page - 1, pageSize); // backend start = 0
+
+  /** 🔹 Mutation: xóa báo giá */
+  const deleteQuotation = useDeleteQuotation();
+
+  const handleDelete = (id: string) => {
+    deleteQuotation.mutate(id, {
+      onSuccess: () => {
+        message.success("Xóa báo giá thành công");
+        queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      },
+      onError: () => {
+        message.error("Xóa báo giá thất bại");
+      },
+    });
   };
 
-  useEffect(() => {
-    fetchQuotations();
-  }, [page, pageSize]);
-
-  /** Delete quotation */
-  const handleDelete = async (id: string) => {
-    try {
-      await axios.delete(`/api/quotations/${id}`);
-      message.success("Quotation deleted successfully");
-      fetchQuotations();
-    } catch {
-      message.error("Failed to delete quotation");
-    }
-  };
-
-  /** Table columns */
+  /** Cấu hình bảng */
   const columns: ColumnsType<IQuotationItem> = [
     {
-      title: "ID",
+      title: "Mã báo giá",
       dataIndex: "id",
       key: "id",
       render: (id: string) => (
-        <span className="font-mono">{id.slice(0, 8)}...</span>
+        <span className="font-mono text-gray-700">{id.slice(0, 8)}...</span>
       ),
     },
     {
-      title: "Customer ID",
+      title: "Khách hàng",
       dataIndex: "customerId",
       key: "customerId",
+      render: (text) => text || "-",
     },
     {
-      title: "Dealer ID",
+      title: "Đại lý",
       dataIndex: "dealerId",
       key: "dealerId",
+      render: (text) => text || "-",
     },
     {
-      title: "Total Quantity",
+      title: "Số lượng",
       dataIndex: "totalQuantity",
       key: "totalQuantity",
       align: "center",
       sorter: (a, b) => (a.totalQuantity || 0) - (b.totalQuantity || 0),
-      render: (q) => <strong>{q ?? "-"}</strong>,
     },
     {
-      title: "Total Price",
+      title: "Tổng giá trị",
       dataIndex: "totalPrice",
       key: "totalPrice",
       align: "right",
       sorter: (a, b) => (a.totalPrice || 0) - (b.totalPrice || 0),
       render: (price: number) =>
-        price != null ? `$${price.toLocaleString()}` : "-",
+        price != null ? `${price.toLocaleString("vi-VN")} ₫` : "-",
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "status",
       align: "center",
       render: (status: string) => {
@@ -122,7 +110,7 @@ const QuotationPage: React.FC = () => {
       },
     },
     {
-      title: "Actions",
+      title: "Thao tác",
       key: "actions",
       align: "center",
       render: (_, record) => (
@@ -145,7 +133,7 @@ const QuotationPage: React.FC = () => {
               setIsUpdateModalOpen(true);
             }}
           >
-            Edit
+            Sửa
           </Button>
 
           <Button
@@ -156,17 +144,15 @@ const QuotationPage: React.FC = () => {
               setIsApproveModalOpen(true);
             }}
           >
-            Approve
+            Duyệt
           </Button>
 
           <Popconfirm
-            title="Bạn có chắc chắn muốn xóa báo giá này?"
+            title="Bạn có chắc muốn xóa báo giá này?"
             onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
           >
             <Button size="small" danger>
-              Delete
+              Xóa
             </Button>
           </Popconfirm>
         </div>
@@ -174,11 +160,14 @@ const QuotationPage: React.FC = () => {
     },
   ];
 
+  const quotationData = data?.result?.data ?? [];
+  const totalElements = data?.result?.metadata?.totalElements ?? 0;
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* 🔹 Header */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <SectionTitle text="Quotation Management" />
+        <SectionTitle text="Quản lý báo giá" />
         <Button
           type="primary"
           className="bg-green-700"
@@ -188,16 +177,16 @@ const QuotationPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* 🔹 Table */}
+      {/* Table */}
       <Table
         columns={columns}
-        dataSource={data}
-        loading={loading}
+        dataSource={quotationData}
+        loading={isLoading}
         rowKey="id"
         pagination={{
           current: page,
           pageSize,
-          total,
+          total: totalElements,
           showSizeChanger: true,
           onChange: (p, ps) => {
             setPage(p);
@@ -209,21 +198,24 @@ const QuotationPage: React.FC = () => {
         className="bg-white rounded-lg shadow-sm"
       />
 
-      {/* 🔹 Modals */}
+      {/* Modals */}
       {isCreateModalOpen && (
-        <CreateQuotationPage
+        <CreateQuotationModal
           open={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={fetchQuotations}
+          onSuccess={() => {
+            setPage(1);
+            refetch();
+          }}
         />
       )}
 
       {isUpdateModalOpen && selectedQuotationId && (
-        <UpdateQuotationPage
+        <UpdateQuotationModal
           open={isUpdateModalOpen}
           quotationId={selectedQuotationId}
           onClose={() => setIsUpdateModalOpen(false)}
-          onSuccess={fetchQuotations}
+          onSuccess={refetch}
         />
       )}
 
@@ -240,7 +232,7 @@ const QuotationPage: React.FC = () => {
           open={isApproveModalOpen}
           record={selectedRecord}
           onClose={() => setIsApproveModalOpen(false)}
-          onSuccess={fetchQuotations}
+          onSuccess={refetch}
         />
       )}
     </div>

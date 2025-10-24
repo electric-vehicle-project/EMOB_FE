@@ -13,24 +13,26 @@ export const ROUTES = {
 
   // ====== AUTHENTICATION ======
   AUTH: "/auth",
+
+  // Auth
   LOGIN: "login",
   REGISTER: "register",
   FORGET_PASSWORD: "forget-password",
   FORGET_PASSWORD_OTP: "forget-password-otp",
   RESET_PASSWORD: "reset-password",
 
-  // ====== CUSTOMERS ======
+  // Quản lý dữ liệu
+  DEALERS: "dealers",
   CUSTOMERS: "customers",
   CUSTOMER_CREATE: "customers/create",
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
 
   // ====== ADMIN MODULES ======
-  DEALERS: "dealers",
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
-  // ====== PROFILE ======
+  // Hồ sơ người dùng
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
@@ -45,6 +47,17 @@ export const ROUTES = {
   // ====== QUOTATION ======
   QUOTATIONS: "quotations",
   QUOTATION_CREATE: "quotations/create",
-  QUOTATION_UPDATE: "quotations/edit",
-  QUOTATION_VIEW: "quotations/view",
+  QUOTATION_UPDATE: "quotations/edit/:id",
+  QUOTATION_VIEW: "quotations/view/:id",
+  // EVM
+  EVM_VEHICLE: "evm/vehicle",
+  EVM_VEHICLE_BULK: "evm/vehicle/bulk",
+  EVM_VEHICLE_RULES: "evm/price-rules",
+  EVM_VEHICLE_NEW: "evm/vehicle/new",
+  EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
+  EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
+  EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
+
+  // VEHICLE-REQUEST
+  VEHICLE_REQUEST: "vehicle-request",
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form, Button, DatePicker, message, Modal } from "antd";
 import type { IQuotationItem } from "../../model/Quotation";
 import TextInput from "../../components/atoms/TextInput";
@@ -27,32 +27,37 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
   const { mutateAsync: createQuotation, isPending } = useCreateQuotation();
 
   const handleSubmit = async (values: any) => {
-    const payload: CreateQuotationPayload = {
-      items: [
-        {
-          vehicleId: values.vehicleId,
-          promotionId: values.promotionId,
-          vehicleStatus: values.vehicleStatus,
-          color: values.color,
-          quantity: values.quantity,
-        },
-      ],
-      customerId: values.customerId,
-      validUntil: values.validUntil
-        ? values.validUntil.valueOf() // convert sang int timestamp
-        : 0,
-    };
-
     try {
-      await createQuotation(payload); // Gọi mutation hook
-      message.success("Quotation created successfully!");
+      const payload: CreateQuotationPayload = {
+        items: [
+          {
+            vehicleId: values.vehicleId,
+            promotionId: values.promotionId,
+            vehicleStatus: values.vehicleStatus,
+            color: values.color,
+            quantity: values.quantity,
+          },
+        ],
+        customerId: values.customerId,
+        validUntil: values.validUntil
+          ? new Date(values.validUntil).getTime()
+          : 0,
+      };
+
+      await createQuotation(payload);
+
+      message.success("Tạo báo giá thành công!");
       form.resetFields();
-      if (onSuccess) onSuccess();
-      if (onClose) onClose();
+      // cho nó đợi add vào ròi mới close
+      if (onSuccess) {
+        await onSuccess();
+      }
+      onClose?.();
     } catch (error: any) {
-      console.error(error);
+      console.error("Create quotation error:", error);
       message.error(
-        error?.response?.data?.message || "Failed to create quotation."
+        error?.response?.data?.message ||
+          "Tạo báo giá thất bại, vui lòng thử lại."
       );
     }
   };
@@ -76,21 +81,20 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
         <TextInput
           label="Vehicle ID"
           name="vehicleId"
-          placeholder="Enter vehicle ID"
-          rules={[{ required: true, message: "Vehicle ID is required" }]}
+          placeholder="Nhập mã xe"
+          rules={[{ required: true, message: "Vehicle ID là bắt buộc" }]}
         />
 
         <TextInput
           label="Promotion ID"
           name="promotionId"
-          placeholder="Enter promotion ID"
-          rules={[{ required: true, message: "Promotion ID is required" }]}
+          placeholder="Nhập mã khuyến mãi (nếu có)"
         />
 
         <SelectInput
-          label="Vehicle Status"
+          label="Trạng thái xe"
           name="vehicleStatus"
-          placeholder="Select vehicle status"
+          placeholder="Chọn trạng thái xe"
           options={[
             { label: "NORMAL", value: "NORMAL" },
             { label: "SPECIAL", value: "SPECIAL" },
@@ -99,29 +103,29 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
             { label: "OLD_STOCK", value: "OLD_STOCK" },
             { label: "SOLD", value: "SOLD" },
           ]}
-          rules={[{ required: true, message: "Select vehicle status" }]}
+          rules={[{ required: true, message: "Hãy chọn trạng thái xe" }]}
         />
 
         <TextInput
-          label="Color"
+          label="Màu sắc"
           name="color"
-          placeholder="Enter vehicle color"
-          rules={[{ required: true, message: "Color is required" }]}
+          placeholder="Nhập màu xe"
+          rules={[{ required: true, message: "Color là bắt buộc" }]}
         />
 
         <NumberInput
-          label="Quantity"
+          label="Số lượng"
           name="quantity"
           min={1}
-          placeholder="Enter quantity"
-          rules={[{ required: true, message: "Quantity is required" }]}
+          placeholder="Nhập số lượng xe"
+          rules={[{ required: true, message: "Quantity là bắt buộc" }]}
         />
 
         <TextInput
           label="Customer ID"
           name="customerId"
-          placeholder="Enter customer ID"
-          rules={[{ required: true, message: "Customer ID is required" }]}
+          placeholder="Nhập mã khách hàng"
+          rules={[{ required: true, message: "Customer ID là bắt buộc" }]}
         />
 
         <NumberInput
@@ -133,9 +137,9 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
         />
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>Hủy</Button>
           <Button type="primary" htmlType="submit" loading={isPending}>
-            Create Quotation
+            Tạo báo giá
           </Button>
         </div>
       </Form>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Modal, Descriptions, Spin, message, Tag, Divider } from "antd";
-import axios from "axios";
+import React from "react";
+import { Modal, Descriptions, Spin, Alert, Tag, Divider } from "antd";
 import type { IQuotationItem } from "../../model/Quotation";
+import { useGetQuotationById } from "../../service/quotationService";
 
 interface ViewQuotationModalProps {
   open?: boolean;
@@ -14,25 +14,13 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   quotationId,
   onClose,
 }) => {
-  const [quotation, setQuotation] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const { data, isLoading, isError, error } = useGetQuotationById(quotationId, {
+    enabled: !!quotationId && !!open,
+    retry: false,
+  });
 
-  const fetchQuotation = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`/api/quotations/${quotationId}`);
-      setQuotation(res.data.result);
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to load quotation details.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (quotationId && open) fetchQuotation();
-  }, [quotationId, open]);
+  const quotation = data?.result;
+  const is401Error = error?.response?.status === 401;
 
   return (
     <Modal
@@ -44,33 +32,65 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
       destroyOnClose
       title={<span className="text-lg font-semibold">Chi tiết báo giá</span>}
     >
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-10">
-          <Spin />
+          <Spin tip="Đang tải..." />
+        </div>
+      ) : isError ? (
+        <div className="py-6">
+          {is401Error ? (
+            <Alert
+              type="warning"
+              showIcon
+              message="Không có quyền truy cập"
+              description={
+                <div>
+                  <p className="mb-2">
+                    Bạn không có quyền xem chi tiết báo giá này.
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Chỉ <strong>MANAGER</strong> hoặc{" "}
+                    <strong>DEALER_STAFF</strong> mới có thể xem chi tiết.
+                  </p>
+                </div>
+              }
+            />
+          ) : (
+            <Alert
+              type="error"
+              showIcon
+              message="Không thể tải dữ liệu"
+              description={
+                error?.response?.data?.message ||
+                "Đã xảy ra lỗi khi tải chi tiết báo giá. Vui lòng thử lại."
+              }
+            />
+          )}
         </div>
       ) : quotation ? (
         <>
-          {/* 🟢 Thông tin tổng quan */}
           <Descriptions bordered column={2} size="middle">
-            <Descriptions.Item label="Quotation ID" span={2}>
+            <Descriptions.Item label="Mã báo giá" span={2}>
               {quotation.id}
             </Descriptions.Item>
-            <Descriptions.Item label="Customer ID">
-              {quotation.customerId}
+            <Descriptions.Item label="Khách hàng">
+              {quotation.customerId || "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Dealer ID">
-              {quotation.dealerId}
+            <Descriptions.Item label="Đại lý">
+              {quotation.dealerId || "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Account ID">
-              {quotation.accountId}
+            <Descriptions.Item label="Người tạo">
+              {quotation.accountId || "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Total Quantity">
-              {quotation.totalQuantity}
+            <Descriptions.Item label="Số lượng">
+              {quotation.totalQuantity ?? 0}
             </Descriptions.Item>
-            <Descriptions.Item label="Total Price">
-              ${quotation.totalPrice?.toLocaleString()}
+            <Descriptions.Item label="Tổng giá trị">
+              {quotation.totalPrice != null
+                ? `${quotation.totalPrice.toLocaleString("vi-VN")} ₫`
+                : "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Status">
+            <Descriptions.Item label="Trạng thái">
               <Tag
                 color={
                   quotation.status === "PENDING"
@@ -83,17 +103,18 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                 {quotation.status}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Valid Until (days)">
-              {quotation.validUntil}
+            <Descriptions.Item label="Hiệu lực (ngày)">
+              {quotation.validUntil ?? "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Created At" span={2}>
-              {new Date(quotation.createdAt).toLocaleString()}
+            <Descriptions.Item label="Ngày tạo" span={2}>
+              {quotation.createdAt
+                ? new Date(quotation.createdAt).toLocaleString("vi-VN")
+                : "-"}
             </Descriptions.Item>
           </Descriptions>
 
-          {/* 🟠 Danh sách xe trong báo giá */}
           <Divider orientation="left" className="mt-6">
-            Vehicle Items
+            Danh sách xe
           </Divider>
 
           {quotation.items?.length ? (
@@ -105,40 +126,46 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                 size="small"
                 className="mb-4"
               >
-                <Descriptions.Item label="Vehicle ID">
+                <Descriptions.Item label="Xe">
                   {item.vehicleId}
                 </Descriptions.Item>
-                <Descriptions.Item label="Promotion ID">
-                  {item.promotionId}
+                <Descriptions.Item label="Khuyến mãi">
+                  {item.promotionId || "-"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Vehicle Status">
+                <Descriptions.Item label="Trạng thái xe">
                   <Tag color="blue">{item.vehicleStatus}</Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Color">
+                <Descriptions.Item label="Màu sắc">
                   {item.color}
                 </Descriptions.Item>
-                <Descriptions.Item label="Quantity">
+                <Descriptions.Item label="Số lượng">
                   {item.quantity}
                 </Descriptions.Item>
-                <Descriptions.Item label="Unit Price">
-                  ${item.unitPrice?.toLocaleString()}
+                <Descriptions.Item label="Đơn giá">
+                  {item.unitPrice != null
+                    ? `${item.unitPrice.toLocaleString("vi-VN")} ₫`
+                    : "-"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Discount Price">
-                  ${item.discountPrice?.toLocaleString()}
+                <Descriptions.Item label="Giá sau giảm">
+                  {item.discountPrice != null
+                    ? `${item.discountPrice.toLocaleString("vi-VN")} ₫`
+                    : "-"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Total Price">
-                  ${item.totalPrice?.toLocaleString()}
+                <Descriptions.Item label="Thành tiền">
+                  {item.totalPrice != null
+                    ? `${item.totalPrice.toLocaleString("vi-VN")} ₫`
+                    : "-"}
                 </Descriptions.Item>
               </Descriptions>
             ))
           ) : (
             <p className="text-gray-500 italic mt-2">
-              No vehicle items available.
+              Không có xe trong báo giá.
             </p>
           )}
         </>
       ) : (
-        <p className="text-gray-500 italic">No quotation data found.</p>
+        <p className="text-gray-500 italic">Không tìm thấy dữ liệu báo giá.</p>
       )}
     </Modal>
   );

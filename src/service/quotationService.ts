@@ -1,9 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   createMutationHook,
   createQueryHook,
+  createQueryWithPathParamHook,
   deleteMutationHook,
   updateMutationHook,
 } from "../hook/useApi";
+import api from "../config/api";
 
 const BASE_URL = "/quotation";
 
@@ -20,5 +23,28 @@ export const useDeleteQuotation = deleteMutationHook(
   BASE_URL
 );
 
-export const useQuotationsList = (page = 0, size = 10) =>
-  createQueryHook("customerList", BASE_URL)({}, { page, size });
+// Hook mới - dùng cho query param
+// export const createQueryWithQueryParamHook =
+//   (queryKey: string, url: string) => (id?: string, options?: any) => {
+//     return useQuery({
+//       queryKey: id ? [queryKey, id] : [queryKey],
+//       queryFn: async () => {
+//         if (!id) throw new Error("ID is required");
+//         return (await api.get(url, { params: { id } })).data; // Query param
+//       },
+//       enabled: !!id,
+//       ...options,
+//     });
+//   };
+
+export const useGetQuotationById = createQueryWithPathParamHook(
+  "quotationDetail",
+  `${BASE_URL}/${id}`
+);
+
+export const useQuotationsList = (page = 0, size = 10) => {
+  return createQueryHook(["quotations", page, size], BASE_URL)(
+    {},
+    { page, size }
+  );
+};

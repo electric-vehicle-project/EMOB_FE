@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Form, Button, message, Modal } from "antd";
-import axios from "axios";
 import type { IQuotationItem } from "../../model/Quotation";
 import TextInput from "../../components/atoms/TextInput";
 import SelectInput from "../../components/atoms/SelectInput";
 import NumberInput from "../../components/atoms/NumberInput";
+import {
+  useGetQuotationById,
+  useUpdateQuotation,
+} from "../../service/quotationService";
 
 export interface UpdateQuotationPayload {
   items: IQuotationItem[];
@@ -26,24 +29,23 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
   onSuccess,
 }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
 
+  /** 🔹 Hook lấy chi tiết báo giá */
+  const {
+    data: quotationData,
+    isLoading: isFetching,
+    refetch,
+  } = useGetQuotationById(quotationId!, {
+    enabled: !!quotationId && open, // chỉ fetch khi mở modal
+  });
+
+  /** 🔹 Hook cập nhật báo giá */
+  const { mutateAsync: updateQuotation, isPending } = useUpdateQuotation();
+
+  /** 🔹 Khi dữ liệu có, fill vào form */
   useEffect(() => {
-    if (quotationId) {
-      fetchQuotation(quotationId);
-    }
-  }, [quotationId]);
-
-  const fetchQuotation = async (id: string) => {
-    try {
-      const res = await axios.get(`/api/quotations/${id}`);
-      const quotation = res.data.result;
-
-      if (!quotation) {
-        message.warning("Quotation not found");
-        return;
-      }
-
+    if (quotationData?.result) {
+      const quotation = quotationData.result;
       const item = quotation.items?.[0] || {};
 
       form.setFieldsValue({
@@ -56,12 +58,10 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
         customerId: quotation.customerId,
         validUntil: quotation.validUntil,
       });
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to load quotation data.");
     }
-  };
+  }, [quotationData, form]);
 
+  /** 🔹 Submit form */
   const handleSubmit = async (values: any) => {
     const payload: UpdateQuotationPayload = {
       items: [
@@ -78,18 +78,17 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
       validUntil: values.validUntil,
     };
 
-    setLoading(true);
     try {
-      await axios.put(`/api/quotations/${quotationId}`, payload);
-      message.success("Quotation updated successfully!");
+      await updateQuotation({ id: quotationId, data: payload });
+      message.success("Cập nhật báo giá thành công!");
       form.resetFields();
-      if (onSuccess) onSuccess();
-      if (onClose) onClose();
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to update quotation.");
-    } finally {
-      setLoading(false);
+      onSuccess?.();
+      onClose?.();
+    } catch (error: any) {
+      console.error("Update quotation error:", error);
+      message.error(
+        error?.response?.data?.message || "Cập nhật báo giá thất bại."
+      );
     }
   };
 
@@ -112,21 +111,20 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
         <TextInput
           label="Vehicle ID"
           name="vehicleId"
-          placeholder="Enter vehicle ID"
-          rules={[{ required: true, message: "Vehicle ID is required" }]}
+          placeholder="Nhập mã xe"
+          rules={[{ required: true, message: "Vehicle ID là bắt buộc" }]}
         />
 
         <TextInput
           label="Promotion ID"
           name="promotionId"
-          placeholder="Enter promotion ID"
-          rules={[{ required: true, message: "Promotion ID is required" }]}
+          placeholder="Nhập mã khuyến mãi"
         />
 
         <SelectInput
-          label="Vehicle Status"
+          label="Trạng thái xe"
           name="vehicleStatus"
-          placeholder="Select vehicle status"
+          placeholder="Chọn trạng thái xe"
           options={[
             { label: "NORMAL", value: "NORMAL" },
             { label: "SPECIAL", value: "SPECIAL" },
@@ -135,43 +133,47 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
             { label: "OLD_STOCK", value: "OLD_STOCK" },
             { label: "SOLD", value: "SOLD" },
           ]}
-          rules={[{ required: true, message: "Select vehicle status" }]}
+          rules={[{ required: true, message: "Chọn trạng thái xe" }]}
         />
 
         <TextInput
-          label="Color"
+          label="Màu sắc"
           name="color"
-          placeholder="Enter vehicle color"
-          rules={[{ required: true, message: "Color is required" }]}
+          placeholder="Nhập màu xe"
+          rules={[{ required: true, message: "Color là bắt buộc" }]}
         />
 
         <NumberInput
-          label="Quantity"
+          label="Số lượng"
           name="quantity"
           min={1}
-          placeholder="Enter quantity"
-          rules={[{ required: true, message: "Quantity is required" }]}
+          placeholder="Nhập số lượng"
+          rules={[{ required: true, message: "Quantity là bắt buộc" }]}
         />
 
         <TextInput
           label="Customer ID"
           name="customerId"
-          placeholder="Enter customer ID"
-          rules={[{ required: true, message: "Customer ID is required" }]}
+          placeholder="Nhập mã khách hàng"
+          rules={[{ required: true, message: "Customer ID là bắt buộc" }]}
         />
 
         <NumberInput
-          label="Valid Until (days)"
+          label="Valid Until (ngày)"
           name="validUntil"
           min={0}
-          placeholder="Enter valid duration (days)"
-          rules={[{ required: true, message: "Valid until is required" }]}
+          placeholder="Nhập số ngày hiệu lực"
+          rules={[{ required: true, message: "Valid Until là bắt buộc" }]}
         />
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={loading}>
-            Update Quotation
+          <Button onClick={onClose}>Hủy</Button>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isPending || isFetching}
+          >
+            Cập nhật
           </Button>
         </div>
       </Form>
