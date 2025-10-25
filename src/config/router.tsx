@@ -26,6 +26,7 @@ import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
+import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 
 export const routes: RouteObject[] = [
   { path: ROUTES.HOME, element: <HomePage /> },
@@ -56,6 +57,10 @@ export const routes: RouteObject[] = [
       { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
+      {
+        path: ROUTES.DEALER_DISCOUNT_POLICY,
+        element: <DealerDiscountPolicyPage />,
+      },
     ],
   },
 

@@ -61,4 +61,9 @@ export const ROUTES = {
 
   // VEHICLE-REQUEST
   VEHICLE_REQUEST: "vehicle-request",
+  VEHICLE_REQUEST_CREATE: "vehicle-request/create",
+  VEHICLE_REQUEST_UPDATE: "vehicle-request/edit/:id",
+
+  // DEALER_DISCOUNT_POLICY
+  DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
 };
