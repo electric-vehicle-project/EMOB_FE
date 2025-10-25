@@ -47,7 +47,8 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
   const vehicleOptions = useMemo(() => {
     const vehicles = vehiclesData?.result?.data || [];
     return vehicles.map((vehicle: any) => ({
-      label: `${vehicle.model} (${vehicle.type})`,
+      // label: `${vehicle.model} (${vehicle.type})`,
+      label: vehicle.id,
       value: vehicle.id,
     }));
   }, [vehiclesData]);

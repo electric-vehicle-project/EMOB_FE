@@ -7,7 +7,7 @@ import {
 } from "../hook/useApi";
 
 // =================== BASE URL ===================
-const BASE_URL = "/vehicle-requests";
+const BASE_URL = "/vehicle-request";
 
 // =================== QUERIES ===================
 

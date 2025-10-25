@@ -146,12 +146,17 @@ const QuotationPage: React.FC = () => {
 
           <Button
             size="small"
-            type="primary"
+            style={{
+              backgroundColor: "#627254",
+              color: "white",
+              border: "none",
+            }}
             className="bg-green-600 hover:bg-green-700 border-green-600"
             onClick={() => {
               setSelectedQuotationId(record.id);
               setIsUpdateModalOpen(true);
             }}
+            disabled={record.status === "APPROVED"}
           >
             Sửa
           </Button>
@@ -159,7 +164,7 @@ const QuotationPage: React.FC = () => {
           <Button
             size="small"
             style={{
-              backgroundColor: "#16a34a", // tương đương bg-green-600
+              backgroundColor: "#16a34a",
               color: "white",
               border: "none",
             }}
@@ -186,6 +191,7 @@ const QuotationPage: React.FC = () => {
                 color: "white",
                 border: "none",
               }}
+              disabled={record.status === "APPROVED"}
             >
               Xóa
             </Button>

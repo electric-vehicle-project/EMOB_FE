@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal, Form, Button, message } from "antd";
-import axios from "axios";
 import SelectInput from "../../components/atoms/SelectInput";
+import { useApproveQuotation } from "../../service/quotationService";
 import type { CreateQuotationPayload } from "./CreateQuotationModal";
 
 interface ApproveQuotationModalProps {
@@ -18,32 +18,33 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
   onSuccess,
 }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = React.useState(false);
+  const { mutateAsync: approveQuotation, isPending } = useApproveQuotation();
 
   const handleApprove = async (values: any) => {
     if (!record) return;
 
     const payload = record.items?.map((item) => ({
-      itemsId: item.id,
+      vehicleId: item.vehicleId,
       promotionId: item.promotionId,
+      quantity: item.quantity,
+      price: item.price,
     }));
 
-    setLoading(true);
     try {
-      await axios.put(`/api/quotation/${record.id}/approved`, payload, {
-        params: { paymentStatus: values.paymentStatus },
+      await approveQuotation({
+        id: record.id,
+        data: payload,
+        paymentStatus: values.paymentStatus,
       });
 
       message.success("Quotation approved successfully!");
-      onSuccess();
-      onClose();
+      onSuccess?.();
+      onClose?.();
     } catch (error: any) {
       console.error(error);
       message.error(
         error?.response?.data?.message || "Failed to approve quotation."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -80,7 +81,7 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
           <Button
             type="primary"
             htmlType="submit"
-            loading={loading}
+            loading={isPending}
             className="bg-green-700 hover:bg-green-800"
           >
             Xác nhận duyệt

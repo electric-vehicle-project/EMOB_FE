@@ -1,3 +1,4 @@
+import type { AxiosError } from "axios";
 import {
   createMutationHook,
   createQueryHook,
@@ -5,6 +6,8 @@ import {
   deleteMutationHook,
   updateMutationHook,
 } from "../hook/useApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../config/api";
 
 const BASE_URL = "/quotation";
 
@@ -47,7 +50,25 @@ export const useQuotationsList = (page = 0, size = 10) => {
   );
 };
 
-export const useApproveQuotation = updateMutationHook(
-  "approveQuotation",
-  `${BASE_URL}/approved`
-);
+export const useApproveQuotation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any, // response type
+    AxiosError<{ message: string }>, // error type
+    { id: string; data: any; paymentStatus: string } // variables type
+  >({
+    mutationFn: async ({ id, data, paymentStatus }) => {
+      // ✅ Đúng định dạng backend yêu cầu
+      return (
+        await api.put(`/quotation/${id}/approved`, data, {
+          params: { paymentStatus },
+        })
+      ).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quotationDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+    },
+  });
+};

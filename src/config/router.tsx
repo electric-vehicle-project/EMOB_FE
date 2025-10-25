@@ -80,7 +80,7 @@ export const routes: RouteObject[] = [
   {
     path: ROUTES.DASHBOARD,
     element: (
-      <AuthProtect allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}>
+      <AuthProtect allowedRoles={["MANAGER", "DEALER_STAFF"]}>
         <DashboardLayout />
       </AuthProtect>
     ),
