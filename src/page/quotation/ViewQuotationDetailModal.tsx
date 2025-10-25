@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Modal, Descriptions, Spin, Alert, Tag, Divider } from "antd";
 import type { IQuotationItem } from "../../model/Quotation";
 import { useGetQuotationById } from "../../service/quotationService";
+import { useCustomerList } from "../../service/customerService";
+import { useGetVehicles } from "../../service/vehicleService";
+import { usePromotionList } from "../../service/promotionService";
 
 interface ViewQuotationModalProps {
   open?: boolean;
@@ -14,14 +17,45 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   quotationId,
   onClose,
 }) => {
+  /** Lấy dữ liệu báo giá theo ID */
   const { data, isLoading, isError, error } = useGetQuotationById(quotationId, {
     enabled: !!quotationId && !!open,
     retry: false,
   });
-
   const quotation = data?.result;
   const is401Error = error?.response?.status === 401;
 
+  /** Lấy danh sách customers, vehicles, promotions */
+  const { data: customersData } = useCustomerList(0, 100);
+  const { data: vehiclesData } = useGetVehicles(0, 100);
+  const { data: promotionsData } = usePromotionList("", 0, 100);
+
+  /** 3Map dữ liệu thành dictionary để tra nhanh */
+  const customerMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    customersData?.result?.data?.forEach((c: any) => {
+      map[c.id] = `${c.fullName}`;
+    });
+    return map;
+  }, [customersData]);
+
+  const vehicleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    vehiclesData?.result?.data?.forEach((v: any) => {
+      map[v.id] = `${v.model} (${v.type})`;
+    });
+    return map;
+  }, [vehiclesData]);
+
+  const promotionMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    promotionsData?.result?.data?.forEach((p: any) => {
+      map[p.id] = `${p.name} - Giảm ${p.value.toLocaleString("vi-VN")} ₫`;
+    });
+    return map;
+  }, [promotionsData]);
+
+  /** Render modal */
   return (
     <Modal
       open={open}
@@ -34,7 +68,7 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
     >
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <Spin tip="Đang tải..." />
+          <Spin tip="Đang tải dữ liệu..." />
         </div>
       ) : isError ? (
         <div className="py-6">
@@ -44,7 +78,7 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
               showIcon
               message="Không có quyền truy cập"
               description={
-                <div>
+                <>
                   <p className="mb-2">
                     Bạn không có quyền xem chi tiết báo giá này.
                   </p>
@@ -52,7 +86,7 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                     Chỉ <strong>MANAGER</strong> hoặc{" "}
                     <strong>DEALER_STAFF</strong> mới có thể xem chi tiết.
                   </p>
-                </div>
+                </>
               }
             />
           ) : (
@@ -69,12 +103,10 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
         </div>
       ) : quotation ? (
         <>
+          {/* Thông tin chung */}
           <Descriptions bordered column={2} size="middle">
-            <Descriptions.Item label="Mã báo giá" span={2}>
-              {quotation.id}
-            </Descriptions.Item>
             <Descriptions.Item label="Khách hàng">
-              {quotation.customerId || "-"}
+              {customerMap[quotation.customerId] || "-"}
             </Descriptions.Item>
             <Descriptions.Item label="Đại lý">
               {quotation.dealerId || "-"}
@@ -106,13 +138,14 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
             <Descriptions.Item label="Hiệu lực (ngày)">
               {quotation.validUntil ?? "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo" span={2}>
+            <Descriptions.Item label="Ngày tạo">
               {quotation.createdAt
                 ? new Date(quotation.createdAt).toLocaleString("vi-VN")
                 : "-"}
             </Descriptions.Item>
           </Descriptions>
 
+          {/* Danh sách xe */}
           <Divider orientation="left" className="mt-6">
             Danh sách xe
           </Divider>
@@ -127,10 +160,12 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                 className="mb-4"
               >
                 <Descriptions.Item label="Xe">
-                  {item.vehicleId}
+                  {vehicleMap[item.vehicleId || ""] || "-"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Khuyến mãi">
-                  {item.promotionId || "-"}
+                  {item.promotionId
+                    ? promotionMap[item.promotionId] || "Đang cập nhật"
+                    : "Không áp dụng"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái xe">
                   <Tag color="blue">{item.vehicleStatus}</Tag>

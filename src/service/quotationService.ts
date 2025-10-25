@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   createMutationHook,
   createQueryHook,
@@ -6,7 +5,6 @@ import {
   deleteMutationHook,
   updateMutationHook,
 } from "../hook/useApi";
-import api from "../config/api";
 
 const BASE_URL = "/quotation";
 
@@ -39,7 +37,7 @@ export const useDeleteQuotation = deleteMutationHook(
 
 export const useGetQuotationById = createQueryWithPathParamHook(
   "quotationDetail",
-  `${BASE_URL}/${id}`
+  BASE_URL
 );
 
 export const useQuotationsList = (page = 0, size = 10) => {
@@ -48,3 +46,8 @@ export const useQuotationsList = (page = 0, size = 10) => {
     { page, size }
   );
 };
+
+export const useApproveQuotation = updateMutationHook(
+  "approveQuotation",
+  `${BASE_URL}/approved`
+);

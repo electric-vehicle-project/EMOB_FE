@@ -1,10 +1,12 @@
-import React from "react";
-import { Form, Button, DatePicker, message, Modal } from "antd";
+import React, { useMemo } from "react";
+import { Form, Button, message, Modal } from "antd";
 import type { IQuotationItem } from "../../model/Quotation";
-import TextInput from "../../components/atoms/TextInput";
 import SelectInput from "../../components/atoms/SelectInput";
 import NumberInput from "../../components/atoms/NumberInput";
 import { useCreateQuotation } from "../../service/quotationService";
+import { useCustomerList } from "../../service/customerService";
+import { usePromotionList } from "../../service/promotionService";
+import { useGetVehicles } from "../../service/vehicleService";
 
 export interface CreateQuotationPayload {
   items: IQuotationItem[];
@@ -26,13 +28,48 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
   const [form] = Form.useForm();
   const { mutateAsync: createQuotation, isPending } = useCreateQuotation();
 
+  // Fetch danh sách từ API
+  const { data: customersData, isLoading: loadingCustomers } =
+    useCustomerList();
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles();
+  const { data: promotionsData, isLoading: loadingPromotions } =
+    usePromotionList("", 0, 100);
+
+  // Chuyển đổi data thành options cho Select
+  const customerOptions = useMemo(() => {
+    const customers = customersData?.result?.data || [];
+    return customers.map((customer: any) => ({
+      label: `${customer.fullName} - ${customer.phoneNumber || customer.email}`,
+      value: customer.id,
+    }));
+  }, [customersData]);
+
+  const vehicleOptions = useMemo(() => {
+    const vehicles = vehiclesData?.result?.data || [];
+    return vehicles.map((vehicle: any) => ({
+      label: `${vehicle.model} (${vehicle.type})`,
+      value: vehicle.id,
+    }));
+  }, [vehiclesData]);
+
+  const promotionOptions = useMemo(() => {
+    const promotions = promotionsData?.result?.data || [];
+    return [
+      { label: "Không áp dụng", value: "" },
+      ...promotions.map((promo: any) => ({
+        label: `${promo.name} - Giảm ${promo.value}`,
+        value: promo.id,
+      })),
+    ];
+  }, [promotionsData]);
+
   const handleSubmit = async (values: any) => {
     try {
       const payload: CreateQuotationPayload = {
         items: [
           {
             vehicleId: values.vehicleId,
-            promotionId: values.promotionId,
+            promotionId: values.promotionId || null,
             vehicleStatus: values.vehicleStatus,
             color: values.color,
             quantity: values.quantity,
@@ -48,7 +85,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
 
       message.success("Tạo báo giá thành công!");
       form.resetFields();
-      // cho nó đợi add vào ròi mới close
+
       if (onSuccess) {
         await onSuccess();
       }
@@ -78,62 +115,92 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
         onFinish={handleSubmit}
         className="max-w-2xl"
       >
-        <TextInput
-          label="Vehicle ID"
+        {/* 🔹 Chọn khách hàng */}
+        <SelectInput
+          label="Khách hàng"
+          name="customerId"
+          placeholder="Chọn khách hàng"
+          options={customerOptions}
+          loading={loadingCustomers}
+          showSearch
+          filterOption={(input, option) =>
+            (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+          }
+          rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
+        />
+
+        {/* 🔹 Chọn xe */}
+        <SelectInput
+          label="Xe"
           name="vehicleId"
-          placeholder="Nhập mã xe"
-          rules={[{ required: true, message: "Vehicle ID là bắt buộc" }]}
+          placeholder="Chọn xe"
+          options={vehicleOptions}
+          loading={loadingVehicles}
+          showSearch
+          filterOption={(input, option) =>
+            (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+          }
+          rules={[{ required: true, message: "Vui lòng chọn xe" }]}
         />
 
-        <TextInput
-          label="Promotion ID"
+        {/* 🔹 Chọn khuyến mãi */}
+        <SelectInput
+          label="Khuyến mãi"
           name="promotionId"
-          placeholder="Nhập mã khuyến mãi (nếu có)"
+          placeholder="Chọn khuyến mãi (nếu có)"
+          options={promotionOptions}
+          loading={loadingPromotions}
+          showSearch
         />
 
+        {/* 🔹 Trạng thái xe */}
         <SelectInput
           label="Trạng thái xe"
           name="vehicleStatus"
           placeholder="Chọn trạng thái xe"
           options={[
-            { label: "NORMAL", value: "NORMAL" },
-            { label: "SPECIAL", value: "SPECIAL" },
-            { label: "TEST_DRIVE", value: "TEST_DRIVE" },
-            { label: "RESERVED", value: "RESERVED" },
-            { label: "OLD_STOCK", value: "OLD_STOCK" },
-            { label: "SOLD", value: "SOLD" },
+            { label: "Bình thường", value: "NORMAL" },
+            { label: "Đặc biệt", value: "SPECIAL" },
+            { label: "Xe lái thử", value: "TEST_DRIVE" },
+            { label: "Đã đặt trước", value: "RESERVED" },
+            { label: "Tồn kho cũ", value: "OLD_STOCK" },
+            { label: "Đã bán", value: "SOLD" },
           ]}
           rules={[{ required: true, message: "Hãy chọn trạng thái xe" }]}
         />
 
-        <TextInput
+        {/* 🔹 Màu sắc */}
+        <SelectInput
           label="Màu sắc"
           name="color"
-          placeholder="Nhập màu xe"
-          rules={[{ required: true, message: "Color là bắt buộc" }]}
+          placeholder="Chọn màu xe"
+          options={[
+            { label: "Đen", value: "BLACK" },
+            { label: "Trắng", value: "WHITE" },
+            { label: "Đỏ", value: "RED" },
+            { label: "Xanh", value: "BLUE" },
+            { label: "Bạc", value: "SILVER" },
+            { label: "Xám", value: "GRAY" },
+          ]}
+          rules={[{ required: true, message: "Vui lòng chọn màu xe" }]}
         />
 
+        {/* 🔹 Số lượng */}
         <NumberInput
           label="Số lượng"
           name="quantity"
           min={1}
           placeholder="Nhập số lượng xe"
-          rules={[{ required: true, message: "Quantity là bắt buộc" }]}
+          rules={[{ required: true, message: "Số lượng là bắt buộc" }]}
         />
 
-        <TextInput
-          label="Customer ID"
-          name="customerId"
-          placeholder="Nhập mã khách hàng"
-          rules={[{ required: true, message: "Customer ID là bắt buộc" }]}
-        />
-
+        {/* 🔹 Thời hạn hiệu lực */}
         <NumberInput
-          label="Valid Until (days)"
+          label="Thời hạn hiệu lực (ngày)"
           name="validUntil"
           min={0}
-          placeholder="Enter valid duration (days)"
-          rules={[{ required: true, message: "Valid until is required" }]}
+          placeholder="Nhập số ngày hiệu lực"
+          rules={[{ required: true, message: "Thời hạn hiệu lực là bắt buộc" }]}
         />
 
         <div className="flex justify-end gap-3 mt-4">

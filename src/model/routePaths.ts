@@ -49,6 +49,7 @@ export const ROUTES = {
   QUOTATION_CREATE: "quotations/create",
   QUOTATION_UPDATE: "quotations/edit/:id",
   QUOTATION_VIEW: "quotations/view/:id",
+  QUOTATION_APPROVE: "quotation/approve/:id",
   // EVM
   EVM_VEHICLE: "evm/vehicle",
   EVM_VEHICLE_BULK: "evm/vehicle/bulk",
