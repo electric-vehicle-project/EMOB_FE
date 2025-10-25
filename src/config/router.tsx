@@ -1,13 +1,15 @@
-import { createBrowserRouter, type RouteObject } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import AuthLayout from "../layout/AuthLayout";
 import { ROUTES } from "../model/routePaths";
-import { AuthProtect } from "../components/atoms/AuthProtect";
 
+// 🔐 Auth Pages
 import { LoginCard } from "../components/organisms/LoginCard";
 import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
 import { OTPCard } from "../components/organisms/OTPCard";
 import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
+
+// 📄 General
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import ReportPage from "../page/ReportPage";
@@ -16,21 +18,32 @@ import ReportPage from "../page/ReportPage";
 import { DealerPage } from "../page/DealerPage";
 import { TestDrivePage } from "../page/TestDrivePage";
 
-// ===== PROFILE PAGES =====
+// 👤 Profile
 import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
-import TestPage from "../page/TestPage";
 import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 
-export const routes: RouteObject[] = [
+// ⚡ EV Management
+import { VehiclePage } from "../page/EVM/VehiclePage";
+import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
+import { VehicleDetailPage } from "../page/EVM/VehicleDetailPage";
+import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
+import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
+import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
+import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
+import { AuthProtect } from "../components/atoms/AuthProtect";
+import TestPage from "../page/TestPage";
+
+export const router = createBrowserRouter([
+  // 🏠 Trang chủ
   { path: ROUTES.HOME, element: <HomePage /> },
 
-  // Auth layout cho login / reset password
+  // 🔐 AUTH
   {
     path: ROUTES.AUTH,
     element: <AuthLayout />,
@@ -43,6 +56,7 @@ export const routes: RouteObject[] = [
   },
 
   // ADMIN
+  // 👑 ADMIN DASHBOARD
   {
     path: ROUTES.ADMIN,
     element: (
@@ -52,10 +66,9 @@ export const routes: RouteObject[] = [
     ),
     children: [
       { path: ROUTES.DEALERS, element: <DealerPage /> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
-      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
@@ -77,6 +90,7 @@ export const routes: RouteObject[] = [
   },
 
   // DEALER_MANAGER + DEALER_STAFF
+  // ⚡ EVM DASHBOARD
   {
     path: ROUTES.DASHBOARD,
     element: (
@@ -85,6 +99,7 @@ export const routes: RouteObject[] = [
       </AuthProtect>
     ),
     children: [
+      // 👤 Profile
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
@@ -92,27 +107,26 @@ export const routes: RouteObject[] = [
       { path: "test", element: <TestPage /> },
       { path: ROUTES.QUOTATIONS, element: <QuotationPage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
+
+      // ⚡ Vehicle Management
+      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
+      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      {
+        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+        element: <VehiclePriceUpdatePage />,
+      },
+
+      // ✅ Price Rules
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+
+      // 👥 Customer Detail
+      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
 
-  // // CUSTOMER
-  // {
-  //   path: "/customer",
-  //   element: (
-  //     <AuthProtect allowedRoles={["CUSTOMER"]}>
-  //       <DashboardLayout />
-  //     </AuthProtect>
-  //   ),
-  //   children: [
-  //     { path: "profile/info", element: <InfoPage /> },
-  //     { path: "profile/changeInfo", element: <ChangeInfoPage /> },
-  //     { path: "profile/resetPassword", element: <ResetPasswordPage /> },
-  //   ],
-  // },
-
-  //404
+  // 🚫 404
   { path: ROUTES.NOTFOUND, element: <NotFoundPage /> },
-];
-
-//       EXPORT ROUTER
-export const router = createBrowserRouter(routes);
+]);
