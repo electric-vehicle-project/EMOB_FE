@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, message, Popconfirm, Tag } from "antd";
+import { Table, Button, message, Popconfirm, Tag, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import SectionTitle from "../../components/atoms/SectionTitle";
 import {
@@ -10,6 +10,7 @@ import ViewVehicleRequestModal from "./ViewVehicleRequestModal";
 import UpdateVehicleRequestModal from "./UpdateVehicleRequestModal"; // ✅ Thêm modal update
 import type { IVehicleRequest } from "../../model/VehicleRequest";
 import CreateVehicleRequestModal from "./CreateVehicleRequestModal ";
+import { SearchOutlined } from "@ant-design/icons";
 
 const VehicleRequestPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -22,9 +23,11 @@ const VehicleRequestPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Fetch data
+  const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, refetch } = useGetVehicleRequests(
-    {},
-    { page: page - 1, size: pageSize }
+    page - 1,
+    pageSize,
+    searchTerm
   );
 
   const vehicleRequests: IVehicleRequest[] = data?.result?.data ?? [];
@@ -147,6 +150,16 @@ const VehicleRequestPage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <SectionTitle text="Vehicle Requests Management" />
+        <Input.Search
+          placeholder="Tìm kiếm theo mã hoặc đại lý..."
+          allowClear
+          enterButton={<SearchOutlined />}
+          onSearch={(value) => {
+            setSearchTerm(value);
+            setPage(1); // quay lại trang đầu
+          }}
+          style={{ width: 300, marginLeft: 40 }}
+        />
         <Button
           type="primary"
           className="bg-green-700"

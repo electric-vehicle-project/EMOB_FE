@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, message, Popconfirm, Tag } from "antd";
+import { Table, Button, message, Popconfirm, Tag, Input } from "antd";
 import SectionTitle from "../../components/atoms/SectionTitle";
 import type { ColumnsType } from "antd/es/table";
 import type { IQuotation, IQuotationItem } from "../../model/Quotation";
@@ -15,6 +15,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerById } from "../../service/customerService";
 import { useGetDealerById } from "../../service/dealerService";
+import { SearchOutlined } from "@ant-design/icons";
 
 const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
   const { data, isLoading } = useCustomerById(customerId);
@@ -44,9 +45,15 @@ const QuotationPage: React.FC = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  // search
+  const [searchTerm, setSearchTerm] = useState("");
 
   /** Query: danh sách báo giá */
-  const { data, isLoading, refetch } = useQuotationsList(page - 1, pageSize); // backend start = 0
+  const { data, isLoading, refetch } = useQuotationsList(
+    page - 1,
+    pageSize,
+    searchTerm
+  ); // backend start = 0
 
   /** Mutation: xóa báo giá */
   const deleteQuotation = useDeleteQuotation();
@@ -209,6 +216,16 @@ const QuotationPage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <SectionTitle text="Quản lý báo giá" />
+        <Input.Search
+          placeholder="Tìm kiếm theo mã, khách hàng..."
+          allowClear
+          enterButton={<SearchOutlined />}
+          onSearch={(value) => {
+            setSearchTerm(value);
+            setPage(1);
+          }}
+          style={{ width: 300, marginLeft: 200 }}
+        />
         <Button
           type="primary"
           className="bg-green-700"

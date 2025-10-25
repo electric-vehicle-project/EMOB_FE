@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createMutationHook,
   createQueryHook,
@@ -5,6 +6,8 @@ import {
   deleteMutationHook,
   updateMutationHook,
 } from "../hook/useApi";
+import type { AxiosError } from "axios";
+import api from "../config/api";
 
 // =================== BASE URL ===================
 const BASE_URL = "/vehicle-request";
@@ -12,10 +15,11 @@ const BASE_URL = "/vehicle-request";
 // =================== QUERIES ===================
 
 // (GET /vehicle-requests)
-export const useGetVehicleRequests = createQueryHook(
-  "vehicleRequests",
-  BASE_URL
-);
+export const useGetVehicleRequests = (page = 0, size = 10, search = "") =>
+  createQueryHook("vehicleRequests", BASE_URL)(
+    {},
+    { page, size, search } // 👈 thêm query param search
+  );
 
 // (GET /vehicle-requests/{id})
 export const useGetVehicleRequestById = createQueryWithPathParamHook(
@@ -40,3 +44,28 @@ export const useDeleteVehicleRequest = deleteMutationHook(
   "deleteVehicleRequest",
   BASE_URL
 );
+
+// Approve
+export const useApproveVehicleRequest = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any,
+    AxiosError<{ message: string }>,
+    { id: string; paymentStatus: string }
+  >({
+    mutationFn: async ({ id, paymentStatus }) => {
+      // PUT /vehicle-request/{id}/approved?id={id}
+      return (
+        await api.put(`/vehicle-request/${id}/approved`, paymentStatus, {
+          params: { id },
+          headers: { "Content-Type": "application/json" },
+        })
+      ).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicleRequestDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicleRequests"] });
+    },
+  });
+};

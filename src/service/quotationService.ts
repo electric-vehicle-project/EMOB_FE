@@ -43,10 +43,10 @@ export const useGetQuotationById = createQueryWithPathParamHook(
   BASE_URL
 );
 
-export const useQuotationsList = (page = 0, size = 10) => {
-  return createQueryHook(["quotations", page, size], BASE_URL)(
+export const useQuotationsList = (page = 0, size = 10, search = "") => {
+  return createQueryHook(["quotations", page, size, search], "/quotation")(
     {},
-    { page, size }
+    { page, size, search }
   );
 };
 
