@@ -1,84 +1,70 @@
-import {
-  createQueryHook,
-  createQueryWithPathParamHook,
-  createMutationHook,
-  updateMutationHook,
-  deleteMutationHook,
-} from "../hook/useApi";
 import api from "../config/api";
 import type { IDealer } from "../model/Dealer";
 
-// Interface for API response data structure
-interface DealerApiResponse {
-  id: string;
-  name: string;
-  contactInfo: string;
-  address?: string;
-  country?: string;
-}
+let dealers: IDealer[] = [
+  {
+    id: "1",
+    name: "Dealer A",
+    email: "a@mail.com",
+    phone: "0123456789",
+    address: "Hà Nội",
+    status: "Active",
+  },
+  {
+    id: "2",
+    name: "Dealer B",
+    email: "b@mail.com",
+    phone: "0987654321",
+    address: "TP.HCM",
+    status: "Active",
+  },
+];
 
-/* =========================================================
-   🔹 QUERY HOOKS
-   ========================================================= */
+export const dealerService = {
+  getDealers: async (): Promise<IDealer[]> => {
+    return Promise.resolve(dealers);
+  },
+  createDealer: async (dealer: IDealer): Promise<void> => {
+    dealers.push({ ...dealer, id: Date.now().toString() });
+    return Promise.resolve();
+  },
+  updateDealer: async (dealer: IDealer): Promise<void> => {
+    dealers = dealers.map((d) => (d.id === dealer.id ? dealer : d));
+    return Promise.resolve();
+  },
+  deleteDealer: async (id: string): Promise<void> => {
+    dealers = dealers.filter((d) => d.id !== id);
+    return Promise.resolve();
+  },
+};
 
-// 🟢 Lấy danh sách đại lý (GET /dealer?page=0&size=1000)
-export const useDealerList = createQueryHook("dealers", "/dealer");
-
-// 🟢 Lấy chi tiết đại lý theo ID (GET /dealer/{id})
-export const useDealerById = createQueryWithPathParamHook("dealer", "/dealer");
-
-/* =========================================================
-   🔹 MUTATION HOOKS
-   ========================================================= */
-
-// 🟩 Tạo mới đại lý (POST /dealer)
-export const useDealerCreate = createMutationHook("dealers", "/dealer");
-
-// 🟨 Cập nhật đại lý (PUT /dealer/{id})
-export const useDealerUpdate = updateMutationHook("dealers", "/dealer");
-
-// 🟥 Xóa đại lý (DELETE /dealer/{id})
-export const useDealerDelete = deleteMutationHook("dealers", "/dealer");
-
-/* =========================================================
-   🔹 WRAPPER API TRỰC TIẾP (dành cho file cũ, như PromotionCreatePage)
-   ========================================================= */
-
+// ⚙️ Wrapper gọi API thật, fallback sang mock khi lỗi
 export const getAllDealers = async (): Promise<IDealer[]> => {
   try {
-    const res = await api.get("/dealer", { params: { page: 0, size: 1000 } });
+    const res = await api.get("/api/dealer", {
+      params: { page: 0, size: 1000 },
+    });
+
+    // Dữ liệu dealer trong swagger nằm ở res.data.result.data
     const data = res.data?.result?.data ?? [];
 
-    // Validate that data is an array
-    if (!Array.isArray(data)) {
-      console.warn("⚠️ API response data is not an array:", data);
-      return [];
-    }
-
-    // Chuẩn hoá về model IDealer với type safety
-    return data
-      .filter((item): item is DealerApiResponse => {
-        // Type guard to ensure item has required properties
-        return (
-          typeof item === "object" &&
-          item !== null &&
-          typeof item.id === "string" &&
-          typeof item.name === "string" &&
-          typeof item.contactInfo === "string"
-        );
-      })
-      .map(
-        (d: DealerApiResponse): IDealer => ({
-          id: d.id,
-          name: d.name,
-          email: d.contactInfo,
-          phone: "", // BE chưa có trường phone
-          address: d.address || d.country || "",
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map(
+        (d: Record<string, unknown>): IDealer => ({
+          id: (d.id as string) ?? "",
+          name: (d.name as string) ?? "",
+          email: (d.contactInfo as string) ?? "",
+          phone: "",
+          address: (d.country as string) ?? "",
           status: "Active",
         })
       );
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi GET /dealer:", error);
+    }
+
+    // Nếu không có dealer nào trong DB
     return [];
+  } catch {
+    console.warn("⚠️ API /api/dealer chưa sẵn sàng, fallback sang mock data.");
+    return dealerService.getDealers();
   }
 };

@@ -1,75 +1,58 @@
-import React from "react";
-import { Table, Button, Tag } from "antd";
+import React, { useMemo } from "react";
+import { Table, Button } from "antd";
 import type { SortOrder } from "antd/es/table/interface";
 import type { ColumnsType } from "antd/es/table";
-import {
-  EditOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { IDealer } from "../../model/Dealer";
 
 interface Props {
   data: IDealer[];
   onEdit: (dealer: IDealer) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export const DealerTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
+  // ✅ Lấy danh sách quốc gia duy nhất để làm filter
+  const countryFilters = useMemo(() => {
+    const unique = Array.from(
+      new Set(data.map((d) => d.country || "Không xác định"))
+    );
+    return unique.map((country) => ({
+      text: country,
+      value: country,
+    }));
+  }, [data]);
+
   const columns: ColumnsType<IDealer> = [
     {
       title: "Tên đại lý",
       dataIndex: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
       sortDirections: ["ascend", "descend"] as SortOrder[],
-      responsive: ["xs", "sm", "md", "lg", "xl"],
+      ellipsis: true,
     },
     {
-      title: "E-mail",
-      dataIndex: "email",
-      responsive: ["sm", "md", "lg", "xl"],
+      title: "Thông tin liên hệ",
+      dataIndex: "contactInfo",
+      ellipsis: true,
     },
     {
-      title: "Số điện thoại",
-      dataIndex: "phone",
-      responsive: ["xs", "sm", "md", "lg", "xl"],
+      title: "Quốc gia",
+      dataIndex: "country",
+      filters: countryFilters,
+      onFilter: (value, record) => record.country === value,
+      ellipsis: true,
     },
     {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      responsive: ["md", "lg", "xl"],
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      align: "center",
-      filters: [
-        { text: "Active", value: "Active" },
-        { text: "Inactive", value: "Inactive" },
-      ],
-      onFilter: (value, record) =>
-        record.status.toLowerCase() === value.toString().toLowerCase(),
-      render: (status: string) => {
-        const normalized = status?.toLowerCase?.() ?? "";
-        switch (normalized) {
-          case "active":
-            return (
-              <Tag color="green" icon={<CheckCircleOutlined />}>
-                Active
-              </Tag>
-            );
-          case "inactive":
-            return (
-              <Tag color="volcano" icon={<CloseCircleOutlined />}>
-                Inactive
-              </Tag>
-            );
-          default:
-            return <Tag>{status}</Tag>;
-        }
-      },
-      responsive: ["sm", "md", "lg", "xl"],
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      sorter: (a, b) =>
+        new Date(a.createdAt ?? "").getTime() -
+        new Date(b.createdAt ?? "").getTime(),
+      sortDirections: ["descend", "ascend"] as SortOrder[],
+      render: (value: string | undefined) =>
+        value ? new Date(value).toLocaleString("vi-VN") : "-",
+      width: 180,
     },
     {
       title: "Thao tác",
