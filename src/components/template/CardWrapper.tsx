@@ -1,21 +1,28 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-export interface ProfileCardWrapperProps {
+export interface CardWrapperProps {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
-  maxWidth?: string; 
+  maxWidth?: string;
+  variant?: "profile" | "dashboard";
 }
 
-
-const ProfileCardWrapper: React.FC<ProfileCardWrapperProps> = ({
+/**
+ * CardWrapper (Fixed Static Version)
+ * - Không hover, không translate, không gradient
+ * - Giữ layout sáng, bo tròn, bóng nhẹ cố định
+ */
+const CardWrapper: React.FC<CardWrapperProps> = ({
   title,
   subtitle,
   children,
   maxWidth,
+  variant = "dashboard",
 }) => {
-  const containerMaxWidth = maxWidth || "max-w-5xl";
+  const containerMaxWidth =
+    maxWidth || (variant === "profile" ? "max-w-5xl" : "max-w-6xl");
 
   return (
     <div className="min-h-[calc(100vh-150px)] flex justify-center items-start bg-[var(--neutural-color)] p-4 sm:p-6 md:p-8 font-[Inter,sans-serif]">
@@ -23,7 +30,7 @@ const ProfileCardWrapper: React.FC<ProfileCardWrapperProps> = ({
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className={`${containerMaxWidth} w-full backdrop-blur-sm bg-white/90 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 p-8 sm:p-10 hover:bg-gradient-to-tr hover:from-[#f7f8f6] hover:to-[#f0f3ed]`}
+        className={`${containerMaxWidth} w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-10`}
       >
         <div className="border-l-4 border-[#627254] pl-4 mb-6">
           <h1 className="text-2xl font-semibold text-[#414d38]">{title}</h1>
@@ -36,8 +43,4 @@ const ProfileCardWrapper: React.FC<ProfileCardWrapperProps> = ({
   );
 };
 
-export default ProfileCardWrapper;
-
-
-
-
+export default CardWrapper;

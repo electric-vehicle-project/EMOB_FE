@@ -10,7 +10,6 @@ interface Props {
 
 export const DealerForm = ({ form, onFinish }: Props) => (
   <Form layout="vertical" form={form} onFinish={onFinish}>
-    {/* Tên đại lý */}
     <Form.Item
       name="name"
       label="Tên đại lý"
@@ -19,7 +18,6 @@ export const DealerForm = ({ form, onFinish }: Props) => (
       <Input placeholder="Nhập tên đại lý" allowClear />
     </Form.Item>
 
-    {/* Thông tin liên hệ */}
     <Form.Item
       name="contactInfo"
       label="Thông tin liên hệ"
@@ -28,13 +26,16 @@ export const DealerForm = ({ form, onFinish }: Props) => (
       <Input placeholder="Nhập email hoặc số điện thoại" allowClear />
     </Form.Item>
 
-    {/* Quốc gia */}
     <Form.Item
       name="country"
       label="Quốc gia"
       rules={[{ required: true, message: "Vui lòng nhập quốc gia" }]}
     >
       <Input placeholder="Ví dụ: Việt Nam, USA, Japan..." allowClear />
+    </Form.Item>
+
+    <Form.Item name="address" label="Địa chỉ">
+      <Input placeholder="Nhập địa chỉ đại lý (nếu có)" allowClear />
     </Form.Item>
   </Form>
 );
