@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Spin } from "antd";
-import { toast } from "react-toastify";
+import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
+import { message, Spin, Empty } from "antd";
 import type { IDealer } from "../../model/Dealer";
 import { DealerTable } from "../molecules/DealerTable";
 import { SearchBar } from "../molecules/SearchBar";
@@ -8,8 +8,9 @@ import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Button } from "../atoms/Button";
 import { useDebounce } from "../../hook/useDebounce";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 import {
-  useGetDealers,
+  useDealers,
   useCreateDealer,
   useUpdateDealer,
   useDeleteDealer,
@@ -23,124 +24,153 @@ export const DealerList = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // ===== API HOOKS =====
-  const { data: dealers = [], refetch, isLoading } = useGetDealers();
+  const { data, refetch, isLoading, isError, error } = useDealers();
+  const dealers: IDealer[] = useMemo(() => data?.result?.data ?? [], [data]);
+
   const createDealer = useCreateDealer();
   const updateDealer = useUpdateDealer();
   const deleteDealer = useDeleteDealer();
 
-  // ===== FILTER TÌM KIẾM (client-side) =====
-  const filtered = dealers.filter((d: IDealer) =>
-    d.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+  // ===== ROLE CONTROL =====
+  const user = useCurrentUser();
+  const canModify = ["ADMIN", "EVM_STAFF"].includes(
+    (user as { role?: string } | null)?.role || ""
   );
 
-  // ✅ Lưu (thêm hoặc sửa)
+  // ===== SEARCH =====
+  const filtered = useMemo(() => {
+    const keyword = debouncedSearch.toLowerCase();
+    return dealers.filter((d) => d.name.toLowerCase().includes(keyword));
+  }, [dealers, debouncedSearch]);
+
+  // ===== SAVE =====
   const handleSave = async (values: IDealer) => {
     try {
-      if (editDealer?.id) {
-        await updateDealer.mutateAsync({
-          id: editDealer.id,
-          data: {
-            name: values.name,
-            contactInfo: values.contactInfo,
-            country: values.country,
-          },
-        });
-        toast.success("Cập nhật đại lý thành công!");
+      if (editDealer) {
+        await updateDealer.mutateAsync({ id: editDealer.id!, data: values });
+        message.success("Cập nhật đại lý thành công!");
       } else {
-        await createDealer.mutateAsync({
-          name: values.name,
-          contactInfo: values.contactInfo,
-          country: values.country,
-        });
-        toast.success("Thêm đại lý mới thành công!");
-
-        // 🟢 Đồng bộ lại danh sách
-        refetch();
+        await createDealer.mutateAsync(values);
+        message.success("Tạo mới đại lý thành công!");
       }
-
       setModalOpen(false);
       setEditDealer(undefined);
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(
-        err?.response?.data?.message || "Lỗi khi lưu thông tin đại lý!"
-      );
+      refetch();
+    } catch {
+      message.error("Đã xảy ra lỗi, vui lòng thử lại!");
     }
   };
 
-  // ✅ Xóa
+  // ===== DELETE =====
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
       await deleteDealer.mutateAsync(deleteId);
-      toast.success("Xóa đại lý thành công!");
-      refetch();
+      message.success("Xóa thành công!");
       setDeleteId(null);
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err?.response?.data?.message || "Không thể xóa đại lý!");
+      refetch();
+    } catch {
+      message.error("Không thể xóa đại lý, vui lòng thử lại!");
     }
   };
 
-  return (
-    <Spin
-      spinning={
-        isLoading ||
-        createDealer.isPending ||
-        updateDealer.isPending ||
-        deleteDealer.isPending
-      }
-      tip="Đang xử lý..."
-      size="large"
-    >
-      <div className="space-y-4">
-        {/* Thanh tìm kiếm + nút thêm */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm kiếm đại lý..."
-            className="w-full sm:max-w-[420px] hover-lift"
-          />
+  // ===== LOADING STATE =====
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" tip="Đang tải danh sách đại lý..." />
+      </div>
+    );
+  }
 
+  // ===== ERROR STATE =====
+  if (isError) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500 font-medium mb-4">
+          Không thể tải danh sách đại lý.
+        </p>
+        <p className="text-gray-500">{error?.message || "Vui lòng thử lại."}</p>
+        <Button
+          type="primary"
+          onClick={() => refetch()}
+          className="mt-4 !bg-[#627254] hover:!bg-[#525e46]"
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  // ===== MAIN CONTENT =====
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="space-y-4"
+    >
+      {/* --- Search & Add Button --- */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Tìm kiếm đại lý..."
+          className="w-full sm:max-w-[420px]"
+        />
+
+        {canModify && (
           <Button
             type="primary"
             onClick={() => setModalOpen(true)}
-            className="w-full sm:w-auto sm:ml-4 px-6 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            className="!bg-[#627254] hover:!bg-[#525e46] text-white rounded-xl px-6 py-2"
           >
             Thêm đại lý mới
           </Button>
-        </div>
-
-        {/* Bảng đại lý (đã có sort & filter trong bảng) */}
-        <DealerTable
-          data={filtered}
-          onEdit={(d) => {
-            setEditDealer(d);
-            setModalOpen(true);
-          }}
-          onDelete={(id) => setDeleteId(id)}
-        />
-
-        {/* Modal thêm/sửa */}
-        <DealerModal
-          open={modalOpen}
-          onClose={() => {
-            setModalOpen(false);
-            setEditDealer(undefined);
-          }}
-          onSubmit={handleSave}
-          initialValues={editDealer}
-        />
-
-        {/* Xác nhận xóa */}
-        <DeleteConfirm
-          open={!!deleteId}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteId(null)}
-          message="Bạn có chắc chắn muốn xóa đại lý này không?"
-        />
+        )}
       </div>
-    </Spin>
+
+      {/* --- Table Wrapper (no hover, static) --- */}
+      <div className="overflow-x-auto rounded-2xl shadow-sm bg-white border border-gray-100">
+        {filtered.length > 0 ? (
+          <DealerTable
+            data={filtered}
+            onEdit={(d) => {
+              setEditDealer(d);
+              setModalOpen(true);
+            }}
+            onDelete={(id) => setDeleteId(id)}
+            canModify={canModify}
+          />
+        ) : (
+          <Empty
+            description="Không tìm thấy đại lý nào"
+            className="py-10 text-gray-500"
+          />
+        )}
+      </div>
+
+      {/* --- Modal Thêm/Sửa --- */}
+      {canModify && (
+        <>
+          <DealerModal
+            open={modalOpen}
+            onClose={() => {
+              setModalOpen(false);
+              setEditDealer(undefined);
+            }}
+            onSubmit={handleSave}
+            initialValues={editDealer}
+          />
+
+          <DeleteConfirm
+            open={!!deleteId}
+            onConfirm={handleDelete}
+            onCancel={() => setDeleteId(null)}
+            message="Bạn có chắc chắn muốn xóa đại lý này?"
+          />
+        </>
+      )}
+    </motion.div>
   );
 };

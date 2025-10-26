@@ -23,11 +23,7 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
-import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
-import QuotationPage from "../page/quotation/QuotationPage";
-import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
-import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 
 // ⚡ EV Management
 import { VehiclePage } from "../page/EVM/VehiclePage";
@@ -38,7 +34,14 @@ import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
 import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
 import { AuthProtect } from "../components/atoms/AuthProtect";
+
+// 🎯 Promotions
+import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
+import PromotionEditPage from "../page/promotions/PromotionEditPage";
+
+// 🧪 Test
 import TestPage from "../page/TestPage";
+import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -65,12 +68,12 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
-      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: "test", element: <TestPage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <DealerDiscountPolicyPage />,
@@ -78,7 +81,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // EVM_STAFF
+  // ⚡ EVM STAFF DASHBOARD
   {
     path: ROUTES.EVM_STAFF,
     element: (
@@ -87,33 +90,38 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
-      { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
-    ],
-  },
+      // 👥 Dealer Management
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
 
-  // DEALER_MANAGER + DEALER_STAFF
-  {
-    path: ROUTES.DASHBOARD,
-    element: (
-      <AuthProtect allowedRoles={["MANAGER", "DEALER_STAFF"]}>
-        <DashboardLayout />
-      </AuthProtect>
-    ),
-    children: [
-      // 👤 Profile
+      // ⚡ Vehicle Management
+      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
+      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      {
+        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+        element: <VehiclePriceUpdatePage />,
+      },
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+
+      // 👤 Profile Pages
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-      { path: "test", element: <TestPage /> },
-      { path: ROUTES.QUOTATIONS, element: <QuotationPage /> },
-      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
+    ],
+  },
 
-      // ⚡ Vehicle Management
+  // ==== MANAGER ====
+  {
+    path: ROUTES.MANAGER,
+    element: <DashboardLayout />,
+    children: [
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
@@ -123,11 +131,7 @@ export const router = createBrowserRouter([
         path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
         element: <VehiclePriceUpdatePage />,
       },
-
-      // ✅ Price Rules
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
-
-      // 👥 Customer Detail
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },

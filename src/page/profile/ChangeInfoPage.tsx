@@ -46,7 +46,7 @@ const ChangeInfoPage: React.FC = () => {
     if (avatarPreview) {
       message.success("Ảnh đại diện đã được cập nhật thành công!");
     }
-    navigate("/admin/profile/info");
+    navigate("/dashboard/profile/info");
   };
 
   return (

@@ -4,24 +4,31 @@ import { accountService } from "../../service/accountService";
 import { Button } from "../../components/atoms/Button";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
-import ProfileCardWrapper from "../../components/molecules/ProfileCardWrapper";
+import CardWrapper from "../../components/template/CardWrapper";
 
 const ResetPasswordPage: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const onFinish = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+  const onFinish = async (values: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
     if (values.newPassword !== values.confirmPassword) {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    await accountService.changePassword(values.currentPassword, values.newPassword);
+    await accountService.changePassword(
+      values.currentPassword,
+      values.newPassword
+    );
     message.success("Đổi mật khẩu thành công");
-    navigate("/admin/profile/info");
+    navigate("/dashboard/profile/info");
   };
 
   return (
-    <ProfileCardWrapper title="" maxWidth="max-w-md">
+    <CardWrapper title="" maxWidth="max-w-md" variant="profile">
       <div className="border-l-4 border-[#627254] pl-3 mb-4">
         <h1 className="text-2xl font-bold text-[#414d38]">Đổi mật khẩu</h1>
         <p className="text-gray-500 text-base">Cập nhật mật khẩu mới của bạn</p>
@@ -30,14 +37,36 @@ const ResetPasswordPage: React.FC = () => {
       <div className="flex justify-center">
         <LockOutlined className="text-[var(--primary-color)] text-3xl mx-auto mb-3" />
       </div>
-      <Form layout="vertical" form={form} onFinish={onFinish} requiredMark={false}>
-        <Form.Item name="currentPassword" label="Mật khẩu hiện tại" rules={[{ required: true, message: "Vui lòng nhập mật khẩu hiện tại" }]}>
+      <Form
+        layout="vertical"
+        form={form}
+        onFinish={onFinish}
+        requiredMark={false}
+      >
+        <Form.Item
+          name="currentPassword"
+          label="Mật khẩu hiện tại"
+          rules={[
+            { required: true, message: "Vui lòng nhập mật khẩu hiện tại" },
+          ]}
+        >
           <Input.Password placeholder="Nhập mật khẩu hiện tại" />
         </Form.Item>
-        <Form.Item name="newPassword" label="Mật khẩu mới" rules={[{ required: true, message: "Vui lòng nhập mật khẩu mới" }, { min: 6, message: "Tối thiểu 6 ký tự" }]}>
+        <Form.Item
+          name="newPassword"
+          label="Mật khẩu mới"
+          rules={[
+            { required: true, message: "Vui lòng nhập mật khẩu mới" },
+            { min: 6, message: "Tối thiểu 6 ký tự" },
+          ]}
+        >
           <Input.Password placeholder="Nhập mật khẩu mới" />
         </Form.Item>
-        <Form.Item name="confirmPassword" label="Xác nhận mật khẩu" rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}>
+        <Form.Item
+          name="confirmPassword"
+          label="Xác nhận mật khẩu"
+          rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}
+        >
           <Input.Password placeholder="Nhập lại mật khẩu mới" />
         </Form.Item>
         <div className="flex justify-end items-center mt-6 flex-wrap gap-3">
@@ -49,10 +78,8 @@ const ResetPasswordPage: React.FC = () => {
           </Button>
         </div>
       </Form>
-    </ProfileCardWrapper>
+    </CardWrapper>
   );
 };
 
 export default ResetPasswordPage;
-
-

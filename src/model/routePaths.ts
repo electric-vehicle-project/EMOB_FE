@@ -31,6 +31,8 @@ export const ROUTES = {
   // ====== ADMIN MODULES ======
   TESTDRIVE: "testdrive",
   REPORT: "report",
+  PROMOTIONS: "promotions",
+  PROMOTION_EDIT: "promotions/edit/:id",
 
   // Hồ sơ người dùng
   PROFILE_INFO: "profile/info",
