@@ -1,10 +1,14 @@
 import { TestDriveList } from "../components/organisms/TestDriveList";
+import CardWrapper from "../components/template/CardWrapper";
 
 export const TestDrivePage = () => {
   return (
-    <div className="p-6 bg-white shadow rounded-lg">
-      <h1 className="text-xl font-bold mb-4">Quản lý lịch lái thử</h1>
+    <CardWrapper
+      title="Quản lý lịch lái thử"
+      subtitle="Theo dõi và xử lý các yêu cầu lái thử xe"
+      variant="dashboard"
+    >
       <TestDriveList />
-    </div>
+    </CardWrapper>
   );
 };

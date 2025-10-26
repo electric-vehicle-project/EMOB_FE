@@ -116,6 +116,7 @@ export const TestDriveTable: React.FC<Props> = ({ data, onEdit, onDelete }) => {
       dataSource={data}
       columns={columns}
       pagination={{ pageSize: 5 }}
+      rowClassName={() => "transition-colors duration-200 hover:bg-[#f7f9f4]"}
       scroll={{ x: true }}
       size="middle"
     />
