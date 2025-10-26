@@ -19,25 +19,12 @@ export const DealerModal = ({
 }: Props) => {
   const [form] = useForm<IDealer>();
 
-  // ✅ Reset hoặc set giá trị khi mở modal
   useEffect(() => {
     if (open) {
-      if (initialValues) {
-        form.setFieldsValue({
-          name: initialValues.name,
-          contactInfo: initialValues.contactInfo,
-          country: initialValues.country,
-        });
-      } else {
-        form.resetFields();
-      }
+      if (initialValues) form.setFieldsValue(initialValues);
+      else form.resetFields();
     }
   }, [open, initialValues, form]);
-
-  // ✅ Submit form
-  const handleSubmit = (values: IDealer) => {
-    onSubmit(values);
-  };
 
   return (
     <Modal
@@ -48,11 +35,7 @@ export const DealerModal = ({
       cancelText="Hủy"
       onOk={() => form.submit()}
     >
-      <DealerForm
-        form={form}
-        onFinish={handleSubmit}
-        isEdit={!!initialValues}
-      />
+      <DealerForm form={form} onFinish={onSubmit} isEdit={!!initialValues} />
     </Modal>
   );
 };

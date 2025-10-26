@@ -23,7 +23,6 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
-import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
 // ⚡ EV Management
@@ -35,6 +34,13 @@ import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
 import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
 import { AuthProtect } from "../components/atoms/AuthProtect";
+
+// 🎯 Promotions
+import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
+import PromotionEditPage from "../page/promotions/PromotionEditPage";
+
+// 🧪 Test
+import TestPage from "../page/TestPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -62,26 +68,55 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> }, // /admin/testdrive
-      { path: ROUTES.REPORT, element: <ReportPage /> }, // /admin/report
-      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> }, // /admin/promotions
-      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> }, // /admin /promotions/edit/:id
-      { path: "test", element: <TestPage /> }, // /admin/test
+      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: "test", element: <TestPage /> },
+    ],
+  },
+
+  // ⚡ EVM STAFF DASHBOARD
+  {
+    path: ROUTES.EVM_STAFF,
+    element: (
+      <AuthProtect allowedRoles={["EVM_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
+    children: [
+      // 👥 Dealer Management
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
+
+      // ⚡ Vehicle Management
+      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
+      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      {
+        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+        element: <VehiclePriceUpdatePage />,
+      },
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+
+      // 👤 Profile Pages
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
     ],
   },
 
   // ==== MANAGER ====
   {
-    path: ROUTES.MANAGER, // /manager
+    path: ROUTES.MANAGER,
     element: <DashboardLayout />,
     children: [
-      // 👤 Profile
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-
-      // ⚡ Vehicle Management
       { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
@@ -91,11 +126,7 @@ export const router = createBrowserRouter([
         path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
         element: <VehiclePriceUpdatePage />,
       },
-
-      // ✅ Price Rules
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
-
-      // 👥 Customer Detail
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },
