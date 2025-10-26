@@ -41,6 +41,7 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 
 // 🧪 Test
 import TestPage from "../page/TestPage";
+import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: "test", element: <TestPage /> },
+      {
+        path: ROUTES.DEALER_DISCOUNT_POLICY,
+        element: <DealerDiscountPolicyPage />,
+      },
     ],
   },
 
