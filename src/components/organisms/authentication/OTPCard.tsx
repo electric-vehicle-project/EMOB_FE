@@ -1,4 +1,4 @@
-import { OTPForm } from "../molecules/OTPForm";
+import { OTPForm } from "../../molecules/authentication/OTPForm";
 
 export const OTPCard = () => (
   <div className="bg-[#DDDDDD]">

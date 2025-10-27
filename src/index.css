@@ -55,6 +55,15 @@
   background: rgba(0, 0, 0, 0.62);
 }
 
+/* glassy effect */
+.glass-dark {
+  background: rgba(0, 0, 0, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 /* Ripple effect (centered) */
 .with-ripple {
   position: relative;
@@ -233,10 +242,10 @@
 }
 
 /* Sidebar decorative background (image overlay, subtle) */
-.sidebar-decor {
+.bg-decor {
   position: relative;
 }
-.sidebar-decor::before {
+.bg-decor::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -260,3 +269,19 @@
   border-radius: 16px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.12);
 }
+
+
+.ant-picker-calendar-year-select, .ant-picker-calendar-month-select {
+  display: none !important;
+}
+
+
+/* ẩn thanh cuộn */
+
+@layer utilities {
+  /* Thêm hỗ trợ cho WebKit */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+

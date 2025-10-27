@@ -4,7 +4,7 @@ import {
   useGetVehicleById,
   useUpdateVehicle,
 } from "../../service/vehicleService";
-import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
+import { VehicleForm } from "../../components/molecules/evm/VehicleForm";
 import type { IVehicle } from "../../model/Vehicle";
 import { useEffect, useRef } from "react";
 import { useCurrentUser } from "../../utils/getCurrentUser";

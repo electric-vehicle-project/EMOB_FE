@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Spin } from "antd";
 import { toast } from "react-toastify";
-import type { IDealer } from "../../model/Dealer";
-import { DealerTable } from "../molecules/DealerTable";
-import { SearchBar } from "../molecules/SearchBar";
+import type { IDealer } from "../../../model/Dealer";
+import { DealerTable } from "../../molecules/dealer/DealerTable";
+import { SearchBar } from "../../molecules/SearchBar";
 import { DealerModal } from "./DealerModal";
-import { DeleteConfirm } from "./DeleteConfirm";
-import { Button } from "../atoms/Button";
-import { useDebounce } from "../../hook/useDebounce";
+import { DeleteConfirm } from "../DeleteConfirm";
+import { Button } from "../../atoms/Button";
+import { useDebounce } from "../../../hook/useDebounce";
 import {
   useGetDealers,
   useCreateDealer,
   useUpdateDealer,
   useDeleteDealer,
-} from "../../service/dealerService";
+} from "../../../service/dealerService";
 
 export const DealerList = () => {
   const [search, setSearch] = useState("");

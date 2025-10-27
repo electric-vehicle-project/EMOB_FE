@@ -1,4 +1,4 @@
-import { DealerList } from "../components/organisms/DealerList";
+import { DealerList } from "../components/organisms/dealer/DealerList";
 
 export const DealerPage = () => {
   return (

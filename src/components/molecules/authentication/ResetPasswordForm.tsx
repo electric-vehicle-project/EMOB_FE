@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Form } from "antd";
-import { InputField } from "../atoms/InputField";
-import { ButtonPrimary } from "../atoms/ButtonPrimary";
+import { InputField } from "../../atoms/InputField";
+import { ButtonPrimary } from "../../atoms/ButtonPrimary";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
-import { useResetPasswordMutation } from "../../service/authenticationService";
-import { ROUTES } from "../../model/routePaths";
+import { useResetPasswordMutation } from "../../../service/authenticationService";
+import { ROUTES } from "../../../model/routePaths";
 import { toast } from "react-toastify";
 
 

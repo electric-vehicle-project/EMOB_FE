@@ -1,6 +1,6 @@
 import { Card, message, Button, Space, Form } from "antd";
 import { useNavigate } from "react-router-dom";
-import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
+import { VehicleForm } from "../../components/molecules/evm/VehicleForm";
 import {
   useCreateVehicle,
   useUploadVehicleImages,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tag } from "antd";
-import { VehicleList } from "../../components/organisms/EVM/VehicleList";
+import { VehicleList } from "../../components/organisms/evm/VehicleList";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { VehicleUnitListModal } from "./VehicleUnitListModal";
 

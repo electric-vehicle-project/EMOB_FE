@@ -22,14 +22,22 @@ export const ROUTES = {
   RESET_PASSWORD: "reset-password",
 
   // Quản lý dữ liệu
-  DEALERS: "dealers",
   CUSTOMERS: "customers",
   CUSTOMER_CREATE: "customers/create",
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
 
-  // ====== ADMIN MODULES ======
-  TESTDRIVE: "testdrive",
+  // Lịch lái thử
+  TEST_DRIVE: "test-drive",
+  TEST_DRIVE_ALL: "test-drive/schedules",
+  TEST_DRIVE_NEW: "test-drive/new",
+  TEST_DRIVE_EDIT: "test-drive/edit/:id",
+  TEST_DRIVE_DETAIL: "test-drive/:id",
+
+  // Đại lý
+  DEALERS: "dealers",
+
+  // Báo cáo
   REPORT: "report",
 
   // Hồ sơ người dùng

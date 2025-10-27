@@ -3,7 +3,7 @@ import { Table, Button } from "antd";
 import type { SortOrder } from "antd/es/table/interface";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import type { IDealer } from "../../model/Dealer";
+import type { IDealer } from "../../../model/Dealer";
 
 interface Props {
   data: IDealer[];

@@ -1,6 +1,6 @@
 import { Form, Input } from "antd";
 import type { FormInstance } from "antd/es/form";
-import type { IDealer } from "../../model/Dealer";
+import type { IDealer } from "../../../model/Dealer";
 
 interface Props {
   form: FormInstance<IDealer>;

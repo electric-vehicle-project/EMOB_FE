@@ -1,8 +1,8 @@
 import { Modal } from "antd";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
-import { DealerForm } from "../molecules/DealerForm";
-import type { IDealer } from "../../model/Dealer";
+import { DealerForm } from "../../molecules/dealer/DealerForm";
+import type { IDealer } from "../../../model/Dealer";
 
 interface Props {
   open: boolean;
