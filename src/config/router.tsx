@@ -43,6 +43,8 @@ import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
 import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
 import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
+import { SaleOrderDealerPage } from "../page/saleOrder/SaleOrderDealerPage";
+import { SaleOrderDetailPage } from "../page/saleOrder/SaleOrderDetailPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -126,6 +128,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
       { path: ROUTES.DEALER_POINT_RULES, element: <DealerPointRulePage /> },
+      { path: ROUTES.SALE_ORDERS, element: <SaleOrderDealerPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
     ],
   },
 
@@ -146,6 +150,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> },
       { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> },
       { path: ROUTES.DEALER_POINT_RULES, element: <DealerPointRulePage /> },
+      { path: ROUTES.SALE_ORDERS, element: <SaleOrderDealerPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
     ],
   },
 

@@ -24,8 +24,8 @@ export const ROUTES = {
   // Quản lý dữ liệu
   DEALERS: "dealers",
   CUSTOMERS: "customers",
-
-  // ====== ADMIN MODULES ======
+  DEALER_POINT_RULES: "dealerPoint",
+  PROMOTIONS: "promotions",
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
@@ -45,7 +45,7 @@ export const ROUTES = {
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
 
   // ====== PROMOTIONS ======
-  PROMOTIONS: "promotions",
+
   PROMOTION_CREATE: "promotions/create",
   PROMOTION_EDIT: "promotions/edit/:id",
 
@@ -53,8 +53,10 @@ export const ROUTES = {
   CUSTOMER_CREATE: "customers/create",
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
-  DEALER_POINT_RULES: "/dealerPoint",
 
+  // ====== SALE ORDER ======
+  SALE_ORDERS: "sale-orders",
+  SALE_ORDER_DETAIL: "sale-orders/:orderId",
   // 404
   NOTFOUND: "*",
 };

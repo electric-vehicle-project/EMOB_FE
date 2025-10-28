@@ -1,3 +1,4 @@
+// src/page/promotion/PromotionCreatePage.tsx
 import { useEffect, useState } from "react";
 import {
   Form,
@@ -18,6 +19,10 @@ import type { Role } from "../../utils/promotionPermissions";
 import { usePromotionCreate } from "../../service/promotionService";
 import { useGetDealers } from "../../service/dealerService";
 import { useGetVehicles } from "../../service/vehicleService";
+import {
+  mapDealerOptions,
+  mapVehicleOptions,
+} from "../../utils/mapToSelectOptions";
 
 const { Title } = Typography;
 
@@ -49,52 +54,35 @@ export default function PromotionCreatePage() {
   // ===== API HOOKS =====
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
   const { data: dealersData, isLoading: loadingDealers } = useGetDealers({
-    enabled: canFetchDealers, // ✅ chỉ gọi khi có quyền
+    enabled: canFetchDealers,
   });
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
-    enabled: true, // luôn được phép gọi
+    enabled: true,
   });
 
   // ===== STATE LOCAL =====
   const [dealerOptions, setDealerOptions] = useState<
-    { id: string; name: string }[]
+    { label: string; value: string }[]
   >([]);
   const [vehicleOptions, setVehicleOptions] = useState<
-    { id: string; name: string }[]
+    { label: string; value: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // ===== XỬ LÝ DỮ LIỆU TRẢ VỀ =====
+  // ===== MAP DỮ LIỆU TỪ API -> SELECT OPTIONS =====
   useEffect(() => {
-    if (vehiclesData) {
-      const vehicles =
-        vehiclesData?.result?.data ??
-        vehiclesData?.result ??
-        vehiclesData ??
-        [];
-      setVehicleOptions(
-        vehicles.map((v: { id: string; name: string }) => ({
-          id: v.id,
-          name: v.name,
-        }))
-      );
-    }
+    // 🔹 Chuẩn hóa danh sách xe điện
+    setVehicleOptions(mapVehicleOptions(vehiclesData));
 
+    // 🔹 Chuẩn hóa danh sách đại lý (chỉ khi có quyền)
     if (dealersData && canFetchDealers) {
-      const dealers =
-        dealersData?.result?.data ?? dealersData?.result ?? dealersData ?? [];
-      setDealerOptions(
-        dealers.map((d: { id: string; name: string }) => ({
-          id: d.id,
-          name: d.name,
-        }))
-      );
+      setDealerOptions(mapDealerOptions(dealersData));
     }
 
     if (vehiclesData || (dealersData && canFetchDealers)) setLoading(false);
   }, [dealersData, vehiclesData, canFetchDealers]);
 
-  // ===== KHỞI TẠO GIÁ TRỊ MẶC ĐỊNH CHO DEALER_STAFF =====
+  // ===== SET DEALER ID MẶC ĐỊNH CHO DEALER STAFF =====
   useEffect(() => {
     if (isDealerStaff && user.dealerId) {
       form.setFieldsValue({ dealerId: [user.dealerId] });
@@ -126,7 +114,7 @@ export default function PromotionCreatePage() {
     }
   };
 
-  // ===== LOADING =====
+  // ===== LOADING STATE =====
   if (loading || loadingDealers || loadingVehicles) {
     return (
       <div style={{ textAlign: "center", marginTop: 100 }}>
@@ -135,7 +123,7 @@ export default function PromotionCreatePage() {
     );
   }
 
-  // ===== CHECK QUYỀN TRUY CẬP =====
+  // ===== KIỂM TRA QUYỀN TRUY CẬP =====
   if (!isDealerStaff && !isEvmStaff && !isAdmin) {
     antdMessage.warning("Bạn không có quyền truy cập trang này!");
     navigate(-1);
@@ -160,13 +148,13 @@ export default function PromotionCreatePage() {
           <Select
             mode="multiple"
             allowClear
-            disabled={isDealerStaff} // ✅ staff không chọn được
+            disabled={isDealerStaff}
             placeholder={
               isDealerStaff
-                ? "Tự động gán dealerId của bạn"
+                ? "Tự động gán đại lý của bạn"
                 : "Bỏ trống nếu muốn tạo khuyến mãi toàn hệ thống (GLOBAL)"
             }
-            options={dealerOptions.map((d) => ({ label: d.name, value: d.id }))}
+            options={dealerOptions} // ✅ hiển thị name, gửi id
           />
         </Form.Item>
 
@@ -182,10 +170,7 @@ export default function PromotionCreatePage() {
             mode="multiple"
             allowClear
             placeholder="Chọn xe điện áp dụng"
-            options={vehicleOptions.map((v) => ({
-              label: v.name,
-              value: v.id,
-            }))}
+            options={vehicleOptions} // ✅ hiển thị brand + model, gửi id
           />
         </Form.Item>
 
