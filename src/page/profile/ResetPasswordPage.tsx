@@ -4,7 +4,7 @@ import { useChangePassword } from "../../service/accountService";
 import { Button } from "../../components/atoms/Button";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
-import ProfileCardWrapper from "../../components/molecules/ProfileCardWrapper";
+import CardWrapper from "../../components/template/CardWrapper";
 
 const ResetPasswordPage: React.FC = () => {
   const [form] = Form.useForm();
@@ -20,21 +20,13 @@ const ResetPasswordPage: React.FC = () => {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-
-    try {
-      await changePassword.mutateAsync({
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      });
-      message.success("Đổi mật khẩu thành công");
-      navigate("/admin/profile/info");
-    } catch {
-      message.error("Đổi mật khẩu thất bại");
-    }
+    await accountService.changePassword(values.currentPassword, values.newPassword);
+    message.success("Đổi mật khẩu thành công");
+    navigate("/admin/profile/info");
   };
 
   return (
-    <ProfileCardWrapper title="" maxWidth="max-w-md">
+    <CardWrapper title="" maxWidth="max-w-md" variant="profile">
       <div className="border-l-4 border-[#627254] pl-3 mb-4">
         <h1 className="text-2xl font-bold text-[#414d38]">Đổi mật khẩu</h1>
         <p className="text-gray-500 text-base">Cập nhật mật khẩu mới của bạn</p>
@@ -85,7 +77,7 @@ const ResetPasswordPage: React.FC = () => {
           </Button>
         </div>
       </Form>
-    </ProfileCardWrapper>
+    </CardWrapper>
   );
 };
 

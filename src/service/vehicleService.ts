@@ -76,3 +76,10 @@ export const useUploadVehicleImages = createMutationUploadFilesHook(
   "vehicleUpload",
   `${BASE_URL}/upload`
 );
+
+export const useGetAllVehicles = (page = 0, size = 10) => {
+  return createQueryHook(["vehicles", page, size], BASE_URL)(
+    {}, // body
+    { page, size } // params
+  );
+};

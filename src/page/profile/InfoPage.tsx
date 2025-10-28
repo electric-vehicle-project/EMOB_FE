@@ -3,7 +3,7 @@ import { Skeleton } from "antd";
 import { useGetAccountById } from "../../service/accountService";
 import { useCurrentUser as getCurrentUser } from "../../utils/getCurrentUser";
 import { motion } from "framer-motion";
-import ProfileCardWrapper from "../../components/molecules/ProfileCardWrapper";
+import CardWrapper from "../../components/template/CardWrapper";
 
 const InfoPage: React.FC = () => {
   const user = getCurrentUser();
@@ -11,7 +11,7 @@ const InfoPage: React.FC = () => {
   const profile = data?.result ?? null;
 
   return (
-    <ProfileCardWrapper title="" maxWidth="max-w-5xl">
+    <CardWrapper title="" maxWidth="max-w-5xl" variant="profile">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -86,7 +86,7 @@ const InfoPage: React.FC = () => {
           </div>
         )}
       </motion.div>
-    </ProfileCardWrapper>
+    </CardWrapper>
   );
 };
 

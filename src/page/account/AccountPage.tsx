@@ -1,10 +1,18 @@
-import { AccountList } from "../../components/organisms/AccountList";
+// src/page/account/AccountPage.tsx
+import { App } from "antd";
+import CardWrapper from "../../components/template/CardWrapper";
+import { AccountList } from "../../components/organisms/account/AccountList";
 
 export const AccountPage = () => {
   return (
-    <div className="p-6 bg-white shadow rounded-lg">
-      <h1 className="text-xl font-bold mb-4">Quản lý tài khoản</h1>
-      <AccountList />
-    </div>
+    <App>
+      <CardWrapper
+        title="Quản lý tài khoản"
+        subtitle="Theo dõi và quản lý người dùng trong hệ thống"
+        variant="dashboard"
+      >
+        <AccountList />
+      </CardWrapper>
+    </App>
   );
 };

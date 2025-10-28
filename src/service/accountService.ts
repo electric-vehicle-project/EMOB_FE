@@ -1,72 +1,82 @@
-// src/service/accountService.ts
+/* EMOB-2025 - Account Service */
 import {
   createQueryHook,
   createQueryWithPathParamHook,
   createMutationHook,
+  updateMutationHook,
+  deleteMutationHook,
 } from "../hook/useApi";
 import type { IAccount } from "../model/Account";
 
 const BASE_URL = "/auth";
 
-/**
- * ===================
- * 🟢 GET
- * ===================
- */
-
-// 👑 Admin xem tất cả manager + evm staff
-export const useGetAccountsByAdmin = () => {
-  const query = createQueryHook("accounts-by-admin", `${BASE_URL}/by-admin`)();
-  const accounts: IAccount[] = query.data?.result?.data ?? [];
-  return { ...query, data: accounts };
-};
-
-// 👨‍💼 Manager xem tất cả dealer staff mà mình quản lý
-export const useGetAccountsByManager = () => {
+/* ==================== 🔍 GET ==================== */
+/** ADMIN /api/auth/by-admin?page&size */
+export const useGetAccountsByAdmin = (
+  page = 0,
+  size = 10,
+  options?: Record<string, unknown> // ✅ cho phép enabled, tránh any
+) => {
   const query = createQueryHook(
-    "accounts-by-manager",
-    `${BASE_URL}/by-manager`
-  )();
+    `accounts-by-admin-${page}-${size}`,
+    `${BASE_URL}/by-admin`
+  )(options, { page, size });
   const accounts: IAccount[] = query.data?.result?.data ?? [];
-  return { ...query, data: accounts };
+  const meta = query.data?.result?.metadata ?? null;
+  return { ...query, data: accounts, meta };
 };
 
-// 🔍 Lấy chi tiết 1 account theo ID
+/** MANAGER /api/auth/by-manager?page&size */
+export const useGetAccountsByManager = (
+  page = 0,
+  size = 10,
+  options?: Record<string, unknown> // ✅ cho phép enabled, tránh any
+) => {
+  const query = createQueryHook(
+    `accounts-by-manager-${page}-${size}`,
+    `${BASE_URL}/by-manager`
+  )(options, { page, size });
+  const accounts: IAccount[] = query.data?.result?.data ?? [];
+  const meta = query.data?.result?.metadata ?? null;
+  return { ...query, data: accounts, meta };
+};
+
+/** GET /api/auth/{id} */
 export const useGetAccountById = createQueryWithPathParamHook(
   "account",
   BASE_URL
 );
 
-// =================== PROFILE ===================
+/* ==================== 🧩 POST ==================== */
+export const useRegisterByAdmin = () =>
+  createMutationHook("accounts-by-admin", `${BASE_URL}/register-by-admin`)();
+
+export const useRegisterByManager = () =>
+  createMutationHook(
+    "accounts-by-manager",
+    `${BASE_URL}/register-by-manager`
+  )();
+
+/* ==================== 🚦 PUT ==================== */
+/** PUT /api/auth/change-status/{id} body: { status: 'ACTIVE'|'INACTIVE' } */
+export const useChangeAccountStatus = () =>
+  updateMutationHook("accounts", `${BASE_URL}/change-status`)();
+
+/* ==================== 🚫 DELETE ==================== */
+/** DELETE /api/auth/{id}  (Ban vĩnh viễn) */
+export const useBanAccount = () =>
+  deleteMutationHook("accounts", `${BASE_URL}`)();
+
+/* ==================== 👤 PROFILE ==================== */
 export const useGetAccountProfile = createQueryHook(
   "account-profile",
   `${BASE_URL}/profile`
 );
-
 export const useUpdateAccountProfile = createMutationHook(
-  "account-profile-update",
+  "update-account-profile",
   `${BASE_URL}/profile`
 );
-
 export const useChangePassword = createMutationHook(
   "change-password",
   `${BASE_URL}/change-password`
-);
-
-/**
- * ===================
- * 🟢 POST
- * ===================
- */
-
-// 👑 Admin tạo tài khoản Manager / EVM Staff
-export const useRegisterByAdmin = createMutationHook(
-  "register-by-admin",
-  `${BASE_URL}/register-by-admin`
-);
-
-// 👨‍💼 Manager tạo tài khoản Dealer Staff
-export const useRegisterByManager = createMutationHook(
-  "register-by-manager",
-  `${BASE_URL}/register-by-manager`
 );

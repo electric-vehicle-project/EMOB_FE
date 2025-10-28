@@ -49,17 +49,12 @@ const ChangeInfoPage: React.FC = () => {
         ? values.dateOfBirth.format("YYYY-MM-DD")
         : "",
     };
-
-    try {
-      await updateProfile.mutateAsync(payload);
-      message.success("Cập nhật thông tin thành công");
-      if (avatarPreview) {
-        message.success("Ảnh đại diện đã được cập nhật thành công!");
-      }
-      navigate("/admin/profile/info");
-    } catch {
-      message.error("Cập nhật thông tin thất bại");
+    await accountService.updateAccountProfile(payload);
+    message.success("Cập nhật thông tin thành công");
+    if (avatarPreview) {
+      message.success("Ảnh đại diện đã được cập nhật thành công!");
     }
+    navigate("/admin/profile/info");
   };
 
   return (

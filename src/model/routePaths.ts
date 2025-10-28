@@ -32,6 +32,8 @@ export const ROUTES = {
   DEALERS: "dealers",
   TESTDRIVE: "testdrive",
   REPORT: "report",
+  PROMOTIONS: "promotions",
+  PROMOTION_EDIT: "promotions/edit/:id",
 
   // ====== PROFILE ======
   PROFILE_INFO: "profile/info",
@@ -39,7 +41,7 @@ export const ROUTES = {
   PROFILE_RESET: "profile/resetpassword",
   PROFILE_SCHEDULE: "profile/viewSchedule",
 
-  // ====== EVM MODULES ======
+  // EVM
   EVM_VEHICLE: "evm/vehicle",
   EVM_VEHICLE_BULK: "evm/vehicle/bulk",
   EVM_VEHICLE_RULES: "evm/price-rules",
@@ -47,12 +49,11 @@ export const ROUTES = {
   EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
+  // DEALER_DISCOUNT_POLICY
+  DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
 
-  // ====== PROMOTIONS ======
-  PROMOTIONS: "promotions",
-  PROMOTION_CREATE: "promotions/create",
-  PROMOTION_EDIT: "promotions/edit/:id",
+  ACCOUNT: "accounts",
 
-  // ====== ERROR ======
+  // 404
   NOTFOUND: "*",
 };
