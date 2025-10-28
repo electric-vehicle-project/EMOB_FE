@@ -10,7 +10,7 @@ import {
   Spin,
   Typography,
 } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 
 import type { RootState } from "../../redux/store";

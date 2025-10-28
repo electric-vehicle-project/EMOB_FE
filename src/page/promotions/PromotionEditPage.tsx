@@ -9,12 +9,12 @@ import {
   Select,
   InputNumber,
   message,
-  Space,
   Spin,
   Tag,
+  Alert,
 } from "antd";
 import dayjs from "dayjs";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
 
@@ -32,36 +32,75 @@ import {
 
 const { RangePicker } = DatePicker;
 
+type Role = "ADMIN" | "MANAGER" | "EVM_STAFF" | "DEALER_STAFF";
+interface AppUser {
+  id: string;
+  role: Role;
+  dealerId?: string;
+}
+
+type FormValues = {
+  name: string;
+  description?: string;
+  type?: "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
+  value?: number;
+  minValue?: number;
+  duration?: [dayjs.Dayjs, dayjs.Dayjs];
+  dealerIds?: string[];
+  electricVehicleIds?: string[];
+};
+
 export default function PromotionEditPage() {
-  const [form] = Form.useForm();
-  const { id } = useParams<{ id: string }>();
+  const [form] = Form.useForm<FormValues>();
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const user = useSelector((s: RootState) => s.user);
-  const role = user?.role;
+
+  const missingId = !paramId;
+
+  const user = useSelector<RootState, AppUser | null>(
+    (s) => (s as any).user ?? null
+  );
+  const role: Role = user?.role ?? "ADMIN";
 
   const isEvmStaff = role === "EVM_STAFF";
   const isDealerStaff = role === "DEALER_STAFF";
   const isManager = role === "MANAGER";
   const isAdmin = role === "ADMIN";
 
-  const { data, isLoading } = usePromotionById(id ?? "");
+  const canEditTargets = isEvmStaff || isDealerStaff;
+  const canPickDealers = isEvmStaff;
+
+  const { data, isLoading } = usePromotionById(paramId);
   const { mutateAsync: updateBasic, isPending: updatingBasic } =
     usePromotionUpdate();
   const { mutateAsync: updateValue, isPending: updatingValue } =
     usePromotionUpdateValue();
 
   const { data: dealersData, isLoading: loadingDealers } = useGetDealers({
-    enabled: isEvmStaff,
+    enabled: canPickDealers,
   } as any);
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
-    enabled: isEvmStaff || isDealerStaff,
+    enabled: canEditTargets,
   } as any);
 
-  const p = data?.result;
+  const p = data?.result as
+    | {
+        id: string;
+        name: string;
+        description?: string;
+        type?: "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
+        value?: number;
+        minValue?: number;
+        startDate?: string | null;
+        endDate?: string | null;
+        dealerIds?: string[];
+        vehicleIds?: string[];
+      }
+    | undefined;
+
   const [existingDealerIds, setExistingDealerIds] = useState<string[]>([]);
   const [existingVehicleIds, setExistingVehicleIds] = useState<string[]>([]);
 
-  // Map option có label đẹp
   const dealerOptions = useMemo(
     () => mapDealerOptions(dealersData),
     [dealersData]
@@ -71,14 +110,12 @@ export default function PromotionEditPage() {
     [vehiclesData]
   );
 
-  // Hàm tìm label từ ID (để hiển thị tag tên thay vì id)
   const findDealerLabel = (id: string) =>
     dealerOptions.find((x) => x.value === id)?.label ?? id;
 
   const findVehicleLabel = (id: string) =>
     vehicleOptions.find((x) => x.value === id)?.label ?? "Unknown Vehicle";
 
-  // Render tag, khóa tag cũ không cho xóa
   const tagRender =
     (existingIds: string[], findLabel: (id: string) => string) =>
     (props: any) => {
@@ -95,16 +132,18 @@ export default function PromotionEditPage() {
       );
     };
 
-  // Load dữ liệu ban đầu
+  /** ✅ Tự động điền thời gian áp dụng */
   useEffect(() => {
     if (!p) return;
+
     const dealers = p.dealerIds ?? [];
     const vehicles = p.vehicleIds ?? [];
+
     setExistingDealerIds(dealers);
     setExistingVehicleIds(vehicles);
 
-    const start = p.startDate ? dayjs(p.startDate) : undefined;
-    const end = p.endDate ? dayjs(p.endDate) : undefined;
+    const start = p.startDate ? dayjs(p.startDate) : dayjs();
+    const end = p.endDate ? dayjs(p.endDate) : dayjs().add(7, "day");
 
     form.setFieldsValue({
       name: p.name,
@@ -112,21 +151,25 @@ export default function PromotionEditPage() {
       value: p.value,
       minValue: p.minValue,
       type: p.type ?? "PERCENTAGE",
-      duration: start && end ? [start, end] : undefined,
+      duration: [start, end],
       dealerIds: dealers,
       electricVehicleIds: vehicles,
     });
-  }, [p]);
+  }, [p, form]);
 
-  // Submit form
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: FormValues) => {
+    if (!paramId) {
+      message.error("Thiếu ID khuyến mãi trong URL!");
+      return;
+    }
     try {
       const [start, end] = values.duration || [];
+
       const addedDealers = (values.dealerIds || []).filter(
-        (id: string) => !existingDealerIds.includes(id)
+        (x) => !existingDealerIds.includes(x)
       );
       const addedVehicles = (values.electricVehicleIds || []).filter(
-        (id: string) => !existingVehicleIds.includes(id)
+        (x) => !existingVehicleIds.includes(x)
       );
 
       const payloadBase = {
@@ -136,16 +179,16 @@ export default function PromotionEditPage() {
         electricVehicleIds: addedVehicles,
       };
 
-      if (isEvmStaff || isDealerStaff) {
-        await updateBasic({ id, data: payloadBase });
+      if (canEditTargets) {
+        await updateBasic({ id: paramId, data: payloadBase });
       }
       if (isManager || isAdmin) {
         await updateValue({
-          id,
+          id: paramId,
           data: {
-            value: values.value,
-            minPrice: values.minValue,
-            type: values.type,
+            value: values.value ?? 0,
+            minPrice: values.minValue ?? 0,
+            type: values.type ?? "PERCENTAGE",
             startDate: start?.toISOString(),
             endDate: end?.toISOString(),
           },
@@ -159,18 +202,29 @@ export default function PromotionEditPage() {
     }
   };
 
-  if (isLoading || loadingDealers || loadingVehicles)
+  if (isLoading || loadingDealers || loadingVehicles) {
     return (
       <div style={{ textAlign: "center", marginTop: 100 }}>
         <Spin size="large" />
       </div>
     );
+  }
 
   return (
     <div style={{ padding: 24 }}>
       <Button onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
         ← Quay lại
       </Button>
+
+      {missingId && (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="Thiếu ID khuyến mãi"
+          description="Đường dẫn không chứa ID hợp lệ. Vui lòng quay lại danh sách và mở lại trang chỉnh sửa."
+        />
+      )}
 
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Row gutter={16}>
@@ -217,17 +271,16 @@ export default function PromotionEditPage() {
           </Col>
         </Row>
 
-        {/* Field chỉ hiển thị cho EVM_STAFF & DEALER_STAFF */}
-        {(isEvmStaff || isDealerStaff) && (
+        {canEditTargets && (
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="Dealer áp dụng" name="dealerIds">
                 <Select
                   mode="multiple"
-                  disabled={isDealerStaff}
+                  disabled={!canPickDealers}
                   tagRender={tagRender(existingDealerIds, findDealerLabel)}
                   options={
-                    isEvmStaff
+                    canPickDealers
                       ? dealerOptions.filter(
                           (o) => !existingDealerIds.includes(o.value)
                         )
@@ -267,9 +320,17 @@ export default function PromotionEditPage() {
               />
             </Form.Item>
           </Col>
+
           <Col span={12}>
             <Form.Item label="Mô tả" name="description">
-              <Input.TextArea rows={3} disabled={isManager || isAdmin} />
+              <Input.TextArea
+                rows={3}
+                disabled={isManager || isAdmin}
+                style={{
+                  resize: "none",
+                  borderRadius: 8,
+                }}
+              />
             </Form.Item>
           </Col>
         </Row>

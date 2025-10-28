@@ -11,7 +11,7 @@ import {
   Modal,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import dayjs from "dayjs";
 import {
   EditOutlined,

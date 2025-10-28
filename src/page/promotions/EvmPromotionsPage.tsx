@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button, Modal, Table, Tabs, message, Spin } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 
