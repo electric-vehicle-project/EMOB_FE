@@ -41,10 +41,10 @@ import { CustomerEditPage } from "../page/customer/CustomerEditPage";
 import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
 import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
 import PromotionEditPage from "../page/promotions/PromotionEditPage";
-import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
 import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
 import { SaleOrderDealerPage } from "../page/saleOrder/SaleOrderDealerPage";
 import { SaleOrderDetailPage } from "../page/saleOrder/SaleOrderDetailPage";
+import { DealerPromotionsPage } from "../page/promotions/DealerPromotionsPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
