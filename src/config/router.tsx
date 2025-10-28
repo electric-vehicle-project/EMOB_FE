@@ -23,7 +23,6 @@ import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
 import ViewSchedulePage from "../page/profile/ViewSchedulePage";
-import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
 // ⚡ EV Management
@@ -45,6 +44,11 @@ import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
 import { SaleOrderDealerPage } from "../page/saleOrder/SaleOrderDealerPage";
 import { SaleOrderDetailPage } from "../page/saleOrder/SaleOrderDetailPage";
 import { DealerPromotionsPage } from "../page/promotions/DealerPromotionsPage";
+
+// 🧪 Test
+import TestPage from "../page/TestPage";
+import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
+import { CustomerPage } from "../page/customer/CustomerPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -70,31 +74,60 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: "test", element: <TestPage /> },
+      {
+        path: ROUTES.DEALER_DISCOUNT_POLICY,
+        element: <DealerDiscountPolicyPage />,
+      },
     ],
   },
 
-  // ⚡ EVM DASHBOARD
+  // ⚡ EVM STAFF DASHBOARD
   {
-    path: ROUTES.DASHBOARD,
+    path: ROUTES.EVM_STAFF,
     element: (
-      <AuthProtect allowedRoles={["MANAGER", "DEALER_STAFF"]}>
+      <AuthProtect allowedRoles={["EVM_STAFF"]}>
         <DashboardLayout />
       </AuthProtect>
     ),
     children: [
-      // 👤 Profile
+      // 👥 Dealer Management
+      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
+
+      // ⚡ Vehicle Management
+      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
+      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      {
+        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+        element: <VehiclePriceUpdatePage />,
+      },
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+
+      // 👤 Profile Pages
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
+    ],
+  },
 
-      // ⚡ Vehicle Management
+  // ==== MANAGER ====
+  {
+    path: ROUTES.MANAGER,
+    element: <DashboardLayout />,
+    children: [
+      { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
+      { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
+      { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
+      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
@@ -104,11 +137,7 @@ export const router = createBrowserRouter([
         path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
         element: <VehiclePriceUpdatePage />,
       },
-
-      // ✅ Price Rules
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
-
-      // 👥 Customer Detail
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },

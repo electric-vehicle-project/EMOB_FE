@@ -17,8 +17,10 @@ export const AuthRedirectHandler = () => {
     const token = localStorage.getItem("token");
     const refreshToken = localStorage.getItem("refreshToken");
 
-    if (token && refreshToken && user?.role) {
-      const rolePath = `/${user.role.toLowerCase().replaceAll("_", "-")}`;
+    if (token && refreshToken && (user as { role?: string } | null)?.role) {
+      const rolePath = `/${(user as { role?: string } | null)?.role
+        ?.toLowerCase()
+        .replaceAll("_", "-")}`;
 
       // ✅ Chỉ redirect nếu đang ở trang login hoặc root
       if (location.pathname === "/" || location.pathname === "/login") {

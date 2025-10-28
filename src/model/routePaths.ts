@@ -25,7 +25,6 @@ export const ROUTES = {
   DEALERS: "dealers",
   CUSTOMERS: "customers",
   DEALER_POINT_RULES: "dealerPoint",
-  PROMOTIONS: "promotions",
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
@@ -35,6 +34,17 @@ export const ROUTES = {
   PROFILE_RESET: "profile/resetpassword",
   PROFILE_SCHEDULE: "profile/viewSchedule",
 
+  // ====== PROMOTIONS ======
+  PROMOTIONS: "promotions",
+  PROMOTION_CREATE: "promotions/create",
+  PROMOTION_EDIT: "promotions/edit/:id",
+
+  // ====== QUOTATION ======
+  QUOTATIONS: "quotations",
+  QUOTATION_CREATE: "quotations/create",
+  QUOTATION_UPDATE: "quotations/edit/:id",
+  QUOTATION_VIEW: "quotations/view/:id",
+  QUOTATION_APPROVE: "quotation/approve/:id",
   // EVM
   EVM_VEHICLE: "evm/vehicle",
   EVM_VEHICLE_BULK: "evm/vehicle/bulk",
@@ -43,11 +53,6 @@ export const ROUTES = {
   EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
-
-  // ====== PROMOTIONS ======
-
-  PROMOTION_CREATE: "promotions/create",
-  PROMOTION_EDIT: "promotions/edit/:id",
 
   // ====== CUSTOMERS ======
   CUSTOMER_CREATE: "customers/create",
@@ -59,4 +64,11 @@ export const ROUTES = {
   SALE_ORDER_DETAIL: "sale-orders/:orderId",
   // 404
   NOTFOUND: "*",
+  // VEHICLE-REQUEST
+  VEHICLE_REQUEST: "vehicle-request",
+  VEHICLE_REQUEST_CREATE: "vehicle-request/create",
+  VEHICLE_REQUEST_UPDATE: "vehicle-request/edit/:id",
+
+  // DEALER_DISCOUNT_POLICY
+  DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
 };

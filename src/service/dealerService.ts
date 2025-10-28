@@ -1,23 +1,19 @@
-// src/service/dealerService.ts
 import {
   createQueryHook,
-  createQueryWithPathParamHook,
   createMutationHook,
   updateMutationHook,
   deleteMutationHook,
 } from "../hook/useApi";
 
-const BASE_URL = "/dealer";
+// ===============================
+// QUERY HOOKS
+// ===============================
+export const useDealers = createQueryHook("dealers", "/dealer"); // GET all dealers
+export const useDealerById = createQueryHook("dealerById", "/dealer"); // GET by id
 
-export const useGetDealers = createQueryHook("dealers", BASE_URL);
-
-export const useGetDealerById = createQueryWithPathParamHook(
-  "dealer",
-  BASE_URL
-);
-
-export const useCreateDealer = createMutationHook("dealers", BASE_URL);
-
-export const useUpdateDealer = updateMutationHook("dealers", BASE_URL);
-
-export const useDeleteDealer = deleteMutationHook("dealers", BASE_URL);
+// ===============================
+// MUTATION HOOKS
+// ===============================
+export const useCreateDealer = createMutationHook("dealers", "/dealer"); // POST
+export const useUpdateDealer = updateMutationHook("dealers", "/dealer"); // PUT
+export const useDeleteDealer = deleteMutationHook("dealers", "/dealer"); // DELETE

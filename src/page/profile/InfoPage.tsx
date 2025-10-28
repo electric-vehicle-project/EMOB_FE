@@ -3,7 +3,7 @@ import { Skeleton } from "antd";
 import { accountService } from "../../service/accountService";
 import { useCurrentUser as getCurrentUser } from "../../utils/getCurrentUser";
 import { motion } from "framer-motion";
-import ProfileCardWrapper from "../../components/molecules/ProfileCardWrapper";
+import CardWrapper from "../../components/template/CardWrapper";
 
 const InfoPage: React.FC = () => {
   const user = getCurrentUser();
@@ -37,7 +37,7 @@ const InfoPage: React.FC = () => {
   }, [user]);
 
   return (
-    <ProfileCardWrapper title="" maxWidth="max-w-5xl">
+    <CardWrapper title="" maxWidth="max-w-5xl" variant="profile">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -45,7 +45,9 @@ const InfoPage: React.FC = () => {
       >
         <div className="border-l-4 border-[#627254] pl-3 mb-4">
           <h1 className="text-2xl font-bold text-[#414d38]">Hồ sơ cá nhân</h1>
-          <p className="text-gray-500 text-base">Theo dõi thông tin tài khoản của bạn</p>
+          <p className="text-gray-500 text-base">
+            Theo dõi thông tin tài khoản của bạn
+          </p>
         </div>
 
         {loading ? (
@@ -79,7 +81,7 @@ const InfoPage: React.FC = () => {
                 {profile?.gender || ""}
               </div>
             </div>
-            
+
             <div className="py-2 border-b border-gray-200">
               <div className="text-gray-600 font-medium">Địa chỉ</div>
               <div className="text-[#2e3825] font-semibold text-sm sm:text-base break-words">
@@ -110,7 +112,7 @@ const InfoPage: React.FC = () => {
           </div>
         )}
       </motion.div>
-    </ProfileCardWrapper>
+    </CardWrapper>
   );
 };
 
