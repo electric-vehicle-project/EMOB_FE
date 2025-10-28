@@ -1,10 +1,15 @@
 import { Calendar, Card, Checkbox } from "antd";
 
 export const TestDriveFilterBar = () => (
-  <div className="flex-col justify-center">
-    <Card type={"inner"}><Calendar fullscreen={false} /></Card>
+  <div className="flex-col justify-between">
+    <Card className="shadow-gray-400 shadow-xl ">
+      <Calendar
+        fullscreen={false}
+      />
+    </Card>
 
     <br />
+    
     <Card className="shadow-gray-400 shadow-xl flex justify-center m-10 ">
       <Checkbox.Group
         options={[

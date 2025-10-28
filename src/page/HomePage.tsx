@@ -2,25 +2,9 @@ import React from "react";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEffect } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "../redux/store";
-import { toast } from "react-toastify";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-
-  const user = useSelector((state: RootState) => state.user);
-
-  useEffect(() => {
-    if (user) {
-      toast.success("Đã đăng nhập!");
-      const timer = setTimeout(() => {
-        navigate("/" + user.role.toLowerCase());
-      }, 4 * 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, navigate]);
 
   return (
     <div
@@ -31,19 +15,18 @@ const HomePage: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/70 z-0" />
 
       {/* header */}
-      <header className="relative z-10 flex justify-between items-center px-10 pt-6">
+      <header className="relative z-10 flex justify-between items-start px-10 !pt-7">
         <motion.img
           src="/logo.png"
           alt="EMOB Logo"
-          className="w-[5vw] min-w-[60px] aspect-square rounded-full drop-shadow-lg"
+          className="w-[8vw] min-w-[60px] aspect-square rounded-full drop-shadow-lg"
           whileHover={{ scale: 1.05 }}
         />
 
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
-            type="primary"
             size="large"
-            className="rounded-full font-semibold px-8 shadow-md text-[15px] tracking-wide"
+            className="!rounded-full font-semibold px-8 shadow-md text-[15px] tracking-wide !bg-white !text-black"
             onClick={() => navigate("/auth/login")}
           >
             Đăng nhập
@@ -52,9 +35,10 @@ const HomePage: React.FC = () => {
       </header>
 
       {/* body */}
-      <main className="relative z-10 flex flex-col justify-center items-center h-[80%] text-center text-white">
+      <main className="relative z-10 flex flex-col justify-center items-center  text-center text-white">
 
         <motion.h1
+          whileHover={{ scale: 1.05 }}
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5 }}
@@ -102,8 +86,7 @@ const HomePage: React.FC = () => {
 
       {/* footer */}
       <footer className="absolute bottom-4 left-0 w-full text-center text-white/60 text-xs md:text-sm tracking-wide z-10">
-        © {new Date().getFullYear()} EMOB – Electric Mobility Brand - Dealer Management
-        System | v1.0.0
+        © {new Date().getFullYear()} EMOB - Electric Mobility Brand/Dealer Management System | v1.0.0
       </footer>
     </div>
   );
