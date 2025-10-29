@@ -23,12 +23,12 @@ import {
   usePromotionUpdate,
   usePromotionUpdateValue,
 } from "../../service/promotionService";
-import { useGetDealers } from "../../service/dealerService";
 import { useGetVehicles } from "../../service/vehicleService";
 import {
   mapDealerOptions,
   mapVehicleOptions,
 } from "../../utils/mapToSelectOptions";
+import { useDealers } from "../../service/dealerService";
 
 const { RangePicker } = DatePicker;
 
@@ -76,7 +76,7 @@ export default function PromotionEditPage() {
   const { mutateAsync: updateValue, isPending: updatingValue } =
     usePromotionUpdateValue();
 
-  const { data: dealersData, isLoading: loadingDealers } = useGetDealers({
+  const { data: dealersData, isLoading: loadingDealers } = useDealers({
     enabled: canPickDealers,
   } as any);
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({

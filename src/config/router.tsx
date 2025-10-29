@@ -49,6 +49,7 @@ import { DealerPromotionsPage } from "../page/promotions/DealerPromotionsPage";
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { CustomerPage } from "../page/customer/CustomerPage";
+import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -159,6 +160,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.DEALER_POINT_RULES, element: <DealerPointRulePage /> },
       { path: ROUTES.SALE_ORDERS, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
     ],
   },
 

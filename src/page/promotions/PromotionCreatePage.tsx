@@ -17,12 +17,12 @@ import type { RootState } from "../../redux/store";
 import type { Role } from "../../utils/promotionPermissions";
 
 import { usePromotionCreate } from "../../service/promotionService";
-import { useGetDealers } from "../../service/dealerService";
 import { useGetVehicles } from "../../service/vehicleService";
 import {
   mapDealerOptions,
   mapVehicleOptions,
 } from "../../utils/mapToSelectOptions";
+import { useDealers } from "../../service/dealerService";
 
 const { Title } = Typography;
 
@@ -53,7 +53,7 @@ export default function PromotionCreatePage() {
 
   // ===== API HOOKS =====
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
-  const { data: dealersData, isLoading: loadingDealers } = useGetDealers({
+  const { data: dealersData, isLoading: loadingDealers } = useDealers({
     enabled: canFetchDealers,
   });
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
