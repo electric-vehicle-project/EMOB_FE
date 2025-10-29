@@ -9,6 +9,7 @@ import { useCurrentUser } from "../../utils/getCurrentUser";
 import type { IVehicle } from "../../model/Vehicle";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { ROUTES } from "../../model/routePaths";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
@@ -21,12 +22,21 @@ export const VehicleCreatePage = () => {
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
+  const basePath =
+    role === "ADMIN"
+      ? "/admin"
+      : role === "EVM_STAFF"
+      ? "/evm_staff"
+      : role === "MANAGER"
+      ? "/manager"
+      : "/dealer_staff";
+
   useEffect(() => {
     if (role !== "EVM_STAFF") {
       message.warning("Tài khoản của bạn không có quyền thêm xe mới!");
-      navigate("/dashboard/evm/vehicle", { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
     }
-  }, [role, navigate]);
+  }, [role, navigate, basePath]);
 
   const handleCreate = async (values: IVehicle) => {
     try {
@@ -63,14 +73,14 @@ export const VehicleCreatePage = () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
 
       message.success("✅ Thêm xe mới thành công!");
-      navigate("/dashboard/evm/vehicle");
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
     } catch (err: unknown) {
       console.error("❌ Lỗi khi tạo xe:", err);
       message.error("❌ Không thể thêm xe!");
     }
   };
 
-  const handleCancel = () => navigate("/dashboard/evm/vehicle");
+  const handleCancel = () => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
 
   return (
     <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">

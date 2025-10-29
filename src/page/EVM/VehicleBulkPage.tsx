@@ -21,6 +21,7 @@ import {
 } from "../../service/vehicleService";
 import api from "../../config/api";
 import { ROUTES } from "../../model/routePaths";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 const { Option } = Select;
 
@@ -29,6 +30,17 @@ export const VehicleBulkPage = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const vehicleId = new URLSearchParams(search).get("vehicleId");
+
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+  const basePath =
+    role === "ADMIN"
+      ? "/admin"
+      : role === "EVM_STAFF"
+      ? "/evm_staff"
+      : role === "MANAGER"
+      ? "/manager"
+      : "/dealer_staff";
 
   const { data: vehicleData, isLoading: vehicleLoading } = useGetVehicleById(
     vehicleId ?? ""
@@ -93,8 +105,8 @@ export const VehicleBulkPage = () => {
       );
 
       setTimeout(() => {
-        navigate(`${ROUTES.DASHBOARD}/${ROUTES.EVM_VEHICLE}`);
-      }, 1000);
+        navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
+      }, 800);
     } catch (error) {
       console.error(error);
       message.error("❌ Không thể nhập đơn vị xe. Vui lòng thử lại!");
@@ -123,7 +135,7 @@ export const VehicleBulkPage = () => {
           <div className="flex justify-between items-center">
             <span>🚗 Nhập kho hàng loạt xe điện (Vehicle Units)</span>
             <Button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`)}
               className="rounded-lg border-gray-300"
             >
               Quay lại
@@ -180,7 +192,6 @@ export const VehicleBulkPage = () => {
                 }}
                 className="space-y-2"
               >
-                {/* 🔹 Hàng đầu tiên: Số lượng & Giá dự kiến */}
                 <Space direction="horizontal" size="middle" className="w-full">
                   <Form.Item
                     label="Số lượng cần nhập"
@@ -191,7 +202,6 @@ export const VehicleBulkPage = () => {
                     <InputNumber min={1} className="w-full" />
                   </Form.Item>
 
-                  {/* ✅ Ô hiển thị giá dự kiến (read-only, có công thức rõ ràng) */}
                   <Form.Item
                     label="Giá dự kiến (Import Price × Multiplier)"
                     className="flex-1"
@@ -210,16 +220,14 @@ export const VehicleBulkPage = () => {
                   </Form.Item>
                 </Space>
 
-                {/* 🔹 Màu sơn */}
                 <Form.Item
                   label="Màu sơn"
                   name="color"
                   rules={[{ required: true, message: "Nhập màu sơn" }]}
                 >
-                  <Input placeholder="Ví dụ: Trắng, Đen, Xanh..." />
+                  <Input placeholder="Ví dụ: Trắng" />
                 </Form.Item>
 
-                {/* 🔹 Năm sản xuất */}
                 <Form.Item
                   label="Năm sản xuất"
                   name="productionYear"
@@ -228,7 +236,6 @@ export const VehicleBulkPage = () => {
                   <DatePicker picker="year" className="w-full" />
                 </Form.Item>
 
-                {/* 🔹 Ngày mua & bảo hành */}
                 <Space direction="horizontal" size="middle" className="w-full">
                   <Form.Item
                     label="Ngày mua (Purchase Date)"
@@ -257,7 +264,6 @@ export const VehicleBulkPage = () => {
                   <DatePicker className="w-full" />
                 </Form.Item>
 
-                {/* 🔹 Tình trạng */}
                 <Form.Item
                   label="Tình trạng ban đầu"
                   name="status"
@@ -275,7 +281,6 @@ export const VehicleBulkPage = () => {
                   </Select>
                 </Form.Item>
 
-                {/* 🔹 Submit */}
                 <Button
                   type="primary"
                   htmlType="submit"

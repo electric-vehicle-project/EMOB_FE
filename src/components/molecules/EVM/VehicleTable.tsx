@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import type { IVehicle } from "../../../model/Vehicle";
 import dayjs from "dayjs";
-import UnitsSubtable from "../_UnitsSubtable";
+import UnitsSubtable from "./_UnitsSubtable";
 
 const { Text } = Typography;
 

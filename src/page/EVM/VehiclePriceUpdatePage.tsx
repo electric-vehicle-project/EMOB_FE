@@ -6,6 +6,7 @@ import {
 } from "../../service/vehicleService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useEffect } from "react";
+import { ROUTES } from "../../model/routePaths";
 
 export const VehiclePriceUpdatePage = () => {
   const { id } = useParams();
@@ -17,15 +18,24 @@ export const VehiclePriceUpdatePage = () => {
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
-  // ✅ Nếu không phải Admin thì chặn luôn
+  const basePath =
+    role === "ADMIN"
+      ? "/admin"
+      : role === "EVM_STAFF"
+      ? "/evm_staff"
+      : role === "MANAGER"
+      ? "/manager"
+      : "/dealer_staff";
+
   useEffect(() => {
     if (role !== "ADMIN") {
       message.warning("⚠️ Chỉ Admin mới có quyền cập nhật giá!");
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+      });
     }
-  }, [role, navigate, id]);
+  }, [role, navigate, id, basePath]);
 
-  // ✅ Gán giá trị ban đầu cho form
   useEffect(() => {
     if (vehicle) {
       form.setFieldsValue({
@@ -35,38 +45,27 @@ export const VehiclePriceUpdatePage = () => {
     }
   }, [vehicle, form]);
 
-  // ✅ Xử lý cập nhật giá
   const handleSubmit = async (values: {
     importPrice: number;
     retailPrice: number;
   }) => {
-    // So sánh giá trị cũ & mới
     const oldImport = vehicle?.importPrice ?? 0;
     const oldRetail = vehicle?.retailPrice ?? 0;
     const sameImport = values.importPrice === oldImport;
     const sameRetail = values.retailPrice === oldRetail;
 
     if (sameImport && sameRetail) {
-      message.info({
-        content: "Không có thay đổi nào để cập nhật.",
-        duration: 2.5,
-      });
+      message.info("Không có thay đổi nào để cập nhật.");
       return;
     }
 
     try {
       await updatePrices.mutateAsync({ id: id!, data: values });
-      message.success({
-        content: "💰 Giá xe đã được cập nhật thành công!",
-        duration: 2.5,
-      });
-      navigate(`/dashboard/evm/vehicle/${id}`);
+      message.success("💰 Giá xe đã được cập nhật thành công!");
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!));
     } catch (error) {
       console.error("❌ Update error:", error);
-      message.error({
-        content: "Không thể cập nhật giá. Vui lòng thử lại sau.",
-        duration: 2.5,
-      });
+      message.error("Không thể cập nhật giá. Vui lòng thử lại sau.");
     }
   };
 

@@ -1,86 +1,92 @@
-import { useState, useMemo } from "react";
-import { Spin, Row, Col } from "antd";
-import { useNavigate } from "react-router-dom";
-import { SearchBar } from "../../molecules/SearchBar";
-import { Button } from "../../atoms/Button";
-import { useDebounce } from "../../../hook/useDebounce";
+// src/components/organisms/EVM/VehicleList.tsx
+import { Row, Col, Empty, Spin } from "antd";
+import { useMemo } from "react";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { useGetVehicles } from "../../../service/vehicleService";
-import { useCurrentUser } from "../../../utils/getCurrentUser"; // ✅ thêm
-import type { IVehicle } from "../../../model/Vehicle";
 import { VehicleCard } from "../../molecules/EVM/VehicleCard";
+import type { IVehicle } from "../../../model/Vehicle";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../model/routePaths";
 
-interface VehicleListProps {
-  onViewUnits?: (vehicleId: string) => void;
-}
+type Props = {
+  onOpenUnits?: (id: string) => void;
+};
 
-export const VehicleList = ({ onViewUnits }: VehicleListProps) => {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
-  const navigate = useNavigate();
-
-  // ✅ Lấy role người dùng
+export const VehicleList = ({ onOpenUnits }: Props) => {
+  // Lấy role hiện tại
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
-  const canCreate = role === "EVM_STAFF"; // ✅ chỉ EVM_STAFF được thêm xe
 
-  const { data: vehiclesData, isLoading } = useGetVehicles();
+  // Tính basePath ổn định (tránh re-render không cần thiết)
+  const basePath = useMemo<
+    "/admin" | "/evm_staff" | "/manager" | "/dealer_staff"
+  >(
+    () =>
+      role === "ADMIN"
+        ? "/admin"
+        : role === "EVM_STAFF"
+        ? "/evm_staff"
+        : role === "MANAGER"
+        ? "/manager"
+        : "/dealer_staff",
+    [role]
+  );
 
-  const vehicles = useMemo(() => {
-    const all = vehiclesData?.result?.data ?? [];
-    if (!Array.isArray(all)) return [];
-    // ✅ Lọc bỏ xe bị xóa
-    return all.filter((v) => {
-      const deleted =
-        v.isDeleted === true || v.is_deleted === 1 || v.is_Deleted === 1;
-      return !deleted;
-    });
-  }, [vehiclesData]);
+  const navigate = useNavigate();
 
-  const filtered = useMemo(() => {
-    if (!Array.isArray(vehicles)) return [];
-    return vehicles.filter(
-      (v: IVehicle) =>
-        v.brand?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        v.model?.toLowerCase().includes(debouncedSearch.toLowerCase())
+  // Lấy danh sách xe
+  const { data, isLoading } = useGetVehicles();
+
+  // Chuẩn hóa dữ liệu từ nhiều shape khác nhau (array | {result:{data}} | {result})
+  const vehicles: IVehicle[] = useMemo(() => {
+    const raw = (data?.result?.data ?? data?.result ?? data) as unknown;
+    if (Array.isArray(raw)) return raw as IVehicle[];
+    if (raw && typeof raw === "object") {
+      const obj = raw as Record<string, unknown>;
+      if (Array.isArray(obj.data as unknown[])) {
+        return obj.data as IVehicle[];
+      }
+    }
+    return [];
+  }, [data]);
+
+  // Lọc phần tử không hợp lệ (thiếu id)
+  const safeVehicles = useMemo(
+    () =>
+      vehicles.filter(
+        (v): v is IVehicle & { id: string } =>
+          typeof v?.id === "string" && v.id.length > 0
+      ),
+    [vehicles]
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spin size="large" />
+      </div>
     );
-  }, [vehicles, debouncedSearch]);
+  }
+
+  if (!safeVehicles.length) {
+    return <Empty description="Chưa có xe nào" />;
+  }
 
   return (
-    <Spin spinning={isLoading} tip="Đang tải xe...">
-      <div className="space-y-4">
-        {/* ✅ Thanh tìm kiếm + nút thêm (ẩn nếu không phải EVM_STAFF) */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm kiếm theo hãng hoặc mẫu xe..."
-            className="w-full sm:max-w-[420px]"
+    <Row gutter={[16, 16]}>
+      {safeVehicles.map((v) => (
+        <Col xs={24} sm={12} md={8} lg={6} key={v.id}>
+          <VehicleCard
+            vehicle={v}
+            onViewDetail={() =>
+              navigate(
+                `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", v.id)
+              )
+            }
+            onViewUnits={onOpenUnits}
           />
-
-          {canCreate && ( // ✅ chỉ hiện nút nếu có quyền
-            <Button
-              type="primary"
-              onClick={() => navigate("/dashboard/evm/vehicle/new")}
-              className="w-full sm:w-auto sm:ml-4 px-6"
-            >
-              Thêm xe mới
-            </Button>
-          )}
-        </div>
-
-        {/* ✅ Danh sách xe điện */}
-        <Row gutter={[16, 16]}>
-          {filtered.map((v) => (
-            <Col xs={24} sm={12} lg={8} key={v.id}>
-              <VehicleCard
-                vehicle={v}
-                onViewDetail={() => navigate(`/dashboard/evm/vehicle/${v.id}`)}
-                onViewUnits={() => onViewUnits?.(v.id)} // ✅ truyền id xe
-              />
-            </Col>
-          ))}
-        </Row>
-      </div>
-    </Spin>
+        </Col>
+      ))}
+    </Row>
   );
 };

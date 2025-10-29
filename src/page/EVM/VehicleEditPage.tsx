@@ -8,6 +8,7 @@ import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
 import type { IVehicle } from "../../model/Vehicle";
 import { useEffect, useRef } from "react";
 import { useCurrentUser } from "../../utils/getCurrentUser";
+import { ROUTES } from "../../model/routePaths";
 
 export const VehicleEditPage = () => {
   const { id } = useParams();
@@ -21,12 +22,23 @@ export const VehicleEditPage = () => {
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
+  const basePath =
+    role === "ADMIN"
+      ? "/admin"
+      : role === "EVM_STAFF"
+      ? "/evm_staff"
+      : role === "MANAGER"
+      ? "/manager"
+      : "/dealer_staff";
+
   useEffect(() => {
     if (role !== "EVM_STAFF") {
       message.warning("Tài khoản của bạn không có quyền chỉnh sửa xe!");
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+      });
     }
-  }, [role, navigate, id]);
+  }, [role, navigate, id, basePath]);
 
   useEffect(() => {
     if (vehicle) {
@@ -51,7 +63,9 @@ export const VehicleEditPage = () => {
     try {
       await updateVehicle.mutateAsync({ id: id!, data: values });
       message.success("✅ Đã lưu thay đổi xe thành công!");
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+      });
     } catch {
       message.error("❌ Không thể cập nhật xe!");
     }
@@ -59,7 +73,9 @@ export const VehicleEditPage = () => {
 
   const handleCancel = () => {
     if (!isFormChanged()) {
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+      });
       return;
     }
 
@@ -68,7 +84,11 @@ export const VehicleEditPage = () => {
       content: "Mọi thay đổi chưa lưu sẽ bị mất.",
       okText: "Đồng ý",
       cancelText: "Tiếp tục chỉnh",
-      onOk: () => navigate(`/dashboard/evm/vehicle/${id}`, { replace: true }),
+      onOk: () =>
+        navigate(
+          `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!),
+          { replace: true }
+        ),
     });
   };
 
@@ -86,7 +106,7 @@ export const VehicleEditPage = () => {
           <p className="mb-4">Không tìm thấy xe.</p>
           <Button
             type="primary"
-            onClick={() => navigate("/dashboard/evm/vehicle")}
+            onClick={() => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`)}
           >
             Quay lại danh sách
           </Button>
