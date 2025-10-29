@@ -42,6 +42,7 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 // 🧪 Test
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
+import { AccountPage } from "../page/account/AccountPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -78,10 +79,11 @@ export const router = createBrowserRouter([
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <DealerDiscountPolicyPage />,
       },
+      { path: ROUTES.ACCOUNT, element: <AccountPage /> }, // ✅ ADMIN full CRUD
     ],
   },
 
-  // ⚡ EVM STAFF DASHBOARD
+  // ⚡ EVM STAFF DASHBOARD (thêm quyền xem trang Account)
   {
     path: ROUTES.EVM_STAFF,
     element: (
@@ -110,10 +112,13 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
+
+      // ✅ Cho phép EVM_STAFF xem trang Account (read-only)
+      { path: ROUTES.ACCOUNT, element: <AccountPage /> },
     ],
   },
 
-  // ==== MANAGER ====
+  // ==== MANAGER ==== (không thêm trang Account để cấm truy cập)
   {
     path: ROUTES.MANAGER,
     element: <DashboardLayout />,

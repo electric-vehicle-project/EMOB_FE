@@ -1,8 +1,14 @@
 import React from "react";
 import { Table } from "antd";
 
+type DealerData = {
+  region: string;
+  sales: string | number;
+  debt: string | number;
+};
+
 export type DealerProps = {
-  data?: any[];
+  data?: DealerData[];
 };
 const Dealer: React.FC<DealerProps> = ({ data }) => {
   const columns = [

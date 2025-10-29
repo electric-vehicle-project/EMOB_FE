@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Input, message } from "antd";
-import { accountService } from "../../service/accountService";
+import { useChangePassword } from "../../service/accountService";
 import { Button } from "../../components/atoms/Button";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
@@ -9,6 +9,7 @@ import CardWrapper from "../../components/template/CardWrapper";
 const ResetPasswordPage: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const changePassword = useChangePassword();
 
   const onFinish = async (values: {
     currentPassword: string;
@@ -19,12 +20,9 @@ const ResetPasswordPage: React.FC = () => {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    await accountService.changePassword(
-      values.currentPassword,
-      values.newPassword
-    );
+    await accountService.changePassword(values.currentPassword, values.newPassword);
     message.success("Đổi mật khẩu thành công");
-    navigate("/dashboard/profile/info");
+    navigate("/admin/profile/info");
   };
 
   return (
@@ -73,6 +71,7 @@ const ResetPasswordPage: React.FC = () => {
           <Button
             className="!bg-[#627254] hover:!bg-[#525e46] active:!bg-[#414d38] text-white rounded-xl transition-all duration-300 px-6 py-2"
             onClick={() => form.submit()}
+            loading={changePassword.isPending}
           >
             Đổi mật khẩu
           </Button>
