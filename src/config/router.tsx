@@ -1,3 +1,4 @@
+// src/router.tsx
 import { createBrowserRouter } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import AuthLayout from "../layout/AuthLayout";
@@ -26,7 +27,7 @@ import ViewSchedulePage from "../page/profile/ViewSchedulePage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
 // ⚡ EV Management
-import VehiclePage from "../page/EVM/VehiclePage";
+import { VehicleListPage } from "../page/EVM/VehicleListPage";
 import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
 import { VehicleDetailPage } from "../page/EVM/VehicleDetailPage";
 import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
@@ -44,8 +45,9 @@ import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { AccountPage } from "../page/account/AccountPage";
 
+// -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
-  // 🏠 Trang chủ
+  // 🏠 Public Home
   { path: ROUTES.HOME, element: <HomePage /> },
 
   // 🔐 AUTH
@@ -69,7 +71,8 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
+      // General
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
@@ -80,10 +83,19 @@ export const router = createBrowserRouter([
         element: <DealerDiscountPolicyPage />,
       },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> }, // ✅ ADMIN full CRUD
+
+      // ⚡ EV – Admin chỉ: List, Detail, Price Update
+      { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
+      {
+        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+        element: <VehiclePriceUpdatePage />,
+      },
+      // ❌ Không mount: NEW / EDIT / BULK / RULES cho Admin
     ],
   },
 
-  // ⚡ EVM STAFF DASHBOARD (thêm quyền xem trang Account)
+  // ⚡ EVM STAFF DASHBOARD
   {
     path: ROUTES.EVM_STAFF,
     element: (
@@ -92,51 +104,48 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      // 👥 Dealer Management
-      { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
+      // 👥 Dealer
+      { path: ROUTES.DEALERS, element: <DealerPage /> },
 
-      // ⚡ Vehicle Management
-      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
+      // ⚡ Vehicle – EVM full quản lý (trừ Price Update – là của Admin)
+      { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
-      {
-        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
-        element: <VehiclePriceUpdatePage />,
-      },
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+      // ❌ Không mount: EVM_VEHICLE_PRICE_UPDATE
 
-      // 👤 Profile Pages
+      // 👤 Profile
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
 
-      // ✅ Cho phép EVM_STAFF xem trang Account (read-only)
+      // ✅ Cho phép EVM_STAFF xem trang Account (tuỳ bạn kiểm soát read-only trong component)
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
     ],
   },
 
-  // ==== MANAGER ==== (không thêm trang Account để cấm truy cập)
+  // 👔 MANAGER + 👨‍🔧 DEALER_STAFF DASHBOARD
   {
-    path: ROUTES.MANAGER,
-    element: <DashboardLayout />,
+    path: ROUTES.MANAGER, // hoặc ROUTES.DEALER nếu bạn có
+    element: (
+      <AuthProtect allowedRoles={["MANAGER", "DEALER_STAFF"]}>
+        <DashboardLayout />
+      </AuthProtect>
+    ),
     children: [
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-      { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
-      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
-      { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
+
+      // ⚡ Vehicle – chỉ List + Detail (không có NEW/EDIT/BULK/PRICE/_RULES)
+      { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
-      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
-      {
-        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
-        element: <VehiclePriceUpdatePage />,
-      },
-      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+
+      // 👥 Customer
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
     ],
   },

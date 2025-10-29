@@ -50,7 +50,24 @@ export const VehicleBulkPage = () => {
   const [multiplier, setMultiplier] = useState<number>(1);
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
 
-  const basePrice = vehicleData?.result?.importPrice ?? 0;
+  type VehicleInfo = {
+    id?: string;
+    images?: string[];
+    brand?: string;
+    model?: string;
+    type?: string;
+    batteryKwh?: number;
+    rangeKm?: number;
+    importPrice?: number;
+  };
+
+  const vehicleInfo: VehicleInfo = ((
+    vehicleData as { result?: VehicleInfo } | undefined
+  )?.result ??
+    (vehicleData as VehicleInfo | undefined) ??
+    {}) as VehicleInfo;
+
+  const basePrice = vehicleInfo.importPrice ?? 0;
 
   type FormValues = {
     quantity: number;
@@ -103,10 +120,7 @@ export const VehicleBulkPage = () => {
           values.status
         }) thành công — Giá mỗi xe: ${finalPrice.toLocaleString()}₫`
       );
-
-      setTimeout(() => {
-        navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
-      }, 800);
+      setTimeout(() => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`), 800);
     } catch (error) {
       console.error(error);
       message.error("❌ Không thể nhập đơn vị xe. Vui lòng thử lại!");
@@ -115,12 +129,11 @@ export const VehicleBulkPage = () => {
     }
   };
 
-  const vehicleInfo = vehicleData?.result;
   const imageList: string[] = Array.isArray(vehicleInfo?.images)
     ? vehicleInfo.images.filter((u: string) => !!u && /^https?:\/\//i.test(u))
     : [];
   const mainImage =
-    imageList[0] || "https://via.placeholder.com/400x300?text=No+Image";
+    imageList[0] || "https://placehold.co/400x300?text=No+Image";
 
   useEffect(() => {
     if (basePrice) setCalculatedPrice(basePrice * multiplier);
@@ -147,7 +160,6 @@ export const VehicleBulkPage = () => {
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : vehicleInfo ? (
           <div className="flex flex-col lg:flex-row gap-10">
-            {/* 🖼️ Hình xe */}
             <div className="flex-1 flex flex-col items-center">
               <Image
                 src={mainImage}
@@ -156,8 +168,8 @@ export const VehicleBulkPage = () => {
                 height={300}
                 className="rounded-lg shadow-sm border object-cover"
                 onError={(e) => {
-                  e.currentTarget.src =
-                    "https://via.placeholder.com/420x300?text=No+Image";
+                  (e.currentTarget as HTMLImageElement).src =
+                    "https://placehold.co/420x300?text=No+Image";
                 }}
               />
               <div className="mt-4 text-center">
@@ -165,7 +177,7 @@ export const VehicleBulkPage = () => {
                   {vehicleInfo.brand} – {vehicleInfo.model}
                 </h3>
                 <p className="text-gray-500 text-sm">
-                  Loại: {vehicleInfo.type} | Pin: {vehicleInfo.batteryKwh} kWh |{" "}
+                  Loại: {vehicleInfo.type} | Pin: {vehicleInfo.batteryKwh} kWh |
                   Tầm hoạt động: {vehicleInfo.rangeKm} km
                 </p>
                 <p className="text-gray-700 font-medium mt-2">
@@ -177,7 +189,6 @@ export const VehicleBulkPage = () => {
               </div>
             </div>
 
-            {/* 📋 Form nhập liệu */}
             <div className="flex-1">
               <Form
                 form={form}
@@ -245,7 +256,6 @@ export const VehicleBulkPage = () => {
                   >
                     <DatePicker className="w-full" />
                   </Form.Item>
-
                   <Form.Item
                     label="Ngày bảo hành bắt đầu"
                     name="warrantyStart"

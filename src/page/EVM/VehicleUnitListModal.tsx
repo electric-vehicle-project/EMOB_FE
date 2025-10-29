@@ -38,9 +38,7 @@ export const VehicleUnitListModal = ({
       try {
         const res = await api.get(
           `/vehicle/unit/view-all-by-model/${vehicleId}`,
-          {
-            params: { page, size },
-          }
+          { params: { page, size } }
         );
         const result = res?.data?.result;
         setUnits(result?.data ?? []);
@@ -58,7 +56,6 @@ export const VehicleUnitListModal = ({
   useEffect(() => {
     fetchUnits();
   }, [fetchUnits]);
-
   useEffect(() => {
     setPage(0);
   }, [vehicleId]);
@@ -127,7 +124,7 @@ export const VehicleUnitListModal = ({
       footer={null}
       width={900}
       centered
-      destroyOnHidden // ✅ antd v5
+      destroyOnHidden
       maskClosable
     >
       {units.length === 0 && !isSoftLoading ? (

@@ -15,7 +15,10 @@ export const VehicleEditPage = () => {
   const navigate = useNavigate();
   const { data, isLoading } = useGetVehicleById(id ?? "");
   const updateVehicle = useUpdateVehicle();
-  const vehicle = data?.result;
+  type VehicleDataLike = { result?: IVehicle } | IVehicle | undefined;
+  const vehicle =
+    (data as VehicleDataLike as { result?: IVehicle })?.result ??
+    (data as VehicleDataLike as IVehicle | undefined);
   const [form] = Form.useForm<IVehicle>();
   const initialValuesRef = useRef<IVehicle | null>(null);
 

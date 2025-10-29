@@ -52,15 +52,19 @@ export const VehicleCreatePage = () => {
       let imageUrls: string[] = [];
       if (formData.has("files")) {
         const uploadRes = await uploadImages.mutateAsync(formData);
-        imageUrls =
-          uploadRes?.data?.result || uploadRes?.result || uploadRes || [];
+        const raw =
+          (uploadRes as { data?: { result?: string[] } } | undefined)?.data
+            ?.result ??
+          (uploadRes as { result?: string[] } | undefined)?.result ??
+          (Array.isArray(uploadRes) ? (uploadRes as string[]) : []);
+        imageUrls = Array.isArray(raw) ? raw : [];
       }
 
       const payload = {
         ...values,
         images: imageUrls.length
           ? imageUrls
-          : ["https://via.placeholder.com/300x200?text=Vehicle"],
+          : ["https://placehold.co/300x200?text=Vehicle"],
         type:
           typeof values.type === "object" &&
           values.type !== null &&
@@ -93,7 +97,6 @@ export const VehicleCreatePage = () => {
           onFinish={handleCreate}
           canEditPrices={false}
         />
-
         <div className="flex justify-end gap-3 mt-6">
           <Space>
             <Button onClick={handleCancel}>Hủy</Button>

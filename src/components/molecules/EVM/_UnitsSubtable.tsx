@@ -1,7 +1,6 @@
-// src/components/organisms/EVM/_UnitsSubtable.tsx
 import { Table, Tag, Empty, Spin } from "antd";
 import dayjs from "dayjs";
-import { useGetVehicleUnitsByVehicleId } from "../../../service/vehicleService";
+import { useGetVehicleUnits } from "../../../service/vehicleService";
 
 interface Props {
   vehicleId: string;
@@ -35,7 +34,7 @@ const statusColor: Record<UnitRow["status"], string> = {
 };
 
 const UnitsSubtable = ({ vehicleId }: Props) => {
-  const { data, isLoading } = useGetVehicleUnitsByVehicleId(vehicleId, 0, 5);
+  const { data, isLoading } = useGetVehicleUnits(vehicleId, 0, 5);
   const rows = (data as { data?: UnitRow[] })?.data ?? [];
 
   if (isLoading) {

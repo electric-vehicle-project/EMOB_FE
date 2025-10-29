@@ -1,8 +1,8 @@
 import { Modal, Table, Button, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { toast } from "react-toastify";
-import { useGetVehicleUnitsByVehicleId } from "../../../service/vehicleService";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { useGetVehicleUnits } from "../../../service/vehicleService";
 
 type Props = {
   open: boolean;
@@ -28,9 +28,7 @@ export default function VehicleUnitListModal({
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
-  const { data = [], isLoading } = useGetVehicleUnitsByVehicleId(
-    vehicleId ?? undefined
-  );
+  const { data = [], isLoading } = useGetVehicleUnits(vehicleId ?? "", 0, 10);
 
   // Hiện chưa có API thật, nên chỉ toast giả lập
   const handleApprove = async (vinNumber: string) => {

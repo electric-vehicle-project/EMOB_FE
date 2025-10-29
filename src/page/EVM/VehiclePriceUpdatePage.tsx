@@ -14,10 +14,19 @@ export const VehiclePriceUpdatePage = () => {
   const [form] = Form.useForm();
   const updatePrices = useUpdateVehiclePrices();
   const { data, isLoading } = useGetVehicleById(id ?? "");
-  const vehicle = data?.result;
+  type PriceVehicle = {
+    importPrice?: number;
+    retailPrice?: number;
+    brand?: string;
+    model?: string;
+  };
+  const hasResult = (x: unknown): x is { result?: PriceVehicle } =>
+    !!x && typeof x === "object" && "result" in (x as Record<string, unknown>);
+  const vehicle: PriceVehicle | undefined = hasResult(data)
+    ? data.result
+    : (data as PriceVehicle | undefined);
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
-
   const basePath =
     role === "ADMIN"
       ? "/admin"
@@ -53,7 +62,6 @@ export const VehiclePriceUpdatePage = () => {
     const oldRetail = vehicle?.retailPrice ?? 0;
     const sameImport = values.importPrice === oldImport;
     const sameRetail = values.retailPrice === oldRetail;
-
     if (sameImport && sameRetail) {
       message.info("Không có thay đổi nào để cập nhật.");
       return;
@@ -69,12 +77,13 @@ export const VehiclePriceUpdatePage = () => {
     }
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <Spin size="large" />
       </div>
     );
+  }
 
   return (
     <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
@@ -119,7 +128,6 @@ export const VehiclePriceUpdatePage = () => {
               formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             />
           </Form.Item>
-
           <Form.Item
             label="Giá bán lẻ (VNĐ)"
             name="retailPrice"
@@ -131,7 +139,6 @@ export const VehiclePriceUpdatePage = () => {
               formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             />
           </Form.Item>
-
           <Button
             type="primary"
             htmlType="submit"
