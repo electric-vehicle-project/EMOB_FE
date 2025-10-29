@@ -8,12 +8,6 @@ export interface CardWrapperProps {
   maxWidth?: string;
   variant?: "profile" | "dashboard";
 }
-
-/**
- * CardWrapper (Fixed Static Version)
- * - Không hover, không translate, không gradient
- * - Giữ layout sáng, bo tròn, bóng nhẹ cố định
- */
 const CardWrapper: React.FC<CardWrapperProps> = ({
   title,
   subtitle,
