@@ -1,6 +1,6 @@
 import { Table, Tag, Empty, Spin } from "antd";
 import dayjs from "dayjs";
-import { useGetVehicleUnits } from "../../../service/vehicleService";
+import { useGetVehicleUnitsByVehicleId } from "../../../service/vehicleService";
 
 interface Props {
   vehicleId: string;
@@ -34,7 +34,10 @@ const statusColor: Record<UnitRow["status"], string> = {
 };
 
 const UnitsSubtable = ({ vehicleId }: Props) => {
-  const { data, isLoading } = useGetVehicleUnits(vehicleId, 0, 5);
+  const { data, isLoading } = useGetVehicleUnitsByVehicleId(
+    "get-vehicle-units-by-model",
+    `/vehicle/unit/view-all-by-model/${vehicleId}`
+  );
   const rows = (data as { data?: UnitRow[] })?.data ?? [];
 
   if (isLoading) {

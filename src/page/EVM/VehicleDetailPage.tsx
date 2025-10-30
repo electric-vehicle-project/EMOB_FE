@@ -268,7 +268,6 @@ export const VehicleDetailPage = () => {
         <VehicleCompareModal
           open={compareOpen}
           onClose={() => setCompareOpen(false)}
-          leftId={id}
         />
       )}
     </div>

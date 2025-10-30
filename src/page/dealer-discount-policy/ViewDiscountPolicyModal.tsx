@@ -5,7 +5,7 @@ import {
   useGetAllDealers,
   useGetDiscountPolicyById,
 } from "../../service/dealerDiscountPolicyService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 
 interface ViewDealerDiscountPolicyModalProps {
   open: boolean;
@@ -23,7 +23,7 @@ const ViewDiscountPolicyModal: React.FC<ViewDealerDiscountPolicyModalProps> = ({
   });
 
   const { data: allDealers } = useGetAllDealers(0, 200);
-  const { data: allVehicles } = useGetAllVehicles(0, 200);
+  const { data: allVehicles } = useGetVehicles(0, 200);
 
   const dealerMap = useMemo(() => {
     const map = new Map();
