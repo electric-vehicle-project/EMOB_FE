@@ -1,12 +1,28 @@
-import { createSlice } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  type PayloadAction,
+  type SliceSelectors,
+} from "@reduxjs/toolkit";
+import type { IAccount } from "../../model/Account";
 
-const initialState = null;
+const initialState: IAccount | null = null;
 
-export const userSlice = createSlice({
+export const userSlice = createSlice<
+  IAccount | null,
+  {
+    login: (
+      _state: IAccount | null,
+      action: PayloadAction<IAccount>
+    ) => IAccount | null;
+    logout: (_state: IAccount | null) => null;
+  },
+  "user",
+  SliceSelectors<IAccount | null>
+>({
   name: "user",
   initialState,
   reducers: {
-    login: (_, action) => action.payload,
+    login: (_state, action) => action.payload,
     logout: () => null,
   },
 });

@@ -1,56 +1,82 @@
-import api from "../config/api";
+/* EMOB-2025 - Account Service */
+import {
+  createQueryHook,
+  createQueryWithPathParamHook,
+  createMutationHook,
+  updateMutationHook,
+  deleteMutationHook,
+} from "../hook/useApi";
+import type { IAccount } from "../model/Account";
 
-export interface AccountProfile {
-  accountID: string;
-  role: string;
-  email: string;
-  phone: string;
-  fullName: string;
-  gender: "Male" | "Female" | "Other" | string;
-  address: string;
-  dateOfBirth: string; // ISO string
-  status: "Active" | "Inactive" | string;
-}
+const BASE_URL = "/auth";
 
-// Mock profile để hiển thị dữ liệu trên giao diện khi API backend chưa sẵn sàng
-let mockProfile: AccountProfile = {
-  accountID: "acc-EMOB-0001",
-  role: "Customer",
-  email: "khachhang.emob@example.com",
-  phone: "0901 234 567",
-  fullName: "Nguyễn Văn A",
-  gender: "Male",
-  address: "Số 123, Đường Hoa Sen, Quận 7, TP. Hồ Chí Minh",
-  dateOfBirth: "1995-06-15",
-  status: "Active",
+/* ==================== 🔍 GET ==================== */
+/** ADMIN /api/auth/by-admin?page&size */
+export const useGetAccountsByAdmin = (
+  page = 0,
+  size = 10,
+  options?: Record<string, unknown> // ✅ cho phép enabled, tránh any
+) => {
+  const query = createQueryHook(
+    `accounts-by-admin-${page}-${size}`,
+    `${BASE_URL}/by-admin`
+  )(options, { page, size });
+  const accounts: IAccount[] = query.data?.result?.data ?? [];
+  const meta = query.data?.result?.metadata ?? null;
+  return { ...query, data: accounts, meta };
 };
 
-export const accountService = {
-  async getAccountProfile(): Promise<AccountProfile> {
-    try {
-      const res = await api.get("/Account/profile");
-      return (res?.data as AccountProfile) || mockProfile;
-    } catch {
-      return mockProfile;
-    }
-  },
-  async updateAccountProfile(data: Partial<AccountProfile>): Promise<AccountProfile> {
-    try {
-      const res = await api.put("/Account/profile", data);
-      return (res?.data as AccountProfile) || { ...(mockProfile = { ...mockProfile, ...data }) };
-    } catch {
-      mockProfile = { ...mockProfile, ...data } as AccountProfile;
-      return mockProfile;
-    }
-  },
-  async changePassword(currentPassword: string, newPassword: string): Promise<{ ok: boolean }> {
-    try {
-      const res = await api.put("/Account/change-password", { currentPassword, newPassword });
-      return (res?.data as { ok: boolean }) || { ok: true };
-    } catch {
-      // Mock: coi như thay đổi mật khẩu luôn thành công để test UI
-      return { ok: true };
-    }
-  },
+/** MANAGER /api/auth/by-manager?page&size */
+export const useGetAccountsByManager = (
+  page = 0,
+  size = 10,
+  options?: Record<string, unknown> // ✅ cho phép enabled, tránh any
+) => {
+  const query = createQueryHook(
+    `accounts-by-manager-${page}-${size}`,
+    `${BASE_URL}/by-manager`
+  )(options, { page, size });
+  const accounts: IAccount[] = query.data?.result?.data ?? [];
+  const meta = query.data?.result?.metadata ?? null;
+  return { ...query, data: accounts, meta };
 };
 
+/** GET /api/auth/{id} */
+export const useGetAccountById = createQueryWithPathParamHook(
+  "account",
+  BASE_URL
+);
+
+/* ==================== 🧩 POST ==================== */
+export const useRegisterByAdmin = () =>
+  createMutationHook("accounts-by-admin", `${BASE_URL}/register-by-admin`)();
+
+export const useRegisterByManager = () =>
+  createMutationHook(
+    "accounts-by-manager",
+    `${BASE_URL}/register-by-manager`
+  )();
+
+/* ==================== 🚦 PUT ==================== */
+/** PUT /api/auth/change-status/{id} body: { status: 'ACTIVE'|'INACTIVE' } */
+export const useChangeAccountStatus = () =>
+  updateMutationHook("accounts", `${BASE_URL}/change-status`)();
+
+/* ==================== 🚫 DELETE ==================== */
+/** DELETE /api/auth/{id}  (Ban vĩnh viễn) */
+export const useBanAccount = () =>
+  deleteMutationHook("accounts", `${BASE_URL}`)();
+
+/* ==================== 👤 PROFILE ==================== */
+export const useGetAccountProfile = createQueryHook(
+  "account-profile",
+  `${BASE_URL}/profile`
+);
+export const useUpdateAccountProfile = createMutationHook(
+  "update-account-profile",
+  `${BASE_URL}/profile`
+);
+export const useChangePassword = createMutationHook(
+  "change-password",
+  `${BASE_URL}/change-password`
+);

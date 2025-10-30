@@ -1,34 +1,40 @@
+// src/model/routePaths.ts
 export const ROUTES = {
   // ====== HOMEPAGE ======
   HOME: "/",
 
-  // ====== ROLE ======
+  // ====== ROLE ROOTS ======
   ADMIN: "/admin",
   MANAGER: "/manager",
   DEALER_STAFF: "/dealer_staff",
   EVM_STAFF: "/evm_staff",
-
-  // ====== DASHBOARD ======
   DASHBOARD: "/dashboard",
 
   // ====== AUTHENTICATION ======
   AUTH: "/auth",
-
-  // Auth
   LOGIN: "login",
   REGISTER: "register",
   FORGET_PASSWORD: "forget-password",
   FORGET_PASSWORD_OTP: "forget-password-otp",
   RESET_PASSWORD: "reset-password",
 
-  // Quản lý dữ liệu
-  DEALERS: "dealers",
+  // ====== ACCOUNT MANAGEMENT ======
+  ACCOUNTS: "accounts",
+  ACCOUNT_DETAIL: "accounts/:id",
+
+  // ====== CUSTOMERS ======
   CUSTOMERS: "customers",
   DEALER_POINT_RULES: "dealerPoint",
+  CUSTOMER_CREATE: "customers/create",
+  CUSTOMER_DETAIL: "customers/:id",
+  CUSTOMER_EDIT: "customers/edit/:id",
+
+  // ====== ADMIN MODULES ======
+  DEALERS: "dealers",
   TESTDRIVE: "testdrive",
   REPORT: "report",
 
-  // Hồ sơ người dùng
+  // ====== PROFILE ======
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
@@ -54,11 +60,6 @@ export const ROUTES = {
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
 
-  // ====== CUSTOMERS ======
-  CUSTOMER_CREATE: "customers/create",
-  CUSTOMER_DETAIL: "customers/:id",
-  CUSTOMER_EDIT: "customers/edit/:id",
-
   // ====== SALE ORDER ======
   SALE_ORDERS: "sale-orders",
   SALE_ORDER_DETAIL: "sale-orders/:orderId",
@@ -71,4 +72,6 @@ export const ROUTES = {
 
   // DEALER_DISCOUNT_POLICY
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
+
+  ACCOUNT: "accounts",
 };
