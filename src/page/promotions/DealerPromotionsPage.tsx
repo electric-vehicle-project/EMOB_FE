@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { message, Button } from "antd";
 import { useNavigate } from "react-router";
 import { PlusOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
+import { useQueryClient } from "@tanstack/react-query";
 import type { RootState } from "../../redux/store";
 import type { Promotion } from "../../model/Promotion";
 import {
@@ -13,25 +14,12 @@ import { PromotionTable } from "../../components/organisms/promotion/PromotionTa
 import { PromotionDeleteConfirm } from "../../components/organisms/promotion/PromotionDeleteConfirm";
 import { PromotionFilterBar } from "../../components/organisms/promotion/PromotionFilterBar";
 
-/**
- * DealerPromotionsPage
- * ---------------------------------------
- * Hiển thị danh sách khuyến mãi (LOCAL scope)
- * - Dealer Manager và Dealer Staff CRUD trong phạm vi LOCAL
- * - Dùng chung UI với EvmPromotionsPage (PromotionTable + Filter + Confirm)
- * ---------------------------------------
- */
 export const DealerPromotionsPage = () => {
-  // ========================
-  // 🔹 Hook khởi tạo
-  // ========================
   const navigate = useNavigate();
-  // SỬA LỖI 1: Redux state có field `user`, không phải `auth`
+  const queryClient = useQueryClient();
   const user = useSelector((state: RootState) => state.user);
 
-  // ========================
-  // 🔹 State quản lý filter + modal
-  // ========================
+  // --- UI state
   const [scope, setScope] = useState<"LOCAL" | "GLOBAL">("LOCAL");
   const [status, setStatus] = useState<string>("ALL");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -39,47 +27,63 @@ export const DealerPromotionsPage = () => {
     null
   );
 
-  // ========================
-  // 🔹 Fetch API
-  // ========================
-  const { data, isLoading, refetch } = usePromotionList(scope);
+  // --- Data
+  // IMPORTANT: hook usePromotionList(scope) cần có queryKey dạng ["promotions", scope]
+  // Nếu SDK của bạn đã làm vậy thì tự động tách cache theo scope.
+  const { data, isLoading, isFetching, refetch, fetchStatus } =
+    usePromotionList(scope);
   const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
-
-  // Dữ liệu bảng
   const promotions: Promotion[] = (data?.result?.data as Promotion[]) ?? [];
 
-  // Nếu có dùng filter theo status, tránh cảnh báo unused:
-  const filteredPromotions = useMemo(() => {
-    if (status === "ALL") return promotions;
-    return promotions.filter((p: Promotion) => p.status === status);
-  }, [promotions, status]);
-
-  // ========================
-  // 🔹 Role-based Permission
-  // ========================
+  // --- Role permission
   const role = (user as any)?.role as string | undefined;
   const canCreate = role === "MANAGER" || role === "DEALER_STAFF";
-  const canEdit = role === "MANAGER";
-  const canDelete = role === "MANAGER";
+  const canEdit = role === "MANAGER" || role === "DEALER_STAFF"; // ✅ DEALER_STAFF được sửa
+  const canDelete = role === "MANAGER"; // ❌ STAFF không được xoá
 
-  // ========================
-  // 🔹 Tính tổng trạng thái cho FilterBar
-  // ========================
+  // --- Chuyển scope: luôn hiển thị trạng thái loading “thật”
+  // Không dùng dữ liệu cũ khi đang fetch; tránh cảm giác “lệch scope”
+  const [isSwitching, setIsSwitching] = useState(false);
+  const handleScopeChange = (s: "LOCAL" | "GLOBAL") => {
+    setScope(s);
+    setIsSwitching(true);
+    // Xoá cache scope còn lại để không bị tái dùng nhầm
+    queryClient.removeQueries({
+      queryKey: ["promotions", s === "LOCAL" ? "GLOBAL" : "LOCAL"],
+    });
+    refetch();
+  };
+  useEffect(() => {
+    // Khi query đã xong (fetchStatus idle) thì tắt cờ switching
+    if (!isFetching && fetchStatus === "idle") setIsSwitching(false);
+  }, [isFetching, fetchStatus]);
+
+  // --- Đếm trạng thái: nếu API chưa trả status, tự suy luận từ ngày
   const statusCounts = useMemo(() => {
     const counts = { all: 0, active: 0, upcoming: 0, expired: 0 };
-    // SỬA LỖI 3: khai báo kiểu cho p
+    const now = new Date().getTime();
+
     promotions.forEach((p: Promotion) => {
       counts.all++;
-      if (p.status === "ACTIVE") counts.active++;
-      else if (p.status === "UPCOMING") counts.upcoming++;
-      else if (p.status === "EXPIRED") counts.expired++;
+      const s = p.status as string | undefined;
+      if (s === "ACTIVE") counts.active++;
+      else if (s === "UPCOMING") counts.upcoming++;
+      else if (s === "EXPIRED") counts.expired++;
+      else {
+        // fallback theo ngày nếu thiếu status
+        const a = p.startDate ? new Date(p.startDate).getTime() : NaN;
+        const b = p.endDate ? new Date(p.endDate).getTime() : NaN;
+        if (!isNaN(a) && !isNaN(b)) {
+          if (now >= a && now <= b) counts.active++;
+          else if (now < a) counts.upcoming++;
+          else if (now > b) counts.expired++;
+        }
+      }
     });
     return counts;
   }, [promotions]);
 
-  // ========================
-  // 🔹 Handle Event
-  // ========================
+  // --- Actions
   const handleDelete = async () => {
     if (!selectedPromotion) return;
     try {
@@ -93,51 +97,55 @@ export const DealerPromotionsPage = () => {
     }
   };
 
+  const rolePath = role ? `/${role.toLowerCase()}` : "";
   const handleEdit = (id: string) => {
-    navigate(`/promotion/edit/${id}`);
+    // ✅ chuẩn path: /dealer_staff/promotion/edit/:id
+    navigate(`${rolePath}/promotions/edit/${id}`);
   };
-
+  const handleCreate = () => {
+    // ✅ chuẩn path: /dealer_staff/promotion/create
+    navigate(`${rolePath}/promotions/create`);
+  };
   const handleDeleteClick = (id: string) => {
-    // SỬA LỖI 4: khai báo kiểu cho p
     const target = promotions.find((p: Promotion) => p.id === id);
     if (!target) return;
     setSelectedPromotion(target);
     setConfirmOpen(true);
   };
 
-  // ========================
-  // 🔹 Render
-  // ========================
   return (
     <div className="p-5 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi của đại lý
         </h2>
-        {canCreate && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => navigate("/promotion/create")}
-          >
-            Tạo khuyến mãi
-          </Button>
-        )}
+
+        {/* Luôn hiển thị nút Tạo, nhưng disable nếu không có quyền */}
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+          className="bg-[#627254]"
+          disabled={!canCreate}
+        >
+          Tạo khuyến mãi
+        </Button>
       </div>
 
       <PromotionFilterBar
         counts={statusCounts}
         defaultScope={scope}
-        onScopeChange={(s) => {
-          setScope(s);
-          refetch();
-        }}
+        onScopeChange={handleScopeChange}
         onStatusChange={(s) => setStatus(s)}
       />
 
       <PromotionTable
-        data={filteredPromotions}
-        loading={isLoading}
+        data={
+          // Khi đang chuyển scope, xoá dữ liệu cũ để tránh “nhảy nhầm”
+          isSwitching ? [] : promotions
+        }
+        loading={isLoading || isSwitching}
+        // Luôn render nút nhưng disable theo quyền (đã đổi bên trong table)
         canEdit={canEdit}
         canDelete={canDelete}
         onEdit={handleEdit}
@@ -154,3 +162,5 @@ export const DealerPromotionsPage = () => {
     </div>
   );
 };
+
+export default DealerPromotionsPage;

@@ -1,23 +1,24 @@
 import { Table, Tag, Button, Popconfirm, Tooltip, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-
 import dayjs from "dayjs";
 import type { Promotion, PromotionStatus } from "../../../model/Promotion";
 
 interface Props {
   data: Promotion[];
   loading?: boolean;
-  canEdit?: boolean;
-  canDelete?: boolean;
+  canEdit?: boolean; // quyền chỉnh sửa
+  canDelete?: boolean; // quyền xoá
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
 /**
- * PromotionTable (đã tinh chỉnh giao diện theo style nhóm EMOB)
+ * PromotionTable (UI đồng bộ)
  * - Bỏ cột phạm vi
- * - Nếu thiếu ngày, không hiển thị “Invalid Date”
+ * - Căn giữa dấu “—”
+ * - Ngày invalid hiển thị “—”
+ * - Luôn hiển thị nút Sửa/Xoá, nhưng .disabled nếu không có quyền
  */
 export const PromotionTable = ({
   data,
@@ -47,7 +48,6 @@ export const PromotionTable = ({
       title: "Tên chương trình",
       dataIndex: "name",
       key: "name",
-      width: 250,
       render: (text: string) => <span className="font-medium">{text}</span>,
     },
     {
@@ -60,20 +60,27 @@ export const PromotionTable = ({
       title: "Loại khuyến mãi",
       dataIndex: "type",
       key: "type",
-      render: (type) => (
-        <Tag color="purple" className="px-2 py-1 rounded-md">
-          {type}
-        </Tag>
-      ),
+      align: "center",
+      render: (type) =>
+        type ? (
+          <Tag color="purple" className="px-2 py-1 rounded-md">
+            {type}
+          </Tag>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       title: "Giá trị",
       dataIndex: "value",
       key: "value",
       align: "center",
-      render: (val) => (
-        <span className="font-medium">{val ? `${val}%` : "--"}</span>
-      ),
+      render: (val) =>
+        typeof val === "number" ? (
+          <span className="font-medium">{val}%</span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       title: "Thời gian áp dụng",
@@ -83,12 +90,9 @@ export const PromotionTable = ({
         const { startDate, endDate } = record;
         const start = startDate ? dayjs(startDate) : null;
         const end = endDate ? dayjs(endDate) : null;
-
         if (!start?.isValid() || !end?.isValid()) {
-          // Không hiện "Invalid Date"
           return <span className="text-gray-400">—</span>;
         }
-
         return (
           <span>
             {start.format("DD/MM/YYYY")} - {end.format("DD/MM/YYYY")}
@@ -116,27 +120,32 @@ export const PromotionTable = ({
       align: "center",
       render: (_, record) => (
         <Space>
-          {canEdit && (
-            <Tooltip title="Chỉnh sửa">
+          {/* Luôn hiển thị, nhưng disable khi không có quyền */}
+          <Tooltip title={canEdit ? "Chỉnh sửa" : "Bạn không có quyền sửa"}>
+            <Button
+              icon={<EditOutlined />}
+              type="link"
+              onClick={() => onEdit?.(record.id)}
+              disabled={!canEdit}
+            />
+          </Tooltip>
+
+          <Popconfirm
+            title={canDelete ? "Xóa khuyến mãi này?" : "Bạn không có quyền xoá"}
+            okText="Xóa"
+            cancelText="Hủy"
+            onConfirm={() => onDelete?.(record.id)}
+            disabled={!canDelete}
+          >
+            <Tooltip title={canDelete ? "Xóa" : "Bạn không có quyền xoá"}>
               <Button
-                icon={<EditOutlined />}
+                danger
                 type="link"
-                onClick={() => onEdit?.(record.id)}
+                icon={<DeleteOutlined />}
+                disabled={!canDelete}
               />
             </Tooltip>
-          )}
-          {canDelete && (
-            <Popconfirm
-              title="Xóa khuyến mãi này?"
-              okText="Xóa"
-              cancelText="Hủy"
-              onConfirm={() => onDelete?.(record.id)}
-            >
-              <Tooltip title="Xóa">
-                <Button danger type="link" icon={<DeleteOutlined />} />
-              </Tooltip>
-            </Popconfirm>
-          )}
+          </Popconfirm>
         </Space>
       ),
     },
@@ -155,3 +164,5 @@ export const PromotionTable = ({
     />
   );
 };
+
+export default PromotionTable;
