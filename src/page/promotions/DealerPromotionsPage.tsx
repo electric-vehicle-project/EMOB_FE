@@ -1,3 +1,4 @@
+// src/page/promotions/DealerPromotionsPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Button, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -40,14 +41,14 @@ const DealerPromotionsPage: React.FC = () => {
   const promotions: Promotion[] =
     ((data as any)?.result?.data as Promotion[]) ?? [];
 
-  // Refetch khi đổi scope
+  // ✅ Refetch khi đổi scope
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope]);
 
   // ========================
-  // Permission
+  // Role-based Permission
   // ========================
   const role = (user as any)?.role as
     | "ADMIN"
@@ -56,15 +57,16 @@ const DealerPromotionsPage: React.FC = () => {
     | "EVM_STAFF"
     | undefined;
 
-  // ✅ Sửa quyền:
-  // DEALER_STAFF: tạo + sửa
-  // MANAGER: chỉ sửa + xoá
-  const canCreate = role === "DEALER_STAFF";
-  const canEdit = role === "MANAGER" || role === "DEALER_STAFF";
-  const canDelete = role === "MANAGER";
+  // ✅ Quyền theo scope
+  const isGlobalScope = scope === "GLOBAL";
+
+  const canCreate = !isGlobalScope && role === "DEALER_STAFF"; // chỉ LOCAL + DEALER_STAFF
+  const canEdit =
+    !isGlobalScope && (role === "MANAGER" || role === "DEALER_STAFF");
+  const canDelete = !isGlobalScope && role === "MANAGER";
 
   // ========================
-  // Summary (đếm trạng thái)
+  // Summary
   // ========================
   const statusCounts = useMemo(() => {
     const counts = { all: 0, active: 0, upcoming: 0, expired: 0 };
@@ -87,6 +89,7 @@ const DealerPromotionsPage: React.FC = () => {
   };
 
   const handleEdit = (id: string) => {
+    if (!canEdit) return;
     const base = `/${String(role || "").toLowerCase()}`;
     navigate(`${base}/promotions/edit/${id}`, { replace: false });
   };
@@ -94,6 +97,7 @@ const DealerPromotionsPage: React.FC = () => {
   const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
 
   const handleDeleteClick = (id: string) => {
+    if (!canDelete) return;
     const target = promotions.find((p) => p.id === id);
     if (!target) return;
     setSelectedPromotion(target);
