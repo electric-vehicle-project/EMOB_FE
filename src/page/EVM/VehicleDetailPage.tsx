@@ -1,44 +1,54 @@
-// src/page/EVM/VehicleDetailPage.tsx
+/* EMOB-2025 - VehicleDetailPage (đồng bộ CardWrapper, nút theo role, EVM được xóa) */
 import { useMemo, useState } from "react";
-import {
-  Button,
-  Card,
-  Descriptions,
-  message,
-  Popconfirm,
-  Space,
-  Tag,
-} from "antd";
+import { Card, Tag, Space, Tooltip, message } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { useSelector } from "react-redux";
 import type { ReactElement } from "react";
-import type { ElectricVehicle } from "../../model/ElectricVehicle";
 import type { Role } from "../../model/Account";
 import {
-  canAddVehicleBatch,
+  canBulkCreateUnits,
+  canCompareVehicles,
   canEditVehicle,
   canUpdatePrice,
-  canViewDealerBatchesOnly,
-  isEvmStaff,
+  canViewUnits,
   getRoleBasePath,
+  hasVehiclePriced,
+  isEvmStaff,
+  canDeleteVehicle,
 } from "../../utils/roleGuard";
 import {
-  useDeleteVehicle,
   useGetVehicleById,
+  useDeleteVehicle,
 } from "../../service/vehicleService";
 import { VehicleCompareModal } from "../../components/organisms/vehicle/VehicleCompareModal";
 import {
   EditOutlined,
-  DeleteOutlined,
   ArrowLeftOutlined,
   PlusOutlined,
   DollarOutlined,
   AppstoreOutlined,
   ColumnWidthOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { ROUTES } from "../../model/routePaths";
+import { Button } from "../../components/atoms/Button";
+import CardWrapper from "../../components/template/CardWrapper";
+import { Popconfirm } from "antd";
 
 type Sel = { auth?: { user?: { role?: Role | null } } };
+
+const SpecItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number | null;
+}) => (
+  <div className="grid grid-cols-5 gap-3 py-2">
+    <div className="col-span-2 text-sm text-neutral-500">{label}</div>
+    <div className="col-span-3 font-medium">{value ?? "—"}</div>
+  </div>
+);
 
 export const VehicleDetailPage = () => {
   const { id = "" } = useParams();
@@ -47,16 +57,13 @@ export const VehicleDetailPage = () => {
     | Role
     | null
     | undefined;
-
-  const { data, isLoading, error } = useGetVehicleById(id, { enabled: !!id });
-  // ✅ service đã unwrap → data chính là ElectricVehicle hoặc undefined
-  const vehicle = (data ?? undefined) as ElectricVehicle | undefined;
-
-  const deleteMut = useDeleteVehicle();
-  const [compareOpen, setCompareOpen] = useState(false);
   const basePath = getRoleBasePath(role ?? null);
 
-  // Hiển thị thông báo khi 401/403
+  // ✅ LẤY vehicle từ service đúng field
+  const { vehicle, isLoading, error } = useGetVehicleById(id, {
+    enabled: !!id,
+  });
+
   if (
     error &&
     typeof error === "object" &&
@@ -66,9 +73,17 @@ export const VehicleDetailPage = () => {
     message.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
   }
 
+  const { mutateAsync: deleteVehicle, isPending: deleting } =
+    useDeleteVehicle();
+
+  const [compareOpen, setCompareOpen] = useState(false);
+  const priced = hasVehiclePriced(vehicle);
+
+  // ===== Actions theo role
   const actions = useMemo(() => {
     const arr: ReactElement[] = [];
 
+    // Quay lại
     arr.push(
       <Button
         key="back"
@@ -79,20 +94,7 @@ export const VehicleDetailPage = () => {
       </Button>
     );
 
-    if (canAddVehicleBatch(role)) {
-      arr.push(
-        <Button
-          key="add-batch"
-          icon={<PlusOutlined />}
-          onClick={() =>
-            navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`)
-          }
-        >
-          Thêm lô xe
-        </Button>
-      );
-    }
-
+    // EVM: Edit (không được sửa giá)
     if (canEditVehicle(role)) {
       arr.push(
         <Button
@@ -103,39 +105,77 @@ export const VehicleDetailPage = () => {
               `${basePath}/${ROUTES.EVM_VEHICLE_EDIT}`.replace(":id", id)
             )
           }
+          className="rounded-md"
         >
           Chỉnh sửa
         </Button>
       );
+    }
+
+    // EVM: Delete (CHỈ EVM_STAFF)
+    if (canDeleteVehicle(role)) {
       arr.push(
         <Popconfirm
           key="delete"
           title="Xóa mẫu xe?"
+          description="Hành động này không thể hoàn tác."
           okText="Xóa"
-          okButtonProps={{ danger: true }}
+          okButtonProps={{ danger: true, loading: deleting }}
+          cancelText="Hủy"
           onConfirm={async () => {
             try {
-              await deleteMut.mutateAsync(id);
-              message.success("Đã xóa");
-              navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
-            } catch (e: unknown) {
-              message.error(
-                (e as { message?: string })?.message || "Xóa thất bại"
-              );
+              await deleteVehicle(id);
+              message.success("Đã xóa mẫu xe.");
+              // điều hướng về trang trước (hoặc list)
+              navigate(-1);
+            } catch {
+              message.error("Xóa không thành công.");
             }
           }}
         >
-          <Button icon={<DeleteOutlined />} danger>
+          <Button icon={<DeleteOutlined />} danger className="rounded-md">
             Xóa
           </Button>
         </Popconfirm>
       );
     }
 
+    // EVM: Bulk create units (disable nếu chưa có giá)
+    if (canBulkCreateUnits(role)) {
+      const btn = (
+        <Button
+          key="add-batch"
+          icon={<PlusOutlined />}
+          disabled={!priced}
+          onClick={() =>
+            navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`)
+          }
+          className="rounded-md"
+        >
+          Thêm lô xe
+        </Button>
+      );
+      arr.push(
+        priced ? (
+          btn
+        ) : (
+          // AntD cần wrap <Button disabled> trong <span> để tooltip hoạt động
+          <Tooltip
+            key="add-batch-tip"
+            title="Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật."
+          >
+            <span>{btn}</span>
+          </Tooltip>
+        )
+      );
+    }
+
+    // Admin: Update price
     if (canUpdatePrice(role)) {
       arr.push(
         <Button
           key="update-price"
+          type="primary"
           icon={<DollarOutlined />}
           onClick={() =>
             navigate(
@@ -145,13 +185,15 @@ export const VehicleDetailPage = () => {
               )
             )
           }
+          className="rounded-md !bg-[#627254] !border-[#627254] hover:!bg-[#76885B]"
         >
           Cập nhật giá
         </Button>
       );
     }
 
-    if (canViewDealerBatchesOnly(role)) {
+    // Xem lô xe (ai cũng xem được — BE tự filter theo dealer)
+    if (canViewUnits(role)) {
       arr.push(
         <Button
           key="view-units"
@@ -162,107 +204,182 @@ export const VehicleDetailPage = () => {
                 "?openUnits=1"
             )
           }
+          className="rounded-md"
         >
           Xem lô xe
         </Button>
       );
     }
 
-    if (isEvmStaff(role) || canUpdatePrice(role)) {
+    // So sánh: tất cả (BE enforce scope)
+    if (canCompareVehicles(role)) {
       arr.push(
         <Button
           key="compare"
           type="primary"
           icon={<ColumnWidthOutlined />}
           onClick={() => setCompareOpen(true)}
+          className="rounded-md !bg-[#627254] !border-[#627254] hover:!bg-[#76885B]"
         >
           So sánh
         </Button>
       );
     }
-    return arr;
-  }, [role, id, navigate, basePath, deleteMut]);
 
-  const cover = (
-    <div className="w-full h-64 overflow-hidden flex items-center justify-center bg-white rounded-xl">
-      <img
-        src={vehicle?.imageUrl || "/images/vehicle-placeholder.png"}
-        alt={vehicle?.name || "vehicle"}
-        className="object-contain h-full"
-      />
-    </div>
-  );
+    return arr;
+  }, [role, id, basePath, navigate, priced, deleting, deleteVehicle]);
+
+  // ===== Chuẩn hoá hiển thị
+  const name = `${vehicle?.brand ?? ""} ${vehicle?.model ?? ""}`.trim();
+  const images: string[] = Array.isArray(vehicle?.images)
+    ? vehicle!.images
+    : [];
+  const mainImage = images[0] || "/images/vehicle-placeholder.png";
 
   return (
-    <div className="p-4 lg:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Chi tiết mẫu xe</h1>
+    <CardWrapper
+      title="Chi tiết mẫu xe"
+      subtitle="Thông tin tổng quan & thông số kỹ thuật"
+      variant="dashboard"
+    >
+      {/* Toolbar: Back trái – actions phải (đồng bộ các page) */}
+      <div className="flex items-center justify-between -mt-2">
+        <div />
         <Space wrap>{actions}</Space>
       </div>
 
-      <Card loading={isLoading} className="rounded-2xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {cover}
-          <div>
-            <h2 className="text-2xl font-semibold">{vehicle?.name}</h2>
-            <div className="text-neutral-500">{vehicle?.brand}</div>
-
-            <div className="flex flex-wrap gap-2 my-3">
-              {vehicle?.rangePerCharge != null && (
-                <Tag className="rounded-full">
-                  Tầm hoạt động: {vehicle.rangePerCharge} km
-                </Tag>
-              )}
-              {vehicle?.batteryCapacity != null && (
-                <Tag className="rounded-full">
-                  Pin: {vehicle.batteryCapacity} kWh
-                </Tag>
-              )}
-              {vehicle?.power != null && (
-                <Tag className="rounded-full">
-                  Công suất: {vehicle.power} kW
-                </Tag>
-              )}
-              {vehicle?.torque != null && (
-                <Tag className="rounded-full">
-                  Mô-men xoắn: {vehicle.torque} Nm
-                </Tag>
-              )}
-              {vehicle?.seats != null && (
-                <Tag className="rounded-full">Số chỗ: {vehicle.seats}</Tag>
-              )}
-            </div>
-
-            <div className="font-bold text-2xl">
-              {vehicle?.basePrice
-                ? vehicle.basePrice.toLocaleString("vi-VN") + " ₫"
-                : "Liên hệ"}
-            </div>
-
-            <Descriptions column={1} bordered className="mt-4 rounded-xl">
-              <Descriptions.Item label="Mã xe">{vehicle?.id}</Descriptions.Item>
-              <Descriptions.Item label="Hãng">
-                {vehicle?.brand ?? "-"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Pin">
-                {vehicle?.batteryCapacity ?? "-"} kWh
-              </Descriptions.Item>
-              <Descriptions.Item label="Tầm hoạt động">
-                {vehicle?.rangePerCharge ?? "-"} km
-              </Descriptions.Item>
-              <Descriptions.Item label="Công suất">
-                {vehicle?.power ?? "-"} kW
-              </Descriptions.Item>
-              <Descriptions.Item label="Mô-men xoắn">
-                {vehicle?.torque ?? "-"} Nm
-              </Descriptions.Item>
-              <Descriptions.Item label="Số chỗ">
-                {vehicle?.seats ?? "-"}
-              </Descriptions.Item>
-            </Descriptions>
+      {/* Vùng nội dung */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Media (trái) */}
+        <Card loading={isLoading} className="rounded-2xl lg:col-span-5">
+          <div className="w-full h-72 sm:h-80 overflow-hidden flex items-center justify-center bg-white rounded-xl border">
+            <img
+              src={mainImage}
+              alt={name || "vehicle"}
+              className="object-contain h-full"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src =
+                  "/images/vehicle-placeholder.png";
+              }}
+            />
           </div>
-        </div>
-      </Card>
+          {images.length > 1 && (
+            <div className="mt-3 grid grid-cols-4 gap-3">
+              {images.slice(0, 4).map((url, i) => (
+                <div
+                  key={i}
+                  className="h-16 border rounded-lg overflow-hidden flex items-center justify-center bg-white"
+                >
+                  <img
+                    src={url}
+                    alt={`thumb-${i}`}
+                    className="object-contain h-full"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/images/vehicle-placeholder.png";
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Tóm tắt + Specs (phải) */}
+        <Card loading={isLoading} className="rounded-2xl lg:col-span-7">
+          {!isLoading && vehicle && (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#414d38]">
+                    {name || vehicle.id}
+                  </h2>
+                  {vehicle.brand && (
+                    <div className="text-neutral-500 mt-0.5">
+                      {vehicle.brand}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {vehicle.type && (
+                      <Tag className="rounded-full">{vehicle.type}</Tag>
+                    )}
+                    {typeof vehicle.rangeKm === "number" && (
+                      <Tag className="rounded-full">
+                        Tầm: {vehicle.rangeKm} km
+                      </Tag>
+                    )}
+                    {typeof vehicle.batteryKwh === "number" && (
+                      <Tag className="rounded-full">
+                        Pin: {vehicle.batteryKwh} kWh
+                      </Tag>
+                    )}
+                    {typeof vehicle.powerKw === "number" && (
+                      <Tag className="rounded-full">
+                        Công suất: {vehicle.powerKw} kW
+                      </Tag>
+                    )}
+                  </div>
+
+                  {isEvmStaff(role) && !priced && (
+                    <Tag color="orange" className="mt-3">
+                      Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật trước khi
+                      nhập lô.
+                    </Tag>
+                  )}
+                </div>
+
+                {/* Chips giá nếu có */}
+                {priced && (
+                  <div className="text-right">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
+                      Giá nhập:
+                      <span className="text-[#414d38]">
+                        {vehicle.importPrice?.toLocaleString("vi-VN")} ₫
+                      </span>
+                    </div>
+                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
+                      Giá bán lẻ:
+                      <span className="text-[#414d38]">
+                        {vehicle.retailPrice?.toLocaleString("vi-VN")} ₫
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Specs grid */}
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-base font-semibold mb-2">
+                  Thông số kỹ thuật
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                  <SpecItem label="Mã xe" value={vehicle.id} />
+                  <SpecItem label="Hãng" value={vehicle.brand} />
+                  <SpecItem label="Mẫu" value={vehicle.model} />
+                  <SpecItem label="Loại" value={vehicle.type} />
+                  <SpecItem label="Pin (kWh)" value={vehicle.batteryKwh} />
+                  <SpecItem
+                    label="Tầm hoạt động (km)"
+                    value={vehicle.rangeKm}
+                  />
+                  <SpecItem label="Công suất (kW)" value={vehicle.powerKw} />
+                  <SpecItem
+                    label="Tốc độ tối đa (km/h)"
+                    value={vehicle.topSpeedKmh}
+                  />
+                  <SpecItem label="Khối lượng (kg)" value={vehicle.weightKg} />
+                  <SpecItem
+                    label="Thời gian sạc (giờ)"
+                    value={vehicle.chargeTimeHr}
+                  />
+                  <SpecItem label="Ngày tạo" value={vehicle.createdAt} />
+                </div>
+              </div>
+            </>
+          )}
+        </Card>
+      </div>
 
       {id && (
         <VehicleCompareModal
@@ -270,6 +387,8 @@ export const VehicleDetailPage = () => {
           onClose={() => setCompareOpen(false)}
         />
       )}
-    </div>
+    </CardWrapper>
   );
 };
+
+export default VehicleDetailPage;

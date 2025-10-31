@@ -2,10 +2,7 @@ import { Modal, Table, Button, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { toast } from "react-toastify";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
-import {
-  useGetVehicleUnitsByVehicleId,
-  BASE_UNIT_URL,
-} from "../../../service/vehicleService";
+import { useGetVehicleUnitsByVehicleId } from "../../../service/vehicleService";
 
 type Props = {
   open: boolean;
@@ -33,7 +30,7 @@ export default function VehicleUnitListModal({
 
   const { data = [], isLoading } = useGetVehicleUnitsByVehicleId(
     "get-vehicle-units-by-model",
-    `${BASE_UNIT_URL}/view-all-by-model/${vehicleId}`
+    `/vehicle/unit/view-all-by-model/${vehicleId}`
   );
 
   // Hiện chưa có API thật, nên chỉ toast giả lập

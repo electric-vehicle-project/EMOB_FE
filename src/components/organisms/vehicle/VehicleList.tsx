@@ -120,7 +120,6 @@ export const VehicleList = ({ onOpenUnits }: Props) => {
                     )
                   )
                 }
-                onViewUnits={onOpenUnits}
               />
             </Col>
           ))}
