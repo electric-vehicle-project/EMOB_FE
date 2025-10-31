@@ -1,253 +1,124 @@
-import { useMemo, useState } from "react";
-import { Button, Modal, Table, Tabs, message, Spin } from "antd";
+// src/page/promotions/EvmPromotionsPage.tsx
+import { useState } from "react";
+import { Button, message } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 
 import type { RootState } from "../../redux/store";
+import type { Promotion } from "../../model/Promotion";
 import {
   usePromotionDelete,
   usePromotionList,
 } from "../../service/promotionService";
-import { ROUTES } from "../../model/routePaths";
 
-// ===== Kiểu dữ liệu chuẩn cho promotion =====
-interface Promotion {
-  id: string;
-  name: string;
-  description: string;
-  type: "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT" | string;
-  value: number;
-  status: "UPCOMING" | "ACTIVE" | "EXPIRED" | string;
-}
+import { PromotionTable } from "../../components/organisms/promotion/PromotionTable";
+import { PromotionDeleteConfirm } from "../../components/organisms/promotion/PromotionDeleteConfirm";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
-export default function EvmPromotionsPage() {
+const EvmPromotionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.user);
 
-  // ===== Lấy role từ Redux =====
-  const role = useSelector((state: RootState) => {
-    const u = state.user as { role?: string } | null;
-    return u?.role ?? null;
-  });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
+    null
+  );
 
-  const [tabKey, setTabKey] = useState("all");
-  const [page, setPage] = useState(0);
+  // EVM chỉ xem GLOBAL
+  const { data, isLoading, isFetching, refetch } = usePromotionList(
+    "GLOBAL",
+    0,
+    10
+  );
+  const promotions: Promotion[] =
+    ((data as any)?.result?.data as Promotion[]) ?? [];
 
-  // ===== Gọi API danh sách khuyến mãi GLOBAL =====
-  const {
-    data: promotionData,
-    isLoading,
-    refetch,
-  } = usePromotionList("GLOBAL", page, 10);
+  const role = (user as any)?.role as
+    | "ADMIN"
+    | "EVM_STAFF"
+    | "MANAGER"
+    | "DEALER_STAFF"
+    | undefined;
 
-  const deletePromotion = usePromotionDelete();
-  const promotions = useMemo<Promotion[]>(() => {
-    return promotionData?.result?.data ?? [];
-  }, [promotionData]);
+  // ✅ Quyền đúng yêu cầu
+  const canCreate = role === "EVM_STAFF";
+  const canEdit = role === "EVM_STAFF" || role === "ADMIN";
+  const canDelete = role === "ADMIN";
 
-  // ===== Tính toán số lượng khuyến mãi =====
-  const tabCounts = useMemo(() => {
-    const all = promotions.length;
-    const active = promotions.filter((p) => p.status === "ACTIVE").length;
-    const expired = promotions.filter((p) => p.status === "EXPIRED").length;
-    const pending = promotions.filter(
-      (p) => !p.status || !p.type || p.value === 0 || p.value == null
-    ).length;
-    return { all, active, expired, pending };
-  }, [promotions]);
+  const handleCreate = () => {
+    if (!canCreate) return;
+    const base = `/${String(role || "").toLowerCase()}`;
+    navigate(`${base}/promotions/create`, { replace: false });
+  };
 
-  // ===== Bộ lọc tab =====
-  const filtered = useMemo(() => {
-    switch (tabKey) {
-      case "active":
-        return promotions.filter((p) => p.status === "ACTIVE");
-      case "expired":
-        return promotions.filter((p) => p.status === "EXPIRED");
-      case "pending":
-        return promotions.filter(
-          (p) => !p.status || !p.type || p.value === 0 || p.value == null
-        );
-      default:
-        return promotions;
-    }
-  }, [tabKey, promotions]);
+  const handleEdit = (id: string) => {
+    if (!canEdit) return;
+    const base = `/${String(role || "").toLowerCase()}`;
+    navigate(`${base}/promotions/edit/${id}`, { replace: false });
+  };
 
-  // ===== Xử lý xoá =====
-  const handleDelete = async (id: string) => {
+  const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
+
+  const handleDeleteClick = (id: string) => {
+    if (!canDelete) return;
+    const target = promotions.find((p) => p.id === id);
+    if (!target) return;
+    setSelectedPromotion(target);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedPromotion) return;
     try {
-      await deletePromotion.mutateAsync(id);
-      message.success("Xoá khuyến mãi thành công!");
+      await deletePromotion(selectedPromotion.id);
+      message.success("Đã xoá khuyến mãi thành công!");
       refetch();
     } catch {
-      message.error("Xoá khuyến mãi thất bại!");
+      message.error("Không thể xoá khuyến mãi này!");
+    } finally {
+      setConfirmOpen(false);
     }
   };
 
-  // ===== Hiện popup cảnh báo =====
-  const showNoPermission = (action: string) => {
-    Modal.warning({
-      title: "Không có quyền",
-      content: `Bạn không có quyền thực hiện hành động "${action}".`,
-      okText: "Đã hiểu",
-    });
-  };
-
-  // ===== Điều hướng sang trang sửa =====
-  const handleEdit = (id: string) => {
-    if (role === "EVM_STAFF")
-      navigate(`${ROUTES.EVM_STAFF}/promotions/edit/${id}`);
-    else if (role === "ADMIN")
-      navigate(`${ROUTES.ADMIN}/promotions/edit/${id}`);
-  };
-
-  // ===== Tabs có đếm số lượng =====
-  const items = [
-    { key: "all", label: `Tất cả (${tabCounts.all})` },
-    { key: "active", label: `Đang hoạt động (${tabCounts.active})` },
-    { key: "pending", label: `Chờ duyệt (${tabCounts.pending})` },
-    { key: "expired", label: `Hết hạn (${tabCounts.expired})` },
-  ];
-
-  // ===== Cột của bảng =====
-  const columns = [
-    {
-      title: "Tên khuyến mãi",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-    },
-    {
-      title: "Loại",
-      dataIndex: "type",
-      key: "type",
-      render: (t: Promotion["type"]) =>
-        t === "PERCENTAGE" ? "Giảm theo %" : t,
-    },
-    {
-      title: "Giá trị",
-      dataIndex: "value",
-      key: "value",
-      render: (v: number) => `${v ?? 0}`,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (s: Promotion["status"]) => {
-        switch (s) {
-          case "UPCOMING":
-            return "Sắp diễn ra";
-          case "ACTIVE":
-            return "Đang hoạt động";
-          case "EXPIRED":
-            return "Đã hết hạn";
-          default:
-            return "Không xác định";
-        }
-      },
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      align: "center" as const,
-      render: (_: unknown, record: Promotion) => {
-        const canDelete = role === "ADMIN";
-        return (
-          <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
-            {/* Nút sửa luôn hoạt động */}
-            <Button
-              icon={<EditOutlined />}
-              size="middle"
-              type="primary"
-              onClick={() => handleEdit(record.id)}
-              style={{
-                backgroundColor: "#627254",
-                border: "none",
-              }}
-            >
-              Sửa
-            </Button>
-
-            {/* Nút xoá: làm xám với EVM_STAFF */}
-            <Button
-              icon={<DeleteOutlined />}
-              size="middle"
-              onClick={
-                canDelete
-                  ? () =>
-                      Modal.confirm({
-                        title: "Xác nhận xoá",
-                        content:
-                          "Bạn có chắc chắn muốn xoá khuyến mãi này không?",
-                        okText: "Xoá",
-                        cancelText: "Huỷ",
-                        okButtonProps: { danger: true },
-                        onOk: () => handleDelete(record.id),
-                      })
-                  : () => showNoPermission("Xoá khuyến mãi")
-              }
-              style={{
-                background: canDelete ? "#dc2626" : "#d9d9d9",
-                color: canDelete ? "#fff" : "#666",
-                border: "none",
-                cursor: canDelete ? "pointer" : "not-allowed",
-              }}
-            >
-              Xoá
-            </Button>
-          </div>
-        );
-      },
-    },
-  ];
-
-  // ===== Render =====
-  const canCreate = role === "EVM_STAFF"; // Chỉ EVM_STAFF được tạo
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Khuyến mãi toàn hệ thống</h2>
-
-        {/* Nút tạo khuyến mãi — làm xám nếu ADMIN */}
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={
-            canCreate
-              ? () => navigate(`${ROUTES.EVM_STAFF}/promotions/create`)
-              : () => showNoPermission("Tạo khuyến mãi")
-          }
-          style={{
-            background: canCreate ? "#627254" : "#d9d9d9",
-            border: "none",
-            color: canCreate ? "#fff" : "#666",
-            cursor: canCreate ? "pointer" : "not-allowed",
-          }}
-        >
-          Tạo khuyến mãi
-        </Button>
+    <CardWrapper>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-[#627254]">
+          Danh sách khuyến mãi toàn hệ thống
+        </h2>
+        {canCreate && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+            className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
+          >
+            Tạo khuyến mãi
+          </Button>
+        )}
       </div>
 
-      <Tabs items={items} activeKey={tabKey} onChange={setTabKey} />
+      {/* Bảng + phân trang đã căn giữa trong PromotionTable */}
+      <PromotionTable
+        data={promotions}
+        loading={isLoading || isFetching}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
 
-      <Spin spinning={isLoading}>
-        <Table<Promotion>
-          dataSource={filtered}
-          columns={columns}
-          rowKey={(record) => record.id}
-          pagination={{
-            current: page + 1,
-            pageSize: 10,
-            onChange: (p) => setPage(p - 1),
-          }}
-          locale={{ emptyText: "Không có khuyến mãi nào." }}
-        />
-      </Spin>
-    </div>
+      <PromotionDeleteConfirm
+        open={confirmOpen}
+        promotionName={selectedPromotion?.name}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleDelete}
+        loading={isPending}
+      />
+    </CardWrapper>
   );
-}
+};
+
+export default EvmPromotionsPage;
+export { EvmPromotionsPage };
