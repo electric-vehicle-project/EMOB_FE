@@ -131,6 +131,7 @@ export const PromotionTable = ({
       pagination={{
         pageSize: 10,
         showSizeChanger: false,
+        position: ["bottomCenter"],
         showTotal: (total) => `Tổng cộng ${total} khuyến mãi`,
       }}
       scroll={{ x: "max-content", y: 560 }}
