@@ -1,4 +1,3 @@
-// src/page/promotions/DealerPromotionsPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Button, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -33,19 +32,15 @@ const DealerPromotionsPage: React.FC = () => {
   // ========================
   // Data
   // ========================
-  // service của bạn: usePromotionList(scope, page, size)
-  const {
-    data,
-    isLoading,
-    isFetching,
-    refetch, // có sẵn từ createQueryHook
-  } = usePromotionList(scope, 0, 10);
-
-  // ép kiểu mềm để tránh gãy nếu BE đổi shape
+  const { data, isLoading, isFetching, refetch } = usePromotionList(
+    scope,
+    0,
+    10
+  );
   const promotions: Promotion[] =
     ((data as any)?.result?.data as Promotion[]) ?? [];
 
-  // Force refetch ngay khi đổi scope (chữa dứt điểm “bấm tab không đổi”)
+  // Refetch khi đổi scope
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,13 +56,15 @@ const DealerPromotionsPage: React.FC = () => {
     | "EVM_STAFF"
     | undefined;
 
-  // Theo yêu cầu trước: DEALER_STAFF có thể TẠO & SỬA, không được XOÁ
-  const canCreate = role === "MANAGER" || role === "DEALER_STAFF";
+  // ✅ Sửa quyền:
+  // DEALER_STAFF: tạo + sửa
+  // MANAGER: chỉ sửa + xoá
+  const canCreate = role === "DEALER_STAFF";
   const canEdit = role === "MANAGER" || role === "DEALER_STAFF";
   const canDelete = role === "MANAGER";
 
   // ========================
-  // Summary for filter badges
+  // Summary (đếm trạng thái)
   // ========================
   const statusCounts = useMemo(() => {
     const counts = { all: 0, active: 0, upcoming: 0, expired: 0 };
@@ -84,6 +81,7 @@ const DealerPromotionsPage: React.FC = () => {
   // Handlers
   // ========================
   const handleCreate = () => {
+    if (!canCreate) return;
     const base = `/${String(role || "").toLowerCase()}`;
     navigate(`${base}/promotions/create`, { replace: false });
   };
@@ -107,7 +105,7 @@ const DealerPromotionsPage: React.FC = () => {
     try {
       await deletePromotion(selectedPromotion.id);
       message.success("Đã xoá khuyến mãi thành công!");
-      refetch(); // reload lại danh sách sau khi xoá
+      refetch();
     } catch {
       message.error("Không thể xoá khuyến mãi này!");
     } finally {
@@ -115,7 +113,6 @@ const DealerPromotionsPage: React.FC = () => {
     }
   };
 
-  // Dùng key để buộc table re-render khi đổi scope (tránh giữ state cũ)
   const listKey = `promotion-${scope}`;
 
   // ========================
@@ -127,21 +124,22 @@ const DealerPromotionsPage: React.FC = () => {
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi của đại lý
         </h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-          className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
-          disabled={!canCreate}
-        >
-          Tạo khuyến mãi
-        </Button>
+        {canCreate && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+            className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
+          >
+            Tạo khuyến mãi
+          </Button>
+        )}
       </div>
 
       <PromotionFilterBar
         counts={statusCounts}
         defaultScope={scope}
-        onScopeChange={(s) => setScope(s)} // đổi scope -> useEffect sẽ refetch
+        onScopeChange={(s) => setScope(s)}
       />
 
       <PromotionTable
