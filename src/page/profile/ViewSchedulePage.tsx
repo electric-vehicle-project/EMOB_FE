@@ -9,9 +9,9 @@ import {
 } from "@ant-design/icons";
 import { testDriveService } from "../../service/testDriveService";
 import { useCurrentUser as getCurrentUser } from "../../utils/getCurrentUser";
-import CardWrapper from "../../components/template/CardWrapper";
 
 import type { Dayjs } from "dayjs";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 interface ScheduleItem {
   id: number;

@@ -1,4 +1,4 @@
-import { Table, Tag, Button, Popconfirm, Tooltip, Space } from "antd";
+import { Table, Tag, Button, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -7,19 +7,12 @@ import type { Promotion, PromotionStatus } from "../../../model/Promotion";
 interface Props {
   data: Promotion[];
   loading?: boolean;
-  canEdit?: boolean; // quyền chỉnh sửa
-  canDelete?: boolean; // quyền xoá
+  canEdit?: boolean;
+  canDelete?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-/**
- * PromotionTable (UI đồng bộ)
- * - Bỏ cột phạm vi
- * - Căn giữa dấu “—”
- * - Ngày invalid hiển thị “—”
- * - Luôn hiển thị nút Sửa/Xoá, nhưng .disabled nếu không có quyền
- */
 export const PromotionTable = ({
   data,
   loading,
@@ -36,8 +29,6 @@ export const PromotionTable = ({
         return "blue";
       case "EXPIRED":
         return "red";
-      case "INACTIVE":
-        return "default";
       default:
         return "default";
     }
@@ -48,16 +39,12 @@ export const PromotionTable = ({
       title: "Tên chương trình",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => <span className="font-medium">{text}</span>,
+      sorter: (a, b) => a.name.localeCompare(b.name),
+      align: "left",
+      render: (text) => <span className="font-medium">{text}</span>,
     },
     {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-      ellipsis: true,
-    },
-    {
-      title: "Loại khuyến mãi",
+      title: "Loại",
       dataIndex: "type",
       key: "type",
       align: "center",
@@ -76,11 +63,7 @@ export const PromotionTable = ({
       key: "value",
       align: "center",
       render: (val) =>
-        typeof val === "number" ? (
-          <span className="font-medium">{val}%</span>
-        ) : (
-          <span className="text-gray-400">—</span>
-        ),
+        val ? <span>{val}%</span> : <span className="text-gray-400">—</span>,
     },
     {
       title: "Thời gian áp dụng",
@@ -90,14 +73,9 @@ export const PromotionTable = ({
         const { startDate, endDate } = record;
         const start = startDate ? dayjs(startDate) : null;
         const end = endDate ? dayjs(endDate) : null;
-        if (!start?.isValid() || !end?.isValid()) {
+        if (!start?.isValid() || !end?.isValid())
           return <span className="text-gray-400">—</span>;
-        }
-        return (
-          <span>
-            {start.format("DD/MM/YYYY")} - {end.format("DD/MM/YYYY")}
-          </span>
-        );
+        return `${start.format("DD/MM/YYYY")} - ${end.format("DD/MM/YYYY")}`;
       },
     },
     {
@@ -107,9 +85,7 @@ export const PromotionTable = ({
       align: "center",
       render: (status: PromotionStatus) =>
         status ? (
-          <Tag color={getStatusColor(status)} className="px-3 py-1 rounded-md">
-            {status}
-          </Tag>
+          <Tag color={getStatusColor(status)}>{status}</Tag>
         ) : (
           <span className="text-gray-400">—</span>
         ),
@@ -119,33 +95,26 @@ export const PromotionTable = ({
       key: "actions",
       align: "center",
       render: (_, record) => (
-        <Space>
-          {/* Luôn hiển thị, nhưng disable khi không có quyền */}
-          <Tooltip title={canEdit ? "Chỉnh sửa" : "Bạn không có quyền sửa"}>
-            <Button
-              icon={<EditOutlined />}
-              type="link"
-              onClick={() => onEdit?.(record.id)}
-              disabled={!canEdit}
-            />
-          </Tooltip>
-
-          <Popconfirm
-            title={canDelete ? "Xóa khuyến mãi này?" : "Bạn không có quyền xoá"}
-            okText="Xóa"
-            cancelText="Hủy"
-            onConfirm={() => onDelete?.(record.id)}
-            disabled={!canDelete}
+        <Space size="middle">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            disabled={!canEdit}
+            onClick={() => onEdit?.(record.id)}
+            className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52] disabled:!bg-gray-300 disabled:!border-gray-300"
           >
-            <Tooltip title={canDelete ? "Xóa" : "Bạn không có quyền xoá"}>
-              <Button
-                danger
-                type="link"
-                icon={<DeleteOutlined />}
-                disabled={!canDelete}
-              />
-            </Tooltip>
-          </Popconfirm>
+            Sửa
+          </Button>
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            disabled={!canDelete}
+            onClick={() => onDelete?.(record.id)}
+            className="!bg-red-500 !border-red-500 text-white hover:!bg-red-600 disabled:!bg-gray-300 disabled:!border-gray-300"
+          >
+            Xóa
+          </Button>
         </Space>
       ),
     },
@@ -153,16 +122,26 @@ export const PromotionTable = ({
 
   return (
     <Table
+      bordered
+      rowKey="id"
+      size="middle"
       columns={columns}
       dataSource={data}
       loading={loading}
-      pagination={{ pageSize: 10 }}
-      rowKey="id"
-      bordered
-      size="middle"
-      className="rounded-xl shadow-sm overflow-hidden"
+      pagination={{
+        pageSize: 10,
+        showSizeChanger: false,
+        showTotal: (total) => `Tổng cộng ${total} khuyến mãi`,
+      }}
+      scroll={{ x: "max-content", y: 560 }}
+      sticky={{ offsetHeader: 0 }}
+      className="
+        bg-white
+        [&_.ant-table-thead>tr>th]:!bg-[#627254]
+        [&_.ant-table-thead>tr>th]:!text-white
+        [&_.ant-table-thead>tr>th]:!border-[#627254]
+        [&_.ant-table-tbody>tr:hover>td]:!bg-white
+      "
     />
   );
 };
-
-export default PromotionTable;
