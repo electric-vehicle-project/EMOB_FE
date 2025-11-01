@@ -41,6 +41,7 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 
 // 🧪 Test
 import TestPage from "../page/TestPage";
+import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -105,6 +106,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
     ],
   },
 
@@ -128,6 +130,7 @@ export const router = createBrowserRouter([
       },
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
       { path: `${ROUTES.CUSTOMERS}/:id`, element: <CustomerDetailPage /> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
     ],
   },
 

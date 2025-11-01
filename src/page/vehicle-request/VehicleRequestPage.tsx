@@ -7,10 +7,22 @@ import {
   useDeleteVehicleRequest,
 } from "../../service/vehicleRequestService";
 import ViewVehicleRequestModal from "./ViewVehicleRequestModal";
-import UpdateVehicleRequestModal from "./UpdateVehicleRequestModal"; // ✅ Thêm modal update
+import UpdateVehicleRequestModal from "./UpdateVehicleRequestModal";
 import type { IVehicleRequest } from "../../model/VehicleRequest";
 import CreateVehicleRequestModal from "./CreateVehicleRequestModal ";
 import { SearchOutlined } from "@ant-design/icons";
+import ApproveVehicleRequestModal from "./ApproveVehicleRequestModal";
+import { useDealerById, useDealers } from "../../service/dealerService";
+
+const DealerNameCell: React.FC<{ dealerId: string }> = ({ dealerId }) => {
+  const { data, isLoading } = useDealers(dealerId, { enabled: !!dealerId });
+
+  if (!dealerId) return <span>-</span>;
+  if (isLoading)
+    return <span className="text-gray-400 italic">Đang tải...</span>;
+
+  return <span>{data?.result?.name ?? "Không xác định"}</span>;
+};
 
 const VehicleRequestPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -19,6 +31,7 @@ const VehicleRequestPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -60,7 +73,7 @@ const VehicleRequestPage: React.FC = () => {
       title: "Đại lý",
       dataIndex: "dealerId",
       key: "dealerId",
-      render: (text) => text || "-",
+      render: (dealerId: string) => <DealerNameCell dealerId={dealerId} />,
     },
     {
       title: "Số lượng",
@@ -132,6 +145,16 @@ const VehicleRequestPage: React.FC = () => {
           >
             Xem
           </Button>
+          <Button
+            size="small"
+            className="bg-blue-600 text-white"
+            onClick={() => {
+              setSelectedId(record.id);
+              setIsApproveModalOpen(true);
+            }}
+          >
+            Duyệt
+          </Button>
           <Popconfirm
             title="Bạn có chắc muốn xóa yêu cầu này?"
             onConfirm={() => handleDelete(record.id)}
@@ -156,7 +179,7 @@ const VehicleRequestPage: React.FC = () => {
           enterButton={<SearchOutlined />}
           onSearch={(value) => {
             setSearchTerm(value);
-            setPage(1); // quay lại trang đầu
+            setPage(1);
           }}
           style={{ width: 300, marginLeft: 40 }}
         />
@@ -190,7 +213,7 @@ const VehicleRequestPage: React.FC = () => {
         className="bg-white rounded-lg shadow-sm"
       />
 
-      {/* Modal tạo mới */}
+      {/* Modals */}
       {isCreateModalOpen && (
         <CreateVehicleRequestModal
           open={isCreateModalOpen}
@@ -199,7 +222,6 @@ const VehicleRequestPage: React.FC = () => {
         />
       )}
 
-      {/* Modal xem chi tiết */}
       {isViewModalOpen && selectedId && (
         <ViewVehicleRequestModal
           open={isViewModalOpen}
@@ -208,12 +230,20 @@ const VehicleRequestPage: React.FC = () => {
         />
       )}
 
-      {/* Modal cập nhật */}
       {isUpdateModalOpen && selectedId && (
         <UpdateVehicleRequestModal
           open={isUpdateModalOpen}
           requestId={selectedId}
           onClose={() => setIsUpdateModalOpen(false)}
+          onSuccess={refetch}
+        />
+      )}
+
+      {isApproveModalOpen && selectedId && (
+        <ApproveVehicleRequestModal
+          open={isApproveModalOpen}
+          record={vehicleRequests.find((item) => item.id === selectedId)}
+          onClose={() => setIsApproveModalOpen(false)}
           onSuccess={refetch}
         />
       )}
