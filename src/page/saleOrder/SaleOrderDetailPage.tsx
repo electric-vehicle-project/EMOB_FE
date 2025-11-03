@@ -1,106 +1,63 @@
-import { useNavigate, useParams } from "react-router";
-import {
-  Button,
-  Card,
-  Descriptions,
-  Divider,
-  message,
-  Spin,
-  Table,
-  Tag,
-} from "antd";
-import { ArrowLeftOutlined, ReloadOutlined } from "@ant-design/icons";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../redux/store";
-import type { SaleOrderResponse } from "../../model/SaleOrder";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button, Card, Divider, message, Spin, Tag } from "antd";
 import {
   useSaleOrderById,
   useSaleOrderComplete,
   useSaleOrderDelete,
 } from "../../service/saleOrderService";
-import { CardWrapper } from "../../components/template/CardWrapper";
-import { SaleOrderStatusTag } from "../../components/organisms/saleOrder/SaleOrderStatusTag";
+import { SaleOrderDetailInfo } from "../../components/organisms/saleOrder/SaleOrderDetailInfo";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../redux/store";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { SaleOrderItemTable } from "../../components/organisms/saleOrder/SaleOrderItemTable";
 
-export const SaleOrderDetailPage: React.FC = () => {
-  const { orderId } = useParams();
+export const SaleOrderDetailPage = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const user = useSelector((state: RootState) => state.user);
+  const role = useSelector((state: RootState) => {
+    return state?.user?.role ?? null;
+  });
 
-  // =========================
-  // API
-  // =========================
-  const { data, isLoading, refetch } = useSaleOrderById(orderId!);
-  const { mutateAsync: completeOrder, isPending: isCompleting } =
+  // ==============================
+  // 🔍 Gọi API lấy chi tiết đơn hàng
+  // ==============================
+  const { data: orderData, isLoading, refetch } = useSaleOrderById(id ?? "");
+
+  const { mutate: completeOrder, isPending: completing } =
     useSaleOrderComplete();
-  const { mutateAsync: cancelOrder, isPending: isCanceling } =
-    useSaleOrderDelete();
+  const { mutate: cancelOrder, isPending: canceling } = useSaleOrderDelete();
 
-  const order: SaleOrderResponse | null = (data as any)?.result ?? null;
+  const order = orderData?.result ?? orderData?.data ?? null;
 
-  // =========================
-  // Handlers
-  // =========================
-  const handleBack = () => navigate(-1);
-
-  const handleComplete = async () => {
-    if (!orderId) return;
-    try {
-      await completeOrder(orderId);
-      message.success("Đơn hàng đã được hoàn tất!");
-      refetch();
-    } catch {
-      message.error("Không thể hoàn tất đơn hàng!");
-    }
+  // ==============================
+  // 🧩 Hành động
+  // ==============================
+  const handleComplete = () => {
+    if (!id) return;
+    completeOrder(id, {
+      onSuccess: () => {
+        message.success("Hoàn tất đơn hàng thành công");
+        refetch();
+      },
+      onError: () => message.error("Không thể hoàn tất đơn hàng"),
+    });
   };
 
-  const handleCancel = async () => {
-    if (!orderId) return;
-    try {
-      await cancelOrder(orderId);
-      message.success("Đơn hàng đã bị hủy!");
-      refetch();
-    } catch {
-      message.error("Không thể hủy đơn hàng!");
-    }
+  const handleCancel = () => {
+    if (!id) return;
+    cancelOrder(id, {
+      onSuccess: () => {
+        message.success("Đã hủy đơn hàng");
+        refetch();
+      },
+      onError: () => message.error("Không thể hủy đơn hàng"),
+    });
   };
 
-  // =========================
-  // Columns
-  // =========================
-  const columns = [
-    {
-      title: "Tên xe",
-      dataIndex: "vehicleName",
-      key: "vehicleName",
-    },
-    {
-      title: "Màu sắc",
-      dataIndex: "color",
-      key: "color",
-    },
-    {
-      title: "Số lượng",
-      dataIndex: "quantity",
-      key: "quantity",
-    },
-    {
-      title: "Đơn giá",
-      dataIndex: "unitPrice",
-      key: "unitPrice",
-      render: (price: number) => `${price.toLocaleString()} ₫`,
-    },
-    {
-      title: "Thành tiền",
-      dataIndex: "totalPrice",
-      key: "totalPrice",
-      render: (price: number) => `${price.toLocaleString()} ₫`,
-    },
-  ];
-
-  // =========================
-  // Render
-  // =========================
-  if (isLoading) {
+  // ==============================
+  // ⏳ Loading state
+  // ==============================
+  if (isLoading || !order) {
     return (
       <div className="flex justify-center items-center h-[70vh]">
         <Spin size="large" />
@@ -108,113 +65,93 @@ export const SaleOrderDetailPage: React.FC = () => {
     );
   }
 
-  if (!order) {
-    return (
-      <CardWrapper>
-        <div className="text-center text-gray-500">
-          Không tìm thấy đơn hàng.
-        </div>
-      </CardWrapper>
-    );
-  }
+  // ==============================
+  // 👥 Phân quyền
+  // ==============================
+  const isDealerStaff = role === "DEALER_STAFF";
+  const isEvmStaff = role === "EVM_STAFF";
+  const isManager = role === "MANAGER";
 
-  const role = (user as any)?.role as
-    | "MANAGER"
-    | "DEALER_STAFF"
-    | "EVM_STAFF"
-    | "ADMIN";
+  // ==============================
+  // 🏷️ Màu trạng thái
+  // ==============================
+  const statusColor: Record<string, string> = {
+    CREATED: "processing",
+    COMPLETED: "success",
+    CANCELED: "error",
+  };
 
-  const canComplete =
-    order.status === "CREATED" &&
-    (role === "DEALER_STAFF" || role === "MANAGER");
-
-  const canCancel =
-    order.status === "CREATED" &&
-    (role === "DEALER_STAFF" || role === "EVM_STAFF");
-
+  // ==============================
+  // 🎨 Render UI
+  // ==============================
   return (
-    <CardWrapper>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
-          Quay lại
-        </Button>
+    <div className="p-6 space-y-6">
+      <Card
+        bordered={false}
+        className="shadow-md rounded-2xl"
+        title={
+          <div className="flex items-center gap-3">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              className="flex items-center bg-[#3f4a3c] text-white hover:!bg-[#2f382e]"
+            >
+              Quay lại
+            </Button>
+            <span className="text-lg font-semibold text-[#3f4a3c]">
+              Chi tiết đơn hàng #{order.id?.slice(0, 8)}
+            </span>
+            <Tag color={statusColor[order.status]} className="ml-2 text-sm">
+              {order.status === "CREATED"
+                ? "Đã tạo"
+                : order.status === "COMPLETED"
+                ? "Hoàn tất"
+                : "Đã hủy"}
+            </Tag>
+          </div>
+        }
+      >
+        {/* ===== Thông tin đơn hàng ===== */}
+        <SaleOrderDetailInfo order={order} />
 
-        <div className="flex gap-2">
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => refetch()}
-            loading={isLoading}
-          >
-            Tải lại
-          </Button>
+        <Divider />
 
-          {canCancel && (
-            <Button danger loading={isCanceling} onClick={handleCancel}>
+        {/* ===== Danh sách sản phẩm ===== */}
+        <h3 className="text-lg font-medium mb-2 text-[#3f4a3c]">
+          Danh sách sản phẩm
+        </h3>
+        <SaleOrderItemTable items={order.items || []} />
+
+        {/* ===== Action buttons ===== */}
+        <Divider />
+        {(isDealerStaff || isEvmStaff) && order.status === "CREATED" && (
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              danger
+              loading={canceling}
+              onClick={handleCancel}
+              className="px-5 rounded-lg"
+            >
               Hủy đơn hàng
             </Button>
-          )}
-
-          {canComplete && (
             <Button
               type="primary"
-              loading={isCompleting}
+              loading={completing}
               onClick={handleComplete}
-              className="!bg-[#4f6f52] border-none"
+              className="bg-[#3f4a3c] border-none hover:!bg-[#2f382e] px-6 rounded-lg"
             >
-              Hoàn tất
+              Hoàn tất đơn hàng
             </Button>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* Info */}
-      <Card bordered>
-        <Descriptions
-          title="Thông tin đơn hàng"
-          column={2}
-          bordered
-          size="middle"
-          labelStyle={{ width: 200, fontWeight: 600 }}
-        >
-          <Descriptions.Item label="Mã đơn hàng">{order.id}</Descriptions.Item>
-          <Descriptions.Item label="Ngày tạo">
-            {new Date(order.createdAt).toLocaleString("vi-VN")}
-          </Descriptions.Item>
-          <Descriptions.Item label="Tổng số lượng">
-            {order.totalQuantity}
-          </Descriptions.Item>
-          <Descriptions.Item label="Tổng giá trị">
-            {order.totalPrice.toLocaleString()} ₫
-          </Descriptions.Item>
-          <Descriptions.Item label="VAT">
-            {order.vatAmount.toLocaleString()} ₫
-          </Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">
-            <SaleOrderStatusTag status={order.status} />
-          </Descriptions.Item>
-        </Descriptions>
+        {/* Manager chỉ xem */}
+        {isManager && (
+          <div className="flex justify-end mt-3">
+            <Tag color="default">Quản lý chỉ có quyền xem</Tag>
+          </div>
+        )}
       </Card>
-
-      <Divider />
-
-      {/* Items */}
-      <h3 className="text-lg font-semibold mb-2">Danh sách sản phẩm</h3>
-      <Table
-        dataSource={order.items ?? []}
-        columns={columns}
-        pagination={false}
-        rowKey="id"
-      />
-
-      {order.contractId && (
-        <>
-          <Divider />
-          <Tag color="blue">Đã có hợp đồng #{order.contractId}</Tag>
-        </>
-      )}
-    </CardWrapper>
+    </div>
   );
 };
-
-export default SaleOrderDetailPage;

@@ -8,6 +8,7 @@ import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 
 import {
   useSaleOrdersOfCurrentDealer,
+  useSaleOrdersOfCurrentStaff,
   useSaleOrderDelete,
   useSaleOrderComplete,
 } from "../../service/saleOrderService";
@@ -21,6 +22,7 @@ import { SaleOrderCompleteConfirm } from "../../components/organisms/saleOrder/S
 const SaleOrderDealerPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user);
+  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
 
   // ========================
   // State
@@ -35,11 +37,6 @@ const SaleOrderDealerPage: React.FC = () => {
   const [sortDir, setSortDir] = useState<string>("desc");
 
   // ========================
-  // Role
-  // ========================
-  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
-
-  // ========================
   // Query Params
   // ========================
   const params = useMemo(() => {
@@ -48,12 +45,15 @@ const SaleOrderDealerPage: React.FC = () => {
   }, [statusFilter, sortField, sortDir]);
 
   // ========================
-  // Data
+  // Fetch data theo role
   // ========================
-  const { data, isLoading, isFetching, refetch } = useSaleOrdersOfCurrentDealer(
-    {},
-    params
-  );
+  const query =
+    role === "MANAGER"
+      ? useSaleOrdersOfCurrentDealer({}, params)
+      : useSaleOrdersOfCurrentStaff({}, params);
+
+  const { data, isLoading, isFetching, refetch } = query;
+
   const orders: SaleOrderResponse[] =
     ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
 
@@ -63,7 +63,7 @@ const SaleOrderDealerPage: React.FC = () => {
   }, [statusFilter, sortField, sortDir]);
 
   // ========================
-  // Summary cho bộ filter bar (luôn giữ count gốc)
+  // Summary cho filter bar
   // ========================
   const allOrders: SaleOrderResponse[] =
     ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
@@ -135,6 +135,9 @@ const SaleOrderDealerPage: React.FC = () => {
     }
   };
 
+  // ========================
+  // Render
+  // ========================
   return (
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">
@@ -171,6 +174,7 @@ const SaleOrderDealerPage: React.FC = () => {
         onConfirm={handleDelete}
         loading={canceling}
       />
+
       <SaleOrderCompleteConfirm
         open={confirmCompleteOpen}
         orderId={selectedOrder?.id}

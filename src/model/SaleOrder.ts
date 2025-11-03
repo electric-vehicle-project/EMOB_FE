@@ -28,33 +28,27 @@ export interface SaleOrderItemResponse {
 // ==========================
 export interface SaleOrderResponse {
   id: string;
-
-  // Tổng quan
-  totalPrice: number;
-  totalQuantity: number;
-  vatAmount: number;
   createdAt: string;
+  totalQuantity: number;
+  totalPrice: number;
+  vatAmount?: number;
+  status: "CREATED" | "COMPLETED" | "CANCELED";
 
-  // Trạng thái
-  status: OrderStatus;
-  paymentStatus?: PaymentStatus;
-
-  // Quan hệ
-  accountId?: string; // nhân viên tạo đơn
-  dealerId?: string;
+  accountId?: string;
   customerId?: string;
+  dealerId?: string;
   saleContractId?: string;
-  contractId?: string; // alias để FE dùng tiện hơn
-  quotationId?: string;
-  installmentPlanId?: string;
 
-  // Metadata hiển thị
-  customerName?: string;
-  dealerName?: string;
-  staffName?: string;
-
-  // Danh sách sản phẩm
-  items?: SaleOrderItemResponse[];
+  items?: {
+    id: string;
+    vehicleName: string;
+    color: string;
+    quantity: number;
+    unitPrice: number;
+    discountPrice?: number;
+    totalPrice: number;
+    promotionName?: string;
+  }[];
 }
 
 // ==========================

@@ -62,7 +62,7 @@ export const ROUTES = {
 
   // ====== SALE ORDER ======
   SALE_ORDERS: "sale-orders",
-  SALE_ORDER_DETAIL: "sale-orders/:orderId",
+  SALE_ORDER_DETAIL: "sale-orders/:id",
   // 404
   NOTFOUND: "*",
   // VEHICLE-REQUEST
