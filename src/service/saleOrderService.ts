@@ -1,3 +1,4 @@
+// src/service/saleOrderService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -7,38 +8,50 @@ import {
 
 const BASE_URL = "/sale-order";
 
-// ======= GET ALL - DEALER =======
-export const useSaleOrderOfDealer = (page = 0, size = 10) =>
-  createQueryHook("saleOrderDealerList", `${BASE_URL}/of-dealer`)(
-    {},
-    { page, size }
+export const useSaleOrdersOfCurrentDealer = (
+  options?: Record<string, any>,
+  params?: Record<string, any>
+) =>
+  createQueryHook("saleOrdersCurrentDealer", `${BASE_URL}/current-dealer`)(
+    options,
+    params
   );
 
-// ======= GET ALL - CUSTOMER =======
-export const useSaleOrderOfCustomer = (page = 0, size = 10) =>
-  createQueryHook("saleOrderCustomerList", `${BASE_URL}/of-customer`)(
-    {},
-    { page, size }
+export const useSalesByStaffSummary = (
+  options?: Record<string, any>,
+  params?: Record<string, any>
+) =>
+  createQueryHook("salesByStaffSummary", `${BASE_URL}/sale-of-staff`)(
+    options,
+    params
   );
 
-// ======= GET BY ID =======
+export const useSaleOrdersByCustomerId = (
+  customerId: string,
+  options?: Record<string, any>,
+  params?: Record<string, any>
+) =>
+  createQueryHook(
+    "saleOrdersByCustomer",
+    `${BASE_URL}/customers/${customerId}`
+  )(options, params);
+
 export const useSaleOrderById = createQueryWithPathParamHook(
   "saleOrderDetail",
   BASE_URL
 );
 
-/* =========================
-      COMPLETE ORDER
-      - Nếu payment_status = FULL → chỉ cần orderId
-      - Nếu payment_status = INSTALLMENT → điền đủ field (deposit, downPayment, totalAmount, termMonths, interestRate)
-   ========================= */
 export const useSaleOrderComplete = createMutationHook(
   "saleOrderComplete",
-  `${BASE_URL}/completed`
+  `${BASE_URL}/complete`
 );
 
-// ======= DELETE ORDER =======
 export const useSaleOrderDelete = deleteMutationHook(
   "saleOrderDelete",
+  BASE_URL
+);
+
+export const useSaleOrderCreate = createMutationHook(
+  "saleOrderCreate",
   BASE_URL
 );

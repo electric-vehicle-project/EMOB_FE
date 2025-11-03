@@ -1,54 +1,186 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { message } from "antd";
+import { useNavigate } from "react-router";
+import { useSelector } from "react-redux";
+
+import type { RootState } from "../../redux/store";
+import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
+
 import {
-  useSaleOrderOfDealer,
-  useSaleOrderComplete,
+  useSaleOrdersOfCurrentDealer,
   useSaleOrderDelete,
+  useSaleOrderComplete,
 } from "../../service/saleOrderService";
-import { SaleOrderTable } from "../../components/organisms/SaleOrderTable";
-import { ROUTES } from "../../model/routePaths";
 
-export const SaleOrderDealerPage = () => {
+import { CardWrapper } from "../../components/template/CardWrapper";
+import { SaleOrderFilterBar } from "../../components/organisms/saleOrder/SaleOrderFilterBar";
+import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
+import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
+import { SaleOrderCompleteConfirm } from "../../components/organisms/saleOrder/SaleOrderCompleteConfirm";
+
+const SaleOrderDealerPage: React.FC = () => {
   const navigate = useNavigate();
-  const { data, isLoading, refetch } = useSaleOrderOfDealer(0, 10);
-  const { mutateAsync: completeOrder } = useSaleOrderComplete();
-  const { mutateAsync: cancelOrder } = useSaleOrderDelete();
+  const user = useSelector((state: RootState) => state.user);
 
-  const orders = data?.result?.data ?? [];
+  // ========================
+  // State
+  // ========================
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL");
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<SaleOrderResponse | null>(
+    null
+  );
+  const [sortField, setSortField] = useState<string>("createdAt");
+  const [sortDir, setSortDir] = useState<string>("desc");
 
-  const handleView = (id: string) =>
-    navigate(`${ROUTES.DEALER_STAFF}/sale-orders/${id}`);
+  // ========================
+  // Role
+  // ========================
+  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
 
-  const handleComplete = async (orderId: string) => {
+  // ========================
+  // Query Params
+  // ========================
+  const params = useMemo(() => {
+    const statuses = statusFilter === "ALL" ? undefined : [statusFilter];
+    return { page: 0, size: 10, statuses, sortField, sortDir };
+  }, [statusFilter, sortField, sortDir]);
+
+  // ========================
+  // Data
+  // ========================
+  const { data, isLoading, isFetching, refetch } = useSaleOrdersOfCurrentDealer(
+    {},
+    params
+  );
+  const orders: SaleOrderResponse[] =
+    ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
+
+  useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, sortField, sortDir]);
+
+  // ========================
+  // Summary cho bộ filter bar (luôn giữ count gốc)
+  // ========================
+  const allOrders: SaleOrderResponse[] =
+    ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: 0, created: 0, completed: 0, canceled: 0 };
+    allOrders.forEach((o) => {
+      counts.all++;
+      if (o.status === "CREATED") counts.created++;
+      else if (o.status === "COMPLETED") counts.completed++;
+      else if (o.status === "CANCELED") counts.canceled++;
+    });
+    return counts;
+  }, [allOrders]);
+
+  // ========================
+  // Mutations
+  // ========================
+  const { mutateAsync: cancelOrder, isPending: canceling } =
+    useSaleOrderDelete();
+  const { mutateAsync: completeOrder, isPending: completing } =
+    useSaleOrderComplete();
+
+  // ========================
+  // Handlers
+  // ========================
+  const handleViewDetail = (id: string) => {
+    const base = `/${String(role || "").toLowerCase()}`;
+    navigate(`${base}/sale-orders/${id}`, { replace: false });
+  };
+
+  const handleDeleteClick = (id: string) => {
+    const target = orders.find((o) => o.id === id);
+    if (!target) return;
+    setSelectedOrder(target);
+    setConfirmCancelOpen(true);
+  };
+
+  const handleCompleteClick = (id: string) => {
+    const target = orders.find((o) => o.id === id);
+    if (!target) return;
+    setSelectedOrder(target);
+    setConfirmCompleteOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedOrder) return;
     try {
-      await completeOrder({ request: { orderId } }); // BE đang yêu cầu param query
-      message.success("Hoàn tất đơn hàng thành công");
+      await cancelOrder(selectedOrder.id);
+      message.success("Đã hủy đơn hàng thành công!");
       refetch();
     } catch {
-      message.error("Không thể hoàn tất đơn hàng");
+      message.error("Không thể hủy đơn hàng này!");
+    } finally {
+      setConfirmCancelOpen(false);
     }
   };
 
-  const handleCancel = async (orderId: string) => {
+  const handleComplete = async () => {
+    if (!selectedOrder) return;
     try {
-      await cancelOrder(orderId);
-      message.success("Đã huỷ đơn hàng");
+      await completeOrder(selectedOrder.id);
+      message.success("Đã hoàn tất đơn hàng!");
       refetch();
     } catch {
-      message.error("Huỷ đơn hàng thất bại");
+      message.error("Không thể hoàn tất đơn hàng!");
+    } finally {
+      setConfirmCompleteOpen(false);
     }
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-md">
-      <h1 className="text-xl font-bold mb-4">Danh sách đơn hàng của đại lý</h1>
-      <SaleOrderTable
-        data={orders}
-        loading={isLoading}
-        onView={handleView}
-        onComplete={handleComplete}
-        onCancel={handleCancel}
+    <CardWrapper>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-[#627254]">
+          Danh sách đơn hàng của đại lý
+        </h2>
+      </div>
+
+      <SaleOrderFilterBar
+        counts={statusCounts}
+        defaultStatus={statusFilter}
+        onStatusChange={(s) => setStatusFilter(s)}
       />
-    </div>
+
+      <SaleOrderTable
+        key={`orders-${statusFilter}-${sortField}-${sortDir}`}
+        data={orders}
+        loading={isLoading || isFetching}
+        canDelete
+        canComplete
+        onDelete={handleDeleteClick}
+        onComplete={handleCompleteClick}
+        onViewDetail={handleViewDetail}
+        onSortChange={(field, order) => {
+          setSortField(field);
+          setSortDir(order);
+        }}
+      />
+
+      <SaleOrderCancelConfirm
+        open={confirmCancelOpen}
+        orderId={selectedOrder?.id}
+        onCancel={() => setConfirmCancelOpen(false)}
+        onConfirm={handleDelete}
+        loading={canceling}
+      />
+      <SaleOrderCompleteConfirm
+        open={confirmCompleteOpen}
+        orderId={selectedOrder?.id}
+        onCancel={() => setConfirmCompleteOpen(false)}
+        onConfirm={handleComplete}
+        loading={completing}
+      />
+    </CardWrapper>
   );
 };
+
+export default SaleOrderDealerPage;
+export { SaleOrderDealerPage };

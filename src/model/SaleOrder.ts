@@ -1,31 +1,21 @@
 // src/model/SaleOrder.ts
-export const SaleOrderStatus = {
-  CREATED: "CREATED",
-  COMPLETED: "COMPLETED",
-  CANCELED: "CANCELED",
-} as const;
-export type SaleOrderStatus =
-  (typeof SaleOrderStatus)[keyof typeof SaleOrderStatus];
 
-export const PaymentStatus = {
-  FULL: "FULL",
-  INSTALLMENT: "INSTALLMENT",
-} as const;
-export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
+// ==========================
+// ENUMS (theo BE constants)
+// ==========================
+export type OrderStatus = "CREATED" | "COMPLETED" | "CANCELED";
+export type PaymentStatus = "FULL" | "INSTALLMENT";
 
-export const VehicleStatus = {
-  NORMAL: "NORMAL",
-  SPECIAL: "SPECIAL",
-} as const;
-export type VehicleStatus = (typeof VehicleStatus)[keyof typeof VehicleStatus];
-
-// ================== Interface ==================
-
-export interface ISaleOrderItem {
+// ==========================
+// ENTITY (phản ánh theo SaleOrderResponse BE)
+// ==========================
+export interface SaleOrderItemResponse {
   id: string;
   vehicleId: string;
+  vehicleName?: string; // fallback nếu BE có map tên xe
+  vehicleUnitIds: string[];
   promotionId?: string | null;
-  vehicleStatus: VehicleStatus;
+  vehicleStatus: string;
   color: string;
   quantity: number;
   unitPrice: number;
@@ -33,31 +23,52 @@ export interface ISaleOrderItem {
   totalPrice: number;
 }
 
-export interface ISaleOrder {
+// ==========================
+// SALE ORDER RESPONSE
+// ==========================
+export interface SaleOrderResponse {
   id: string;
-  customerId: string;
-  dealerId: string;
-  accountId: string;
-  items: ISaleOrderItem[];
+
+  // Tổng quan
   totalPrice: number;
   totalQuantity: number;
-  validUntil: number;
-  status: SaleOrderStatus;
+  vatAmount: number;
   createdAt: string;
-  paymentStatus?: PaymentStatus; // nếu BE trả về
+
+  // Trạng thái
+  status: OrderStatus;
+  paymentStatus?: PaymentStatus;
+
+  // Quan hệ
+  accountId?: string; // nhân viên tạo đơn
+  dealerId?: string;
+  customerId?: string;
+  saleContractId?: string;
+  contractId?: string; // alias để FE dùng tiện hơn
+  quotationId?: string;
+  installmentPlanId?: string;
+
+  // Metadata hiển thị
+  customerName?: string;
+  dealerName?: string;
+  staffName?: string;
+
+  // Danh sách sản phẩm
+  items?: SaleOrderItemResponse[];
 }
 
-// ================== Payload (dành cho Complete) ==================
-
-export interface ICompleteOrderFull {
-  orderId: string;
+// ==========================
+// PAGE RESPONSE
+// ==========================
+export interface PageMeta {
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
 }
 
-export interface ICompleteOrderInstallment {
-  orderId: string;
-  deposit: number;
-  downPayment: string; // ISO format
-  totalAmount: number;
-  termMonths: number;
-  interestRate: number;
+export interface SaleOrderPage {
+  data: SaleOrderResponse[];
+  metadata: PageMeta;
 }
