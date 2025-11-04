@@ -43,7 +43,8 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { AccountPage } from "../page/account/AccountPage";
-import { ContractPage } from "../page/ContractPage";
+import { ContractPage } from "../page/contract/ContractPage";
+import { ContractDetailPage } from "../page/contract/ContractDetailPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -127,7 +128,8 @@ export const router = createBrowserRouter([
     path: ROUTES.MANAGER,
     element: <DashboardLayout />,
     children: [
-       { path: ROUTES.CONTRACT, element: <ContractPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractPage /> },
+      { path: ROUTES.CONTRACT_DETAILS, element: <ContractDetailPage /> },
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },

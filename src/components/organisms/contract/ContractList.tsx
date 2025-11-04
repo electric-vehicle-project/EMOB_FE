@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
 import { Card, message } from "antd";
 import { ContractTable } from "../../molecules/contract/ContractTable";
-import { ContractDetailModal } from "./ContractDetailModal";
 import { useContractDeleteMutation, useContractQueryByCurrentDealer, useContractSignMutation } from "../../../service/contractService";
 
 export const ContractList = () => {
-  const [selectedContract, setSelectedContract] = useState<any>(null);
-  const [openDetail, setOpenDetail] = useState(false);
 
   const { data, isLoading, refetch } = useContractQueryByCurrentDealer({}, {});
   const { mutateAsync: signContract, isPending: signing } = useContractSignMutation();
@@ -51,11 +47,6 @@ export const ContractList = () => {
         onCancel={handleCancel}
       />
 
-      <ContractDetailModal
-        open={openDetail}
-        onClose={() => setOpenDetail(false)}
-        contract={selectedContract}
-      />
     </Card>
   );
 };
