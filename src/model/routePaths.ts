@@ -32,7 +32,6 @@ export const ROUTES = {
   // ====== ADMIN MODULES ======
   DEALERS: "dealers",
   TESTDRIVE: "testdrive",
-  REPORT: "report",
 
   // ====== PROFILE ======
   PROFILE_INFO: "profile/info",
@@ -61,6 +60,15 @@ export const ROUTES = {
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
   // DEALER_DISCOUNT_POLICY
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
+  // ====== SALE ORDER ======
+  SALE_ORDERS: "sale-orders",
+  SALE_ORDER_DETAIL: "sale-orders/:id",
+  // ====== REPORT ======
+  REPORT: "report",
+  // ====== REPORT ======
+  VEHICLE_REQUEST: "vehicle-request",
 
   ACCOUNT: "accounts",
+
+  NOTFOUND: "*",
 };

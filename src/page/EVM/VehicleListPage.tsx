@@ -10,9 +10,9 @@ import { getRoleBasePath } from "../../utils/roleGuard";
 import { useGetVehicles } from "../../service/vehicleService";
 import { VehicleCard } from "../../components/organisms/vehicle/VehicleCard";
 import { ROUTES } from "../../model/routePaths";
-import CardWrapper from "../../components/template/CardWrapper";
 import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 /** Small debounce hook (no external deps) */
 function useDebounce<T>(value: T, delay = 350): T {

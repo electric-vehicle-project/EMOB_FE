@@ -1,4 +1,4 @@
-// EMOB-2025 - ReportTable (UI synced)
+// EMOB-2025 - ReportTable (Giao diện tiếng Việt, đồng bộ PromotionTable)
 import { Table, Button, Tag, Tooltip, Space } from "antd";
 import { EditOutlined, DeleteOutlined, ToolOutlined } from "@ant-design/icons";
 import type { IReport } from "../../../model/Report";
@@ -22,25 +22,25 @@ export const ReportTable = ({
 }: Props) => {
   const columns = [
     {
-      title: "Title",
+      title: "Tiêu đề",
       dataIndex: "title",
       key: "title",
     },
     {
-      title: "Type",
+      title: "Loại báo cáo",
       dataIndex: "type",
       key: "type",
       render: (v: string) => (
         <Tag
           color={v === "COMPLAINT" ? "red" : "green"}
-          className="rounded-full px-3 py-1"
+          className="rounded-full px-3 py-1 text-sm"
         >
-          {v}
+          {v === "COMPLAINT" ? "Khiếu nại" : "Phản hồi"}
         </Tag>
       ),
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       render: (s: string) => {
@@ -50,21 +50,27 @@ export const ReportTable = ({
           RESOLVED: "green",
           DELETED: "red",
         };
+        const labelMap: Record<string, string> = {
+          PENDING: "Đang chờ",
+          IN_PROGRESS: "Đang xử lý",
+          RESOLVED: "Đã giải quyết",
+          DELETED: "Đã xóa",
+        };
         return (
-          <Tag color={colorMap[s]} className="rounded-full px-3 py-1">
-            {s}
+          <Tag color={colorMap[s]} className="rounded-full px-3 py-1 text-sm">
+            {labelMap[s] || s}
           </Tag>
         );
       },
     },
     {
-      title: "Customer",
+      title: "Khách hàng",
       dataIndex: "fullName",
       key: "fullName",
       render: (t: string) => t || "--",
     },
     {
-      title: "Created At",
+      title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (v: string) =>
@@ -77,11 +83,12 @@ export const ReportTable = ({
         }),
     },
     {
-      title: "Actions",
+      title: "Thao tác",
       key: "actions",
+      align: "center" as const,
       render: (_: any, record: IReport) => (
         <Space>
-          <Tooltip title="Edit">
+          <Tooltip title="Chỉnh sửa">
             <Button
               icon={<EditOutlined />}
               className="!text-[#627254] hover:!bg-[#f5f5f5]"
@@ -89,7 +96,7 @@ export const ReportTable = ({
               type="text"
             />
           </Tooltip>
-          <Tooltip title="Process">
+          <Tooltip title="Xử lý">
             <Button
               icon={<ToolOutlined />}
               className="!text-[#627254] hover:!bg-[#f5f5f5]"
@@ -97,7 +104,7 @@ export const ReportTable = ({
               type="text"
             />
           </Tooltip>
-          <Tooltip title="Delete">
+          <Tooltip title="Xóa">
             <Button
               icon={<DeleteOutlined />}
               danger
@@ -119,6 +126,9 @@ export const ReportTable = ({
       dataSource={data}
       pagination={pagination}
       className="shadow-sm rounded-lg"
+      locale={{
+        emptyText: "Không có dữ liệu báo cáo",
+      }}
     />
   );
 };
