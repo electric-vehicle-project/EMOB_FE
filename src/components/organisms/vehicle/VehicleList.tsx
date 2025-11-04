@@ -26,7 +26,7 @@ export const VehicleList = ({ onOpenUnits }: Props) => {
         ? "/evm_staff"
         : role === "MANAGER"
         ? "/manager"
-        : "/dealer_staff",
+        : "/evm_staff", // ✅ đổi default từ "/dealer_staff" -> "/evm_staff"
     [role]
   );
 

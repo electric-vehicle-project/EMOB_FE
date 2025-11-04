@@ -40,10 +40,20 @@ export const canCompareVehicles = (_role?: Role | null) => true; // BE enforce p
 // Base path (chấp nhận raw role luôn)
 export const getRoleBasePath = (raw?: unknown) => {
   const role = normalizeRole(raw);
+
   if (role === "ADMIN") return "/admin";
   if (role === "EVM_STAFF") return "/evm_staff";
   if (role === "MANAGER") return "/manager";
-  return "/dealer_staff";
+  if (role === "DEALER_STAFF") return "/manager"; // ✅ Dealer Staff dùng root /manager (router đã gom chung)
+
+  // ✅ Khi role chưa kịp load: suy từ URL hiện tại để tránh 404
+  if (typeof window !== "undefined") {
+    const seg = window.location.pathname.split("/")[1]; // admin | evm_staff | manager | ...
+    if (["admin", "evm_staff", "manager"].includes(seg)) return `/${seg}`;
+  }
+
+  // ✅ Fallback an toàn (tránh /dealer_staff vì không có route root)
+  return "/evm_staff";
 };
 
 // Helper: vehicle đã có giá để cho phép bulk create units?
