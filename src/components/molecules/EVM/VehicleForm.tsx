@@ -12,6 +12,8 @@ interface Props {
 
 const { Option } = Select;
 
+// moved normalizeInitialFileList to vehicleForm.utils.ts to keep component-only exports for Fast Refresh
+
 export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
   return (
     <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -46,13 +48,11 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         </Select>
       </Form.Item>
 
-      {/* Theo nghiệp vụ: EVM_STAFF không chỉnh giá; Admin chỉnh giá ở trang riêng */}
       {canEditPrices && (
         <>
           <Form.Item label="Giá nhập (VNĐ)" name="importPrice">
             <InputNumber min={0} className="w-full" />
           </Form.Item>
-
           <Form.Item label="Giá bán lẻ (VNĐ)" name="retailPrice">
             <InputNumber min={0} className="w-full" />
           </Form.Item>
@@ -91,7 +91,7 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         <InputNumber min={0} className="w-full" />
       </Form.Item>
 
-      {/* Upload hình ảnh => cuối cùng gửi mảng URL string */}
+      {/* Upload hình ảnh => cuối cùng submit ra UploadFile[] (có url hoặc originFileObj) */}
       <Form.Item
         label="Hình ảnh xe"
         name="images"

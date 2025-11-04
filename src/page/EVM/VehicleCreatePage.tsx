@@ -1,16 +1,16 @@
+// src/pages/vehicle/VehicleCreatePage.tsx
 import { Card, message, Button, Space, Form } from "antd";
 import { useNavigate } from "react-router-dom";
 import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
-import {
-  useCreateVehicle,
-  useUploadVehicleImages,
-} from "../../service/vehicleService";
+import { useCreateVehicle } from "../../service/vehicleService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import type { IVehicle } from "../../model/Vehicle";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { ROUTES } from "../../model/routePaths";
 import { getRoleBasePath } from "../../utils/roleGuard";
+import type { UploadFile } from "antd/es/upload";
+import { uploadFiles } from "../../utils/uploadFile";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
@@ -18,7 +18,6 @@ export const VehicleCreatePage = () => {
   const queryClient = useQueryClient();
 
   const createVehicle = useCreateVehicle();
-  const uploadImages = useUploadVehicleImages();
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
@@ -33,48 +32,26 @@ export const VehicleCreatePage = () => {
 
   const handleCreate = async (values: IVehicle) => {
     try {
-      const formData = new FormData();
-      type UploadFileLike = File | { originFileObj?: File };
-      const extractFile = (f: UploadFileLike): File | null => {
-        if (f instanceof File) return f;
-        const origin = (f as { originFileObj?: File }).originFileObj;
-        return origin instanceof File ? origin : null;
-      };
-      ((values.images as UploadFileLike[]) || []).forEach((file) => {
-        const origin = extractFile(file);
-        if (origin) formData.append("files", origin);
-      });
+      // Lấy danh sách file ảnh mới (nếu có)
+      const fileList =
+        (values.images as unknown as UploadFile[] | undefined) ?? [];
+      const rawFiles =
+        fileList
+          .map((f) =>
+            f.originFileObj instanceof File ? f.originFileObj : null
+          )
+          .filter(Boolean) ?? [];
 
-      let imageUrls: string[] = [];
-      if (formData.has("files")) {
-        const uploadRes = await uploadImages.mutateAsync(formData);
-        const raw =
-          (uploadRes as { data?: { result?: string[] } } | undefined)?.data
-            ?.result ??
-          (uploadRes as { result?: string[] } | undefined)?.result ??
-          (Array.isArray(uploadRes) ? (uploadRes as string[]) : []);
-        imageUrls = Array.isArray(raw) ? raw : [];
-      }
+      // Upload lên Supabase → public URLs
+      const uploadedUrls = await uploadFiles(rawFiles as File[]);
 
-      const normalizeType = (t: unknown): string | undefined => {
-        if (typeof t === "string") return t;
-        if (
-          t !== null &&
-          typeof t === "object" &&
-          "value" in (t as Record<string, unknown>)
-        ) {
-          const v = (t as Record<string, unknown>).value;
-          return typeof v === "string" ? v : undefined;
-        }
-        return undefined;
-      };
-
-      const payload = {
+      const payload: IVehicle = {
         ...values,
-        images: imageUrls.length
-          ? imageUrls
-          : ["https://placehold.co/300x200?text=Vehicle"],
-        type: normalizeType((values as unknown as { type?: unknown })?.type),
+        // Nếu không có ảnh thì dùng placeholder
+        images:
+          uploadedUrls.length > 0
+            ? uploadedUrls
+            : ["https://placehold.co/300x200?text=Vehicle"],
       };
 
       await createVehicle.mutateAsync(payload);
@@ -107,7 +84,7 @@ export const VehicleCreatePage = () => {
             <Button
               type="primary"
               onClick={() => form.submit()}
-              loading={createVehicle.isPending || uploadImages.isPending}
+              loading={createVehicle.isPending}
             >
               Tạo xe
             </Button>
@@ -117,3 +94,5 @@ export const VehicleCreatePage = () => {
     </div>
   );
 };
+
+export default VehicleCreatePage;

@@ -1,3 +1,4 @@
+// src/pages/vehicle/VehicleEditPage.tsx
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, message, Spin, Form, Button, Space, Modal } from "antd";
 import {
@@ -5,10 +6,14 @@ import {
   useUpdateVehicle,
 } from "../../service/vehicleService";
 import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
+import { normalizeInitialFileList } from "../../components/molecules/EVM/vehicleForm.utils";
 import type { IVehicle } from "../../model/Vehicle";
 import { useEffect, useRef } from "react";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { ROUTES } from "../../model/routePaths";
+import { getRoleBasePath } from "../../utils/roleGuard";
+import type { UploadFile } from "antd/es/upload";
+import { uploadFiles } from "../../utils/uploadFile";
 
 export const VehicleEditPage = () => {
   const { id } = useParams();
@@ -20,15 +25,7 @@ export const VehicleEditPage = () => {
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
-
-  const basePath =
-    role === "ADMIN"
-      ? "/admin"
-      : role === "EVM_STAFF"
-      ? "/evm_staff"
-      : role === "MANAGER"
-      ? "/manager"
-      : "/dealer_staff";
+  const basePath = getRoleBasePath(user);
 
   useEffect(() => {
     if (role !== "EVM_STAFF") {
@@ -41,8 +38,12 @@ export const VehicleEditPage = () => {
 
   useEffect(() => {
     if (vehicle) {
-      form.setFieldsValue(vehicle);
-      initialValuesRef.current = vehicle;
+      const withUploadList: IVehicle = {
+        ...vehicle,
+        images: normalizeInitialFileList(vehicle.images as string[]),
+      } as unknown as IVehicle;
+      form.setFieldsValue(withUploadList);
+      initialValuesRef.current = withUploadList;
     }
   }, [vehicle, form]);
 
@@ -51,7 +52,6 @@ export const VehicleEditPage = () => {
     const initial = initialValuesRef.current;
     if (!initial) return false;
     return JSON.stringify(current) !== JSON.stringify(initial);
-    // Lưu ý: nếu cần deep-equal mạnh hơn có thể dùng fast-deep-equal
   };
 
   const handleSave = async (values: IVehicle) => {
@@ -60,7 +60,31 @@ export const VehicleEditPage = () => {
       return;
     }
     try {
-      await updateVehicle.mutateAsync({ id: id!, data: values });
+      const fileList =
+        (values.images as unknown as UploadFile[] | undefined) ?? [];
+
+      // 1) URL của ảnh cũ (đã có)
+      const oldUrls =
+        fileList
+          .filter((f) => !!f.url && !f.originFileObj)
+          .map((f) => String(f.url)) ?? [];
+
+      // 2) File mới để upload
+      const newFiles =
+        fileList
+          .filter((f) => f.originFileObj instanceof File)
+          .map((f) => f.originFileObj as File) ?? [];
+
+      // 3) Upload Supabase
+      const newUrls = await uploadFiles(newFiles);
+
+      const payload: IVehicle = {
+        ...values,
+        // gộp ảnh cũ + ảnh mới
+        images: [...oldUrls, ...newUrls],
+      };
+
+      await updateVehicle.mutateAsync({ id: id!, data: payload });
       message.success("✅ Đã lưu thay đổi xe thành công!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
@@ -100,7 +124,7 @@ export const VehicleEditPage = () => {
   if (!vehicle)
     return (
       <div className="flex justify-center items-center h-[80vh]">
-        <Card className="max-w-3xl w-full text-center shadow-md rounded-2xl">
+        <Card className="max-w-3xl w/full text-center shadow-md rounded-2xl">
           <p className="mb-4">Không tìm thấy xe.</p>
           <Button
             type="primary"
@@ -135,3 +159,5 @@ export const VehicleEditPage = () => {
     </div>
   );
 };
+
+export default VehicleEditPage;
