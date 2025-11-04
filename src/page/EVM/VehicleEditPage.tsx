@@ -62,32 +62,28 @@ export const VehicleEditPage = () => {
     try {
       const fileList =
         (values.images as unknown as UploadFile[] | undefined) ?? [];
-
-      // 1) URL của ảnh cũ (đã có)
       const oldUrls =
         fileList
           .filter((f) => !!f.url && !f.originFileObj)
           .map((f) => String(f.url)) ?? [];
-
-      // 2) File mới để upload
       const newFiles =
         fileList
           .filter((f) => f.originFileObj instanceof File)
           .map((f) => f.originFileObj as File) ?? [];
-
-      // 3) Upload Supabase
       const newUrls = await uploadFiles(newFiles);
 
       const payload: IVehicle = {
         ...values,
-        // gộp ảnh cũ + ảnh mới
         images: [...oldUrls, ...newUrls],
       };
 
       await updateVehicle.mutateAsync({ id: id!, data: payload });
       message.success("✅ Đã lưu thay đổi xe thành công!");
+
+      // ✅ Ghi đè entry hiện tại (Edit) bằng trang Detail
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
+        state: { from: "edit" },
       });
     } catch {
       message.error("❌ Không thể cập nhật xe!");
@@ -98,6 +94,7 @@ export const VehicleEditPage = () => {
     if (!isFormChanged()) {
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
+        state: { from: "edit" },
       });
       return;
     }
@@ -109,7 +106,7 @@ export const VehicleEditPage = () => {
       onOk: () =>
         navigate(
           `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!),
-          { replace: true }
+          { replace: true, state: { from: "edit" } }
         ),
     });
   };

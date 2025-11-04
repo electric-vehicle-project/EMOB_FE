@@ -1,4 +1,4 @@
-/* EMOB-2025 - VehicleListPage (realtime search w/ debounce + queryKey override) */
+/* EMOB-2025 - VehicleListPage (fix back navigation flow) */
 import { useMemo, useState, useEffect } from "react";
 import { Empty, Input, Pagination, Row, Col, Spin } from "antd";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
@@ -41,10 +41,8 @@ export const VehicleListPage = () => {
   const [size, setSize] = useState(12);
   const [q, setQ] = useState("");
 
-  // ✅ Debounce keyword để “realtime” mượt mà, hạn chế spam request
   const debouncedQ = useDebounce(q, 350);
 
-  // ✅ Gọi API: truyền keyword + override queryKey để refetch khi q/page/size đổi
   const { vehicles, metadata, isLoading } = useGetVehicles(
     {
       page: page - 1,
@@ -55,7 +53,6 @@ export const VehicleListPage = () => {
     },
     {
       keepPreviousData: true,
-      // Quan trọng: override queryKey để React Query biết khi nào refetch
       queryKey: ["get-vehicles", page, size, debouncedQ.trim()],
     }
   );
@@ -85,12 +82,9 @@ export const VehicleListPage = () => {
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
-          setPage(1); // reset trang khi đổi keyword
-        }}
-        onPressEnter={() => {
-          // optional: ép về trang 1 khi Enter
           setPage(1);
         }}
+        onPressEnter={() => setPage(1)}
         className="rounded-lg"
       />
     </div>
@@ -154,12 +148,14 @@ export const VehicleListPage = () => {
                         power: v.powerKw,
                         type: v.type,
                       }}
+                      // ✅ Truyền state để biết "đến từ danh sách"
                       onOpenDetail={(id) =>
                         navigate(
                           `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(
                             ":id",
                             id
-                          )
+                          ),
+                          { state: { from: "list" } }
                         )
                       }
                     />

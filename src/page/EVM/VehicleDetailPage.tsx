@@ -112,15 +112,19 @@ export const VehicleDetailPage = () => {
   // - Nếu đi từ trang Bulk (location.state?.from === 'bulk'), back sẽ giữ nguyên ở Detail
   //   để tránh quay về Bulk theo mong muốn của bạn.
   const handleBack = useCallback(() => {
-    const cameFromBulk =
-      typeof location.state === "object" &&
-      location.state !== null &&
-      (location.state as Record<string, unknown>).from === "bulk";
-    if (cameFromBulk) {
+    const fromState =
+      typeof location.state === "object"
+        ? (location.state as Record<string, unknown>).from
+        : null;
+
+    // Nếu vừa quay lại từ Edit thì về luôn List
+    if (fromState === "edit" || fromState === "list") {
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
       return;
     }
+
     navigate(-1);
-  }, [location.state, navigate]);
+  }, [location.state, navigate, basePath]);
 
   const actions = useMemo(() => {
     const arr: ReactElement[] = [];
@@ -139,7 +143,8 @@ export const VehicleDetailPage = () => {
           icon={<EditOutlined />}
           onClick={() =>
             navigate(
-              `${basePath}/${ROUTES.EVM_VEHICLE_EDIT}`.replace(":id", id)
+              `${basePath}/${ROUTES.EVM_VEHICLE_EDIT}`.replace(":id", id),
+              { state: { from: "detail" } }
             )
           }
           className="rounded-md"
