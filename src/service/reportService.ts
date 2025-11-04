@@ -1,77 +1,46 @@
-import type { IReport } from "../model/report";
+// src/service/reportService.ts
+import {
+  createQueryHook,
+  createQueryWithPathParamHook,
+  createMutationHook,
+  updateMutationHook,
+  deleteMutationHook,
+} from "../hook/useApi";
 
-const LS_KEY = "emob_reports";
+const BASE_URL = "/report";
 
-// Fallback tạo UUID nếu môi trường không có crypto.randomUUID
-const uid = () =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : "rpt-" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+/* ===== Query hooks ===== */
+export const useReportList = (
+  page = 0,
+  size = 10,
+  keyword?: string,
+  status?: "PENDING" | "IN_PROGRESS" | "RESOLVED" | "DELETED",
+  sortField = "title",
+  sortDir: "asc" | "desc" = "desc"
+) =>
+  createQueryHook("reportList", `${BASE_URL}/view-all`)(
+    {},
+    { page, size, keyword, status, sortField, sortDir }
+  );
 
-const seed: IReport[] = [
-  {
-    reportID: uid(),
-    title: "Lỗi treo màn hình khi đặt lịch lái thử",
-    description: "Nhấn Xác nhận thì đứng ~5s.",
-    reportType: "SystemBug",
-    status: "Pending",
-    reportBy: { name: "Nguyễn Văn A", email: "vana@gmail.com" },
-    createAt: new Date().toISOString().slice(0, 10),
-  },
-  {
-    reportID: uid(),
-    title: "Cải thiện UX trang quản lý đại lý",
-    description: "Nút trên mobile hơi nhỏ, nên tăng hit area.",
-    reportType: "Suggestion",
-    status: "InReview",
-    reportBy: { name: "Trần Thị B" },
-    createAt: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-  },
-];
+export const useReportById = createQueryWithPathParamHook(
+  "reportDetail",
+  BASE_URL
+);
 
-function load(): IReport[] {
-  const raw = localStorage.getItem(LS_KEY);
-  if (!raw) {
-    localStorage.setItem(LS_KEY, JSON.stringify(seed));
-    return [...seed];
-  }
-  try {
-    return JSON.parse(raw) as IReport[];
-  } catch {
-    localStorage.setItem(LS_KEY, JSON.stringify(seed));
-    return [...seed];
-  }
-}
+/* ===== CRUD ===== */
+export const useReportCreate = createMutationHook("reportList", BASE_URL);
+export const useReportUpdate = updateMutationHook("reportList", BASE_URL);
+export const useReportDelete = deleteMutationHook("reportList", BASE_URL);
 
-function save(data: IReport[]) {
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-}
+/* ===== Process status (PUT /report/process-report/{id}?status=...) =====
+   Trick: nhét cả "process-report/{id}?status=..." vào tham số `id` của updateMutationHook
+   - invalidates: "reportList" (list sẽ tự refetch)
+*/
+export const useReportProcess = updateMutationHook("reportList", BASE_URL);
 
-export const reportService = {
-  async getReports(): Promise<IReport[]> {
-    return load();
-  },
-
-  async createReport(payload: Omit<IReport, "reportID" | "createAt" | "status"> & { status?: IReport["status"] }): Promise<IReport> {
-    const data = load();
-    const item: IReport = {
-      reportID: uid(),
-      createAt: new Date().toISOString().slice(0, 10),
-      status: payload.status ?? "Pending",
-      ...payload,
-    };
-    data.unshift(item);
-    save(data);
-    return item;
-  },
-
-  async updateReport(updated: IReport): Promise<void> {
-    const data = load().map((r) => (r.reportID === updated.reportID ? { ...updated } : r));
-    save(data);
-  },
-
-  async deleteReport(reportID: string): Promise<void> {
-    const data = load().filter((r) => r.reportID !== reportID);
-    save(data);
-  },
-};
+/* (tuỳ chọn) Nếu đang ở trang detail và muốn invalidate đúng cache detail:
+   Khởi tạo hook với id của report để invalidate ["reportDetail", reportId]
+*/
+export const useReportProcessDetail = (reportId: string) =>
+  updateMutationHook("reportDetail", BASE_URL)(reportId);

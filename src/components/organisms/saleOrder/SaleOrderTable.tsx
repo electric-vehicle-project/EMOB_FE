@@ -1,112 +1,154 @@
-import { Table, Button, Space, Tooltip } from "antd";
+import { Table, Tag, Button, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import {
-  EyeOutlined,
-  CheckCircleOutlined,
-  StopOutlined,
-} from "@ant-design/icons";
+import dayjs from "dayjs";
+import { EyeOutlined, CheckOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { SaleOrderResponse } from "../../../model/SaleOrder";
-import { SaleOrderStatusTag } from "./SaleOrderStatusTag";
 
-interface Props {
+interface SaleOrderTableProps {
   data: SaleOrderResponse[];
   loading?: boolean;
   canDelete?: boolean;
   canComplete?: boolean;
-  onViewDetail?: (id: string) => void;
+  showDealerColumn?: boolean; // ✅ hiển thị cột đại lý khi cần
   onDelete?: (id: string) => void;
   onComplete?: (id: string) => void;
+  onViewDetail?: (id: string) => void;
   onSortChange?: (field: string, order: "asc" | "desc") => void;
 }
 
-export const SaleOrderTable: React.FC<Props> = ({
+export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   data,
-  loading,
-  canDelete,
-  canComplete,
-  onViewDetail,
+  loading = false,
+  canDelete = false,
+  canComplete = false,
+  showDealerColumn = false,
   onDelete,
   onComplete,
+  onViewDetail,
   onSortChange,
 }) => {
+  // =============================
+  // Columns
+  // =============================
   const columns: ColumnsType<SaleOrderResponse> = [
     {
       title: "Mã đơn hàng",
       dataIndex: "id",
-      sorter: true,
-      width: 230, // ✅ giới hạn độ rộng để tránh tràn nút
+      key: "id",
+      align: "left",
       ellipsis: true,
-      render: (id: string) => (
-        <Tooltip title={id}>
-          <span className="truncate inline-block max-w-[210px]">{id}</span>
-        </Tooltip>
+      render: (id) => (
+        <span className="font-mono text-[#555]">{id?.slice(0, 22)}...</span>
       ),
-    },
-    {
-      title: "Ngày tạo",
-      dataIndex: "createdAt",
       sorter: true,
-      width: 150,
-      render: (v: string) => (v ? new Date(v).toLocaleString("vi-VN") : "--"),
     },
+
+    showDealerColumn
+      ? {
+          title: "Đại lý",
+          dataIndex: "dealerName",
+          key: "dealerName",
+          align: "center",
+          render: (text) => <span>{text || "—"}</span>,
+        }
+      : null,
+
     {
-      title: "Tổng số lượng",
+      title: "Tổng SL",
       dataIndex: "totalQuantity",
-      sorter: true,
-      width: 100,
+      key: "totalQuantity",
+      align: "center",
+      render: (value) => <span>{value ?? 0}</span>,
     },
     {
       title: "Tổng tiền (VNĐ)",
       dataIndex: "totalPrice",
+      key: "totalPrice",
+      align: "center",
+      render: (price) => (
+        <span>{price ? price.toLocaleString("vi-VN") : "0"}</span>
+      ),
       sorter: true,
-      width: 130,
-      render: (v: number) => (v?.toLocaleString("vi-VN") ?? "0") + " VNĐ",
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      align: "center",
+      render: (value) =>
+        value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—",
+      sorter: true,
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
-      filters: [
-        { text: "Đã tạo", value: "CREATED" },
-        { text: "Hoàn tất", value: "COMPLETED" },
-        { text: "Đã hủy", value: "CANCELED" },
-      ],
-      width: 130,
-      render: (_, r) => <SaleOrderStatusTag status={r.status} />,
+      key: "status",
+      align: "center",
+      render: (status) => {
+        const colorMap: Record<string, string> = {
+          CREATED: "processing",
+          COMPLETED: "success",
+          CANCELED: "error",
+        };
+        const textMap: Record<string, string> = {
+          CREATED: "Đang xử lý",
+          COMPLETED: "Hoàn tất",
+          CANCELED: "Đã hủy",
+        };
+        return (
+          <Tag
+            color={colorMap[status] || "default"}
+            style={{
+              display: "inline-flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontWeight: 500,
+              padding: "2px 10px",
+              minWidth: 70, // vừa phải, không bó hẹp
+              borderRadius: 6,
+            }}
+          >
+            {textMap[status] || status}
+          </Tag>
+        );
+      },
     },
+
     {
-      title: "Hành động",
-      fixed: "right",
-      width: 250, // đủ chỗ cho 3 nút
-      render: (_, r) => (
-        <Space wrap>
+      title: "Thao tác",
+      key: "action",
+      align: "center",
+      render: (_, record) => (
+        <Space size="small" align="center">
           <Button
+            icon={<EyeOutlined />}
+            onClick={() => onViewDetail?.(record.id)}
             size="small"
             type="primary"
-            icon={<EyeOutlined />}
-            onClick={() => onViewDetail?.(r.id)}
-            className="!border-[#627254]  hover:!border-[#4f6f52] "
+            style={{ display: "flex", alignItems: "center" }}
           >
             Xem
           </Button>
 
-          {canComplete && r.status === "CREATED" && (
+          {canComplete && record.status === "CREATED" && (
             <Button
-              size="small"
               type="primary"
-              icon={<CheckCircleOutlined />}
-              onClick={() => onComplete?.(r.id)}
-              className="!bg-[#627254] !border-[#627254] hover:!bg-[#4f6f52] hover:!border-[#4f6f52]"
+              icon={<CheckOutlined />}
+              onClick={() => onComplete?.(record.id)}
+              size="small"
+              style={{ display: "flex", alignItems: "center" }}
             >
               Hoàn tất
             </Button>
           )}
 
-          {canDelete && r.status === "CREATED" && (
+          {canDelete && record.status === "CREATED" && (
             <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => onDelete?.(record.id)}
               size="small"
-              icon={<StopOutlined />}
-              onClick={() => onDelete?.(r.id)}
-              className="!bg-[#dc2626] !text-white hover:!bg-[#b91c1c] hover:!text-white !border-none"
+              style={{ display: "flex", alignItems: "center" }}
             >
               Hủy
             </Button>
@@ -114,23 +156,38 @@ export const SaleOrderTable: React.FC<Props> = ({
         </Space>
       ),
     },
-  ];
+  ].filter(Boolean) as ColumnsType<SaleOrderResponse>;
 
+  // =============================
+  // Sort handler
+  // =============================
+  const handleChange = (_: any, __: any, sorter: any) => {
+    if (sorter?.order) {
+      const order = sorter.order === "ascend" ? "asc" : "desc";
+      onSortChange?.(sorter.field, order);
+    } else {
+      onSortChange?.("createdAt", "desc");
+    }
+  };
+
+  // =============================
+  // Render Table
+  // =============================
   return (
-    <Table<SaleOrderResponse>
+    <Table
       rowKey="id"
-      loading={loading}
       columns={columns}
       dataSource={data}
+      loading={loading}
       pagination={false}
-      className="!rounded-xl !bg-white"
-      onChange={(pagination, filters, sorter) => {
-        if ("field" in sorter && sorter.field && sorter.order) {
-          const field = sorter.field as string;
-          const order = sorter.order === "ascend" ? "asc" : "desc";
-          onSortChange?.(field, order);
-        }
+      onChange={handleChange}
+      bordered={false} // ✅ bỏ border giữa các ô
+      className="rounded-lg shadow-sm text-center"
+      style={{
+        textAlign: "center", // ✅ căn giữa toàn bộ nội dung
       }}
     />
   );
 };
+
+export default SaleOrderTable;

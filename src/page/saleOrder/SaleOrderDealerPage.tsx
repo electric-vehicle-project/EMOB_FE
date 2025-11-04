@@ -45,15 +45,13 @@ const SaleOrderDealerPage: React.FC = () => {
   }, [statusFilter, sortField, sortDir]);
 
   // ========================
-  // Fetch data theo role
+  // Fetch Data
   // ========================
-  const query =
-    role === "MANAGER"
-      ? useSaleOrdersOfCurrentDealer({}, params)
-      : useSaleOrdersOfCurrentStaff({}, params);
+  const dealerQuery = useSaleOrdersOfCurrentDealer({}, params);
+  const staffQuery = useSaleOrdersOfCurrentStaff({}, params);
+  const query = role === "MANAGER" ? dealerQuery : staffQuery;
 
   const { data, isLoading, isFetching, refetch } = query;
-
   const orders: SaleOrderResponse[] =
     ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
 
@@ -63,21 +61,18 @@ const SaleOrderDealerPage: React.FC = () => {
   }, [statusFilter, sortField, sortDir]);
 
   // ========================
-  // Summary cho filter bar
+  // Summary for Filter Bar
   // ========================
-  const allOrders: SaleOrderResponse[] =
-    ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
-
   const statusCounts = useMemo(() => {
     const counts = { all: 0, created: 0, completed: 0, canceled: 0 };
-    allOrders.forEach((o) => {
+    orders.forEach((o) => {
       counts.all++;
       if (o.status === "CREATED") counts.created++;
       else if (o.status === "COMPLETED") counts.completed++;
       else if (o.status === "CANCELED") counts.canceled++;
     });
     return counts;
-  }, [allOrders]);
+  }, [orders]);
 
   // ========================
   // Mutations
@@ -125,6 +120,7 @@ const SaleOrderDealerPage: React.FC = () => {
   const handleComplete = async () => {
     if (!selectedOrder) return;
     try {
+      // ✅ Gọi đúng endpoint: POST /sale-order/{id}/completed
       await completeOrder(selectedOrder.id);
       message.success("Đã hoàn tất đơn hàng!");
       refetch();

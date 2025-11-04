@@ -4,6 +4,8 @@ import {
   createMutationHook,
   deleteMutationHook,
 } from "../hook/useApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../config/api";
 
 const BASE_URL = "/sale-order";
 
@@ -27,6 +29,18 @@ export const useSaleOrdersOfCurrentStaff = (
   params?: Record<string, any>
 ) =>
   createQueryHook("saleOrdersCurrentStaff", `${BASE_URL}/staff/current`)(
+    options,
+    params
+  );
+
+// ==========================
+// GET LIST - all dealers (EVM)
+// ==========================
+export const useSaleOrdersOfDealers = (
+  options?: Record<string, any>,
+  params?: Record<string, any>
+) =>
+  createQueryHook("saleOrdersOfDealers", `${BASE_URL}/dealers`)(
     options,
     params
   );
@@ -65,13 +79,23 @@ export const useSaleOrderById = createQueryWithPathParamHook(
 );
 
 // ==========================
-// COMPLETE ORDER (DEALER_STAFF, EVM_STAFF)
-// POST /sale-order/complete/{id}
+// ✅ COMPLETE ORDER (DEALER_STAFF, EVM_STAFF)
+// POST /sale-order/{id}/completed
 // ==========================
-export const useSaleOrderComplete = createMutationHook(
-  "saleOrderComplete",
-  `${BASE_URL}/complete`
-);
+export const useSaleOrderComplete = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.post(`${BASE_URL}/${id}/completed`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saleOrdersCurrentDealer"] });
+      queryClient.invalidateQueries({ queryKey: ["saleOrdersCurrentStaff"] });
+    },
+  });
+};
 
 // ==========================
 // CANCEL ORDER (DEALER_STAFF, EVM_STAFF)

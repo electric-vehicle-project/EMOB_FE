@@ -51,6 +51,7 @@ import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDisco
 import { CustomerPage } from "../page/customer/CustomerPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 import { AccountPage } from "../page/account/AccountPage";
+import SaleOrderEvmPage from "../page/saleOrder/SaleOrderEvmPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -87,6 +88,9 @@ export const router = createBrowserRouter([
         element: <DealerDiscountPolicyPage />,
       },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> }, // ✅ ADMIN full CRUD
+
+      { path: ROUTES.SALE_ORDERS, element: <SaleOrderEvmPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
     ],
   },
 
@@ -122,6 +126,9 @@ export const router = createBrowserRouter([
 
       // ✅ Cho phép EVM_STAFF xem trang Account (read-only)
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
+
+      { path: ROUTES.SALE_ORDERS, element: <SaleOrderEvmPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
     ],
   },
 
