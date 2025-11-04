@@ -33,6 +33,7 @@ export const ReportTable = ({
       sorter: (a, b) =>
         a.title.localeCompare(b.title, "vi", { sensitivity: "base" }),
       align: "left",
+      width: 220,
       ellipsis: true,
     },
     {
@@ -93,6 +94,7 @@ export const ReportTable = ({
       dataIndex: "fullName",
       key: "fullName",
       align: "center",
+      width: 180,
       sorter: (a, b) =>
         a.fullName?.localeCompare(b.fullName ?? "", "vi", {
           sensitivity: "base",
