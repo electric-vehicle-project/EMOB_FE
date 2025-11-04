@@ -13,12 +13,8 @@ import { ROUTES } from "../../model/routePaths";
 export const VehicleEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, isLoading } = useGetVehicleById(id ?? "");
+  const { vehicle, isLoading } = useGetVehicleById(id ?? "", { enabled: !!id });
   const updateVehicle = useUpdateVehicle();
-  type VehicleDataLike = { result?: IVehicle } | IVehicle | undefined;
-  const vehicle =
-    (data as VehicleDataLike as { result?: IVehicle })?.result ??
-    (data as VehicleDataLike as IVehicle | undefined);
   const [form] = Form.useForm<IVehicle>();
   const initialValuesRef = useRef<IVehicle | null>(null);
 
@@ -55,6 +51,7 @@ export const VehicleEditPage = () => {
     const initial = initialValuesRef.current;
     if (!initial) return false;
     return JSON.stringify(current) !== JSON.stringify(initial);
+    // Lưu ý: nếu cần deep-equal mạnh hơn có thể dùng fast-deep-equal
   };
 
   const handleSave = async (values: IVehicle) => {
@@ -62,7 +59,6 @@ export const VehicleEditPage = () => {
       message.warning("Không có thay đổi nào để lưu.");
       return;
     }
-
     try {
       await updateVehicle.mutateAsync({ id: id!, data: values });
       message.success("✅ Đã lưu thay đổi xe thành công!");
@@ -81,7 +77,6 @@ export const VehicleEditPage = () => {
       });
       return;
     }
-
     Modal.confirm({
       title: "Bạn có chắc muốn hủy chỉnh sửa?",
       content: "Mọi thay đổi chưa lưu sẽ bị mất.",
@@ -124,7 +119,6 @@ export const VehicleEditPage = () => {
         className="w-full max-w-3xl shadow-md rounded-2xl"
       >
         <VehicleForm form={form} onFinish={handleSave} canEditPrices={false} />
-
         <div className="flex justify-end gap-3 mt-6">
           <Space>
             <Button onClick={handleCancel}>Hủy</Button>

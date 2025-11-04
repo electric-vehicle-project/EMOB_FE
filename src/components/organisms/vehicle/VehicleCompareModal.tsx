@@ -1,17 +1,89 @@
 // src/components/organisms/vehicle/VehicleCompareModal.tsx
-import { Modal, Select, Typography, Space } from "antd";
-import { useEffect, useState } from "react";
+import {
+  Modal,
+  Select,
+  Typography,
+  Space,
+  Table,
+  Tag,
+  Empty,
+  Spin,
+} from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { useGetVehicles } from "../../../service/vehicleService";
+import api from "../../../config/api";
+import type { IVehicle } from "../../../model/Vehicle";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  leftId: string; // xe hiện tại
 }
 
-export const VehicleCompareModal = ({ open, onClose }: Props) => {
-  const [rightId, setRightId] = useState<string | undefined>();
+type CompareRow = {
+  keyName: string;
+  left?: number | string | null;
+  right?: number | string | null;
+  different: boolean;
+  betterFor?: "left" | "right" | string | null;
+};
+
+export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
+  const [rightId, setRightId] = useState<string>();
+  const [rows, setRows] = useState<CompareRow[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { vehicles } = useGetVehicles({ size: 50 }, { enabled: open });
+  const options = useMemo(
+    () =>
+      (Array.isArray(vehicles) ? (vehicles as IVehicle[]) : [])
+        .filter((v) => v.id !== leftId)
+        .map((v) => ({
+          value: v.id,
+          label: `${v.brand ?? ""} ${v.model ?? ""}`.trim() || v.id,
+        })),
+    [vehicles, leftId]
+  );
+
   useEffect(() => {
-    if (!open) setRightId(undefined);
+    if (!open) {
+      setRightId(undefined);
+      setRows(null);
+    }
   }, [open]);
+
+  const handleOk = async () => {
+    if (!rightId) return;
+    try {
+      setLoading(true);
+      const res = await api.get(`/vehicle/${leftId}/vs/${rightId}`);
+      const list = (res?.data?.result || []) as Array<{
+        keyName: string;
+        vehicleValue: number | string | null;
+        different: boolean;
+        betterFor?: string | null;
+      }>;
+      // API mẫu trả 1 phía; ta map thành bảng hai phía (đơn giản hoá)
+      // Trong thực tế nếu BE trả cả left/right thì chỉ cần gán trực tiếp.
+      const mapped: CompareRow[] = list.map(
+        (x: {
+          keyName: string;
+          vehicleValue: number | string | null;
+          different: boolean;
+          betterFor?: string | null;
+        }) => ({
+          keyName: x.keyName,
+          left: undefined, // BE hiện chưa cung cấp chi tiết; để trống
+          right: x.vehicleValue,
+          different: !!x.different,
+          betterFor: x.betterFor ?? null,
+        })
+      );
+      setRows(mapped);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal
@@ -21,7 +93,7 @@ export const VehicleCompareModal = ({ open, onClose }: Props) => {
       title="So sánh mẫu xe"
       width={900}
       destroyOnClose
-      onOk={() => {}}
+      onOk={handleOk}
     >
       <Space direction="vertical" className="w-full">
         <div>
@@ -34,13 +106,53 @@ export const VehicleCompareModal = ({ open, onClose }: Props) => {
             value={rightId}
             onChange={setRightId}
             showSearch
-            options={[]}
-            disabled
+            options={options}
+            optionFilterProp="label"
           />
         </div>
-        <div style={{ minHeight: 120, textAlign: "center", paddingTop: 30 }}>
-          So sánh xe sẽ hiển thị ở đây.
-        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Spin />
+          </div>
+        ) : rows && rows.length > 0 ? (
+          <Table
+            pagination={false}
+            rowKey={(r) => r.keyName}
+            dataSource={rows}
+            columns={[
+              { title: "Thông số", dataIndex: "keyName" },
+              {
+                title: "Hiện tại (Left)",
+                dataIndex: "left",
+                render: (v) => v ?? "—",
+              },
+              {
+                title: "So sánh (Right)",
+                dataIndex: "right",
+                render: (v) => v ?? "—",
+              },
+              {
+                title: "Khác biệt",
+                dataIndex: "different",
+                render: (b: boolean) =>
+                  b ? <Tag color="orange">Khác</Tag> : <Tag>Giống</Tag>,
+              },
+              {
+                title: "Tối ưu",
+                dataIndex: "betterFor",
+                render: (v: string | null | undefined) =>
+                  v ? (
+                    <Tag color={v === "left" ? "green" : "blue"}>{v}</Tag>
+                  ) : (
+                    "—"
+                  ),
+              },
+            ]}
+          />
+        ) : (
+          <Empty description="Chưa có dữ liệu so sánh" />
+        )}
       </Space>
     </Modal>
   );

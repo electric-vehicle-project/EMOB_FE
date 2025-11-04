@@ -124,7 +124,7 @@ export const VehicleUnitListModal = ({
       footer={null}
       width={900}
       centered
-      destroyOnHidden
+      destroyOnClose
       maskClosable
     >
       {units.length === 0 && !isSoftLoading ? (
@@ -158,7 +158,6 @@ export const VehicleUnitListModal = ({
               pageSize={size}
               onChange={(p) => {
                 setPage(p - 1);
-                fetchUnits(true);
               }}
               showSizeChanger={false}
             />

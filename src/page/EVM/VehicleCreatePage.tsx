@@ -10,6 +10,7 @@ import type { IVehicle } from "../../model/Vehicle";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { ROUTES } from "../../model/routePaths";
+import { getRoleBasePath } from "../../utils/roleGuard";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
@@ -21,15 +22,7 @@ export const VehicleCreatePage = () => {
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
-
-  const basePath =
-    role === "ADMIN"
-      ? "/admin"
-      : role === "EVM_STAFF"
-      ? "/evm_staff"
-      : role === "MANAGER"
-      ? "/manager"
-      : "/dealer_staff";
+  const basePath = getRoleBasePath(user);
 
   useEffect(() => {
     if (role !== "EVM_STAFF") {
@@ -41,13 +34,16 @@ export const VehicleCreatePage = () => {
   const handleCreate = async (values: IVehicle) => {
     try {
       const formData = new FormData();
-      ((values.images as (File | { originFileObj?: File })[]) || []).forEach(
-        (file: File | { originFileObj?: File }) => {
-          const origin =
-            "originFileObj" in file ? file.originFileObj || file : file;
-          if (origin instanceof File) formData.append("files", origin);
-        }
-      );
+      type UploadFileLike = File | { originFileObj?: File };
+      const extractFile = (f: UploadFileLike): File | null => {
+        if (f instanceof File) return f;
+        const origin = (f as { originFileObj?: File }).originFileObj;
+        return origin instanceof File ? origin : null;
+      };
+      ((values.images as UploadFileLike[]) || []).forEach((file) => {
+        const origin = extractFile(file);
+        if (origin) formData.append("files", origin);
+      });
 
       let imageUrls: string[] = [];
       if (formData.has("files")) {
@@ -60,21 +56,29 @@ export const VehicleCreatePage = () => {
         imageUrls = Array.isArray(raw) ? raw : [];
       }
 
+      const normalizeType = (t: unknown): string | undefined => {
+        if (typeof t === "string") return t;
+        if (
+          t !== null &&
+          typeof t === "object" &&
+          "value" in (t as Record<string, unknown>)
+        ) {
+          const v = (t as Record<string, unknown>).value;
+          return typeof v === "string" ? v : undefined;
+        }
+        return undefined;
+      };
+
       const payload = {
         ...values,
         images: imageUrls.length
           ? imageUrls
           : ["https://placehold.co/300x200?text=Vehicle"],
-        type:
-          typeof values.type === "object" &&
-          values.type !== null &&
-          "value" in values.type
-            ? (values.type as { value: string }).value
-            : values.type,
+        type: normalizeType((values as unknown as { type?: unknown })?.type),
       };
 
       await createVehicle.mutateAsync(payload);
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["get-vehicles"] });
 
       message.success("✅ Thêm xe mới thành công!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);

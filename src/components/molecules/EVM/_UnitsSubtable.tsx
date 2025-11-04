@@ -10,10 +10,10 @@ type UnitRow = {
   vehicleUnitId: string;
   vinNumber: string;
   color: string;
-  productionYear?: string;
-  purchaseDate?: string;
-  warrantyStart?: string;
-  warrantyEnd?: string;
+  productionYear?: string; // swagger trả date -> hiển thị YYYY
+  purchaseDate?: string; // swagger trả ISO
+  warrantyStart?: string; // swagger trả YYYY-MM-DD
+  warrantyEnd?: string; // swagger trả YYYY-MM-DD
   status:
     | "NORMAL"
     | "SPECIAL"
@@ -34,11 +34,12 @@ const statusColor: Record<UnitRow["status"], string> = {
 };
 
 const UnitsSubtable = ({ vehicleId }: Props) => {
-  const { data, isLoading } = useGetVehicleUnitsByVehicleId(
-    "get-vehicle-units-by-model",
-    `/vehicle/unit/view-all-by-model/${vehicleId}`
-  );
-  const rows = (data as { data?: UnitRow[] })?.data ?? [];
+  const { units, isLoading } = useGetVehicleUnitsByVehicleId(vehicleId, {
+    // subtable chỉ xem nhanh, không phân trang
+    enabled: !!vehicleId,
+  });
+
+  const rows: UnitRow[] = Array.isArray(units) ? (units as UnitRow[]) : [];
 
   if (isLoading) {
     return (
@@ -77,9 +78,11 @@ const UnitsSubtable = ({ vehicleId }: Props) => {
           title: "Bảo hành",
           render: (r: UnitRow) =>
             `${
-              r.warrantyStart ? dayjs(r.warrantyStart).format("YY-MM-DD") : "—"
+              r.warrantyStart
+                ? dayjs(r.warrantyStart).format("YYYY-MM-DD")
+                : "—"
             } → ${
-              r.warrantyEnd ? dayjs(r.warrantyEnd).format("YY-MM-DD") : "—"
+              r.warrantyEnd ? dayjs(r.warrantyEnd).format("YYYY-MM-DD") : "—"
             }`,
         },
         {
@@ -92,7 +95,8 @@ const UnitsSubtable = ({ vehicleId }: Props) => {
         {
           title: "Giá nhập",
           dataIndex: "price",
-          render: (p?: number) => (p ? `${p.toLocaleString("vi-VN")}₫` : "—"),
+          render: (p?: number) =>
+            typeof p === "number" ? `${p.toLocaleString("vi-VN")}₫` : "—",
         },
       ]}
       dataSource={rows}

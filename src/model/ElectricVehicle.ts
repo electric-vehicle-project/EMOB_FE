@@ -4,24 +4,24 @@ export interface ElectricVehicle {
   name: string;
   brand?: string;
   imageUrl?: string;
-  basePrice?: number;
-  batteryCapacity?: number; // kWh
-  rangePerCharge?: number; // km
-  power?: number; // kW
-  torque?: number; // Nm
+  basePrice?: number;          // ưu tiên retail
+  batteryCapacity?: number;    // kWh
+  rangePerCharge?: number;     // km
+  power?: number;              // kW
+  torque?: number;             // Nm
   seats?: number;
-  // ...bạn có thể bổ sung các field khác có trong BE
+  type?: string;
 }
 
 export type CompareBetter = "left" | "right" | null;
 
 export interface VehicleComparisonField {
-  key: string; // e.g. "basePrice"
-  label: string; // e.g. "Giá niêm yết"
+  key: string;
+  label: string;
   left: string | number | null;
   right: string | number | null;
   different: boolean;
-  betterFor?: CompareBetter; // BE trả "left" hoặc "right" nếu có
+  betterFor?: CompareBetter;
 }
 
 export interface VehicleComparisonResponse {

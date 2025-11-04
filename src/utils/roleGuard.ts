@@ -1,19 +1,29 @@
 // EMOB-2025 - roleGuard (robust)
-import { Role } from "../model/Account";
+import type { Role } from "../model/Account";
 
 /** Chuẩn hoá role từ nhiều kiểu dữ liệu/state khác nhau */
 export const normalizeRole = (raw: unknown): Role | null => {
-  // chấp nhận: "EVM_STAFF" | "evm_staff" | "EVM" | {name:"EVM_STAFF"} | {code:"EVM"} | ["EVM_STAFF"] ...
-  const pick = (v: any) =>
-    v?.role ?? v?.roleName ?? v?.code ?? v?.name ?? v?.[0] ?? v;
-
+  const pick = (v: unknown) => {
+    if (v && typeof v === "object") {
+      const o = v as Record<string, unknown> & { 0?: unknown };
+      return (
+        (o as { role?: unknown }).role ??
+        (o as { roleName?: unknown }).roleName ??
+        (o as { code?: unknown }).code ??
+        (o as { name?: unknown }).name ??
+        o[0] ??
+        v
+      );
+    }
+    return v as unknown;
+  };
   const r = pick(raw);
   const s = String(r ?? "")
     .toUpperCase()
     .replace(/\s+/g, "_");
 
   if (s.includes("ADMIN")) return "ADMIN";
-  if (s.includes("EVM")) return "EVM_STAFF"; // khớp cả "EVM" lẫn "EVM_STAFF"
+  if (s.includes("EVM")) return "EVM_STAFF";
   if (s.includes("MANAGER")) return "MANAGER";
   if (s.includes("DEALER")) return "DEALER_STAFF";
   return null;
@@ -26,37 +36,34 @@ export const isDealerStaff = (role?: Role | null) => role === "DEALER_STAFF";
 
 // Vehicle actions
 export const canCreateVehicle = (role?: Role | null) => isEvmStaff(role);
-export const canEditVehicle = (role?: Role | null) => isEvmStaff(role); // sửa thông tin chung (không sửa giá)
+export const canEditVehicle = (role?: Role | null) => isEvmStaff(role); // EVM sửa thông tin chung
 export const canUpdatePrice = (role?: Role | null) => isAdmin(role); // chỉ ADMIN cập nhật giá
-export const canDeleteVehicle = (role?: Role | null) => isEvmStaff(role); // ✅ chỉ EVM_STAFF được xoá
+export const canDeleteVehicle = (role?: Role | null) => isEvmStaff(role); // EVM được xoá
 
 // Units
 export const canBulkCreateUnits = (role?: Role | null) => isEvmStaff(role);
-export const canViewUnits = (_role?: Role | null) => true; // BE sẽ filter phạm vi
+export const canViewUnits = () => true;
 
 // Compare
-export const canCompareVehicles = (_role?: Role | null) => true; // BE enforce phạm vi
+export const canCompareVehicles = () => true;
 
 // Base path (chấp nhận raw role luôn)
 export const getRoleBasePath = (raw?: unknown) => {
   const role = normalizeRole(raw);
-
   if (role === "ADMIN") return "/admin";
   if (role === "EVM_STAFF") return "/evm_staff";
   if (role === "MANAGER") return "/manager";
-  if (role === "DEALER_STAFF") return "/manager"; // ✅ Dealer Staff dùng root /manager (router đã gom chung)
+  if (role === "DEALER_STAFF") return "/dealer_staff";
 
-  // ✅ Khi role chưa kịp load: suy từ URL hiện tại để tránh 404
   if (typeof window !== "undefined") {
-    const seg = window.location.pathname.split("/")[1]; // admin | evm_staff | manager | ...
-    if (["admin", "evm_staff", "manager"].includes(seg)) return `/${seg}`;
+    const seg = window.location.pathname.split("/")[1];
+    if (["admin", "evm_staff", "manager", "dealer_staff"].includes(seg))
+      return `/${seg}`;
   }
-
-  // ✅ Fallback an toàn (tránh /dealer_staff vì không có route root)
   return "/evm_staff";
 };
 
-// Helper: vehicle đã có giá để cho phép bulk create units?
+// Helper: vehicle đã có cả giá import + retail?
 export const hasVehiclePriced = (v?: {
   importPrice?: number | null;
   retailPrice?: number | null;

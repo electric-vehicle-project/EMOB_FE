@@ -1,8 +1,8 @@
-import { Modal, Table, Button, Tag } from "antd";
+import { Modal, Table, Tag, Pagination, Typography, Empty, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { toast } from "react-toastify";
-import { useCurrentUser } from "../../../utils/getCurrentUser";
-import { useGetVehicleUnitsByVehicleId } from "../../../service/vehicleService";
+import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
+import { useGetVehicleUnitsByVehicleIdPaged } from "../../../service/vehicleService";
 
 type Props = {
   open: boolean;
@@ -11,70 +11,85 @@ type Props = {
 };
 
 type VehicleUnitRow = {
+  vehicleUnitId: string;
   vinNumber: string;
   color: string;
-  status: string;
+  status:
+    | "NORMAL"
+    | "SPECIAL"
+    | "OLD_STOCK"
+    | "TEST_DRIVE"
+    | "RESERVED"
+    | "SOLD";
   productionYear?: string;
-  purchaseDate?: string;
-  warrantyStart?: string;
-  warrantyEnd?: string;
+  price?: number;
 };
+
+const { Text } = Typography;
 
 export default function VehicleUnitListModal({
   open,
   onClose,
   vehicleId,
 }: Props) {
-  const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+  const [page, setPage] = useState(0);
+  const size = 10;
 
-  const { data = [], isLoading } = useGetVehicleUnitsByVehicleId(
-    "get-vehicle-units-by-model",
-    `/vehicle/unit/view-all-by-model/${vehicleId}`
+  useEffect(() => {
+    if (open) setPage(0);
+  }, [open, vehicleId]);
+
+  const query = useGetVehicleUnitsByVehicleIdPaged(
+    vehicleId || "",
+    { page, size },
+    { enabled: open && !!vehicleId, keepPreviousData: true }
   );
 
-  // Hiện chưa có API thật, nên chỉ toast giả lập
-  const handleApprove = async (vinNumber: string) => {
-    toast.info(`Duyệt xe ${vinNumber} (chức năng đang phát triển)`);
-  };
+  const units = (query.data?.units ?? []) as VehicleUnitRow[];
+  const metadata = query.data?.metadata as
+    | { totalElements?: number }
+    | undefined;
+  const { isLoading } = query;
+  const total = metadata?.totalElements ?? 0;
 
+  const statusColor: Record<VehicleUnitRow["status"], string> = useMemo(
+    () => ({
+      NORMAL: "green",
+      SPECIAL: "purple",
+      OLD_STOCK: "orange",
+      TEST_DRIVE: "blue",
+      RESERVED: "gold",
+      SOLD: "red",
+    }),
+    []
+  );
+
+  // 👇 Bảng đã bỏ Ngày mua / BH bắt đầu / BH kết thúc; Admin không có cột thao tác
   const columns: ColumnsType<VehicleUnitRow> = [
-    { title: "Số khung (VIN)", dataIndex: "vinNumber" },
+    {
+      title: "Số khung (VIN)",
+      dataIndex: "vinNumber",
+      render: (v: string) => <Text copyable>{v}</Text>,
+    },
     { title: "Màu sắc", dataIndex: "color" },
     {
       title: "Trạng thái",
       dataIndex: "status",
-      render: (status: string) => {
-        const color =
-          status === "PENDING_APPROVAL"
-            ? "orange"
-            : status === "APPROVED"
-            ? "green"
-            : "blue";
-        return <Tag color={color}>{status || "NORMAL"}</Tag>;
-      },
+      render: (status: VehicleUnitRow["status"]) => (
+        <Tag color={statusColor[status]}>{status}</Tag>
+      ),
     },
-    { title: "Năm SX", dataIndex: "productionYear" },
-    { title: "Ngày mua", dataIndex: "purchaseDate" },
-    { title: "BH bắt đầu", dataIndex: "warrantyStart" },
-    { title: "BH kết thúc", dataIndex: "warrantyEnd" },
-    ...(role === "ADMIN"
-      ? [
-          {
-            title: "Thao tác",
-            align: "center" as const,
-            render: (_: unknown, record: VehicleUnitRow) => (
-              <Button
-                type="primary"
-                onClick={() => handleApprove(record.vinNumber)}
-                className="rounded-md bg-[#627254] border-none hover:opacity-90"
-              >
-                Duyệt yêu cầu
-              </Button>
-            ),
-          },
-        ]
-      : []),
+    {
+      title: "Năm SX",
+      dataIndex: "productionYear",
+      render: (v?: string) => (v ? dayjs(v).format("YYYY") : "—"),
+    },
+    {
+      title: "Giá nhập",
+      dataIndex: "price",
+      render: (p?: number) =>
+        typeof p === "number" ? `${p.toLocaleString("vi-VN")}₫` : "—",
+    },
   ];
 
   return (
@@ -84,14 +99,41 @@ export default function VehicleUnitListModal({
       footer={null}
       width={950}
       title="Danh sách đơn vị xe"
+      destroyOnClose
     >
-      <Table
-        loading={isLoading}
-        dataSource={data as VehicleUnitRow[]}
-        columns={columns}
-        rowKey={(r) => r.vinNumber}
-        pagination={false}
-      />
+      {isLoading && (units?.length ?? 0) === 0 ? (
+        <div className="flex justify-center py-10">
+          <Spin size="large" />
+        </div>
+      ) : (units?.length ?? 0) === 0 ? (
+        <Empty
+          description="Không có lô xe nào thuộc xe này."
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      ) : (
+        <>
+          <Table
+            dataSource={(units || []) as VehicleUnitRow[]}
+            columns={columns}
+            rowKey={(r) => r.vehicleUnitId}
+            pagination={false}
+            size="middle"
+            bordered
+          />
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-gray-600">
+              Tổng cộng: {(units || []).length} / {total} xe
+            </span>
+            <Pagination
+              current={page + 1}
+              total={total}
+              pageSize={size}
+              onChange={(p) => setPage(p - 1)}
+              showSizeChanger={false}
+            />
+          </div>
+        </>
+      )}
     </Modal>
   );
 }

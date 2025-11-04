@@ -1,4 +1,3 @@
-// src/components/organisms/vehicle/VehicleCard.tsx
 import React, { type KeyboardEvent } from "react";
 import { Card, Tag, Tooltip } from "antd";
 import type { ElectricVehicle } from "../../../model/ElectricVehicle";
@@ -6,6 +5,7 @@ import type { ElectricVehicle } from "../../../model/ElectricVehicle";
 interface Props {
   vehicle: ElectricVehicle;
   onOpenDetail: (id: string) => void;
+  onViewUnits?: (id: string) => void;
 }
 
 const fmtPrice = (v?: number) =>
@@ -14,7 +14,6 @@ const fmtPrice = (v?: number) =>
 export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
   const priceText = fmtPrice(vehicle.basePrice);
 
-  // chuẩn hoá KPI: chỉ lấy tối đa 3 chỉ số quan trọng
   const kpis: React.ReactNode[] = [];
   if (typeof vehicle.rangePerCharge === "number") {
     kpis.push(
@@ -59,7 +58,6 @@ export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
         }}
       />
 
-      {/* Badge giá / trạng thái định giá */}
       <div className="absolute top-2 right-2">
         {priceText ? (
           <div className="px-2.5 py-1 rounded-full bg-white/90 border border-gray-200 text-xs font-semibold">
@@ -91,7 +89,6 @@ export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
         onKeyDown={handleKey}
         className="outline-none"
       >
-        {/* Tiêu đề + brand */}
         <div className="min-h-[40px]">
           <Tooltip title={vehicle.name}>
             <h3 className="font-semibold text-base text-[#414d38] line-clamp-1">
@@ -105,9 +102,8 @@ export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
           )}
         </div>
 
-        {/* Loại + các KPI chính */}
         <div className="flex flex-wrap gap-2 mt-2">
-          <Tag className="rounded-md">{(vehicle as any)?.type ?? "EV"}</Tag>
+          <Tag className="rounded-md">{vehicle.type ?? "EV"}</Tag>
           {shownKpis}
         </div>
       </div>

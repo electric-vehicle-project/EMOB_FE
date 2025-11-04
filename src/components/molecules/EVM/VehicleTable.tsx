@@ -18,8 +18,7 @@ interface Props {
   onEdit: (vehicle: IVehicle) => void;
   onDelete: (id: string) => void;
   onAddUnit: (vehicleId: string) => void;
-  canEditPrices?: boolean; // ADMIN => có quyền chỉnh giá (ở nơi khác)
-  canAddUnit?: boolean; // STAFF => thêm đơn vị
+  canAddUnit?: boolean;
 }
 
 export const VehicleTable: React.FC<Props> = ({
@@ -62,9 +61,7 @@ export const VehicleTable: React.FC<Props> = ({
       align: "center",
       render: (images?: string[]) => {
         const src =
-          images && images.length > 0
-            ? images[0]
-            : "https://via.placeholder.com/60x60?text=No+Image";
+          images?.[0] || "https://via.placeholder.com/60x60?text=No+Image";
         return (
           <Tooltip
             title={
@@ -97,17 +94,15 @@ export const VehicleTable: React.FC<Props> = ({
       dataIndex: "brand",
       key: "brand",
       align: "center",
-      sorter: (a, b) => a.brand.localeCompare(b.brand),
+      sorter: (a, b) => (a.brand || "").localeCompare(b.brand || ""),
     },
     {
       title: "Mẫu xe",
       dataIndex: "model",
       key: "model",
       align: "center",
-      sorter: (a, b) => a.model.localeCompare(b.model),
+      sorter: (a, b) => (a.model || "").localeCompare(b.model || ""),
     },
-
-    // 👉 LUÔN hiển thị 2 cột giá (Staff chỉ xem, Admin có thể chỉnh ở trang riêng)
     {
       title: "Giá nhập (₫)",
       dataIndex: "importPrice",
@@ -124,7 +119,6 @@ export const VehicleTable: React.FC<Props> = ({
       render: (v?: number) =>
         typeof v === "number" ? v.toLocaleString("vi-VN") : "—",
     },
-
     { title: "Dung lượng pin (kWh)", dataIndex: "batteryKwh", align: "center" },
     { title: "Tầm hoạt động (km)", dataIndex: "rangeKm", align: "center" },
     {

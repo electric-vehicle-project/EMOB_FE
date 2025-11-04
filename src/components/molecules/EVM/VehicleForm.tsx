@@ -31,7 +31,7 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         <Input placeholder="Ví dụ: VF8, Model S..." />
       </Form.Item>
 
-      {/* ⚠️ Enum BE: SEDAN | SUV | HATCHBACK | TRUCK | MOTORBIKE */}
+      {/* BE enum: SEDAN | SUV | HATCHBACK | TRUCK | MOTORBIKE */}
       <Form.Item
         label="Loại xe"
         name="type"
@@ -46,10 +46,7 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         </Select>
       </Form.Item>
 
-      {/* 👉 Giá chỉ EVM nhập khi tạo? Yêu cầu đề bài:
-          - Admin chỉ cấu hình giá (screen riêng).
-          - EVM_STAFF tạo model, không cấu hình giá ở đây.
-          => Giữ option canEditPrices để linh hoạt theo quyền trang gọi. */}
+      {/* Theo nghiệp vụ: EVM_STAFF không chỉnh giá; Admin chỉnh giá ở trang riêng */}
       {canEditPrices && (
         <>
           <Form.Item label="Giá nhập (VNĐ)" name="importPrice">
@@ -94,7 +91,7 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         <InputNumber min={0} className="w-full" />
       </Form.Item>
 
-      {/* 🖼️ Upload hình ảnh → cuối cùng gửi mảng string URL đúng Swagger */}
+      {/* Upload hình ảnh => cuối cùng gửi mảng URL string */}
       <Form.Item
         label="Hình ảnh xe"
         name="images"

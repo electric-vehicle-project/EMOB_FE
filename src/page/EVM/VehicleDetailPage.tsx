@@ -1,7 +1,12 @@
-/* EMOB-2025 - VehicleDetailPage (đồng bộ CardWrapper, nút theo role, EVM được xóa) */
-import { useMemo, useState } from "react";
-import { Card, Tag, Space, Tooltip, message } from "antd";
-import { useNavigate, useParams } from "react-router";
+/* EMOB-2025 - VehicleDetailPage */
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { Card, Tag, Space, Tooltip, message, Popconfirm } from "antd";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { ReactElement } from "react";
 import type { Role } from "../../model/Account";
@@ -15,6 +20,7 @@ import {
   hasVehiclePriced,
   isEvmStaff,
   canDeleteVehicle,
+  normalizeRole,
 } from "../../utils/roleGuard";
 import {
   useGetVehicleById,
@@ -33,7 +39,8 @@ import {
 import { ROUTES } from "../../model/routePaths";
 import { Button } from "../../components/atoms/Button";
 import CardWrapper from "../../components/template/CardWrapper";
-import { Popconfirm } from "antd";
+import { useCurrentUser } from "../../utils/getCurrentUser";
+import VehicleUnitListModal from "../../components/organisms/vehicle/VehicleUnitListModal";
 
 type Sel = { auth?: { user?: { role?: Role | null } } };
 
@@ -53,48 +60,78 @@ const SpecItem = ({
 export const VehicleDetailPage = () => {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const role = useSelector((s: Sel) => s.auth?.user?.role) as
-    | Role
-    | null
-    | undefined;
-  const basePath = getRoleBasePath(role ?? null);
+  const location = useLocation();
 
-  // ✅ LẤY vehicle từ service đúng field
+  // Role lấy chắc chắn
+  const reduxRole = useSelector((s: Sel) => s.auth?.user?.role);
+  const tokenRole = (useCurrentUser() as { role?: Role } | null)?.role ?? null;
+  const urlSeg =
+    typeof window !== "undefined"
+      ? (window.location.pathname.split("/")[1] || "").toUpperCase()
+      : "";
+  const urlRoleGuess =
+    urlSeg === "ADMIN"
+      ? "ADMIN"
+      : urlSeg === "EVM_STAFF"
+      ? "EVM_STAFF"
+      : urlSeg === "MANAGER"
+      ? "MANAGER"
+      : null;
+
+  const role = normalizeRole(reduxRole ?? tokenRole ?? urlRoleGuess);
+  const basePath = getRoleBasePath(role);
+
   const { vehicle, isLoading, error } = useGetVehicleById(id, {
     enabled: !!id,
   });
 
-  if (
-    error &&
-    typeof error === "object" &&
-    error !== null &&
-    (error as { response?: { status?: number } })?.response?.status === 401
-  ) {
-    message.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
-  }
+  useEffect(() => {
+    const http401 =
+      error &&
+      typeof error === "object" &&
+      (error as { response?: { status?: number } })?.response?.status === 401;
+    if (http401)
+      message.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+  }, [error]);
 
   const { mutateAsync: deleteVehicle, isPending: deleting } =
     useDeleteVehicle();
 
   const [compareOpen, setCompareOpen] = useState(false);
+
+  // Modal Units theo query
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [unitsOpen, setUnitsOpen] = useState(false);
+  useEffect(() => {
+    setUnitsOpen(searchParams.get("openUnits") === "1");
+  }, [searchParams]);
+
   const priced = hasVehiclePriced(vehicle);
 
-  // ===== Actions theo role
+  // Back button logic:
+  // - Nếu đi từ trang Bulk (location.state?.from === 'bulk'), back sẽ giữ nguyên ở Detail
+  //   để tránh quay về Bulk theo mong muốn của bạn.
+  const handleBack = useCallback(() => {
+    const cameFromBulk =
+      typeof location.state === "object" &&
+      location.state !== null &&
+      (location.state as Record<string, unknown>).from === "bulk";
+    if (cameFromBulk) {
+      return;
+    }
+    navigate(-1);
+  }, [location.state, navigate]);
+
   const actions = useMemo(() => {
     const arr: ReactElement[] = [];
 
     // Quay lại
     arr.push(
-      <Button
-        key="back"
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(-1)}
-      >
+      <Button key="back" icon={<ArrowLeftOutlined />} onClick={handleBack}>
         Quay lại
       </Button>
     );
 
-    // EVM: Edit (không được sửa giá)
     if (canEditVehicle(role)) {
       arr.push(
         <Button
@@ -112,7 +149,6 @@ export const VehicleDetailPage = () => {
       );
     }
 
-    // EVM: Delete (CHỈ EVM_STAFF)
     if (canDeleteVehicle(role)) {
       arr.push(
         <Popconfirm
@@ -126,7 +162,6 @@ export const VehicleDetailPage = () => {
             try {
               await deleteVehicle(id);
               message.success("Đã xóa mẫu xe.");
-              // điều hướng về trang trước (hoặc list)
               navigate(-1);
             } catch {
               message.error("Xóa không thành công.");
@@ -140,7 +175,6 @@ export const VehicleDetailPage = () => {
       );
     }
 
-    // EVM: Bulk create units (disable nếu chưa có giá)
     if (canBulkCreateUnits(role)) {
       const btn = (
         <Button
@@ -148,7 +182,9 @@ export const VehicleDetailPage = () => {
           icon={<PlusOutlined />}
           disabled={!priced}
           onClick={() =>
-            navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`)
+            navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`, {
+              state: { from: "detail" },
+            })
           }
           className="rounded-md"
         >
@@ -159,7 +195,6 @@ export const VehicleDetailPage = () => {
         priced ? (
           btn
         ) : (
-          // AntD cần wrap <Button disabled> trong <span> để tooltip hoạt động
           <Tooltip
             key="add-batch-tip"
             title="Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật."
@@ -170,7 +205,6 @@ export const VehicleDetailPage = () => {
       );
     }
 
-    // Admin: Update price
     if (canUpdatePrice(role)) {
       arr.push(
         <Button
@@ -192,18 +226,15 @@ export const VehicleDetailPage = () => {
       );
     }
 
-    // Xem lô xe (ai cũng xem được — BE tự filter theo dealer)
-    if (canViewUnits(role)) {
+    if (canViewUnits()) {
       arr.push(
         <Button
           key="view-units"
           icon={<AppstoreOutlined />}
-          onClick={() =>
-            navigate(
-              `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id) +
-                "?openUnits=1"
-            )
-          }
+          onClick={() => {
+            setSearchParams({ openUnits: "1" }, { replace: true });
+            setUnitsOpen(true);
+          }}
           className="rounded-md"
         >
           Xem lô xe
@@ -211,8 +242,7 @@ export const VehicleDetailPage = () => {
       );
     }
 
-    // So sánh: tất cả (BE enforce scope)
-    if (canCompareVehicles(role)) {
+    if (canCompareVehicles()) {
       arr.push(
         <Button
           key="compare"
@@ -227,9 +257,18 @@ export const VehicleDetailPage = () => {
     }
 
     return arr;
-  }, [role, id, basePath, navigate, priced, deleting, deleteVehicle]);
+  }, [
+    role,
+    id,
+    basePath,
+    navigate,
+    priced,
+    deleting,
+    deleteVehicle,
+    setSearchParams,
+    handleBack,
+  ]);
 
-  // ===== Chuẩn hoá hiển thị
   const name = `${vehicle?.brand ?? ""} ${vehicle?.model ?? ""}`.trim();
   const images: string[] = Array.isArray(vehicle?.images)
     ? vehicle!.images
@@ -242,15 +281,12 @@ export const VehicleDetailPage = () => {
       subtitle="Thông tin tổng quan & thông số kỹ thuật"
       variant="dashboard"
     >
-      {/* Toolbar: Back trái – actions phải (đồng bộ các page) */}
       <div className="flex items-center justify-between -mt-2">
         <div />
         <Space wrap>{actions}</Space>
       </div>
 
-      {/* Vùng nội dung */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Media (trái) */}
         <Card loading={isLoading} className="rounded-2xl lg:col-span-5">
           <div className="w-full h-72 sm:h-80 overflow-hidden flex items-center justify-center bg-white rounded-xl border">
             <img
@@ -285,7 +321,6 @@ export const VehicleDetailPage = () => {
           )}
         </Card>
 
-        {/* Tóm tắt + Specs (phải) */}
         <Card loading={isLoading} className="rounded-2xl lg:col-span-7">
           {!isLoading && vehicle && (
             <>
@@ -329,7 +364,6 @@ export const VehicleDetailPage = () => {
                   )}
                 </div>
 
-                {/* Chips giá nếu có */}
                 {priced && (
                   <div className="text-right">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
@@ -348,13 +382,11 @@ export const VehicleDetailPage = () => {
                 )}
               </div>
 
-              {/* Specs grid */}
               <div className="mt-6 border-t pt-4">
                 <h3 className="text-base font-semibold mb-2">
                   Thông số kỹ thuật
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                  <SpecItem label="Mã xe" value={vehicle.id} />
                   <SpecItem label="Hãng" value={vehicle.brand} />
                   <SpecItem label="Mẫu" value={vehicle.model} />
                   <SpecItem label="Loại" value={vehicle.type} />
@@ -385,6 +417,19 @@ export const VehicleDetailPage = () => {
         <VehicleCompareModal
           open={compareOpen}
           onClose={() => setCompareOpen(false)}
+          leftId={id}
+        />
+      )}
+
+      {id && (
+        <VehicleUnitListModal
+          open={unitsOpen}
+          onClose={() => {
+            setUnitsOpen(false);
+            searchParams.delete("openUnits");
+            setSearchParams(searchParams, { replace: true });
+          }}
+          vehicleId={id}
         />
       )}
     </CardWrapper>

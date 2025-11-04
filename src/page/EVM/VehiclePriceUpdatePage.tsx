@@ -12,19 +12,9 @@ export const VehiclePriceUpdatePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const updatePrices = useUpdateVehiclePrices();
-  const { data, isLoading } = useGetVehicleById(id ?? "");
-  type PriceVehicle = {
-    importPrice?: number;
-    retailPrice?: number;
-    brand?: string;
-    model?: string;
-  };
-  const hasResult = (x: unknown): x is { result?: PriceVehicle } =>
-    !!x && typeof x === "object" && "result" in (x as Record<string, unknown>);
-  const vehicle: PriceVehicle | undefined = hasResult(data)
-    ? data.result
-    : (data as PriceVehicle | undefined);
+  const updatePrices = useUpdateVehiclePrices(); // ✅ đã sửa service: PUT /vehicle/{id}/prices
+  const { vehicle, isLoading } = useGetVehicleById(id ?? "", { enabled: !!id });
+
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
   const basePath =
