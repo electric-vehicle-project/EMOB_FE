@@ -28,7 +28,7 @@ export const VehicleUnitListModal = ({
   const [units, setUnits] = useState<VehicleUnit[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
-  const [isSoftLoading, setIsSoftLoading] = useState(false); // ✅ loading mượt
+  const [isSoftLoading, setIsSoftLoading] = useState(false);
   const size = 10;
 
   const fetchUnits = useCallback(
@@ -38,9 +38,7 @@ export const VehicleUnitListModal = ({
       try {
         const res = await api.get(
           `/vehicle/unit/view-all-by-model/${vehicleId}`,
-          {
-            params: { page, size },
-          }
+          { params: { page, size } }
         );
         const result = res?.data?.result;
         setUnits(result?.data ?? []);
@@ -49,7 +47,7 @@ export const VehicleUnitListModal = ({
         console.error("❌ Lỗi khi tải danh sách Vehicle Units:", err);
         setUnits([]);
       } finally {
-        setTimeout(() => setIsSoftLoading(false), 250); // ✅ delay nhẹ để cảm giác mượt
+        setTimeout(() => setIsSoftLoading(false), 250);
       }
     },
     [open, vehicleId, page, size]
@@ -58,7 +56,6 @@ export const VehicleUnitListModal = ({
   useEffect(() => {
     fetchUnits();
   }, [fetchUnits]);
-
   useEffect(() => {
     setPage(0);
   }, [vehicleId]);
@@ -128,6 +125,7 @@ export const VehicleUnitListModal = ({
       width={900}
       centered
       destroyOnClose
+      maskClosable
     >
       {units.length === 0 && !isSoftLoading ? (
         <Empty
@@ -136,7 +134,6 @@ export const VehicleUnitListModal = ({
         />
       ) : (
         <>
-          {/* ✅ Làm mờ bảng khi đang tải trang mới */}
           <div
             className={`transition-all duration-300 ${
               isSoftLoading ? "opacity-50 pointer-events-none" : "opacity-100"
@@ -151,7 +148,6 @@ export const VehicleUnitListModal = ({
               size="middle"
             />
           </div>
-
           <div className="flex justify-between items-center mt-4">
             <span className="text-gray-600">
               Tổng cộng: {units.length} / {total} xe
@@ -162,7 +158,6 @@ export const VehicleUnitListModal = ({
               pageSize={size}
               onChange={(p) => {
                 setPage(p - 1);
-                fetchUnits(true); // ✅ tải nhẹ (soft fetch)
               }}
               showSizeChanger={false}
             />
@@ -170,7 +165,6 @@ export const VehicleUnitListModal = ({
         </>
       )}
 
-      {/* ✅ Overlay spinner riêng cho loading lần đầu (mở modal) */}
       {isSoftLoading && units.length === 0 && (
         <div className="flex justify-center py-10">
           <Spin size="large" />

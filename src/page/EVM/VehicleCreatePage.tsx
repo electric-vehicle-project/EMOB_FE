@@ -1,14 +1,16 @@
+// src/pages/vehicle/VehicleCreatePage.tsx
 import { Card, message, Button, Space, Form } from "antd";
 import { useNavigate } from "react-router-dom";
 import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
-import {
-  useCreateVehicle,
-  useUploadVehicleImages,
-} from "../../service/vehicleService";
+import { useCreateVehicle } from "../../service/vehicleService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import type { IVehicle } from "../../model/Vehicle";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { ROUTES } from "../../model/routePaths";
+import { getRoleBasePath } from "../../utils/roleGuard";
+import type { UploadFile } from "antd/es/upload";
+import { uploadFiles } from "../../utils/uploadFile";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
@@ -16,61 +18,54 @@ export const VehicleCreatePage = () => {
   const queryClient = useQueryClient();
 
   const createVehicle = useCreateVehicle();
-  const uploadImages = useUploadVehicleImages();
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+  const basePath = getRoleBasePath(user);
 
   useEffect(() => {
     if (role !== "EVM_STAFF") {
       message.warning("Tài khoản của bạn không có quyền thêm xe mới!");
-      navigate("/dashboard/evm/vehicle", { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
     }
-  }, [role, navigate]);
+  }, [role, navigate, basePath]);
 
   const handleCreate = async (values: IVehicle) => {
     try {
-      const formData = new FormData();
-      ((values.images as (File | { originFileObj?: File })[]) || []).forEach(
-        (file: File | { originFileObj?: File }) => {
-          const origin =
-            "originFileObj" in file ? file.originFileObj || file : file;
-          if (origin instanceof File) formData.append("files", origin);
-        }
-      );
+      // Lấy danh sách file ảnh mới (nếu có)
+      const fileList =
+        (values.images as unknown as UploadFile[] | undefined) ?? [];
+      const rawFiles =
+        fileList
+          .map((f) =>
+            f.originFileObj instanceof File ? f.originFileObj : null
+          )
+          .filter(Boolean) ?? [];
 
-      let imageUrls: string[] = [];
-      if (formData.has("files")) {
-        const uploadRes = await uploadImages.mutateAsync(formData);
-        imageUrls =
-          uploadRes?.data?.result || uploadRes?.result || uploadRes || [];
-      }
+      // Upload lên Supabase → public URLs
+      const uploadedUrls = await uploadFiles(rawFiles as File[]);
 
-      const payload = {
+      const payload: IVehicle = {
         ...values,
-        images: imageUrls.length
-          ? imageUrls
-          : ["https://via.placeholder.com/300x200?text=Vehicle"],
-        type:
-          typeof values.type === "object" &&
-          values.type !== null &&
-          "value" in values.type
-            ? (values.type as { value: string }).value
-            : values.type,
+        // Nếu không có ảnh thì dùng placeholder
+        images:
+          uploadedUrls.length > 0
+            ? uploadedUrls
+            : ["https://placehold.co/300x200?text=Vehicle"],
       };
 
       await createVehicle.mutateAsync(payload);
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["get-vehicles"] });
 
       message.success("✅ Thêm xe mới thành công!");
-      navigate("/dashboard/evm/vehicle");
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
     } catch (err: unknown) {
       console.error("❌ Lỗi khi tạo xe:", err);
       message.error("❌ Không thể thêm xe!");
     }
   };
 
-  const handleCancel = () => navigate("/dashboard/evm/vehicle");
+  const handleCancel = () => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
 
   return (
     <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
@@ -83,14 +78,13 @@ export const VehicleCreatePage = () => {
           onFinish={handleCreate}
           canEditPrices={false}
         />
-
         <div className="flex justify-end gap-3 mt-6">
           <Space>
             <Button onClick={handleCancel}>Hủy</Button>
             <Button
               type="primary"
               onClick={() => form.submit()}
-              loading={createVehicle.isPending || uploadImages.isPending}
+              loading={createVehicle.isPending}
             >
               Tạo xe
             </Button>
@@ -100,3 +94,5 @@ export const VehicleCreatePage = () => {
     </div>
   );
 };
+
+export default VehicleCreatePage;

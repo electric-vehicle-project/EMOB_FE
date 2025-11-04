@@ -32,7 +32,10 @@ export const ROUTES = {
   DEALERS: "dealers",
   TESTDRIVE: "testdrive",
   REPORT: "report",
+
+  // ====== PROMOTIONS ======
   PROMOTIONS: "promotions",
+  PROMOTION_CREATE: "promotions/create",
   PROMOTION_EDIT: "promotions/edit/:id",
 
   // ====== PROFILE ======
@@ -49,6 +52,7 @@ export const ROUTES = {
   EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
+
   // DEALER_DISCOUNT_POLICY
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
 
