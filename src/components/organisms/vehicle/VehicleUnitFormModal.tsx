@@ -1,4 +1,13 @@
-import { Modal, Form, InputNumber, Input, DatePicker, Select } from "antd";
+// src/components/organisms/EVM/VehicleUnitFormModal.tsx
+import {
+  Modal,
+  Form,
+  InputNumber,
+  Input,
+  DatePicker,
+  Select,
+  message,
+} from "antd";
 import { useBulkCreateVehicleUnits } from "../../../service/vehicleService";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
@@ -6,7 +15,7 @@ import type { Dayjs } from "dayjs";
 interface Props {
   open: boolean;
   onClose: () => void;
-  vehicleId: string | null; // truyền ngầm từ record đang thao tác
+  vehicleId: string | null; // id của model
 }
 
 export default function VehicleUnitFormModal({
@@ -19,7 +28,13 @@ export default function VehicleUnitFormModal({
     color: string;
     productionYear?: Dayjs;
     purchaseDate?: Dayjs;
-    status: string;
+    status:
+      | "NORMAL"
+      | "SPECIAL"
+      | "OLD_STOCK"
+      | "TEST_DRIVE"
+      | "RESERVED"
+      | "SOLD";
   };
 
   const [form] = Form.useForm<FormValues>();
@@ -28,23 +43,26 @@ export default function VehicleUnitFormModal({
   const onFinish = async (values: FormValues) => {
     if (!vehicleId) return;
 
-    const payload = {
-      vehicleId,
-      quantity: values.quantity,
-      color: values.color,
-      productionYear: values.productionYear
-        ? dayjs(values.productionYear).format("YYYY-01-01")
-        : undefined,
-      purchaseDate: values.purchaseDate
-        ? dayjs(values.purchaseDate).toISOString()
-        : undefined,
-      status: values.status as "IN_STOCK" | "SOLD" | "DAMAGED", // nên là IN_STOCK khi nhập kho
-      // ❌ KHÔNG gửi warrantyStart / warrantyEnd ở bước nhập kho
-    };
+    try {
+      await bulkCreate.mutateAsync({
+        vehicleId,
+        quantity: values.quantity,
+        color: values.color,
+        productionYear: values.productionYear
+          ? dayjs(values.productionYear).format("YYYY-01-01")
+          : undefined,
+        purchaseDate: values.purchaseDate
+          ? dayjs(values.purchaseDate).toISOString()
+          : undefined,
+        status: values.status, // ✅ chuẩn enum BE
+      });
 
-    await bulkCreate.mutateAsync(payload);
-    form.resetFields();
-    onClose();
+      message.success("✅ Tạo lô xe thành công");
+      form.resetFields();
+      onClose();
+    } catch {
+      message.error("❌ Không thể tạo lô xe, vui lòng thử lại!");
+    }
   };
 
   return (
@@ -61,7 +79,7 @@ export default function VehicleUnitFormModal({
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ quantity: 1, status: "IN_STOCK" }}
+        initialValues={{ quantity: 1, status: "NORMAL" }}
       >
         <Form.Item
           name="quantity"
@@ -89,13 +107,16 @@ export default function VehicleUnitFormModal({
 
         <Form.Item name="status" label="Tình trạng">
           <Select>
-            <Select.Option value="IN_STOCK">Trong kho</Select.Option>
-            <Select.Option value="SOLD">Đã bán</Select.Option>
-            <Select.Option value="DAMAGED">Hư hỏng</Select.Option>
+            <Select.Option value="NORMAL">Xe mới (bình thường)</Select.Option>
+            <Select.Option value="SPECIAL">
+              Xe trưng bày / đặc biệt
+            </Select.Option>
+            <Select.Option value="OLD_STOCK">Xe tồn kho cũ</Select.Option>
+            <Select.Option value="TEST_DRIVE">Xe lái thử</Select.Option>
+            <Select.Option value="RESERVED">Xe được đặt giữ chỗ</Select.Option>
+            <Select.Option value="SOLD">Xe đã bán</Select.Option>
           </Select>
         </Form.Item>
-
-        {/* ❌ Không có bảo hành, VIN hay ID – server tự sinh khi tạo */}
       </Form>
     </Modal>
   );

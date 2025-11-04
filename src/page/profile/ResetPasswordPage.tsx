@@ -20,10 +20,10 @@ const ResetPasswordPage: React.FC = () => {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    await accountService.changePassword(
-      values.currentPassword,
-      values.newPassword
-    );
+    await changePassword.mutateAsync({
+      currentPassword: values.currentPassword,
+      newPassword: values.newPassword,
+    });
     message.success("Đổi mật khẩu thành công");
     navigate("/admin/profile/info");
   };

@@ -22,7 +22,6 @@ export const VehiclePricePage = () => {
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
-  // ⛔ Nếu không phải Admin thì chặn truy cập
   if (role !== "ADMIN") {
     return (
       <Result
@@ -125,7 +124,7 @@ export const VehiclePricePage = () => {
             <Upload
               accept=".png"
               showUploadList={false}
-              beforeUpload={() => false} // không upload tự động
+              beforeUpload={() => false}
               onChange={handleUpload}
             >
               <Button icon={<UploadOutlined />}>Chọn ảnh PNG</Button>

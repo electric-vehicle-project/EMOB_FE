@@ -59,17 +59,6 @@ export const ROUTES = {
   EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
   EVM_VEHICLE_PRICE_UPDATE: "evm/vehicle/prices/:id",
-
-  // ====== SALE ORDER ======
-  SALE_ORDERS: "sale-orders",
-  SALE_ORDER_DETAIL: "sale-orders/:id",
-  // 404
-  NOTFOUND: "*",
-  // VEHICLE-REQUEST
-  VEHICLE_REQUEST: "vehicle-request",
-  VEHICLE_REQUEST_CREATE: "vehicle-request/create",
-  VEHICLE_REQUEST_UPDATE: "vehicle-request/edit/:id",
-
   // DEALER_DISCOUNT_POLICY
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
 

@@ -4,7 +4,7 @@ import {
   useBulkUpdateDiscountPolicies,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IDealer } from "../../model/Dealer";
 
@@ -17,7 +17,7 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
 
   // Lấy danh sách dealer + vehicle để chọn
   const { data: dealersData } = useGetAllDealers(0, 1000);
-  const { data: vehiclesData } = useGetAllVehicles(0, 1000);
+  const { data: vehiclesData } = useGetVehicles(0, 1000);
 
   // Tạo option danh sách đại lý
   const dealerOptions =
