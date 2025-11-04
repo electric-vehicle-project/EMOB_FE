@@ -1,4 +1,4 @@
-// src/service/reportService.ts
+// EMOB-2025 - reportService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -6,6 +6,7 @@ import {
   updateMutationHook,
   deleteMutationHook,
 } from "../hook/useApi";
+import type { IReport } from "../model/report";
 
 const BASE_URL = "/report";
 
@@ -14,7 +15,7 @@ export const useReportList = (
   page = 0,
   size = 10,
   keyword?: string,
-  status?: "PENDING" | "IN_PROGRESS" | "RESOLVED" | "DELETED",
+  status?: IReport["status"],
   sortField = "title",
   sortDir: "asc" | "desc" = "desc"
 ) =>
@@ -28,19 +29,11 @@ export const useReportById = createQueryWithPathParamHook(
   BASE_URL
 );
 
-/* ===== CRUD ===== */
+/* ===== CRUD hooks ===== */
 export const useReportCreate = createMutationHook("reportList", BASE_URL);
 export const useReportUpdate = updateMutationHook("reportList", BASE_URL);
 export const useReportDelete = deleteMutationHook("reportList", BASE_URL);
 
-/* ===== Process status (PUT /report/process-report/{id}?status=...) =====
-   Trick: nhét cả "process-report/{id}?status=..." vào tham số `id` của updateMutationHook
-   - invalidates: "reportList" (list sẽ tự refetch)
-*/
+/* ===== Process status hook ===== */
+// PUT /report/process-report/{id}?status=...
 export const useReportProcess = updateMutationHook("reportList", BASE_URL);
-
-/* (tuỳ chọn) Nếu đang ở trang detail và muốn invalidate đúng cache detail:
-   Khởi tạo hook với id của report để invalidate ["reportDetail", reportId]
-*/
-export const useReportProcessDetail = (reportId: string) =>
-  updateMutationHook("reportDetail", BASE_URL)(reportId);

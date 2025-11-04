@@ -12,7 +12,6 @@ import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 // 📄 General
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import ReportPage from "../page/ReportPage";
 
 // ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
@@ -52,6 +51,7 @@ import { CustomerPage } from "../page/customer/CustomerPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 import { AccountPage } from "../page/account/AccountPage";
 import SaleOrderEvmPage from "../page/saleOrder/SaleOrderEvmPage";
+import { ReportPage } from "../page/report/ReportPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -79,7 +79,6 @@ export const router = createBrowserRouter([
     children: [
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: "test", element: <TestPage /> },
@@ -173,6 +172,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.SALE_ORDERS, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
     ],
   },
 
@@ -195,6 +195,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.DEALER_POINT_RULES, element: <DealerPointRulePage /> },
       { path: ROUTES.SALE_ORDERS, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
     ],
   },
 
