@@ -3,7 +3,6 @@ import {
   Card,
   Button,
   Divider,
-  message,
   Spin,
   Modal,
   Select,
@@ -23,6 +22,7 @@ import {
   useContractDetailQuery,
   useContractSignMutation,
 } from "../../../service/contractService";
+import { toast } from "react-toastify";
 
 export const ContractDetail = () => {
   const navigate = useNavigate();
@@ -73,21 +73,21 @@ export const ContractDetail = () => {
             };
 
       await signContract({ params: baseParams, body });
-      message.success("Đã ký hợp đồng thành công!");
+      toast.success("Đã ký hợp đồng thành công!");
       refetch();
       handleCancelModal();
-    } catch (error) {
-      message.error("Ký hợp đồng thất bại!");
+    } catch {
+      toast.error("Ký hợp đồng thất bại!");
     }
   };
 
   const handleCancelContract = async () => {
     try {
       await cancelContract(contract.contractId);
-      message.success("Đã hủy hợp đồng thành công!");
+      toast.success("Đã hủy hợp đồng thành công!");
       refetch();
     } catch {
-      message.error("Hủy hợp đồng thất bại!");
+      toast.error("Hủy hợp đồng thất bại!");
     }
   };
 
@@ -155,16 +155,16 @@ export const ContractDetail = () => {
               <br />
               Địa chỉ: Tòa nhà F-Town 3, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
               <br />
-              Đại diện: Ông/Bà ______________________ – Chức vụ: Giám đốc kinh
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Giám đốc kinh
               doanh
             </p>
 
             <p>
-              <b>BÊN B (Đại lý):</b> {contract?.dealerName ?? "Tên đại lý"}
+              <b>BÊN B (Đại lý):</b> {contract?.dealerName ?? "______________________"}
               <br />
-              Địa chỉ: {contract?.dealerAddress ?? "Địa chỉ đại lý"}
+              Địa chỉ: {contract?.dealerAddress ?? "______________________"}
               <br />
-              Đại diện: Ông/Bà ______________________ – Chức vụ: Giám đốc đại lý
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Giám đốc đại lý
             </p>
 
             <Divider />

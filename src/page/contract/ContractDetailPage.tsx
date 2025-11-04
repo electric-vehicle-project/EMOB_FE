@@ -1,4 +1,4 @@
-import { ContractDetail } from "../../components/organisms/contract/ContractDetail";
+import { ContractDetail } from "../../components/organisms/contract/ContractDetailEVMAndDealer";
 import CardWrapper from "../../components/template/CardWrapper";
 // import { useCurrentUser } from "../utils/getCurrentUser";
 
