@@ -56,4 +56,7 @@ export const ROUTES = {
 
   // 404
   NOTFOUND: "*",
+
+  // CONTRACT
+  CONTRACT: "contract"
 };
