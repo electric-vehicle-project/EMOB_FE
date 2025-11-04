@@ -1,4 +1,4 @@
-// EMOB-2025 - ReportPage (phiên bản tiếng Việt)
+// EMOB-2025 - ReportPage (bỏ thanh filter ngoài)
 import { useState } from "react";
 import { Button, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -6,7 +6,6 @@ import { ReportTable } from "../../components/molecules/report/ReportTable";
 import { ReportFormModal } from "../../components/molecules/report/ReportFormModal";
 import { ProcessReportModal } from "../../components/molecules/report/ProcessReportModal";
 import { ReportDeleteConfirm } from "../../components/molecules/report/ReportDeleteConfirm";
-import { ReportFilterBar } from "../../components/molecules/report/ReportFilterBar";
 import {
   useReportList,
   useReportCreate,
@@ -89,6 +88,9 @@ export const ReportPage = () => {
     }
   };
 
+  const reports = data?.result?.data || [];
+  const totalElements = data?.result?.metadata?.totalElements || 0;
+
   return (
     <CardWrapper>
       <div className="flex items-center justify-between mb-6">
@@ -105,20 +107,15 @@ export const ReportPage = () => {
         </Button>
       </div>
 
-      <ReportFilterBar
-        keyword={keyword}
-        setKeyword={setKeyword}
-        status={status}
-        setStatus={setStatus}
-      />
+      {/* ❌ Bỏ ReportFilterBar */}
 
       <ReportTable
         loading={isLoading}
-        data={data?.data || []}
+        data={reports}
         pagination={{
           current: page + 1,
           pageSize: size,
-          total: data?.metadata?.totalElements,
+          total: totalElements,
           showSizeChanger: true,
           onChange: (p: number, s?: number) => {
             setPage(p - 1);

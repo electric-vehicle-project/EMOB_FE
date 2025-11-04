@@ -1,7 +1,10 @@
-// EMOB-2025 - ReportTable (Giao diện tiếng Việt, đồng bộ PromotionTable)
+// EMOB-2025 - ReportTable (fix tràn nút + điều chỉnh layout)
 import { Table, Button, Tag, Tooltip, Space } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined, ToolOutlined } from "@ant-design/icons";
 import type { IReport } from "../../../model/Report";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../redux/store";
 
 interface Props {
   loading?: boolean;
@@ -20,16 +23,29 @@ export const ReportTable = ({
   onDelete,
   onProcess,
 }: Props) => {
-  const columns = [
+  const role = useSelector((state: RootState) => state.user?.role ?? "");
+
+  const columns: ColumnsType<IReport> = [
     {
       title: "Tiêu đề",
       dataIndex: "title",
       key: "title",
+      sorter: (a, b) =>
+        a.title.localeCompare(b.title, "vi", { sensitivity: "base" }),
+      align: "left",
+      ellipsis: true,
     },
     {
       title: "Loại báo cáo",
       dataIndex: "type",
       key: "type",
+      align: "center",
+      width: 140,
+      filters: [
+        { text: "Phản hồi", value: "FEEDBACK" },
+        { text: "Khiếu nại", value: "COMPLAINT" },
+      ],
+      onFilter: (value, record) => record.type === value,
       render: (v: string) => (
         <Tag
           color={v === "COMPLAINT" ? "red" : "green"}
@@ -43,6 +59,15 @@ export const ReportTable = ({
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
+      align: "center",
+      width: 150,
+      filters: [
+        { text: "Đang chờ", value: "PENDING" },
+        { text: "Đang xử lý", value: "IN_PROGRESS" },
+        { text: "Đã giải quyết", value: "RESOLVED" },
+        { text: "Đã xóa", value: "DELETED" },
+      ],
+      onFilter: (value, record) => record.status === value,
       render: (s: string) => {
         const colorMap: Record<string, string> = {
           PENDING: "orange",
@@ -67,12 +92,21 @@ export const ReportTable = ({
       title: "Khách hàng",
       dataIndex: "fullName",
       key: "fullName",
+      align: "center",
+      sorter: (a, b) =>
+        a.fullName?.localeCompare(b.fullName ?? "", "vi", {
+          sensitivity: "base",
+        }) || 0,
       render: (t: string) => t || "--",
     },
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
+      align: "center",
+      width: 180,
+      sorter: (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (v: string) =>
         new Date(v).toLocaleString("vi-VN", {
           day: "2-digit",
@@ -85,32 +119,56 @@ export const ReportTable = ({
     {
       title: "Thao tác",
       key: "actions",
-      align: "center" as const,
-      render: (_: any, record: IReport) => (
-        <Space>
-          <Tooltip title="Chỉnh sửa">
+      align: "center",
+      width: 240, // ✅ tăng thêm không gian cho 3 nút
+      render: (_, record) => (
+        <Space size="small" className="whitespace-nowrap justify-center">
+          <Tooltip title="Chỉnh sửa báo cáo">
             <Button
+              type="primary"
               icon={<EditOutlined />}
-              className="!text-[#627254] hover:!bg-[#f5f5f5]"
               onClick={() => onEdit?.(record)}
-              type="text"
-            />
+              className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
+              size="middle"
+            >
+              Sửa
+            </Button>
           </Tooltip>
-          <Tooltip title="Xử lý">
+
+          <Tooltip
+            title={
+              role !== "MANAGER"
+                ? "Chỉ Quản lý mới được xử lý báo cáo"
+                : "Xử lý báo cáo"
+            }
+          >
             <Button
+              type="primary"
               icon={<ToolOutlined />}
-              className="!text-[#627254] hover:!bg-[#f5f5f5]"
+              disabled={role !== "MANAGER"}
               onClick={() => onProcess?.(record)}
-              type="text"
-            />
+              className={`text-white ${
+                role !== "MANAGER"
+                  ? "!bg-gray-300 !border-gray-300 cursor-not-allowed"
+                  : "!bg-[#87986a] !border-[#87986a] hover:!bg-[#6b7e4e]"
+              }`}
+              size="middle"
+            >
+              Xử lý
+            </Button>
           </Tooltip>
-          <Tooltip title="Xóa">
+
+          <Tooltip title="Xóa báo cáo">
             <Button
-              icon={<DeleteOutlined />}
+              type="primary"
               danger
-              type="text"
+              icon={<DeleteOutlined />}
               onClick={() => onDelete?.(record)}
-            />
+              className="!bg-red-500 !border-red-500 text-white hover:!bg-red-600"
+              size="middle"
+            >
+              Xóa
+            </Button>
           </Tooltip>
         </Space>
       ),
@@ -118,17 +176,23 @@ export const ReportTable = ({
   ];
 
   return (
-    <Table
-      bordered
-      rowKey="reportId"
-      loading={loading}
-      columns={columns}
-      dataSource={data}
-      pagination={pagination}
-      className="shadow-sm rounded-lg"
-      locale={{
-        emptyText: "Không có dữ liệu báo cáo",
-      }}
-    />
+    <div className="flex flex-col items-center">
+      <Table
+        bordered
+        rowKey="reportId"
+        loading={loading}
+        columns={columns}
+        dataSource={data}
+        pagination={{
+          ...pagination,
+          showSizeChanger: false,
+          position: ["bottomCenter"],
+        }}
+        className="shadow-sm rounded-lg w-full"
+        locale={{
+          emptyText: "Không có dữ liệu báo cáo",
+        }}
+      />
+    </div>
   );
 };

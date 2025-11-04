@@ -1,6 +1,10 @@
-// EMOB-2025 - ReportFormModal (UI synced with PromotionForm)
+// src/components/molecules/report/ReportFormModal.tsx
+// EMOB-2025 - ReportFormModal (chọn 1 khách hàng hiển thị tên, gửi id)
+
 import { Modal, Form, Input, Select, Row, Col, Button } from "antd";
-import type { IReport } from "../../../model/report";
+import { useCustomerList } from "../../../service/customerService";
+import { mapCustomerOptions } from "../../../utils/mapToSelectOptions";
+import type { IReport } from "../../../model/Report";
 
 interface Props {
   open: boolean;
@@ -17,13 +21,20 @@ export const ReportFormModal = ({
 }: Props) => {
   const [form] = Form.useForm();
 
+  // 🧩 Lấy danh sách khách hàng từ service
+  const { data: customers, isLoading } = useCustomerList(0, 100);
+
+  // ✅ Trích đúng dữ liệu theo cấu trúc thực tế của BE
+  // response.result.data → mapCustomerOptions xử lý tương thích
+  const customerOptions = mapCustomerOptions(customers);
+
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       onSubmit(values);
       form.resetFields();
     } catch {
-      /* validation failed */
+      /* ignore */
     }
   };
 
@@ -33,7 +44,7 @@ export const ReportFormModal = ({
       centered
       title={
         <span className="text-[#627254] text-lg font-semibold">
-          {initialValues ? "Edit Report" : "Create New Report"}
+          {initialValues ? "Chỉnh sửa Báo cáo" : "Thêm Báo cáo mới"}
         </span>
       }
       onCancel={onCancel}
@@ -45,69 +56,90 @@ export const ReportFormModal = ({
         form={form}
         initialValues={initialValues || { type: "FEEDBACK" }}
       >
+        {/* --- Dòng 1: Tiêu đề + Loại báo cáo --- */}
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
-              label="Title"
+              label="Tiêu đề"
               name="title"
-              rules={[{ required: true, message: "Please enter the title" }]}
+              rules={[
+                { required: true, message: "Vui lòng nhập tiêu đề báo cáo" },
+              ]}
             >
-              <Input placeholder="Report title" />
+              <Input placeholder="Nhập tiêu đề báo cáo..." />
             </Form.Item>
           </Col>
+
           <Col xs={24} md={12}>
             <Form.Item
-              label="Type"
+              label="Loại báo cáo"
               name="type"
-              rules={[{ required: true, message: "Please select report type" }]}
+              rules={[
+                { required: true, message: "Vui lòng chọn loại báo cáo" },
+              ]}
             >
               <Select
                 options={[
-                  { label: "Feedback", value: "FEEDBACK" },
-                  { label: "Complaint", value: "COMPLAINT" },
+                  { label: "Phản hồi", value: "FEEDBACK" },
+                  { label: "Khiếu nại", value: "COMPLAINT" },
                 ]}
+                placeholder="Chọn loại báo cáo"
               />
             </Form.Item>
           </Col>
         </Row>
 
-        <Row gutter={16}>
-          <Col xs={24}>
-            <Form.Item
-              label="Description"
-              name="description"
-              rules={[
-                { required: true, message: "Please enter a description" },
-              ]}
-            >
-              <Input.TextArea
-                rows={3}
-                placeholder="Describe the issue or feedback..."
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+        {/* --- Dòng 2: Nội dung mô tả --- */}
+        <Form.Item
+          label="Nội dung chi tiết"
+          name="description"
+          rules={[
+            { required: true, message: "Vui lòng nhập nội dung báo cáo" },
+          ]}
+        >
+          <Input.TextArea
+            rows={4}
+            placeholder="Mô tả chi tiết vấn đề hoặc phản hồi..."
+            className="!resize-none !rounded-lg"
+          />
+        </Form.Item>
 
+        {/* --- Dòng 3: Chọn khách hàng --- */}
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
-              label="Customer ID"
+              label="Khách hàng"
               name="customerId"
-              rules={[{ required: true, message: "Please enter Customer ID" }]}
+              rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
             >
-              <Input placeholder="UUID of customer" />
+              <Select
+                showSearch
+                placeholder="Chọn khách hàng"
+                optionFilterProp="label"
+                loading={isLoading}
+                options={customerOptions}
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                // ✅ chỉ cho chọn 1 khách hàng
+                mode={undefined}
+                allowClear
+              />
             </Form.Item>
           </Col>
         </Row>
 
+        {/* --- Footer hành động --- */}
         <div className="flex justify-end mt-6 gap-3">
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onCancel}>Hủy</Button>
           <Button
             type="primary"
             className="!bg-[#627254] hover:!bg-[#4f6f52]"
             onClick={handleOk}
           >
-            {initialValues ? "Update" : "Create"}
+            {initialValues ? "Cập nhật" : "Tạo mới"}
           </Button>
         </div>
       </Form>

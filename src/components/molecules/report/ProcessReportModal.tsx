@@ -1,4 +1,3 @@
-// EMOB-2025 - ProcessReportModal (UI synced with PromotionForm)
 import { Modal, Form, Select, Input, Button, Row, Col } from "antd";
 import { useState } from "react";
 
@@ -28,7 +27,7 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
       centered
       title={
         <span className="text-[#627254] text-lg font-semibold">
-          Process Report
+          Xử lý Báo cáo
         </span>
       }
       onCancel={onCancel}
@@ -43,14 +42,14 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
-              label="Status"
+              label="Trạng thái"
               name="status"
-              rules={[{ required: true, message: "Please select status" }]}
+              rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
             >
               <Select
                 options={[
-                  { label: "In Progress", value: "IN_PROGRESS" },
-                  { label: "Resolved", value: "RESOLVED" },
+                  { label: "Đang xử lý", value: "IN_PROGRESS" },
+                  { label: "Đã giải quyết", value: "RESOLVED" },
                 ]}
                 onChange={(v) => setStatus(v)}
               />
@@ -62,15 +61,19 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
           <Row gutter={16}>
             <Col xs={24}>
               <Form.Item
-                label="Solution"
+                label="Giải pháp"
                 name="solution"
                 rules={[
-                  { required: true, message: "Please describe the solution" },
+                  {
+                    required: true,
+                    message: "Vui lòng nhập nội dung giải pháp",
+                  },
                 ]}
               >
                 <Input.TextArea
                   rows={3}
-                  placeholder="Enter resolution details..."
+                  placeholder="Nhập mô tả giải pháp cho báo cáo..."
+                  className="!resize-none !rounded-lg"
                 />
               </Form.Item>
             </Col>
@@ -78,13 +81,13 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
         )}
 
         <div className="flex justify-end mt-6 gap-3">
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onCancel}>Hủy</Button>
           <Button
             type="primary"
             className="!bg-[#627254] hover:!bg-[#4f6f52]"
             onClick={handleOk}
           >
-            Confirm
+            Xác nhận
           </Button>
         </div>
       </Form>
