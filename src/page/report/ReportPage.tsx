@@ -47,15 +47,26 @@ export const ReportPage = () => {
   const handleSubmit = async (values: any) => {
     try {
       if (editing) {
+        // ✅ Gộp dữ liệu cũ và mới để tránh null
+        const mergedValues = {
+          title: values.title || editing.title,
+          description: values.description || editing.description,
+          type: values.type || editing.type,
+          status: values.status || editing.status,
+          customerId: values.customerId || editing.customerId,
+        };
+
         await updateReport.mutateAsync({
           id: editing.reportId,
-          data: values,
+          data: mergedValues,
         });
+
         message.success("Cập nhật báo cáo thành công!");
       } else {
         await createReport.mutateAsync(values);
         message.success("Tạo báo cáo mới thành công!");
       }
+
       setOpenForm(false);
       setEditing(null);
     } catch {
@@ -106,8 +117,6 @@ export const ReportPage = () => {
           Thêm báo cáo
         </Button>
       </div>
-
-      {/* ❌ Bỏ ReportFilterBar */}
 
       <ReportTable
         loading={isLoading}

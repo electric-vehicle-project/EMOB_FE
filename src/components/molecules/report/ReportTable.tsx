@@ -122,15 +122,20 @@ export const ReportTable = ({
       title: "Thao tác",
       key: "actions",
       align: "center",
-      width: 240, // ✅ tăng thêm không gian cho 3 nút
+      width: 240,
       render: (_, record) => (
         <Space size="small" className="whitespace-nowrap justify-center">
           <Tooltip title="Chỉnh sửa báo cáo">
             <Button
               type="primary"
               icon={<EditOutlined />}
+              disabled={role !== "DEALER_STAFF"}
               onClick={() => onEdit?.(record)}
-              className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
+              className={`text-white ${
+                role === "MANAGER"
+                  ? "!bg-gray-300 !border-gray-300 cursor-not-allowed"
+                  : "!bg-[#627254] !border-[#627254] hover:!bg-[#4f6f52]"
+              }`}
               size="middle"
             >
               Sửa
@@ -152,7 +157,7 @@ export const ReportTable = ({
               className={`text-white ${
                 role !== "MANAGER"
                   ? "!bg-gray-300 !border-gray-300 cursor-not-allowed"
-                  : "!bg-[#87986a] !border-[#87986a] hover:!bg-[#6b7e4e]"
+                  : "!bg-[#627254] !border-[#627254] hover:!bg-[#4f6f52]"
               }`}
               size="middle"
             >
