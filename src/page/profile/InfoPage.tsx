@@ -1,40 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Skeleton } from "antd";
-import { accountService } from "../../service/accountService";
+import { useGetAccountById } from "../../service/accountService";
 import { useCurrentUser as getCurrentUser } from "../../utils/getCurrentUser";
 import { motion } from "framer-motion";
 import CardWrapper from "../../components/template/CardWrapper";
 
 const InfoPage: React.FC = () => {
   const user = getCurrentUser();
-  const [profile, setProfile] = useState<{
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    gender?: string;
-    address?: string;
-    dateOfBirth?: string;
-    role?: string;
-    status?: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    const fetchProfile = async () => {
-      setLoading(true);
-      try {
-        const res = await accountService.getAccountProfile();
-        if (mounted) setProfile(res);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetchProfile();
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
+  const { data, isLoading } = useGetAccountById(user?.id);
+  const profile = data?.result ?? null;
 
   return (
     <CardWrapper title="" maxWidth="max-w-5xl" variant="profile">
@@ -50,7 +24,7 @@ const InfoPage: React.FC = () => {
           </p>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">

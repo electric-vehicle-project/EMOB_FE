@@ -128,7 +128,11 @@ const VehicleRequestPage: React.FC = () => {
         <div className="flex justify-center gap-2">
           <Button
             size="small"
-            type="primary"
+            style={{
+              backgroundColor: "#627254",
+              color: "white",
+              border: "none",
+            }}
             onClick={() => {
               setSelectedId(record.id);
               setIsUpdateModalOpen(true);
@@ -147,7 +151,11 @@ const VehicleRequestPage: React.FC = () => {
           </Button>
           <Button
             size="small"
-            className="bg-blue-600 text-white"
+            style={{
+              backgroundColor: "#16a34a",
+              color: "white",
+              border: "none",
+            }}
             onClick={() => {
               setSelectedId(record.id);
               setIsApproveModalOpen(true);
@@ -157,11 +165,15 @@ const VehicleRequestPage: React.FC = () => {
           </Button>
           <Popconfirm
             title="Bạn có chắc muốn xóa yêu cầu này?"
+            style={{
+              backgroundColor: "red", // tương đương bg-green-600
+              color: "white",
+              border: "none",
+            }}
+            disabled={record.status === "APPROVED"}
             onConfirm={() => handleDelete(record.id)}
           >
-            <Button size="small" danger>
-              Xóa
-            </Button>
+            <Button size="small">Xóa</Button>
           </Popconfirm>
         </div>
       ),

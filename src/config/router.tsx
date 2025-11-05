@@ -106,7 +106,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
       { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehiclePriceRulePage /> },
     ],
   },
 
