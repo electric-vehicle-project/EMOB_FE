@@ -16,23 +16,23 @@ import ReportPage from "../page/ReportPage";
 
 // ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
-import { TestDrivePage } from "../page/TestDrivePage";
+
 
 // 👤 Profile
 import InfoPage from "../page/profile/InfoPage";
 import ChangeInfoPage from "../page/profile/ChangeInfoPage";
 import ResetPasswordPage from "../page/profile/ResetPasswordPage";
-import ViewSchedulePage from "../page/profile/ViewSchedulePage";
+// import ViewSchedulePage from "../page/profile/ViewSchedulePage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
 // ⚡ EV Management
-import { VehiclePage } from "../page/EVM/VehiclePage";
-import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
-import { VehicleDetailPage } from "../page/EVM/VehicleDetailPage";
-import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
-import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
-import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
-import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
+import { VehiclePage } from "../page/evm/VehiclePage";
+import { VehicleBulkPage } from "../page/evm/VehicleBulkPage";
+import { VehicleDetailPage } from "../page/evm/VehicleDetailPage";
+import { VehicleEditPage } from "../page/evm/VehicleEditPage";
+import { VehiclePriceUpdatePage } from "../page/evm/VehiclePriceUpdatePage";
+import { VehicleCreatePage } from "../page/evm/VehicleCreatePage";
+import { VehiclePriceRulePage } from "../page/evm/VehiclePriceRulePage";
 import { AuthProtect } from "../components/atoms/AuthProtect";
 
 // 🎯 Promotions
@@ -43,6 +43,7 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { AccountPage } from "../page/account/AccountPage";
+import { TestDrivePage } from "../page/test-drive/TestDrivePage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -111,7 +112,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
+      // { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
 
       // ✅ Cho phép EVM_STAFF xem trang Account (read-only)
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
@@ -126,7 +127,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
+      // { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehiclePage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
