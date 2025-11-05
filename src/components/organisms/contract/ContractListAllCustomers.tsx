@@ -7,7 +7,7 @@ import {
   useContractSignMutation,
   useContractQueryByDealer,
 } from "../../../service/contractService";
-import { ContractTable } from "../../molecules/contract/ContractTable";
+import { ContractTableCustomers } from "../../molecules/contract/ContractTableCustomers";
 
 const { Option } = Select;
 const { Search } = Input;
@@ -118,7 +118,7 @@ export const ContractListAllCustomers = () => {
           </Space>
         }
       >
-        <ContractTable
+        <ContractTableCustomers
           data={contracts}
           loading={isLoading || signing || cancelling}
           pagination={{

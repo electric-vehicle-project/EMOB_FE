@@ -61,4 +61,6 @@ export const ROUTES = {
   CONTRACT: "contract",
   CONTRACT_DETAILS: "contract/:id",
   CONTRACT_CUSTOMERS: "contract/customers",
+  
+  CONTRACT_CUSTOMER_DETAILS: "contract/customers/:id",
 };

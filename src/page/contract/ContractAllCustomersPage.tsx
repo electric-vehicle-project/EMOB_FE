@@ -1,25 +1,33 @@
 
+import { useNavigate } from "react-router-dom";
 import { ContractListAllCustomers } from "../../components/organisms/contract/ContractListAllCustomers";
 import CardWrapper from "../../components/template/CardWrapper";
-// import { useCurrentUser } from "../utils/getCurrentUser";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 export const ContractAllCustomersPage = () => {
-  // const user = useCurrentUser();
-  // const canAccess = ["ADMIN", "EVM_STAFF"].includes(
-  //   (user as { role?: string } | null)?.role || ""
-  // );
+  const navigate = useNavigate();
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
 
   return (
+
     <CardWrapper
       title="Quản lý hợp đồng"
-    //   subtitle={
-    //     canAccess
-    //       ? "Theo dõi và quản lý thông tin các đại lý trong hệ thống"
-    //       : "Bạn không có quyền truy cập trang này"
-    //   }
+      //   subtitle={
+      //     canAccess
+      //       ? "Theo dõi và quản lý thông tin các đại lý trong hệ thống"
+      //       : "Bạn không có quyền truy cập trang này"
+      //   }
       variant="dashboard"
     >
-        <ContractListAllCustomers />
+
+      <ContractListAllCustomers />
+      <div
+        onClick={() => navigate("/" + role.toLowerCase() + "/contract")}
+        className="flex items-center gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
+      >
+        <span className="font-medium">Danh sách hợp đồng bàn giao với Hãng xe</span>
+      </div>
       {/* {canAccess ? (
         <DealerList />
       ) : (

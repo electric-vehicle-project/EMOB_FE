@@ -46,6 +46,7 @@ import { AccountPage } from "../page/account/AccountPage";
 import { ContractDetailDealerPage } from "../page/contract/ContractDetailDealerPage";
 import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDealerPage";
 import { ContractAllCustomersPage } from "../page/contract/ContractAllCustomersPage";
+import { ContractAllDealersPage } from "../page/contract/ContractAllDealersPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -97,7 +98,9 @@ export const router = createBrowserRouter([
     ),
     children: [
 
-      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      
+      { path: ROUTES.CONTRACT_DETAILS, element: <ContractDetailDealerPage /> },
       // 👥 Dealer Management
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
 
