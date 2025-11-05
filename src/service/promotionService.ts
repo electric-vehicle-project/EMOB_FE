@@ -35,13 +35,22 @@ export const usePromotionCreate = createMutationHook(
   BASE_URL
 );
 
-// ======= Cập nhật khuyến mãi (EVM/Dealer Staff) =======
+// BE: PUT /promotion/{id} (DEALER_STAFF / EVM_STAFF)
+export type UpdatePromotionPayload = {
+  name?: string;
+  description?: string;
+  dealerIds?: string[]; // thêm dealer mới (EVM_STAFF)
+  electricVehicleIds?: string[]; // thêm mẫu xe mới (cả DEALER_STAFF & EVM_STAFF)
+};
+
+// ======= Cập nhật khuyến mãi (DEALER_STAFF / EVM_STAFF) =======
 export const usePromotionUpdate = updateMutationHook(
   "promotionUpdate",
   BASE_URL
 );
 
-// ======= Cập nhật giá trị (Admin/Manager duyệt) =======
+// ======= Cập nhật giá trị khuyến mãi(ADMIN / MANAGER) =======
+// BE: PUT /promotion/value/{id}
 export const usePromotionUpdateValue = updateMutationHook(
   "promotionUpdateValue",
   `${BASE_URL}/value`

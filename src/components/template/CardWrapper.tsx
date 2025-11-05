@@ -1,40 +1,50 @@
-import React from "react";
-import { motion } from "framer-motion";
+import { Card } from "antd";
+import type { ReactNode } from "react";
 
-export interface CardWrapperProps {
-  title: string;
+interface Props {
+  title?: string;
   subtitle?: string;
-  children: React.ReactNode;
+  variant?: "dashboard" | "default" | "profile";
   maxWidth?: string;
-  variant?: "profile" | "dashboard";
+  children: ReactNode;
+  className?: string;
 }
-const CardWrapper: React.FC<CardWrapperProps> = ({
+
+export const CardWrapper = ({
   title,
   subtitle,
+  variant = "default",
   children,
-  maxWidth,
-  variant = "dashboard",
-}) => {
-  const containerMaxWidth =
-    maxWidth || (variant === "profile" ? "max-w-5xl" : "max-w-6xl");
-
+  className,
+}: Props) => {
   return (
-    <div className="min-h-[calc(100vh-150px)] flex justify-center items-start bg-[var(--neutural-color)] p-4 sm:p-6 md:p-8 font-[Inter,sans-serif]">
-      <motion.div
-        initial={{ opacity: 0, y: 25 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className={`${containerMaxWidth} w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-10`}
+    <div className={`p-5 bg-gray-50 min-h-screen`}>
+      <Card
+        bordered={false}
+        className={`shadow-md rounded-xl bg-white ${className ?? ""}`}
+        style={{ width: "100%", maxWidth: "100%" }}
       >
-        <div className="border-l-4 border-[#627254] pl-4 mb-6">
-          <h1 className="text-2xl font-semibold text-[#414d38]">{title}</h1>
-          {subtitle && <p className="text-gray-500 text-sm mt-1">{subtitle}</p>}
-        </div>
+        {(title || subtitle) && (
+          <div
+            className={`mb-4 ${
+              variant === "dashboard"
+                ? "border-b pb-3"
+                : variant === "profile"
+                ? "pb-1"
+                : ""
+            }`}
+          >
+            {title && (
+              <h2 className="text-xl font-semibold text-[#627254]">{title}</h2>
+            )}
+            {subtitle && (
+              <p className="text-gray-500 mt-1 text-sm">{subtitle}</p>
+            )}
+          </div>
+        )}
 
-        <div className="space-y-6">{children}</div>
-      </motion.div>
+        <div>{children}</div>
+      </Card>
     </div>
   );
 };
-
-export default CardWrapper;

@@ -1,11 +1,10 @@
-import React from "react";
 import { Modal, Form, message } from "antd";
 import SelectInput from "../../components/atoms/SelectInput";
 import {
   useBulkDeleteDiscountPolicies,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 import type { IDealer } from "../../model/Dealer";
 import type { IVehicle } from "../../model/Vehicle";
 
@@ -15,7 +14,7 @@ const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
     useBulkDeleteDiscountPolicies();
 
   const { data: dealersData } = useGetAllDealers(0, 1000);
-  const { data: vehiclesData } = useGetAllVehicles(0, 1000);
+  const { data: vehiclesData } = useGetVehicles(0, 1000);
 
   const dealerOptions =
     dealersData?.result?.data?.map((d: IDealer) => ({

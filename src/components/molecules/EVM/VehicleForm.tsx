@@ -1,3 +1,4 @@
+// src/components/molecules/EVM/VehicleForm.tsx
 import { Form, Input, InputNumber, Select, Upload } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import type { FormInstance } from "antd";
@@ -10,6 +11,8 @@ interface Props {
 }
 
 const { Option } = Select;
+
+// moved normalizeInitialFileList to vehicleForm.utils.ts to keep component-only exports for Fast Refresh
 
 export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
   return (
@@ -30,23 +33,45 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         <Input placeholder="Ví dụ: VF8, Model S..." />
       </Form.Item>
 
+      {/* BE enum: SEDAN | SUV | HATCHBACK | TRUCK | MOTORBIKE */}
+      <Form.Item
+        label="Loại xe"
+        name="type"
+        rules={[{ required: true, message: "Chọn loại xe" }]}
+      >
+        <Select placeholder="Chọn loại xe">
+          <Option value="SEDAN">Sedan</Option>
+          <Option value="SUV">SUV</Option>
+          <Option value="HATCHBACK">Hatchback</Option>
+          <Option value="TRUCK">Xe tải điện</Option>
+          <Option value="MOTORBIKE">Xe máy điện</Option>
+        </Select>
+      </Form.Item>
+
       {canEditPrices && (
         <>
           <Form.Item label="Giá nhập (VNĐ)" name="importPrice">
             <InputNumber min={0} className="w-full" />
           </Form.Item>
-
           <Form.Item label="Giá bán lẻ (VNĐ)" name="retailPrice">
             <InputNumber min={0} className="w-full" />
           </Form.Item>
         </>
       )}
 
-      <Form.Item label="Dung lượng pin (kWh)" name="batteryKwh">
+      <Form.Item
+        label="Dung lượng pin (kWh)"
+        name="batteryKwh"
+        rules={[{ required: true, message: "Nhập dung lượng pin" }]}
+      >
         <InputNumber min={0} className="w-full" />
       </Form.Item>
 
-      <Form.Item label="Quãng đường tối đa (km)" name="rangeKm">
+      <Form.Item
+        label="Tầm hoạt động (km)"
+        name="rangeKm"
+        rules={[{ required: true, message: "Nhập tầm hoạt động" }]}
+      >
         <InputNumber min={0} className="w-full" />
       </Form.Item>
 
@@ -66,22 +91,12 @@ export const VehicleForm = ({ form, onFinish, canEditPrices }: Props) => {
         <InputNumber min={0} className="w-full" />
       </Form.Item>
 
-      <Form.Item label="Loại xe" name="type">
-        <Select placeholder="Chọn loại xe">
-          <Option value="SEDAN">Sedan</Option>
-          <Option value="SUV">SUV</Option>
-          <Option value="MOTORBIKE">Xe máy điện</Option>
-          <Option value="TRUCK">Xe tải điện</Option>
-          <Option value="OTHER">Khác</Option>
-        </Select>
-      </Form.Item>
-
-      {/* 🖼️ Upload hình ảnh */}
+      {/* Upload hình ảnh => cuối cùng submit ra UploadFile[] (có url hoặc originFileObj) */}
       <Form.Item
         label="Hình ảnh xe"
         name="images"
         valuePropName="fileList"
-        getValueFromEvent={(e) => e.fileList}
+        getValueFromEvent={(e) => e?.fileList}
       >
         <Upload
           listType="picture-card"

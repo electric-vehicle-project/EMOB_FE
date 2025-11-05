@@ -1,5 +1,5 @@
 import { TestDriveList } from "../components/organisms/TestDriveList";
-import CardWrapper from "../components/template/CardWrapper";
+import { CardWrapper } from "../components/template/CardWrapper";
 
 export const TestDrivePage = () => {
   return (

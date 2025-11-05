@@ -1,3 +1,4 @@
+// src/pages/vehicle/VehicleEditPage.tsx
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, message, Spin, Form, Button, Space, Modal } from "antd";
 import {
@@ -5,33 +6,44 @@ import {
   useUpdateVehicle,
 } from "../../service/vehicleService";
 import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
+import { normalizeInitialFileList } from "../../components/molecules/EVM/vehicleForm.utils";
 import type { IVehicle } from "../../model/Vehicle";
 import { useEffect, useRef } from "react";
 import { useCurrentUser } from "../../utils/getCurrentUser";
+import { ROUTES } from "../../model/routePaths";
+import { getRoleBasePath } from "../../utils/roleGuard";
+import type { UploadFile } from "antd/es/upload";
+import { uploadFiles } from "../../utils/uploadFile";
 
 export const VehicleEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, isLoading } = useGetVehicleById(id ?? "");
+  const { vehicle, isLoading } = useGetVehicleById(id ?? "", { enabled: !!id });
   const updateVehicle = useUpdateVehicle();
-  const vehicle = data?.result;
   const [form] = Form.useForm<IVehicle>();
   const initialValuesRef = useRef<IVehicle | null>(null);
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+  const basePath = getRoleBasePath(user);
 
   useEffect(() => {
     if (role !== "EVM_STAFF") {
       message.warning("Tài khoản của bạn không có quyền chỉnh sửa xe!");
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+      });
     }
-  }, [role, navigate, id]);
+  }, [role, navigate, id, basePath]);
 
   useEffect(() => {
     if (vehicle) {
-      form.setFieldsValue(vehicle);
-      initialValuesRef.current = vehicle;
+      const withUploadList: IVehicle = {
+        ...vehicle,
+        images: normalizeInitialFileList(vehicle.images as string[]),
+      } as unknown as IVehicle;
+      form.setFieldsValue(withUploadList);
+      initialValuesRef.current = withUploadList;
     }
   }, [vehicle, form]);
 
@@ -47,11 +59,32 @@ export const VehicleEditPage = () => {
       message.warning("Không có thay đổi nào để lưu.");
       return;
     }
-
     try {
-      await updateVehicle.mutateAsync({ id: id!, data: values });
+      const fileList =
+        (values.images as unknown as UploadFile[] | undefined) ?? [];
+      const oldUrls =
+        fileList
+          .filter((f) => !!f.url && !f.originFileObj)
+          .map((f) => String(f.url)) ?? [];
+      const newFiles =
+        fileList
+          .filter((f) => f.originFileObj instanceof File)
+          .map((f) => f.originFileObj as File) ?? [];
+      const newUrls = await uploadFiles(newFiles);
+
+      const payload: IVehicle = {
+        ...values,
+        images: [...oldUrls, ...newUrls],
+      };
+
+      await updateVehicle.mutateAsync({ id: id!, data: payload });
       message.success("✅ Đã lưu thay đổi xe thành công!");
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+
+      // ✅ Ghi đè entry hiện tại (Edit) bằng trang Detail
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+        state: { from: "edit" },
+      });
     } catch {
       message.error("❌ Không thể cập nhật xe!");
     }
@@ -59,16 +92,22 @@ export const VehicleEditPage = () => {
 
   const handleCancel = () => {
     if (!isFormChanged()) {
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+        state: { from: "edit" },
+      });
       return;
     }
-
     Modal.confirm({
       title: "Bạn có chắc muốn hủy chỉnh sửa?",
       content: "Mọi thay đổi chưa lưu sẽ bị mất.",
       okText: "Đồng ý",
       cancelText: "Tiếp tục chỉnh",
-      onOk: () => navigate(`/dashboard/evm/vehicle/${id}`, { replace: true }),
+      onOk: () =>
+        navigate(
+          `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!),
+          { replace: true, state: { from: "edit" } }
+        ),
     });
   };
 
@@ -82,11 +121,11 @@ export const VehicleEditPage = () => {
   if (!vehicle)
     return (
       <div className="flex justify-center items-center h-[80vh]">
-        <Card className="max-w-3xl w-full text-center shadow-md rounded-2xl">
+        <Card className="max-w-3xl w/full text-center shadow-md rounded-2xl">
           <p className="mb-4">Không tìm thấy xe.</p>
           <Button
             type="primary"
-            onClick={() => navigate("/dashboard/evm/vehicle")}
+            onClick={() => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`)}
           >
             Quay lại danh sách
           </Button>
@@ -101,7 +140,6 @@ export const VehicleEditPage = () => {
         className="w-full max-w-3xl shadow-md rounded-2xl"
       >
         <VehicleForm form={form} onFinish={handleSave} canEditPrices={false} />
-
         <div className="flex justify-end gap-3 mt-6">
           <Space>
             <Button onClick={handleCancel}>Hủy</Button>
@@ -118,3 +156,5 @@ export const VehicleEditPage = () => {
     </div>
   );
 };
+
+export default VehicleEditPage;

@@ -1,7 +1,7 @@
 // src/page/account/AccountPage.tsx
 import { App } from "antd";
-import CardWrapper from "../../components/template/CardWrapper";
 import { AccountList } from "../../components/organisms/account/AccountList";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 export const AccountPage = () => {
   return (
