@@ -28,7 +28,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   const role = useSelector((state: RootState) => (state.user as any)?.role);
 
   // 🔹 Phân quyền
-  const canComplete = role === "EVM_STAFF";
+  const canComplete = role === "EVM_STAFF" || role === "DEALER_STAFF";
   const canDelete = role === "EVM_STAFF" || role === "DEALER_STAFF";
 
   // ==========================
