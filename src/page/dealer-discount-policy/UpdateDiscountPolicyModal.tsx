@@ -6,7 +6,7 @@ import {
   useGetDiscountPolicyById,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IVehicle } from "../../model/Vehicle";
 
@@ -38,7 +38,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
     0,
     100
   );
-  const { data: vehiclesData, isLoading: loadingVehicles } = useGetAllVehicles(
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
     0,
     100
   );
