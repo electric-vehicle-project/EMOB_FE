@@ -52,6 +52,10 @@ export const ROUTES = {
   // DEALER_DISCOUNT_POLICY
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
 
+  // DELIVERY
+  DELIVERY: "delivery",
+  DELIVERY_DETAILS: "delivery/:id",
+
   ACCOUNT: "accounts",
 
   // 404

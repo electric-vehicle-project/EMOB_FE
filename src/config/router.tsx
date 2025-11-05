@@ -26,13 +26,13 @@ import ViewSchedulePage from "../page/profile/ViewSchedulePage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
 
 // ⚡ EV Management
-import { VehiclePage } from "../page/EVM/VehiclePage";
-import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
-import { VehicleDetailPage } from "../page/EVM/VehicleDetailPage";
-import { VehicleEditPage } from "../page/EVM/VehicleEditPage";
-import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
-import { VehicleCreatePage } from "../page/EVM/VehicleCreatePage";
-import { VehiclePriceRulePage } from "../page/EVM/VehiclePriceRulePage";
+import { VehiclePage } from "../page/evm/VehiclePage";
+import { VehicleBulkPage } from "../page/evm/VehicleBulkPage";
+import { VehicleDetailPage } from "../page/evm/VehicleDetailPage";
+import { VehicleEditPage } from "../page/evm/VehicleEditPage";
+import { VehiclePriceUpdatePage } from "../page/evm/VehiclePriceUpdatePage";
+import { VehicleCreatePage } from "../page/evm/VehicleCreatePage";
+import { VehiclePriceRulePage } from "../page/evm/VehiclePriceRulePage";
 import { AuthProtect } from "../components/atoms/AuthProtect";
 
 // 🎯 Promotions
@@ -43,6 +43,8 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { AccountPage } from "../page/account/AccountPage";
+import { DeliveryPage } from "../page/delivery/DeliveryPage";
+import { DeliveryDetailPage } from "../page/delivery/DeliveryDetailPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -69,6 +71,9 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
+      
+      { path: ROUTES.DELIVERY, element: <DeliveryPage /> },
+      { path: ROUTES.DELIVERY_DETAILS, element: <DeliveryDetailPage /> },
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
@@ -92,6 +97,10 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
+      
+      { path: ROUTES.DELIVERY, element: <DeliveryPage /> },
+      { path: ROUTES.DELIVERY_DETAILS, element: <DeliveryDetailPage /> },
+
       // 👥 Dealer Management
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
 
@@ -123,6 +132,11 @@ export const router = createBrowserRouter([
     path: ROUTES.MANAGER,
     element: <DashboardLayout />,
     children: [
+      
+      { path: ROUTES.DELIVERY, element: <DeliveryPage /> },
+    
+      { path: ROUTES.DELIVERY_DETAILS, element: <DeliveryDetailPage /> },
+      
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
