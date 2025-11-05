@@ -53,16 +53,12 @@ export const useDeliveryCreateByDealerMutation = createMutationHook(
   "/delivery/customer"
 );
 
-export const useDeliveryDeleteMutation = createMutationHook(
-  "deliveryDelete",
-  "/delivery"
-);
 
 // ===============================
-// CUSTOM MUTATION HOOKS
+// CUSTOM MUTATION FOR UPDATE DELIVERY
 // ===============================
 
-import  api from "../config/api";
+import api from "../config/api";
 import { useMutation } from "@tanstack/react-query";
 import { message } from "antd";
 
@@ -75,4 +71,22 @@ export const useDeliveryCompleteMutation = () =>
     },
     onSuccess: () => message.success("Đã hoàn tất giao hàng thành công."),
     onError: () => message.error("Không thể hoàn tất giao hàng."),
+  });
+
+// ===============================
+// CUSTOM MUTATION FOR DELETE DELIVERY
+// ===============================
+
+export const useDeliveryDeleteMutation = () =>
+  useMutation({
+    mutationFn: async (deliveryId: string) => {
+      const { data } = await api.delete(`/delivery/${deliveryId}`);
+      return data;
+    },
+    onSuccess: () => {
+      message.success("Đã xóa đơn vận chuyển thành công!");
+    },
+    onError: () => {
+      message.error("Không thể xóa đơn vận chuyển!");
+    },
   });
