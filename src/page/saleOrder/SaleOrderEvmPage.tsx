@@ -5,8 +5,11 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
 
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
-import { useSaleOrdersOfDealers } from "../../service/saleOrderService";
-import { useGetAccountsByManager } from "../../service/accountService"; // để lấy danh sách đại lý
+import {
+  useSaleOrdersOfDealers,
+  useSaleOrderComplete,
+} from "../../service/saleOrderService";
+import { useGetAccountsByManager } from "../../service/accountService";
 import { mapDealerOptions } from "../../utils/mapToSelectOptions";
 
 import { CardWrapper } from "../../components/template/CardWrapper";
@@ -39,14 +42,7 @@ const SaleOrderEvmPage: React.FC = () => {
   // ==============================
   const params = useMemo(() => {
     const statuses = statusFilter === "ALL" ? undefined : [statusFilter];
-    return {
-      page: 0,
-      size: 10,
-      dealerId,
-      statuses,
-      sortField,
-      sortDir,
-    };
+    return { page: 0, size: 10, dealerId, statuses, sortField, sortDir };
   }, [dealerId, statusFilter, sortField, sortDir]);
 
   // ==============================
@@ -54,7 +50,6 @@ const SaleOrderEvmPage: React.FC = () => {
   // ==============================
   const { data, isLoading, isFetching, refetch, error } =
     useSaleOrdersOfDealers({}, params);
-
   const orders: SaleOrderResponse[] =
     ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
 
@@ -78,6 +73,12 @@ const SaleOrderEvmPage: React.FC = () => {
   }, [orders]);
 
   // ==============================
+  // Mutations
+  // ==============================
+  const { mutateAsync: completeOrder, isPending: completing } =
+    useSaleOrderComplete();
+
+  // ==============================
   // Handlers
   // ==============================
   const handleViewDetail = (id: string) => {
@@ -85,9 +86,18 @@ const SaleOrderEvmPage: React.FC = () => {
     navigate(`${base}/sale-orders/${id}`, { replace: false });
   };
 
-  if (error) {
-    message.error("Không thể tải dữ liệu đơn hàng của đại lý!");
-  }
+  const handleCompleteClick = async (id: string) => {
+    try {
+      await completeOrder(id);
+      message.success("Đã hoàn tất đơn hàng!");
+      refetch();
+    } catch (err) {
+      console.error(err);
+      message.error("Không thể hoàn tất đơn hàng!");
+    }
+  };
+
+  if (error) message.error("Không thể tải dữ liệu đơn hàng của đại lý!");
 
   // ==============================
   // Render
@@ -116,9 +126,10 @@ const SaleOrderEvmPage: React.FC = () => {
       <SaleOrderTable
         key={`orders-${dealerId}-${statusFilter}-${sortField}-${sortDir}`}
         data={orders}
-        loading={isLoading || isFetching}
+        loading={isLoading || isFetching || completing}
         showDealerColumn
         onViewDetail={handleViewDetail}
+        onComplete={handleCompleteClick} // ✅ Truyền handler hoàn tất
         onSortChange={(field, order) => {
           setSortField(field);
           setSortDir(order);

@@ -83,7 +83,6 @@ export const router = createBrowserRouter([
     children: [
       // General
       { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: "test", element: <TestPage /> },

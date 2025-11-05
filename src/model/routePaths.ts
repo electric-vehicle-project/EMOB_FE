@@ -74,6 +74,8 @@ export const ROUTES = {
   DELIVERY_DEALER_DETAILS: "delivery/:id",
   DELIVERY_CUSTOMER_DETAILS: "delivery/customer/:id",
 
+  //OVERVIEW_REVENUE
+  OVERVIEW_REVENUE: "overview",
 
   ACCOUNT: "accounts",
 
