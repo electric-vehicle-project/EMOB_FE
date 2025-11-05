@@ -43,12 +43,12 @@ export const useDeliveryDetailQuery = createQueryWithPathParamHook(
 // MUTATION HOOKS
 // ===============================
 
-export const useDeliveryCreateByDealerMutation = createMutationHook(
+export const useDeliveryCreateByEVMMutation = createMutationHook(
   "deliveryDealer",
   "/delivery/dealer"
 );
 
-export const useDeliveryCreateByCustomerMutation = createMutationHook(
+export const useDeliveryCreateByDealerMutation = createMutationHook(
   "deliveryCustomer",
   "/delivery/customer"
 );
