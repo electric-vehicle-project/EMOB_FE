@@ -161,7 +161,7 @@ export const ContractDetailCustomer = () => {
             <p>
               <b>BÊN B (Khách hàng):</b> 
               <br />
-              Địa chỉ: {contract?.dealerAddress ?? "______________________"}
+              Địa chỉ: ______________________
               <br />
               Đại diện: Ông/Bà ______________________ 
             </p>

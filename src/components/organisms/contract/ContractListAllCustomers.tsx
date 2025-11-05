@@ -60,7 +60,7 @@ export const ContractListAllCustomers = () => {
 
   return (
     <div>
-      <span>Danh sách hợp đồng mua bán xe với Khách hàng</span>
+      <span>Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng</span>
       <Card
         extra={
           <Space>
