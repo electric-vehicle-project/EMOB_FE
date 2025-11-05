@@ -1,46 +1,80 @@
-// src/service/testDriveService.ts
-import type { ITestDrive } from "../model/TestDrive";
+import {
+  createQueryHook,
+  createQueryWithPathParamHook,
+  createMutationHook,
+} from "../hook/useApi";
+import { useMutation } from "@tanstack/react-query";
+import api from "../config/api";
 
-// fake data ban đầu
-let testDrives: ITestDrive[] = [
-  {
-    id: 1,
-    customer: "Nguyễn Văn A",
-    car: "VinFast VF8",
-    date: "2025-10-05",
-    duration: 30,
-    status: "Pending",
-  },
-  {
-    id: 2,
-    customer: "Trần Thị B",
-    car: "Toyota Vios",
-    date: "2025-10-06",
-    duration: 25,
-    status: "Completed",
-  },
-  {
-    id: 3,
-    customer: "Lê Văn C",
-    car: "Honda City",
-    date: "2025-10-07",
-    duration: 15,
-    status: "Cancelled",
-  },
-];
+// ========================================================
+// QUERY HOOKS
+// ========================================================
 
-export const testDriveService = {
-  getTestDrives: async () => testDrives,
+// [Dealer | Manager] - Lấy danh sách toàn bộ lịch lái thử (phân trang + lọc)
+export const useTestDriveQuery = createQueryHook(
+  "testDrives",
+  "/test-drives"
+);
 
-  createTestDrive: async (testDrive: ITestDrive) => {
-    testDrives.push({ ...testDrive, id: testDrives.length + 1 });
-  },
+// [Dealer Staff] - Lấy danh sách lịch lái thử của chính nhân viên
+export const useTestDriveByStaffQuery = createQueryHook(
+  "testDrivesByStaff",
+  "/test-drives/staff"
+);
 
-  updateTestDrive: async (testDrive: ITestDrive) => {
-    testDrives = testDrives.map((d) => (d.id === testDrive.id ? testDrive : d));
-  },
+// [Dealer Staff | Manager] - Xem chi tiết lịch lái thử theo ID
+export const useTestDriveDetailQuery = createQueryWithPathParamHook(
+  "testDriveDetail",
+  "/test-drives"
+);
 
-  deleteTestDrive: async (id: number) => {
-    testDrives = testDrives.filter((d) => d.id !== id);
-  },
-};
+// [Dealer Staff] - Lấy danh sách xe khả dụng trong khung giờ
+// GET /api/test-drives/free-vehicles?scheduledAt=...&duration=...&model=...
+export const useFreeVehiclesQuery = createQueryHook(
+  "freeVehicles",
+  "/test-drives/free-vehicles"
+);
+
+// ========================================================
+// MUTATION HOOKS
+// ========================================================
+
+// [Dealer Staff] - Tạo mới lịch lái thử (POST /test-drives)
+export const useCreateTestDriveMutation = createMutationHook(
+  "createTestDrive",
+  "/test-drives"
+);
+
+// ========================================================
+// CUSTOM HOOKS (PUT và DELETE có Path Param)
+// ========================================================
+
+// PUT /api/test-drives/{id} - Cập nhật lịch lái thử
+export const useUpdateTestDriveMutation = () =>
+  useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        customerId: string;
+        testDriveVehicleId: string;
+        location: string;
+        duration: number;
+        scheduledAt: string;
+      };
+    }) => {
+      const res = await api.put(`/test-drives/${id}`, data);
+      return res.data;
+    }
+  });
+
+// DELETE /api/test-drives/{id} - Hủy lịch lái thử
+export const useDeleteTestDriveMutation = () =>
+  useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/test-drives/${id}`);
+      return res.data;
+    }
+  });
