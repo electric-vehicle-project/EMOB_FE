@@ -38,9 +38,9 @@ import {
 } from "@ant-design/icons";
 import { ROUTES } from "../../model/routePaths";
 import { Button } from "../../components/atoms/Button";
-import CardWrapper from "../../components/template/CardWrapper";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import VehicleUnitListModal from "../../components/organisms/vehicle/VehicleUnitListModal";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 type Sel = { auth?: { user?: { role?: Role | null } } };
 

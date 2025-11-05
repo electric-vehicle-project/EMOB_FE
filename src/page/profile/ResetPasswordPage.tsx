@@ -4,7 +4,7 @@ import { useChangePassword } from "../../service/accountService";
 import { Button } from "../../components/atoms/Button";
 import { useNavigate } from "react-router-dom";
 import { LockOutlined } from "@ant-design/icons";
-import CardWrapper from "../../components/template/CardWrapper";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 const ResetPasswordPage: React.FC = () => {
   const [form] = Form.useForm();

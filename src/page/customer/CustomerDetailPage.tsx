@@ -77,7 +77,7 @@ export const CustomerDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Lấy prefix động: /dealer-staff, /manager, /evm-staff,...
+  // Lấy prefix động: /dealer-staff, /manager, /evm-staff,...
   const prefix =
     location.pathname.split("/").slice(0, 2).join("/") || ROUTES.DEALER_STAFF;
 
