@@ -107,6 +107,7 @@ export const router = createBrowserRouter([
       },
       { path: ROUTES.SALE_ORDERS, element: <SaleOrderEvmPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
     ],
   },
 
@@ -161,6 +162,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
     ],
   },
 
@@ -184,6 +186,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.SALE_ORDERS, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
     ],
   },
 
