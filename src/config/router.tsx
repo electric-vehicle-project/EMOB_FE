@@ -43,8 +43,11 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { AccountPage } from "../page/account/AccountPage";
-import { DeliveryPage } from "../page/delivery/DeliveryPage";
-import { DeliveryDetailPage } from "../page/delivery/DeliveryDetailPage";
+import { DeliveryDealerDetailPage } from "../page/delivery/DeliveryDealerDetailPage";
+import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerPage";
+import { DeliveryDealerAndCustomerPage } from "../page/delivery/DeliveryDealerAndCustomerPage";
+import { DeliveryCustomerDetailPage } from "../page/delivery/DeliveryCustomerDetailPage";
+import { DeliveryEVMAndCurrentDealerPage } from "../page/delivery/DeliveryEVMAndCurrentDealerPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -72,8 +75,9 @@ export const router = createBrowserRouter([
     ),
     children: [
       
-      { path: ROUTES.DELIVERY, element: <DeliveryPage /> },
-      { path: ROUTES.DELIVERY_DETAILS, element: <DeliveryDetailPage /> },
+      { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.DELIVERY_DEALER_DETAILS, element: <DeliveryDealerDetailPage /> },
+
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
@@ -98,8 +102,8 @@ export const router = createBrowserRouter([
     ),
     children: [
       
-      { path: ROUTES.DELIVERY, element: <DeliveryPage /> },
-      { path: ROUTES.DELIVERY_DETAILS, element: <DeliveryDetailPage /> },
+      { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.DELIVERY_DEALER_DETAILS, element: <DeliveryDealerDetailPage /> },
 
       // 👥 Dealer Management
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
@@ -133,10 +137,11 @@ export const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       
-      { path: ROUTES.DELIVERY, element: <DeliveryPage /> },
-    
-      { path: ROUTES.DELIVERY_DETAILS, element: <DeliveryDetailPage /> },
-      
+      { path: ROUTES.DELIVERY, element: <DeliveryDealerAndCustomerPage /> },
+      { path: ROUTES.DELIVERY_CURRENT_DEALER, element: <DeliveryEVMAndCurrentDealerPage /> },
+      { path: ROUTES.DELIVERY_DEALER_DETAILS, element: <DeliveryDealerDetailPage /> },
+      { path: ROUTES.DELIVERY_CUSTOMER_DETAILS, element: <DeliveryCustomerDetailPage /> },
+
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },

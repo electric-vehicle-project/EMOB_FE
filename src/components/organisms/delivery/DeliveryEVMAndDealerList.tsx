@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 
 const { Option } = Select;
 
-export const DeliveryList = () => {
+export const DeliveryEVMAndDealerList = () => {
   // Query params
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -58,7 +58,7 @@ export const DeliveryList = () => {
 
   return (
     <Card
-      title="Delivery Controller (Dealer - EVM)"
+      title="Danh sách đơn vận chuyển từ Hãng về các Đại lý"
       extra={
         <Space>
           <Select

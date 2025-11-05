@@ -6,16 +6,15 @@ import dayjs from "dayjs";
 import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import {
-    useDeliveryDetailQuery,
     useDeliveryCompleteMutation,
+    useDeliveryQueryByCustomer,
 } from "../../../service/deliveryService";
 import { toast } from "react-toastify";
-import { divide } from "lodash";
 
-export const DeliveryDetail = () => {
+export const DeliveryCustomerDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // route: /delivery/:id
-    const { data, isLoading, refetch } = useDeliveryDetailQuery(id);
+    const { data, isLoading, refetch } = useDeliveryQueryByCustomer(id);
     const { mutateAsync: completeDelivery, isPending: completing } =
         useDeliveryCompleteMutation();
 

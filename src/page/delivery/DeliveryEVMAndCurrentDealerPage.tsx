@@ -1,7 +1,7 @@
-import { DeliveryDetail } from "../../components/organisms/delivery/DeliveryDetail";
+import { DeliveryEVMAndDealerListCurrent } from "../../components/organisms/delivery/DeliveryEVMandDealerListCurrent";
 import CardWrapper from "../../components/template/CardWrapper";
 
-export const DeliveryDetailPage = () => {
+export const DeliveryEVMAndCurrentDealerPage = () => {
   // const user = useCurrentUser();
   // const canAccess = ["ADMIN", "EVM_STAFF"].includes(
   //   (user as { role?: string } | null)?.role || ""
@@ -18,7 +18,7 @@ export const DeliveryDetailPage = () => {
       variant="dashboard"
     >
       {/* {canAccess ? ( */}
-        <DeliveryDetail />
+        <DeliveryEVMAndDealerListCurrent />
       {/* ) : (
         <p className="text-center text-red-500 py-10 font-medium">
           Access Denied

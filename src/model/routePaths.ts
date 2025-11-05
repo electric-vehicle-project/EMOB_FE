@@ -54,7 +54,10 @@ export const ROUTES = {
 
   // DELIVERY
   DELIVERY: "delivery",
-  DELIVERY_DETAILS: "delivery/:id",
+  DELIVERY_CURRENT_DEALER: "delivery/current",
+  DELIVERY_DEALER_DETAILS: "delivery/:id",
+  DELIVERY_CUSTOMER_DETAILS: "delivery/customer/:id",
+
 
   ACCOUNT: "accounts",
 
