@@ -11,7 +11,7 @@ import {
   useGetAccountsByAdmin,
   useGetAccountsByManager,
 } from "../../../service/accountService";
-import { useDealers } from "../../../service/dealerService";
+import { useDealersQuery } from "../../../service/dealerService";
 
 /* ===== Helpers ===== */
 const trimEdges = (s: string) => (s ?? "").replace(/^\s+|\s+$/g, "");
@@ -68,7 +68,7 @@ export const AccountForm: React.FC<Props> = ({
   const [innerForm] = Form.useForm<AccountFormValues>();
   const form = outerForm ?? innerForm;
 
-  const { data: dealersData } = useDealers();
+  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
 
   // ✅ Chỉ enable API tương ứng với role để tránh 403
   const { data: adminAccounts = [] } = useGetAccountsByAdmin(0, 10, {

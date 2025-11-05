@@ -22,7 +22,7 @@ import {
   mapDealerOptions,
   mapVehicleOptions,
 } from "../../utils/mapToSelectOptions";
-import { useDealers } from "../../service/dealerService";
+import { useDealersQuery } from "../../service/dealerService";
 
 const { Title } = Typography;
 
@@ -53,7 +53,7 @@ export default function PromotionCreatePage() {
 
   // ===== API HOOKS =====
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
-  const { data: dealersData, isLoading: loadingDealers } = useDealers({
+  const { data: dealersData, isLoading: loadingDealers } = useDealersQuery({
     enabled: canFetchDealers,
   });
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({

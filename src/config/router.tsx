@@ -13,7 +13,7 @@ import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
 // 📄 General
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
-import ReportPage from "../page/ReportPage";
+import { ReportPage } from "../page/report/ReportPage";
 
 // ===== DEALER PAGES =====
 import { DealerPage } from "../page/DealerPage";
@@ -73,8 +73,6 @@ export const router = createBrowserRouter([
     children: [
       // General
       { path: ROUTES.DEALERS, element: <DealerPage /> },
-      { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: "test", element: <TestPage /> },
@@ -120,10 +118,6 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
-      { path: ROUTES.PROFILE_SCHEDULE, element: <ViewSchedulePage /> },
-
-      // ✅ Cho phép EVM_STAFF xem trang Account (tuỳ bạn kiểm soát read-only trong component)
-      { path: ROUTES.ACCOUNT, element: <AccountPage /> },
     ],
   },
 

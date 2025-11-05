@@ -19,7 +19,7 @@ import {
   useChangeAccountStatus,
   useBanAccount,
 } from "../../../service/accountService";
-import { useDealers } from "../../../service/dealerService";
+import { useDealersQuery } from "../../../service/dealerService";
 import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 
@@ -55,7 +55,7 @@ export const AccountList = () => {
     queryKey: ["accounts-by-manager", page, pageSize],
   });
 
-  const { data: dealersData } = useDealers();
+  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
   const dealerMap = useMemo(() => {
     const dealers = dealersData?.result?.data ?? [];
     const map: Record<string, string> = {};

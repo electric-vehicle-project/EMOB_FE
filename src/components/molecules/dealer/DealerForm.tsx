@@ -1,18 +1,9 @@
-import { Form, Input } from "antd";
+import { Form, Input, Select } from "antd";
 import type { FormInstance } from "antd/es/form";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import type { IDealer } from "../../../model/Dealer";
-import type { DealerFormValues } from "./dealerUtils";
-import {
-  emailRegex,
-  normalizeDealerValues,
-  isSameDealerValues,
-  stripPhone,
-  toLocalPhone,
-  trimEdges,
-} from "./dealerUtils";
-
-const vnMobile = /^(0|\+84)(1|2|3|4|5|6|7|8|9)\d{8}$/;
+import type { DealerFormValues, Region } from "./dealerUtils";
+import { normalizeDealerValues, isSameDealerValues } from "./dealerUtils";
 
 interface Props {
   open: boolean;
@@ -25,6 +16,12 @@ interface Props {
   baseline: DealerFormValues | null;
 }
 
+const REGION_OPTIONS: { label: string; value: Region }[] = [
+  { label: "Miền Bắc", value: "NORTH" },
+  { label: "Miền Trung", value: "CENTRAL" },
+  { label: "Miền Nam", value: "SOUTH" },
+];
+
 export const DealerForm: React.FC<Props> = ({
   open,
   form,
@@ -35,42 +32,27 @@ export const DealerForm: React.FC<Props> = ({
   onCanSubmitChange,
   baseline,
 }) => {
-  // ==== Helpers check trùng (bỏ qua currentId khi Edit) ====
-  const isNameDup = (nameNorm: string) =>
-    existingDealers.some(
-      (d) => (d.name ?? "").trim() === nameNorm && d.id !== currentId
-    );
+  const recomputeSubmitState = useCallback(
+    (allFields?: { errors: string[] }[]) => {
+      const hasErrors = (allFields ?? form.getFieldsError()).some(
+        (f) => f.errors.length > 0
+      );
+      const current = normalizeDealerValues(form.getFieldsValue());
+      const dirty = isEdit
+        ? baseline
+          ? !isSameDealerValues(current, baseline)
+          : true
+        : form.isFieldsTouched(true);
+      onCanSubmitChange?.(!hasErrors && dirty);
+    },
+    [form, isEdit, baseline, onCanSubmitChange]
+  );
 
-  const isContactDup = (contactNorm: string) =>
-    existingDealers.some((d) => {
-      const norm = normalizeDealerValues({
-        contactInfo: d.contactInfo,
-      }).contactInfo;
-      return norm === contactNorm && d.id !== currentId;
-    });
-
-  // Tính lại trạng thái nút theo lỗi & dirty.
-  const recomputeSubmitState = (allFields?: { errors: string[] }[]) => {
-    const hasErrors = (allFields ?? form.getFieldsError()).some(
-      (f) => f.errors.length > 0
-    );
-    const current = normalizeDealerValues(form.getFieldsValue());
-    const dirty = isEdit
-      ? baseline
-        ? !isSameDealerValues(current, baseline)
-        : true
-      : form.isFieldsTouched(true);
-    onCanSubmitChange?.(!hasErrors && dirty);
-  };
-
-  // ✅ Khi mở modal: KHÔNG gọi validateFields -> không đỏ sẵn.
   useEffect(() => {
     if (!open) return;
-    // chờ 1 tick để form mount xong rồi tính trạng thái nút
     const id = setTimeout(() => recomputeSubmitState(), 0);
     return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, baseline, existingDealers, currentId]);
+  }, [open, baseline, existingDealers, currentId, recomputeSubmitState]);
 
   return (
     <Form<DealerFormValues>
@@ -79,9 +61,7 @@ export const DealerForm: React.FC<Props> = ({
       autoComplete="off"
       requiredMark="optional"
       className="space-y-2"
-      // ✅ Chỉ hiện lỗi sau khi người dùng tương tác; debounce cho mượt
       validateTrigger={["onChange", "onBlur"]}
-      // ✅ đọc allFields để lấy errors mới nhất (không trễ 1 nhịp)
       onFieldsChange={(_, allFields) =>
         recomputeSubmitState(allFields as { errors: string[] }[])
       }
@@ -94,101 +74,69 @@ export const DealerForm: React.FC<Props> = ({
           { required: true, message: "Vui lòng nhập tên đại lý" },
           { min: 3, message: "Tên đại lý phải có ít nhất 3 ký tự" },
           { max: 120, message: "Tên đại lý quá dài (tối đa 120 ký tự)" },
-          {
-            pattern: /^[\p{L}\d\s'.-]+$/u,
-            message: "Chỉ chữ, số và ký tự cơ bản",
-          },
-          {
-            validator: (_, v?: string) => {
-              const nameNorm = trimEdges(v || "");
-              if (!nameNorm) return Promise.resolve();
-              if (isNameDup(nameNorm)) {
-                return Promise.reject(
-                  new Error("Tên đại lý đã tồn tại trong hệ thống")
-                );
-              }
-              return Promise.resolve();
-            },
-          },
         ]}
       >
-        <Input placeholder="VD: Nguyen A Auto – Quận 7" allowClear />
+        <Input placeholder="VD: VinFast Hà Nội" allowClear />
       </Form.Item>
 
       <Form.Item
-        name="contactInfo"
-        label="Thông tin liên hệ"
-        extra="Có thể nhập email hoặc số điện thoại"
+        name="emailContact"
+        label="Email liên hệ"
         rules={[
-          { required: true, message: "Vui lòng nhập thông tin liên hệ" },
-          { max: 100, message: "Thông tin liên hệ quá dài (tối đa 100 ký tự)" },
+          { type: "email", message: "Email không hợp lệ" },
+          { required: true, message: "Vui lòng nhập email liên hệ" },
+        ]}
+      >
+        <Input placeholder="VD: vinfast@company.com" allowClear />
+      </Form.Item>
+
+      <Form.Item
+        name="phoneContact"
+        label="Số điện thoại liên hệ"
+        rules={[
+          { required: true, message: "Vui lòng nhập số điện thoại" },
           {
-            validator: (_, v?: string) => {
-              const val = trimEdges(v || "");
-              if (!val) return Promise.resolve();
-              if (emailRegex.test(val.toLowerCase())) return Promise.resolve();
-              const raw = stripPhone(val);
-              if (!vnMobile.test(raw)) {
-                return Promise.reject(
-                  new Error("Email hợp lệ hoặc số VN (090..., +84...)")
-                );
-              }
-              return Promise.resolve();
-            },
-          },
-          {
-            validator: (_, v?: string) => {
-              const val = trimEdges(v || "");
-              if (!val) return Promise.resolve();
-              const normalized = emailRegex.test(val.toLowerCase())
-                ? val.toLowerCase()
-                : toLocalPhone(val);
-              if (isContactDup(normalized)) {
-                return Promise.reject(
-                  new Error("Email/SĐT đã tồn tại trong hệ thống")
-                );
-              }
-              return Promise.resolve();
-            },
+            pattern: /^(0|\+84)(1|2|3|4|5|6|7|8|9)\d{8}$/,
+            message: "Số điện thoại không hợp lệ",
           },
         ]}
       >
-        <Input placeholder="VD: daily@emob.vn hoặc 0901234567" allowClear />
+        <Input placeholder="VD: 0901234567" allowClear />
       </Form.Item>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Form.Item
           name="country"
           label="Quốc gia"
-          rules={[
-            { required: true, message: "Vui lòng nhập quốc gia" },
-            { min: 2, message: "Tên quốc gia quá ngắn" },
-            { max: 60, message: "Tên quốc gia quá dài (≤60)" },
-            {
-              pattern: /^[\p{L}\s'.-]+$/u,
-              message: "Chỉ nhập chữ và khoảng trắng",
-            },
-          ]}
+          rules={[{ required: true, message: "Vui lòng nhập quốc gia" }]}
         >
           <Input placeholder="VD: Việt Nam" allowClear />
         </Form.Item>
 
         <Form.Item
-          name="address"
-          label="Địa chỉ"
-          rules={[
-            { required: true, message: "Vui lòng nhập địa chỉ" },
-            { min: 8, message: "Địa chỉ quá ngắn" },
-            { max: 255, message: "Địa chỉ quá dài (≤255)" },
-            {
-              pattern: /^[\p{L}\d\s,.'-]+$/u,
-              message: "Chỉ chữ, số, dấu phẩy, chấm, gạch nối",
-            },
-          ]}
+          name="region"
+          label="Khu vực"
+          rules={[{ required: true, message: "Vui lòng chọn khu vực" }]}
         >
-          <Input placeholder="VD: 123 Nguyễn Trãi, Quận 5, TP.HCM" allowClear />
+          <Select
+            options={REGION_OPTIONS}
+            placeholder="Chọn khu vực"
+            showSearch={false}
+            allowClear
+          />
         </Form.Item>
       </div>
+
+      <Form.Item
+        name="address"
+        label="Địa chỉ"
+        rules={[
+          { required: true, message: "Vui lòng nhập địa chỉ" },
+          { min: 8, message: "Địa chỉ quá ngắn" },
+        ]}
+      >
+        <Input placeholder="VD: 6 Hồng Đức, Bình Thọ, TP.Thủ Đức" allowClear />
+      </Form.Item>
     </Form>
   );
 };
