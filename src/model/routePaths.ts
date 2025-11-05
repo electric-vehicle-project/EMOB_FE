@@ -78,4 +78,11 @@ export const ROUTES = {
   ACCOUNT: "accounts",
 
   NOTFOUND: "*",
+
+  // CONTRACT
+  CONTRACT: "contract",
+  CONTRACT_DETAILS: "contract/:id",
+  CONTRACT_CUSTOMERS: "contract/customers",
+  
+  CONTRACT_CUSTOMER_DETAILS: "contract/customers/:id",
 };

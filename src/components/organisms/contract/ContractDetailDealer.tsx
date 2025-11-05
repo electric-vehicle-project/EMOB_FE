@@ -1,0 +1,342 @@
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Card,
+  Button,
+  Divider,
+  Spin,
+  Modal,
+  Select,
+  InputNumber,
+  Form,
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  PrinterOutlined,
+  FileDoneOutlined,
+} from "@ant-design/icons";
+import { useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
+import dayjs from "dayjs";
+import {
+  useContractCancelMutation,
+  useContractDetailQuery,
+  useContractSignMutation,
+} from "../../../service/contractService";
+import { toast } from "react-toastify";
+
+export const ContractDetailDealer = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { data, isLoading, refetch } = useContractDetailQuery(id);
+  const { mutateAsync: signContract, isPending: signing } =
+    useContractSignMutation();
+  const { mutateAsync: cancelContract, isPending: cancelling } =
+    useContractCancelMutation();
+
+  const contract = data?.result;
+  const printRef = useRef<HTMLDivElement>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"FULL" | "INSTALLMENT">(
+    "FULL"
+  );
+
+  const [form] = Form.useForm();
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: `Hợp đồng_${contract?.contractNumber}`,
+  });
+
+  const handleOpenSign = () => setModalVisible(true);
+  const handleCancelModal = () => {
+    form.resetFields();
+    setModalVisible(false);
+  };
+
+  const handleSignSubmit = async () => {
+    try {
+      const formValues = form.getFieldsValue();
+      const baseParams = {
+        purchaseDate: dayjs().format("YYYY-MM-DD"),
+        paymentStatus,
+      };
+
+      const body =
+        paymentStatus === "FULL"
+          ? { contractId: contract.contractId }
+          : {
+              contractId: contract.contractId,
+              deposit: formValues.deposit,
+              downPayment: formValues.downPayment,
+              termMonths: formValues.termMonths,
+              interestRate: formValues.interestRate,
+            };
+
+      await signContract({ params: baseParams, body });
+      toast.success("Đã ký hợp đồng thành công!");
+      refetch();
+      handleCancelModal();
+    } catch {
+      toast.error("Ký hợp đồng thất bại!");
+    }
+  };
+
+  const handleCancelContract = async () => {
+    try {
+      await cancelContract(contract.contractId);
+      toast.success("Đã hủy hợp đồng thành công!");
+      refetch();
+    } catch {
+      toast.error("Hủy hợp đồng thất bại!");
+    }
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <Spin size="large" />
+      </div>
+    );
+
+  return (
+    <div className="max-w-4xl mx-auto mt-6">
+      {/* Thanh điều hướng + nút in */}
+      <div className="flex justify-between items-center mb-3">
+        <div
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
+        >
+          <ArrowLeftOutlined />
+          <span className="font-medium">Quay lại trang trước</span>
+        </div>
+
+        <Button
+          icon={<PrinterOutlined />}
+          type="default"
+          onClick={handlePrint}
+          className="border-[#627254] text-[#627254] hover:!bg-[#627254] hover:!text-white"
+        >
+          In / Xuất PDF
+        </Button>
+      </div>
+
+      <div ref={printRef}>
+        <Card
+          className="bg-white shadow-md print:shadow-none print:border-none"
+          title={
+            <div className="text-center">
+              <h2 className="text-xl font-bold mt-6">
+                CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+              </h2>
+              <p className="text-xl font-bold mt-1">
+                Độc lập - Tự do - Hạnh phúc
+              </p>
+              -----------------------------------
+              <h2 className="text-xl font-bold uppercase mt-1">
+                HỢP ĐỒNG BÀN GIAO LÔ XE ĐIỆN
+              </h2>
+              <p className="text-gray-600 mt-1 mb-1">
+                (Số: {contract?.contractNumber})
+              </p>
+            </div>
+          }
+        >
+          {/* ---------- Nội dung hợp đồng ---------- */}
+          <div className="text-[15px] leading-7 text-justify space-y-4">
+            <p>
+              Căn cứ Bộ luật Dân sự và các quy định pháp luật có liên quan, hôm
+              nay, ngày{" "}
+              <b>{dayjs(contract?.createdAt).format("DD/MM/YYYY")}</b>, chúng tôi
+              gồm có:
+            </p>
+
+            <p>
+              <b>BÊN A (Hãng xe):</b> Công ty TNHH EMOB Electric Vehicle
+              <br />
+              Địa chỉ: Tòa nhà F-Town 3, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
+              <br />
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên hãng xe
+            </p>
+
+            <p>
+              <b>BÊN B (Đại lý):</b> {contract?.dealerName ?? "______________________"}
+              <br />
+              Địa chỉ: {contract?.dealerAddress ?? "______________________"}
+              <br />
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên đại lý
+            </p>
+
+            <Divider />
+
+            <p>
+              Hai bên thống nhất ký kết <b>Hợp đồng bàn giao lô xe điện</b> với
+              các điều khoản sau:
+            </p>
+
+            <p>
+              <b>Điều 1. Thông tin lô xe bàn giao</b>
+              <br />- Số lượng xe: <b>{contract?.totalQuantity}</b> chiếc
+              <br />- Tổng giá trị:{" "}
+              <b>{contract?.totalPrice?.toLocaleString("vi-VN")} ₫</b>
+              <br />- Chủng loại xe: Theo danh mục đính kèm trong phụ lục hợp
+              đồng.
+            </p>
+
+            <p>
+              <b>Điều 2. Thời gian và địa điểm bàn giao</b>
+              <br />- Thời gian: Trong vòng 15 ngày kể từ ngày ký hợp đồng hoặc
+              thời gian khác theo thỏa thuận.
+              <br />- Địa điểm: Kho hàng của Bên A hoặc địa điểm khác theo thỏa
+              thuận.
+            </p>
+
+            <p>
+              <b>Điều 3. Thanh toán</b>
+              <br />- Hình thức thanh toán: Theo thỏa thuận.
+              <br />- Trạng thái thanh toán: <b>{contract?.status}</b>
+              <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
+            </p>
+
+            <p>
+              <b>Điều 4. Quyền và nghĩa vụ của các bên</b>
+              <br />- Bên A đảm bảo xe bàn giao đúng số lượng, chất lượng.
+              <br />- Bên B có nghĩa vụ kiểm tra, nhận xe và thực hiện thanh
+              toán.
+            </p>
+
+            <p>
+              <b>Điều 5. Điều khoản chung</b>
+              <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
+              <br />- Hợp đồng có hiệu lực kể từ ngày ký.
+              <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị
+              pháp lý như nhau.
+            </p>
+          </div>
+
+          <Divider />
+
+          <div className="flex justify-between items-start mt-8 mr-10 ml-10">
+            <div className="text-center">
+              <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
+              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex" >(đã ký)</div>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
+              <div className="border h-28 w-40 mx-auto mt-2" />
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
+            </div>
+          </div>
+
+          <Divider />
+
+          <div className="flex justify-end gap-3 mt-6 print:hidden">
+            {contract?.status === "PENDING" && (
+              <>
+                <Button
+                  type="primary"
+                  icon={<FileDoneOutlined />}
+                  onClick={handleOpenSign}
+                  className="!bg-[#627254] hover:!bg-[#556547] text-white"
+                >
+                  Ký hợp đồng
+                </Button>
+                <Button
+                  danger
+                  onClick={handleCancelContract}
+                  loading={cancelling}
+                  className="rounded-md"
+                >
+                  Hủy hợp đồng
+                </Button>
+              </>
+            )}
+            {contract?.status === "SIGNED" && (
+              <Button disabled type="default">
+                Hợp đồng đã được ký
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* ---------- Modal ký hợp đồng ---------- */}
+      <Modal
+        open={modalVisible}
+        title="Ký hợp đồng"
+        onCancel={handleCancelModal}
+        onOk={handleSignSubmit}
+        okText="Ký"
+        cancelText="Hủy"
+        confirmLoading={signing}
+      >
+        <Form form={form} layout="vertical" className="mt-2">
+          <Form.Item label="Trạng thái thanh toán">
+            <Select
+              value={paymentStatus}
+              onChange={(v) => setPaymentStatus(v)}
+              options={[
+                { label: "Trả thẳng (FULL)", value: "FULL" },
+                { label: "Trả góp (INSTALLMENT)", value: "INSTALLMENT" },
+              ]}
+            />
+          </Form.Item>
+
+          {paymentStatus === "INSTALLMENT" && (
+            <>
+              <Form.Item
+                name="deposit"
+                label="Tiền đặt cọc (₫)"
+                rules={[{ required: true, message: "Vui lòng nhập tiền đặt cọc" }]}
+              >
+                <InputNumber min={0} className="w-full" />
+              </Form.Item>
+
+              <Form.Item
+                name="downPayment"
+                label="Số tiền trả trước (₫)"
+                rules={[
+                  { required: true, message: "Vui lòng nhập số tiền trả trước" },
+                ]}
+              >
+                <InputNumber min={0} className="w-full" />
+              </Form.Item>
+
+              <Form.Item
+                name="termMonths"
+                label="Thời hạn vay (tháng)"
+                rules={[{ required: true, message: "Vui lòng chọn thời hạn" }]}
+              >
+                <Select
+                  options={[
+                    { label: "12 tháng", value: 12 },
+                    { label: "36 tháng", value: 36 },
+                  ]}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="interestRate"
+                label="Lãi suất (%)"
+                rules={[
+                  { required: true, message: "Vui lòng nhập lãi suất" },
+                ]}
+              >
+                <InputNumber
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  className="w-full"
+                />
+              </Form.Item>
+            </>
+          )}
+        </Form>
+      </Modal>
+    </div>
+  );
+};
