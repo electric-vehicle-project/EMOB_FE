@@ -1,11 +1,9 @@
 // src/components/molecules/contract/ContractTable.tsx
-import { Table, Pagination, Tooltip, Typography } from "antd";
+import { Table, Pagination, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { IContract } from "../../../model/Contract";
-
-const { Paragraph } = Typography;
 
 interface PaginationProps {
   current: number;

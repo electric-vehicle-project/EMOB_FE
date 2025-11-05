@@ -18,20 +18,20 @@ import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import dayjs from "dayjs";
 import {
-  useContractDeleteMutation,
+  useContractCancelMutation,
   useContractDetailQuery,
   useContractSignMutation,
 } from "../../../service/contractService";
 import { toast } from "react-toastify";
 
-export const ContractDetail = () => {
+export const ContractDetailDealer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data, isLoading, refetch } = useContractDetailQuery(id);
   const { mutateAsync: signContract, isPending: signing } =
     useContractSignMutation();
   const { mutateAsync: cancelContract, isPending: cancelling } =
-    useContractDeleteMutation();
+    useContractCancelMutation();
 
   const contract = data?.result;
   const printRef = useRef<HTMLDivElement>(null);
@@ -155,8 +155,7 @@ export const ContractDetail = () => {
               <br />
               Địa chỉ: Tòa nhà F-Town 3, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Giám đốc kinh
-              doanh
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên hãng xe
             </p>
 
             <p>
@@ -164,7 +163,7 @@ export const ContractDetail = () => {
               <br />
               Địa chỉ: {contract?.dealerAddress ?? "______________________"}
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Giám đốc đại lý
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên đại lý
             </p>
 
             <Divider />

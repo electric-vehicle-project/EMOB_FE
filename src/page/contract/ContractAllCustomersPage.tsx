@@ -1,8 +1,9 @@
-import { ContractDetail } from "../../components/organisms/contract/ContractDetailEVMAndDealer";
+
+import { ContractListAllCustomers } from "../../components/organisms/contract/ContractListAllCustomers";
 import CardWrapper from "../../components/template/CardWrapper";
 // import { useCurrentUser } from "../utils/getCurrentUser";
 
-export const ContractDetailPage = () => {
+export const ContractAllCustomersPage = () => {
   // const user = useCurrentUser();
   // const canAccess = ["ADMIN", "EVM_STAFF"].includes(
   //   (user as { role?: string } | null)?.role || ""
@@ -18,7 +19,7 @@ export const ContractDetailPage = () => {
     //   }
       variant="dashboard"
     >
-        <ContractDetail />
+        <ContractListAllCustomers />
       {/* {canAccess ? (
         <DealerList />
       ) : (

@@ -1,8 +1,9 @@
-import { ContractList } from "../../components/organisms/contract/ContractList";
+
+import { ContractListCurrentDealer } from "../../components/organisms/contract/ContractListCurrentDealer";
 import CardWrapper from "../../components/template/CardWrapper";
 // import { useCurrentUser } from "../utils/getCurrentUser";
 
-export const ContractPage = () => {
+export const ContractCurrentDealerPage = () => {
   // const user = useCurrentUser();
   // const canAccess = ["ADMIN", "EVM_STAFF"].includes(
   //   (user as { role?: string } | null)?.role || ""
@@ -18,7 +19,7 @@ export const ContractPage = () => {
     //   }
       variant="dashboard"
     >
-        <ContractList />
+        <ContractListCurrentDealer />
       {/* {canAccess ? (
         <DealerList />
       ) : (

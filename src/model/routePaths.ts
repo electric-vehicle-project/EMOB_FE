@@ -59,5 +59,6 @@ export const ROUTES = {
 
   // CONTRACT
   CONTRACT: "contract",
-  CONTRACT_DETAILS: "contract/:id"
+  CONTRACT_DETAILS: "contract/:id",
+  CONTRACT_CUSTOMERS: "contract/customers",
 };

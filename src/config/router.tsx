@@ -43,8 +43,9 @@ import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import TestPage from "../page/TestPage";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { AccountPage } from "../page/account/AccountPage";
-import { ContractPage } from "../page/contract/ContractPage";
-import { ContractDetailPage } from "../page/contract/ContractDetailPage";
+import { ContractDetailDealerPage } from "../page/contract/ContractDetailDealerPage";
+import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDealerPage";
+import { ContractAllCustomersPage } from "../page/contract/ContractAllCustomersPage";
 
 export const router = createBrowserRouter([
   // 🏠 Trang chủ
@@ -71,7 +72,7 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.CONTRACT, element: <ContractPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage /> },
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /admin/dealers
       { path: ROUTES.TESTDRIVE, element: <TestDrivePage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
@@ -96,7 +97,7 @@ export const router = createBrowserRouter([
     ),
     children: [
 
-      { path: ROUTES.CONTRACT, element: <ContractPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage /> },
       // 👥 Dealer Management
       { path: ROUTES.DEALERS, element: <DealerPage /> }, // /evm_staff/dealers
 
@@ -128,8 +129,10 @@ export const router = createBrowserRouter([
     path: ROUTES.MANAGER,
     element: <DashboardLayout />,
     children: [
-      { path: ROUTES.CONTRACT, element: <ContractPage /> },
-      { path: ROUTES.CONTRACT_DETAILS, element: <ContractDetailPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage/> },
+      { path: ROUTES.CONTRACT_DETAILS, element: <ContractDetailDealerPage /> },
+      { path: ROUTES.CONTRACT_CUSTOMERS, element: <ContractAllCustomersPage /> },
+
       { path: ROUTES.PROFILE_INFO, element: <InfoPage /> },
       { path: ROUTES.PROFILE_CHANGE, element: <ChangeInfoPage /> },
       { path: ROUTES.PROFILE_RESET, element: <ResetPasswordPage /> },
