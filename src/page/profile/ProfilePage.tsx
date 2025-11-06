@@ -9,9 +9,6 @@ import EditProfileModal from "../../components/organisms/profile/EditProfileModa
 import ChangePasswordModal from "../../components/organisms/profile/ChangePasswordModal";
 import ProfileDetailsByRole from "../../components/organisms/profile/ProfileDetailsByRole";
 
-/* ================================
-   🎨 Tag hiển thị trạng thái & role
-================================== */
 const mapStatusLabel: Record<AccountStatus, string> = {
   ACTIVE: "Đang hoạt động",
   INACTIVE: "Tạm ngưng",
@@ -31,9 +28,6 @@ const mapRoleLabel: Record<Role, string> = {
   EVM_STAFF: "Nhân viên EVM",
 };
 
-/* ================================
-   🧱 Component Section nhỏ
-================================== */
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
