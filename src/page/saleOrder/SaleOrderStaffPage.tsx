@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { message, Button } from "antd";
+import { Button, message } from "antd";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 
@@ -7,25 +7,29 @@ import type { RootState } from "../../redux/store";
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 
 import {
-  useSaleOrdersOfCurrentDealer,
+  useSaleOrdersOfCurrentStaff,
   useSaleOrderDelete,
+  useSaleOrderComplete,
 } from "../../service/saleOrderService";
 
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderFilterBar } from "../../components/organisms/saleOrder/SaleOrderFilterBar";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
+import { SaleOrderCompleteConfirm } from "../../components/organisms/saleOrder/SaleOrderCompleteConfirm";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 
-const SaleOrderDealerPage: React.FC = () => {
+const SaleOrderStaffPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user);
-  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
+  const role = (user as any)?.role ?? "DEALER_STAFF";
 
   // ========================
   // State
   // ========================
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL");
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SaleOrderResponse | null>(
     null
   );
@@ -43,7 +47,7 @@ const SaleOrderDealerPage: React.FC = () => {
   // ========================
   // Fetch Data
   // ========================
-  const { data, isLoading, isFetching, refetch } = useSaleOrdersOfCurrentDealer(
+  const { data, isLoading, isFetching, refetch } = useSaleOrdersOfCurrentStaff(
     {},
     params
   );
@@ -74,6 +78,8 @@ const SaleOrderDealerPage: React.FC = () => {
   // ========================
   const { mutateAsync: cancelOrder, isPending: canceling } =
     useSaleOrderDelete();
+  const { mutateAsync: completeOrder, isPending: completing } =
+    useSaleOrderComplete();
 
   // ========================
   // Handlers
@@ -90,6 +96,13 @@ const SaleOrderDealerPage: React.FC = () => {
     setConfirmCancelOpen(true);
   };
 
+  const handleCompleteClick = (id: string) => {
+    const target = orders.find((o) => o.id === id);
+    if (!target) return;
+    setSelectedOrder(target);
+    setConfirmCompleteOpen(true);
+  };
+
   const handleDelete = async () => {
     if (!selectedOrder) return;
     try {
@@ -103,8 +116,17 @@ const SaleOrderDealerPage: React.FC = () => {
     }
   };
 
-  const handleNavigateToStaffOrders = () => {
-    navigate("/dealer_staff/sale-order/staff");
+  const handleComplete = async () => {
+    if (!selectedOrder) return;
+    try {
+      await completeOrder(selectedOrder.id);
+      message.success("Đã hoàn tất đơn hàng!");
+      refetch();
+    } catch {
+      message.error("Không thể hoàn tất đơn hàng này!");
+    } finally {
+      setConfirmCompleteOpen(false);
+    }
   };
 
   // ========================
@@ -114,24 +136,16 @@ const SaleOrderDealerPage: React.FC = () => {
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
-          Đơn hàng của đại lý
+          Đơn hàng của nhân viên
         </h2>
 
-        {role === "MANAGER" ? (
-          <Button
-            onClick={() => navigate("/manager/sale-order/staff-summary")}
-            type="primary"
-          >
-            Xem doanh số theo nhân viên
-          </Button>
-        ) : role === "DEALER_STAFF" ? (
-          <Button
-            onClick={() => navigate("/dealer_staff/sale-order/staff")}
-            type="primary"
-          >
-            Xem các đơn hàng của tôi
-          </Button>
-        ) : null}
+        <Button
+          onClick={() => navigate("/dealer_staff/sale-order")}
+          type="primary"
+          icon={<ArrowLeftOutlined />}
+        >
+          Quay lại đơn hàng của đại lý
+        </Button>
       </div>
 
       <SaleOrderFilterBar
@@ -144,7 +158,10 @@ const SaleOrderDealerPage: React.FC = () => {
         key={`orders-${statusFilter}-${sortField}-${sortDir}`}
         data={orders}
         loading={isLoading || isFetching}
+        canDelete
+        canComplete
         onDelete={handleDeleteClick}
+        onComplete={handleCompleteClick}
         onViewDetail={handleViewDetail}
         onSortChange={(field, order) => {
           setSortField(field);
@@ -159,9 +176,17 @@ const SaleOrderDealerPage: React.FC = () => {
         onConfirm={handleDelete}
         loading={canceling}
       />
+
+      <SaleOrderCompleteConfirm
+        open={confirmCompleteOpen}
+        orderId={selectedOrder?.id}
+        onCancel={() => setConfirmCompleteOpen(false)}
+        onConfirm={handleComplete}
+        loading={completing}
+      />
     </CardWrapper>
   );
 };
 
-export default SaleOrderDealerPage;
-export { SaleOrderDealerPage };
+export default SaleOrderStaffPage;
+export { SaleOrderStaffPage };

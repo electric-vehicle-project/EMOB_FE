@@ -42,7 +42,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       width: 220,
       ellipsis: true,
       render: (id) => (
-        <span className="font-medium text-gray-700">{id.slice(0, 8)}...</span>
+        <span className="font-medium text-gray-700">{id.slice(0, 30)}...</span>
       ),
     },
     {
@@ -136,8 +136,8 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
           {canDelete && record.status === "CREATED" && (
             <Button
               size="small"
-              danger
               icon={<CloseOutlined />}
+              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none transition-colors duration-200"
               onClick={() => onDelete?.(record.id)}
             >
               Huỷ

@@ -14,23 +14,19 @@ import { SaleOrderItemTable } from "../../components/organisms/saleOrder/SaleOrd
 export const SaleOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const role = useSelector((state: RootState) => {
-    return state?.user?.role ?? null;
-  });
+  const role = useSelector((state: RootState) => state.user?.role ?? null);
 
   // ==============================
-  // 🔍 Gọi API lấy chi tiết đơn hàng
+  // 🔍 API
   // ==============================
   const { data: orderData, isLoading, refetch } = useSaleOrderById(id ?? "");
-
   const { mutate: completeOrder, isPending: completing } =
     useSaleOrderComplete();
   const { mutate: cancelOrder, isPending: canceling } = useSaleOrderDelete();
-
   const order = orderData?.result ?? orderData?.data ?? null;
 
   // ==============================
-  // 🧩 Hành động
+  // ⚙️ Action
   // ==============================
   const handleComplete = () => {
     if (!id) return;
@@ -55,7 +51,7 @@ export const SaleOrderDetailPage = () => {
   };
 
   // ==============================
-  // ⏳ Loading state
+  // ⏳ Loading
   // ==============================
   if (isLoading || !order) {
     return (
@@ -66,14 +62,14 @@ export const SaleOrderDetailPage = () => {
   }
 
   // ==============================
-  // 👥 Phân quyền
+  // 👥 Role logic
   // ==============================
   const isDealerStaff = role === "DEALER_STAFF";
   const isEvmStaff = role === "EVM_STAFF";
   const isManager = role === "MANAGER";
 
   // ==============================
-  // 🏷️ Màu trạng thái
+  // 🏷️ Status color
   // ==============================
   const statusColor: Record<string, string> = {
     CREATED: "processing",
@@ -82,7 +78,7 @@ export const SaleOrderDetailPage = () => {
   };
 
   // ==============================
-  // 🎨 Render UI
+  // 🖼️ UI
   // ==============================
   return (
     <div className="p-6 space-y-6">
@@ -112,7 +108,7 @@ export const SaleOrderDetailPage = () => {
         }
       >
         {/* ===== Thông tin đơn hàng ===== */}
-        <SaleOrderDetailInfo order={order} />
+        <SaleOrderDetailInfo order={order} role={role} />
 
         <Divider />
 
@@ -122,8 +118,9 @@ export const SaleOrderDetailPage = () => {
         </h3>
         <SaleOrderItemTable items={order.items || []} />
 
-        {/* ===== Action buttons ===== */}
         <Divider />
+
+        {/* ===== Action Buttons ===== */}
         {(isDealerStaff || isEvmStaff) && order.status === "CREATED" && (
           <div className="flex justify-end gap-3 mt-4">
             <Button
@@ -142,13 +139,6 @@ export const SaleOrderDetailPage = () => {
             >
               Hoàn tất đơn hàng
             </Button>
-          </div>
-        )}
-
-        {/* Manager chỉ xem */}
-        {isManager && (
-          <div className="flex justify-end mt-3">
-            <Tag color="default">Quản lý chỉ có quyền xem</Tag>
           </div>
         )}
       </Card>

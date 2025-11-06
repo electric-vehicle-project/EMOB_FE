@@ -83,7 +83,7 @@ const SaleOrderEvmPage: React.FC = () => {
   // ==============================
   const handleViewDetail = (id: string) => {
     const base = `/${String(role || "").toLowerCase()}`;
-    navigate(`${base}/sale-orders/${id}`, { replace: false });
+    navigate(`${base}/sale-order/${id}`, { replace: false });
   };
 
   const handleCompleteClick = async (id: string) => {

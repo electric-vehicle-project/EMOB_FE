@@ -1,12 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
 
 const api = axios.create({
-  
   // baseURL: "http://103.200.20.149/:8080/api/",
-  baseURL: "http://localhost:8080/api",
+  baseURL: "http://localhost:8081/api",
 });
 
 api.interceptors.request.use(
@@ -19,7 +18,6 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -35,7 +33,9 @@ const processQueue = (error: any, token: string | null = null) => {
 api.interceptors.response.use(
   (response) => response, // thành công thì trả response như bình thường
   async (error: AxiosError<any>) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // kiểm tra token hết hạn (401 + message "Expired token!")
     if (
@@ -68,7 +68,8 @@ api.interceptors.response.use(
           token: refreshToken,
         });
 
-        const { token: newToken, refreshToken: newRefreshToken } = res.data.result;
+        const { token: newToken, refreshToken: newRefreshToken } =
+          res.data.result;
 
         // lưu lại token mới
         localStorage.setItem("token", newToken);
@@ -83,11 +84,11 @@ api.interceptors.response.use(
           originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
         return api(originalRequest);
 
-       // nếu có lỗi thì cho đăng nhập lại
+        // nếu có lỗi thì cho đăng nhập lại
       } catch {
         const navigate = useNavigate();
         toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại!");
-        navigate('/auth/login')
+        navigate("/auth/login");
       } finally {
         isRefreshing = false;
       }
