@@ -24,16 +24,16 @@ export const ROUTES = {
 
   // ====== CUSTOMERS ======
   CUSTOMERS: "customers",
-  DEALER_POINT_RULES: "dealerPoint",
+  DEALER_POINT_RULE: "dealerPoint",
   CUSTOMER_CREATE: "customers/create",
   CUSTOMER_DETAIL: "customers/:id",
   CUSTOMER_EDIT: "customers/edit/:id",
 
   // ====== ADMIN MODULES ======
-  DEALERS: "dealers",
-  TESTDRIVE: "testdrive",
+  DEALER: "dealer",
 
   // ====== PROFILE ======
+  PROFILE: "profile",
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
@@ -45,7 +45,7 @@ export const ROUTES = {
   PROMOTION_EDIT: "promotions/edit/:id",
 
   // ====== QUOTATION ======
-  QUOTATIONS: "quotations",
+  QUOTATION: "quotation",
   QUOTATION_CREATE: "quotations/create",
   QUOTATION_UPDATE: "quotations/edit/:id",
   QUOTATION_VIEW: "quotations/view/:id",
@@ -53,7 +53,7 @@ export const ROUTES = {
   // EVM
   EVM_VEHICLE: "evm/vehicle",
   EVM_VEHICLE_BULK: "evm/vehicle/bulk",
-  EVM_VEHICLE_RULES: "evm/price-rules",
+  EVM_VEHICLE_RULE: "evm/price-rule",
   EVM_VEHICLE_NEW: "evm/vehicle/new",
   EVM_VEHICLE_DETAIL: "evm/vehicle/:id",
   EVM_VEHICLE_EDIT: "evm/vehicle/edit/:id",
@@ -61,7 +61,7 @@ export const ROUTES = {
   // DEALER_DISCOUNT_POLICY
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
   // ====== SALE ORDER ======
-  SALE_ORDERS: "sale-orders",
+  SALE_ORDER: "sale-order",
   SALE_ORDER_DETAIL: "sale-orders/:id",
   // ====== REPORT ======
   REPORT: "report",
@@ -71,9 +71,8 @@ export const ROUTES = {
   // DELIVERY
   DELIVERY: "delivery",
   DELIVERY_CURRENT_DEALER: "delivery/current",
-  DELIVERY_DEALER_DETAILS: "delivery/:id",
-  DELIVERY_CUSTOMER_DETAILS: "delivery/customer/:id",
-
+  DELIVERY_DEALER_DETAIL: "delivery/:id",
+  DELIVERY_CUSTOMER_DETAIL: "delivery/customer/:id",
 
   ACCOUNT: "accounts",
 
@@ -81,8 +80,13 @@ export const ROUTES = {
 
   // CONTRACT
   CONTRACT: "contract",
-  CONTRACT_DETAILS: "contract/:id",
-  CONTRACT_CUSTOMERS: "contract/customers",
-  
-  CONTRACT_CUSTOMER_DETAILS: "contract/customers/:id",
+  CONTRACT_DETAIL: "contract/:id",
+  CONTRACT_CUSTOMER: "contract/customers",
+
+  CONTRACT_CUSTOMER_DETAIL: "contract/customers/:id",
+
+  OVERVIEW: "overview",
+
+  // TEST DRIVE
+  TEST_DRIVE: "test-drive",
 };
