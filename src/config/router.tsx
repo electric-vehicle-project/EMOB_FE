@@ -24,13 +24,17 @@ import ViewSchedulePage from "../page/profile/ViewSchedulePage";
 import TestPage from "../page/TestPage";
 import { CustomerPage } from "../page/customer/CustomerPage";
 import CustomerDetailPage from "../page/customer/CustomerDetailPage";
+import GoogleCallback from "../page/GoogleCallback";
 
 export const routes: RouteObject[] = [
   { path: ROUTES.HOME, element: <HomePage /> },
 
   // Auth layout cho login / reset password
+
+  { path: "/auth/callback", element: <GoogleCallback/>} ,
+
   {
-    path: ROUTES.AUTH, 
+    path: ROUTES.AUTH,
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginCard /> },
