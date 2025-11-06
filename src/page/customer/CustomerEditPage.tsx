@@ -18,36 +18,38 @@ export const CustomerEditPage: React.FC = () => {
   const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
   const canEdit = role === "DEALER_STAFF";
 
+  // FETCH CUSTOMER DETAIL
   const { data, isLoading } = useCustomerById(id || "");
-  const { mutateAsync: updateCustomer, isPending } = useCustomerUpdate();
+  const { mutateAsync: updateCustomer, isPending } = useCustomerUpdate(id);
 
   const customer = data?.result;
 
-  // ✅ CHUYỂN STRING → DAYJS
   const transformedCustomer = customer
     ? {
         ...customer,
-        dateOfBirth: customer?.dateOfBirth ? dayjs(customer.dateOfBirth) : null,
+        dateOfBirth: customer.dateOfBirth ? dayjs(customer.dateOfBirth) : null,
       }
     : null;
 
+  // HANDLE SUBMIT
   const handleSubmit = async (values: any) => {
     if (!canEdit) {
       message.warning("Bạn không có quyền chỉnh sửa khách hàng!");
       return;
     }
+
+    if (!id) {
+      message.error("Không thể xác định ID khách hàng để cập nhật.");
+      return;
+    }
+
     try {
-      // ✅ CHUYỂN DAYJS → STRING khi submit
-      const payload = {
-        ...values,
-        dateOfBirth: values.dateOfBirth
-          ? values.dateOfBirth.format("YYYY-MM-DD")
-          : null,
-      };
-      await updateCustomer({ id, ...payload });
+      await updateCustomer({ id, data: values });
+
       message.success("Cập nhật khách hàng thành công!");
-      navigate("/dealer-staff/customers");
-    } catch {
+      navigate("/dealer_staff/customers");
+    } catch (err) {
+      console.error("Customer update failed:", err);
       message.error("Không thể cập nhật khách hàng, vui lòng thử lại.");
     }
   };

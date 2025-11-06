@@ -39,6 +39,7 @@ export const CustomerForm = ({
       <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true }]}>
         <Input placeholder="Nguyễn Văn A" />
       </Form.Item>
+
       <Form.Item
         name="email"
         label="Email"
@@ -46,15 +47,19 @@ export const CustomerForm = ({
       >
         <Input />
       </Form.Item>
+
       <Form.Item name="phoneNumber" label="SĐT" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
+
       <Form.Item name="address" label="Địa chỉ" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
+
       <Form.Item name="dateOfBirth" label="Ngày sinh">
         <DatePicker className="w-full" format="YYYY-MM-DD" />
       </Form.Item>
+
       <Form.Item name="gender" label="Giới tính">
         <Select
           options={[
@@ -63,9 +68,11 @@ export const CustomerForm = ({
           ]}
         />
       </Form.Item>
+
       <Form.Item name="loyaltyPoints" label="Điểm tích luỹ">
         <InputNumber className="w-full" min={0} />
       </Form.Item>
+
       <Form.Item
         label="Ghi chú"
         name="note"
@@ -76,12 +83,18 @@ export const CustomerForm = ({
           rows={3}
           style={{
             borderRadius: 8,
-            resize: "none",
+            resize: "none", // 🚫 không cho resize
           }}
         />
       </Form.Item>
+
       <div className="flex justify-end">
-        <Button type="primary" htmlType="submit" loading={loading}>
+        <Button
+          type="primary"
+          htmlType="submit"
+          loading={loading}
+          style={{ borderRadius: 8 }}
+        >
           {mode === "create" ? "Tạo khách hàng" : "Cập nhật"}
         </Button>
       </div>
