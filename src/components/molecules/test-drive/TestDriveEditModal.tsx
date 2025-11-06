@@ -100,15 +100,15 @@ export const TestDriveEditModal = ({ open, testDriveId, onClose, onSuccess }: Pr
       toast.success("Cập nhật lịch lái thử thành công!");
       onSuccess?.();
     } catch (err: any) {
-    const serverMsg = err?.response?.data?.message;
+      const serverMsg = err?.response?.data?.message;
 
-    if (serverMsg === "Staff or vehicle is busy at this time") {
-      toast.error("Nhân viên hoặc xe đã có lịch vào thời gian này!");
-    } else if (serverMsg) {
-      toast.error(`Lỗi từ máy chủ: ${serverMsg}`);
-    } else {
-      toast.error("Không thể tạo lịch lái thử, vui lòng thử lại sau!");
-    }
+      if (serverMsg === "Staff or vehicle is busy at this time") {
+        toast.error("Nhân viên hoặc xe đã có lịch vào thời gian này!");
+      } else if (serverMsg) {
+        toast.error(`Lỗi từ máy chủ: ${serverMsg}`);
+      } else {
+        toast.error("Không thể tạo lịch lái thử, vui lòng thử lại sau!");
+      }
     }
   };
 
@@ -237,11 +237,10 @@ export const TestDriveEditModal = ({ open, testDriveId, onClose, onSuccess }: Pr
                   <div
                     key={v.vehicleUnitId}
                     onClick={() => setSelectedVehicleId(v.vehicleUnitId)}
-                    className={`border rounded-xl p-3 cursor-pointer transition-all hover:shadow-md ${
-                      selectedVehicleId === v.vehicleUnitId
+                    className={`border rounded-xl p-3 cursor-pointer transition-all hover:shadow-md ${selectedVehicleId === v.vehicleUnitId
                         ? "border-[#627254] bg-[#f6ffed]"
                         : "border-gray-200 bg-white"
-                    }`}
+                      }`}
                   >
                     <div className="font-semibold text-[#627254]">{v.vinNumber}</div>
                     <div className="text-sm text-gray-600">{v.color}</div>
