@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button, Tooltip } from "antd";
 import { CiLogout } from "react-icons/ci";
 import { Outlet, useNavigate } from "react-router-dom";
-import { getItem } from "../utils/menuUtils";
+import { getItem, type MenuItem } from "../utils/menuUtils";
 import MenuDashboard from "../components/atoms/MenuDashboard";
 import {
   DesktopOutlined,
@@ -14,7 +14,7 @@ import {
   MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/features/userSlice"; //action từ slice
 import { useLogoutMutation } from "../service/authenticationService"; //hook API logout
 import { ROUTES } from "../model/routePaths";
@@ -27,20 +27,106 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const items = [
-    getItem("Option 1", "/admin/dealers", <PieChartOutlined />),
-    getItem("Option 2", "/option2", <DesktopOutlined />),
-    getItem("User", "/admin/user", <UserOutlined />, [
-      getItem("Tom", "/admin/test/test01"),
-      getItem("Bill", "/user/bill"),
-      getItem("Alex", "/user/alex"),
-    ]),
-    getItem("Team", "/team", <TeamOutlined />, [
-      getItem("Team 1", "/team/1"),
-      getItem("Team 2", "/team/2"),
-    ]),
-    getItem("Files", "/files", <FileOutlined />),
-  ];
+  const user = useSelector((state: any) => state.user); // Lấy thông tin user từ Redux store
+  console.log(user);
+  const role = user?.role;
+
+  const items: MenuItem[] = (() => {
+    switch (role) {
+      case "ADMIN":
+        return [
+          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Đại lý", ROUTES.DEALER, <DesktopOutlined />),
+          getItem(
+            "Chính sách chiết khấu",
+            ROUTES.DEALER_DISCOUNT_POLICY,
+            <FileOutlined />
+          ),
+          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+          getItem("Tài khoản", ROUTES.ACCOUNT, <UserOutlined />),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
+        ];
+
+      case "EVM_STAFF":
+        return [
+          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
+          getItem("Đại lý", ROUTES.DEALER, <FileOutlined />),
+          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+          getItem(
+            "Chính sách chiết khấu",
+            ROUTES.DEALER_DISCOUNT_POLICY,
+            <FileOutlined />
+          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
+        ];
+
+      case "MANAGER":
+        return [
+          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
+          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+          getItem(
+            "Chính sách chiết khấu",
+            ROUTES.DEALER_DISCOUNT_POLICY,
+            <FileOutlined />
+          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
+          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <FileOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
+          getItem("Khách hàng", ROUTES.CUSTOMERS, <UserOutlined />),
+          getItem("Báo giá", ROUTES.QUOTATION, <FileOutlined />),
+          getItem("Tài khoản", ROUTES.ACCOUNT, <UserOutlined />),
+          getItem(
+            "Quy tắc điểm đại lý",
+            ROUTES.DEALER_POINT_RULE,
+            <FileOutlined />
+          ),
+        ];
+
+      case "DEALER_STAFF":
+        return [
+          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
+          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+          getItem(
+            "Chính sách chiết khấu",
+            ROUTES.DEALER_DISCOUNT_POLICY,
+            <FileOutlined />
+          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
+          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <FileOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
+          getItem("Khách hàng", ROUTES.CUSTOMERS, <UserOutlined />),
+          getItem("Báo giá", ROUTES.QUOTATION, <FileOutlined />),
+          getItem(
+            "Quy tắc điểm đại lý",
+            ROUTES.DEALER_POINT_RULE,
+            <FileOutlined />
+          ),
+        ];
+
+      default:
+        toast.error("Bạn không có quyền truy cập trang này.");
+        navigate(ROUTES.HOME);
+        return [];
+    }
+  })();
 
   const handleLogout = () => {
     const token = localStorage.getItem("refreshToken");
@@ -114,7 +200,7 @@ function DashboardLayout() {
         </div>
 
         {/* Menu */}
-        <div className="flex-1 w-full px-2">
+        <div className="flex-1 h-[100px] w-full px-2">
           <MenuDashboard
             items={items}
             collapsed={!sidebarOpen}
