@@ -33,7 +33,6 @@ export const DealerList = () => {
   const role = (user as { role?: string } | null)?.role || "";
   const canView = role === "ADMIN" || role === "EVM_STAFF";
   const canModify = role === "ADMIN";
-
   const params = useMemo(
     () => ({
       page: current - 1,
@@ -49,7 +48,6 @@ export const DealerList = () => {
     { enabled: canView },
     params
   );
-
   const dealers: IDealer[] = useMemo(() => {
     const raw: DealerApiModel[] = data?.result?.data ?? [];
     return raw.map((d) => ({
@@ -108,13 +106,6 @@ export const DealerList = () => {
       />
     );
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spin size="large" tip="Đang tải danh sách đại lý..." />
-      </div>
-    );
-
   if (isError)
     return (
       <Result
@@ -132,11 +123,7 @@ export const DealerList = () => {
     );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+<>
       <div className="flex justify-between items-center mb-3">
         <div className="w-full max-w-xs sm:max-w-sm">
           <SearchBar
@@ -163,6 +150,7 @@ export const DealerList = () => {
       {dealers.length > 0 ? (
         <DealerTable
           data={dealers}
+          isLoading={isLoading}
           onEdit={(d) => {
             setEditDealer(d);
             setModalOpen(true);
@@ -201,6 +189,6 @@ export const DealerList = () => {
           />
         </>
       )}
-    </motion.div>
+</>
   );
 };

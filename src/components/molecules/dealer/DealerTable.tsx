@@ -18,6 +18,7 @@ interface Props {
   onEdit: (dealer: IDealer) => void;
   onDelete: (id: string) => void;
   canModify?: boolean;
+  isLoading?: boolean;
   pagination?: PaginationProps;
 }
 
@@ -27,6 +28,7 @@ export const DealerTable = ({
   onDelete,
   canModify = false,
   pagination,
+  isLoading,
 }: Props) => {
   const regionColors: Record<string, string> = {
     NORTH: "green",
@@ -90,13 +92,13 @@ export const DealerTable = ({
       ),
     });
   }
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
       <Table<IDealer>
         rowKey="id"
         dataSource={data}
         columns={columns}
+        loading={isLoading}
         pagination={false}
       />
       {pagination && (
