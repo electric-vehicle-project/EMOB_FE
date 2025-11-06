@@ -1,6 +1,8 @@
 import { Table, Tag, Button, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../redux/store";
 import dayjs from "dayjs";
 import type { ICustomer } from "../../../model/Customer";
 
@@ -21,6 +23,10 @@ export const CustomerTable = ({
   onEdit,
   onDelete,
 }: Props) => {
+  const user = useSelector((state: RootState) => state.user);
+  const role = (user as any)?.role;
+  const rolePrefix = role === "MANAGER" ? "/manager" : "/dealer_staff";
+
   const getStatusColor = (status: ICustomer["status"]) => {
     switch (status) {
       case "ACTIVE":
@@ -44,7 +50,16 @@ export const CustomerTable = ({
       dataIndex: "fullName",
       key: "fullName",
       sorter: (a, b) => a.fullName.localeCompare(b.fullName),
-      render: (text) => <span className="font-medium">{text}</span>,
+      render: (text, record) => (
+        <a
+          onClick={() =>
+            window.open(`${rolePrefix}/customers/${record.id}`, "_self")
+          }
+          className="text-[#4f6f52] hover:text-[#627254] font-medium transition-colors cursor-pointer"
+        >
+          {text}
+        </a>
+      ),
     },
     {
       title: "Email",

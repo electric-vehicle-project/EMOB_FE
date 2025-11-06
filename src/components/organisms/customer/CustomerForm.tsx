@@ -66,8 +66,19 @@ export const CustomerForm = ({
       <Form.Item name="loyaltyPoints" label="Điểm tích luỹ">
         <InputNumber className="w-full" min={0} />
       </Form.Item>
-      <Form.Item name="note" label="Ghi chú">
-        <Input.TextArea rows={3} />
+      <Form.Item
+        label="Ghi chú"
+        name="note"
+        rules={[{ max: 255, message: "Tối đa 255 ký tự" }]}
+      >
+        <Input.TextArea
+          placeholder="Nhập ghi chú (nếu có)"
+          rows={3}
+          style={{
+            borderRadius: 8,
+            resize: "none",
+          }}
+        />
       </Form.Item>
       <div className="flex justify-end">
         <Button type="primary" htmlType="submit" loading={loading}>

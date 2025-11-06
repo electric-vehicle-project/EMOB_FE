@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { message, Skeleton, Card } from "antd";
 import { useSelector } from "react-redux";
+import dayjs from "dayjs";
 import type { RootState } from "../../redux/store";
 import {
   useCustomerById,
@@ -22,21 +23,36 @@ export const CustomerEditPage: React.FC = () => {
 
   const customer = data?.result;
 
+  // ✅ CHUYỂN STRING → DAYJS
+  const transformedCustomer = customer
+    ? {
+        ...customer,
+        dateOfBirth: customer?.dateOfBirth ? dayjs(customer.dateOfBirth) : null,
+      }
+    : null;
+
   const handleSubmit = async (values: any) => {
     if (!canEdit) {
       message.warning("Bạn không có quyền chỉnh sửa khách hàng!");
       return;
     }
     try {
-      await updateCustomer({ id, ...values });
+      // ✅ CHUYỂN DAYJS → STRING khi submit
+      const payload = {
+        ...values,
+        dateOfBirth: values.dateOfBirth
+          ? values.dateOfBirth.format("YYYY-MM-DD")
+          : null,
+      };
+      await updateCustomer({ id, ...payload });
       message.success("Cập nhật khách hàng thành công!");
-      navigate("/dealer_staff/customers");
+      navigate("/dealer-staff/customers");
     } catch {
       message.error("Không thể cập nhật khách hàng, vui lòng thử lại.");
     }
   };
 
-  if (isLoading || !customer)
+  if (isLoading || !transformedCustomer)
     return (
       <CardWrapper>
         <Skeleton active />
@@ -52,7 +68,7 @@ export const CustomerEditPage: React.FC = () => {
       <Card bordered>
         <CustomerForm
           mode="edit"
-          initialValues={customer}
+          initialValues={transformedCustomer}
           onSubmit={handleSubmit}
           loading={isPending}
         />
