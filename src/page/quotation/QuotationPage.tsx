@@ -14,8 +14,8 @@ import {
 } from "../../service/quotationService";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerById } from "../../service/customerService";
-import { useGetDealerById } from "../../service/dealerService";
 import { SearchOutlined } from "@ant-design/icons";
+import { useDealerById } from "../../service/dealerService";
 
 const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
   const { data, isLoading } = useCustomerById(customerId);
@@ -25,7 +25,7 @@ const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
 };
 
 const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
-  const { data, isLoading } = useGetDealerById(dealerId);
+  const { data, isLoading } = useDealerById(dealerId);
 
   if (isLoading) return <span>...</span>;
   return <span>{data?.result?.name || "-"}</span>;

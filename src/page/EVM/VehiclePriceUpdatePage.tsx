@@ -6,26 +6,35 @@ import {
 } from "../../service/vehicleService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useEffect } from "react";
+import { ROUTES } from "../../model/routePaths";
 
 export const VehiclePriceUpdatePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const updatePrices = useUpdateVehiclePrices();
-  const { data, isLoading } = useGetVehicleById(id ?? "");
-  const vehicle = data?.result;
+  const updatePrices = useUpdateVehiclePrices(); // ✅ đã sửa service: PUT /vehicle/{id}/prices
+  const { vehicle, isLoading } = useGetVehicleById(id ?? "", { enabled: !!id });
+
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+  const basePath =
+    role === "ADMIN"
+      ? "/admin"
+      : role === "EVM_STAFF"
+      ? "/evm_staff"
+      : role === "MANAGER"
+      ? "/manager"
+      : "/dealer_staff";
 
-  // ✅ Nếu không phải Admin thì chặn luôn
   useEffect(() => {
     if (role !== "ADMIN") {
       message.warning("⚠️ Chỉ Admin mới có quyền cập nhật giá!");
-      navigate(`/dashboard/evm/vehicle/${id}`, { replace: true });
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
+        replace: true,
+      });
     }
-  }, [role, navigate, id]);
+  }, [role, navigate, id, basePath]);
 
-  // ✅ Gán giá trị ban đầu cho form
   useEffect(() => {
     if (vehicle) {
       form.setFieldsValue({
@@ -35,47 +44,36 @@ export const VehiclePriceUpdatePage = () => {
     }
   }, [vehicle, form]);
 
-  // ✅ Xử lý cập nhật giá
   const handleSubmit = async (values: {
     importPrice: number;
     retailPrice: number;
   }) => {
-    // So sánh giá trị cũ & mới
     const oldImport = vehicle?.importPrice ?? 0;
     const oldRetail = vehicle?.retailPrice ?? 0;
     const sameImport = values.importPrice === oldImport;
     const sameRetail = values.retailPrice === oldRetail;
-
     if (sameImport && sameRetail) {
-      message.info({
-        content: "Không có thay đổi nào để cập nhật.",
-        duration: 2.5,
-      });
+      message.info("Không có thay đổi nào để cập nhật.");
       return;
     }
 
     try {
       await updatePrices.mutateAsync({ id: id!, data: values });
-      message.success({
-        content: "💰 Giá xe đã được cập nhật thành công!",
-        duration: 2.5,
-      });
-      navigate(`/dashboard/evm/vehicle/${id}`);
+      message.success("💰 Giá xe đã được cập nhật thành công!");
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!));
     } catch (error) {
       console.error("❌ Update error:", error);
-      message.error({
-        content: "Không thể cập nhật giá. Vui lòng thử lại sau.",
-        duration: 2.5,
-      });
+      message.error("Không thể cập nhật giá. Vui lòng thử lại sau.");
     }
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <Spin size="large" />
       </div>
     );
+  }
 
   return (
     <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
@@ -120,7 +118,6 @@ export const VehiclePriceUpdatePage = () => {
               formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             />
           </Form.Item>
-
           <Form.Item
             label="Giá bán lẻ (VNĐ)"
             name="retailPrice"
@@ -132,7 +129,6 @@ export const VehiclePriceUpdatePage = () => {
               formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             />
           </Form.Item>
-
           <Button
             type="primary"
             htmlType="submit"

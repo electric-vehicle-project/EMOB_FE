@@ -3,7 +3,7 @@ import { Skeleton } from "antd";
 import { useGetAccountById } from "../../service/accountService";
 import { useCurrentUser as getCurrentUser } from "../../utils/getCurrentUser";
 import { motion } from "framer-motion";
-import CardWrapper from "../../components/template/CardWrapper";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 const InfoPage: React.FC = () => {
   const user = getCurrentUser();

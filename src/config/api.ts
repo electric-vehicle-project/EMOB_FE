@@ -23,7 +23,7 @@ const refreshToken = async () => {
   try {
     const response = await api.post("/auth/refresh", { token: refreshToken });
     const { token: newToken, refreshToken: newRefresh } = response.data.result;
-    
+
     if (newToken && newRefresh) {
       localStorage.setItem("token", newToken);
       localStorage.setItem("refreshToken", newRefresh);
@@ -36,6 +36,6 @@ const refreshToken = async () => {
 };
 
 //auto gọi refresh mỗi 3 phút
-setInterval(refreshToken, 3*60*1000);
+setInterval(refreshToken, 3 * 60 * 1000);
 
 export default api;

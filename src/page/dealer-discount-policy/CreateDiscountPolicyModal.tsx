@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Modal,
   Form,
@@ -10,10 +10,9 @@ import {
 } from "antd";
 import {
   useCreateBulkDiscountPolicy,
-  useGetAllDealerDiscountPolicies,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 import type { IDealer } from "../../model/Dealer";
 
 const { RangePicker } = DatePicker;
@@ -37,7 +36,7 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
     0,
     1000
   );
-  const { data: vehiclesData, isLoading: loadingVehicles } = useGetAllVehicles(
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
     0,
     1000
   );
