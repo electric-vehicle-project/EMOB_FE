@@ -140,8 +140,6 @@ export const router = createBrowserRouter([
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
-      { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> },
-      { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> },
       { path: ROUTES.QUOTATION, element: <h1>Quotation</h1> },
       { path: ROUTES.ACCOUNT, element: <h1>Account</h1> },
       { path: ROUTES.DEALER_POINT_RULE, element: <h1>Dealer Point Rule</h1> },

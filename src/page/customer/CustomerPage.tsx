@@ -71,12 +71,12 @@ export const CustomerPage: React.FC = () => {
   // ========================
   const handleCreate = () => {
     if (!canCreate) return;
-    navigate(`/dealer-staff/customers/create`);
+    navigate(`/dealer_staff/customers/create`);
   };
 
   const handleEdit = (id: string) => {
     if (!canEdit) return;
-    navigate(`/dealer-staff/customers/edit/${id}`);
+    navigate(`/dealer_staff/customers/edit/${id}`);
   };
 
   const { mutateAsync: deleteCustomer, isPending } = useCustomerDelete();
