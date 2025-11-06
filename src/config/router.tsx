@@ -30,6 +30,7 @@ import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
+import { TestDrivePage } from "../page/test-drive/TestDrivePage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -143,7 +144,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
-      { path: ROUTES.TEST_DRIVE, element: <h1>Test Drive</h1> },
+      { path: ROUTES.TEST_DRIVE, element: <TestDrivePage /> },
       { path: ROUTES.SALE_ORDER, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       {
@@ -183,7 +184,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
-      { path: ROUTES.TEST_DRIVE, element: <h1>Test Drive</h1> },
+      { path: ROUTES.TEST_DRIVE, element: <TestDrivePage /> },
       { path: ROUTES.SALE_ORDER, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
