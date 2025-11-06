@@ -1,12 +1,12 @@
 import { Checkbox, Form } from "antd";
-import { InputField } from "../atoms/InputField";
-import { ButtonPrimary } from "../atoms/ButtonPrimary";
-import { ButtonGoogle } from "../atoms/ButtonGoogle";
+import { InputField } from "../../atoms/InputField";
+import { ButtonPrimary } from "../../atoms/ButtonPrimary";
+import { ButtonGoogle } from "../../atoms/ButtonGoogle";
 import { useNavigate, Link } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { useLoginMutation } from "../../service/authenticationService";
+import { useLoginMutation } from "../../../service/authenticationService";
 import { useDispatch } from "react-redux";
-import { login } from "../../redux/features/userSlice";
+import { login } from "../../../redux/features/userSlice";
 import { toast } from "react-toastify";
 
 interface LoginFormValues {
