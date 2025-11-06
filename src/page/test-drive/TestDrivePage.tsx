@@ -1,11 +1,7 @@
 import { TestDrive } from "../../components/organisms/test-drive/TestDrive";
 import CardWrapper from "../../components/template/CardWrapper";
-import { useCurrentUser } from "../../utils/getCurrentUser";
 
 export const TestDrivePage = () => {
-  const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role || ""
-  ;
 
   return (
     <CardWrapper

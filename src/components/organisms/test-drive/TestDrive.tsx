@@ -11,7 +11,7 @@ export const TestDrive = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { data, isLoading, refetch } = useTestDriveQuery({}, {});
+  const { data, refetch } = useTestDriveQuery({}, {});
 
   const testDrives = data?.result?.data ?? [];
 
@@ -64,6 +64,7 @@ export const TestDrive = () => {
       {/* Main Calendar */}
       <div className="flex-1">
         <Card
+        title={"Lịch theo tuần"}
           extra={
             <Button
               type="primary"

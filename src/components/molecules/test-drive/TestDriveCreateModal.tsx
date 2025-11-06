@@ -1,25 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Modal,
-  Form,
-  Select,
-  DatePicker,
-  Button,
-  message,
-  Row,
-  Col,
-  Divider,
+  Modal, Form, Select, DatePicker, Button, Row, Col, Divider,
+  Avatar, Typography, Tag, Empty
 } from "antd";
+import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import dayjs from "dayjs";
-import { SearchOutlined } from "@ant-design/icons";
 import {
   useCreateTestDriveMutation,
   useCustomerQuery,
   useFreeVehiclesQuery,
   useVehicleQuery,
 } from "../../../service/testDriveService";
-import { FreeVehicleCardList } from "../../atoms/FreeVehicleCardList";
+import { useWatch } from "antd/es/form/Form";
+import { toast } from "react-toastify";
+
+const { Text, Title } = Typography;
 
 interface Props {
   open: boolean;
@@ -29,34 +25,52 @@ interface Props {
 
 export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
   const [form] = Form.useForm();
-  const [freeVehicles, setFreeVehicles] = useState<any[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>();
-  const [searching, setSearching] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState<any>();
+  const [queryParams, setQueryParams] = useState<any>();
+  const [searched, setSearched] = useState(false); // NEW
 
   // Hooks
-  const { data: customers } = useCustomerQuery({}, { size: 100, sortField: "fullName" });
-  const { data: vehicles } = useVehicleQuery({}, { size: 100, sortField: "createdAt" });
+  const { data: customers } = useCustomerQuery({}, { size: 100 });
+  const { data: vehicles } = useVehicleQuery({}, { size: 100 });
   const { mutateAsync: createTestDrive, isPending } = useCreateTestDriveMutation();
-  const { refetch: findFreeVehicles } = useFreeVehiclesQuery({},{});
+  const { data: freeVehicles, refetch, isFetching } = useFreeVehiclesQuery({}, queryParams || {});
 
-  // Dropdown data
-  const customerOptions =
-    customers?.result?.data?.map((c: any) => ({
-      label: c.fullName,
-      value: c.id,
-    })) ?? [];
+  const customersRaw = customers?.result?.data ?? [];
+  const vehiclesRaw = vehicles?.result?.data ?? [];
 
-  const modelOptions =
-    vehicles?.result?.data?.map((v: any) => ({
-      label: v.model,
-      value: v.model,
-    })) ?? [];
+  const date = useWatch("date", form);
+  const time = useWatch("time", form);
+  const duration = useWatch("duration", form);
+  const model = useWatch("model", form);
+  const canSearch = !!date && !!time && !!duration && !!model;
 
-  // Actions
+  const customerOptions = customersRaw.map((c: any) => ({
+    label: `${c.fullName} — ${c.phoneNumber}`,
+    value: c.id,
+    data: c,
+  }));
+  const modelOptions = vehiclesRaw.map((v: any) => ({ label: v.model, value: v.model }));
+
+  const handleCustomerChange = (_: any, option: any) => setCustomerInfo(option?.data);
+
+  const handleFindFreeVehicles = async () => {
+    if (!canSearch) return toast.warning("Vui lòng nhập đủ thông tin cần thiết!");
+    setSelectedVehicleId(undefined);
+    setSearched(true); // NEW: đánh dấu đã tìm
+    setQueryParams({
+      scheduledAt: `${date.format("YYYY-MM-DD")}T${time}`,
+      duration,
+      model,
+    });
+    await refetch();
+    toast.success("Tìm xe trống thành công!");
+  };
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      if (!selectedVehicleId) return message.warning("Vui lòng chọn xe lái thử!");
+      if (!selectedVehicleId) return toast.warning("Vui lòng chọn xe lái thử!");
       await createTestDrive({
         customerId: values.customerId,
         testDriveVehicleId: selectedVehicleId,
@@ -64,184 +78,191 @@ export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
         duration: Number(values.duration),
         scheduledAt: `${values.date.format("YYYY-MM-DD")}T${values.time}`,
       });
-      message.success("Tạo lịch lái thử thành công!");
+      toast.success("Tạo lịch lái thử thành công!");
       form.resetFields();
-      setFreeVehicles([]);
       setSelectedVehicleId(undefined);
+      setCustomerInfo(null);
+      setSearched(false);
       onSuccess();
-    } catch {
-      message.error("Không thể tạo lịch lái thử!");
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.message;
+
+      if (serverMsg === "Staff or vehicle is busy at this time") {
+        toast.error("Nhân viên hoặc xe đã có lịch vào thời gian này!");
+      } else if (serverMsg) {
+        toast.error(`Lỗi từ máy chủ: ${serverMsg}`);
+      } else {
+        toast.error("Không thể tạo lịch lái thử, vui lòng thử lại sau!");
+      }
+
     }
   };
 
-  const handleFindVehicles = async () => {
-    const date = form.getFieldValue("date");
-    const time = form.getFieldValue("time");
-    const duration = form.getFieldValue("duration");
-    const model = form.getFieldValue("model");
-
-    if (!date || !time || !duration || !model) {
-      return message.warning("Vui lòng chọn đủ thông tin trước khi tìm xe trống!");
-    }
-
-    setSearching(true);
-    try {
-      const { data } = await findFreeVehicles({
-        scheduledAt: `${date.format("YYYY-MM-DD")}T${time}`,
-        duration,
-        model,
-      });
-      setFreeVehicles(data?.result ?? []);
-      message.success(`Tìm thấy ${data?.result?.length ?? 0} xe trống lịch`);
-    } catch {
-      message.error("Không thể tải danh sách xe trống lịch!");
-    } finally {
-      setSearching(false);
-    }
-  };
+  // Chuẩn bị list xe (API trả về result là ARRAY)
+  const freeList: any[] = Array.isArray(freeVehicles?.result) ? freeVehicles!.result : [];
 
   return (
     <Modal
-      title="Tạo lịch lái thử mới"
+      title={<Title level={4} style={{ color: "#627254", margin: 0 }}>Tạo lịch lái thử mới</Title>}
       open={open}
       onCancel={onClose}
       onOk={handleSubmit}
       okText="Xác nhận"
       cancelText="Hủy"
       confirmLoading={isPending}
+      width={1050}
       centered
-      width={800}
     >
       <Form layout="vertical" form={form}>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Khách hàng"
-              name="customerId"
-              rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
-            >
-              <Select
-                placeholder="Chọn khách hàng"
-                options={customerOptions}
-                showSearch
-              />
-            </Form.Item>
-          </Col>
+        <Row gutter={24} align="top" style={{ display: "flex" }}>
+          {/* LEFT */}
+          <Col span={12} style={{ display: "flex", flexDirection: "column", minHeight: 480 }}>
+            <div style={{ flex: 1 }}>
+              <Form.Item label="Khách hàng" name="customerId"
+                rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}>
+                <Select placeholder="Chọn khách hàng"
+                  options={customerOptions}
+                  onChange={handleCustomerChange}
+                  showSearch
+                  filterOption={(i, o) => o?.label?.toLowerCase().includes(i.toLowerCase())} />
+              </Form.Item>
 
-          <Col span={12}>
-            <Form.Item
-              label="Địa điểm"
-              name="location"
-              rules={[{ required: true, message: "Nhập địa điểm lái thử" }]}
-            >
-              <Select
-                placeholder="Chọn địa điểm"
-                options={[
+              <div className="border border-gray-200 rounded-xl p-4 mb-4 bg-[#f9f9f9] min-h-[120px] flex items-center">
+                {customerInfo ? (
+                  <>
+                    <Avatar size={80} icon={<UserOutlined />} style={{ backgroundColor: "#627254" }} />
+                    <div className="ml-10">
+                      <Text strong style={{ fontSize: 16 }}>{customerInfo.fullName}</Text>
+
+
+                      <div className="text-gray-600 flex flex-col mt-1 mb-2">
+                        <span>{customerInfo.phoneNumber}</span>
+                        <span>{customerInfo.email}</span>
+                      </div>
+                      <Tag color="green" className="mt-1">Member Ship Level: {customerInfo.memberShipLevel || "NORMAL"}</Tag>
+                    </div>
+
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center w-full text-gray-400 italic">
+                    Chưa chọn khách hàng
+                  </div>
+                )}
+              </div>
+
+              <Form.Item label="Địa điểm" name="location"
+                rules={[{ required: true, message: "Vui lòng chọn địa điểm" }]}>
+                <Select placeholder="Chọn địa điểm" options={[
                   { label: "EV Showroom District 9", value: "EV Showroom District 9" },
                   { label: "EV Showroom Bến Thành", value: "EV Showroom Bến Thành" },
                   { label: "EV Showroom Thủ Đức", value: "EV Showroom Thủ Đức" },
-                ]}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+                ]} />
+              </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Ngày lái thử"
-              name="date"
-              rules={[{ required: true, message: "Chọn ngày lái thử" }]}
-            >
-              <DatePicker
-                disabledDate={(d) => d.isBefore(dayjs(), "day")}
-                style={{ width: "100%" }}
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-          </Col>
+              <Row gutter={12}>
+                <Col span={12}>
+                  <Form.Item label="Ngày lái thử" name="date"
+                    rules={[{ required: true, message: "Chọn ngày lái thử" }]}>
+                    <DatePicker disabledDate={(d) => d.isBefore(dayjs(), "day")}
+                      style={{ width: "100%" }} format="YYYY-MM-DD" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="Giờ bắt đầu" name="time"
+                    rules={[{ required: true, message: "Chọn giờ bắt đầu" }]}>
+                    <Select placeholder="Chọn giờ" options={[
+                      { label: "08:00", value: "08:00" },
+                      { label: "10:00", value: "10:00" },
+                      { label: "12:00", value: "12:00" },
+                      { label: "14:00", value: "14:00" },
+                      { label: "16:00", value: "16:00" },
+                    ]} />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-          <Col span={8}>
-            <Form.Item
-              label="Giờ bắt đầu"
-              name="time"
-              rules={[{ required: true, message: "Chọn giờ bắt đầu" }]}
-            >
-              <Select
-                placeholder="Chọn giờ"
-                options={[
-                  { label: "08:00", value: "08:00" },
-                  { label: "10:00", value: "10:00" },
-                  { label: "12:00", value: "12:00" },
-                  { label: "14:00", value: "14:00" },
-                  { label: "16:00", value: "16:00" },
-                ]}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={8}>
-            <Form.Item
-              label="Thời lượng (phút)"
-              name="duration"
-              rules={[{ required: true, message: "Chọn thời lượng" }]}
-            >
-              <Select
-                placeholder="Thời lượng"
-                options={[
+              <Form.Item label="Thời lượng (phút)" name="duration"
+                rules={[{ required: true, message: "Chọn thời lượng lái thử" }]}>
+                <Select placeholder="Thời lượng" options={[
                   { label: "60", value: 60 },
                   { label: "90", value: 90 },
-                ]}
-              />
-            </Form.Item>
+                ]} />
+              </Form.Item>
+            </div>
+          </Col>
+
+          {/* RIGHT */}
+          <Col span={12} style={{ display: "flex", flexDirection: "column", minHeight: 480 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <Row gutter={8} align="middle">
+                <Col span={16}>
+                  <Form.Item label="Model xe" name="model"
+                    rules={[{ required: true, message: "Vui lòng chọn model xe" }]}>
+                    <Select placeholder="Chọn model xe" options={modelOptions} showSearch />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Button
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    onClick={handleFindFreeVehicles}
+                    disabled={!canSearch || isFetching}
+                    block
+                    style={{
+                      height: 40,
+                      backgroundColor: canSearch ? "#627254" : "#a0a0a0",
+                      border: "none",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Tìm xe trống lịch
+                  </Button>
+                </Col>
+              </Row>
+
+              <Divider className="my-3" />
+
+              {/* Khu vực danh sách xe – chiều cao cố định, 2 cột luôn bằng nhau */}
+              <div
+                className="grid grid-cols-2 gap-3"
+                style={{ flex: 1, minHeight: 340, maxHeight: 340, overflowY: "auto", paddingRight: 4 }}
+              >
+                {searched ? (
+                  freeList.length > 0 ? (
+                    freeList.map((v: any) => (
+                      <div
+                        key={v.vehicleUnitId}
+                        onClick={() => setSelectedVehicleId(v.vehicleUnitId)}
+                        className={`border rounded-xl p-3 cursor-pointer transition-all hover:shadow-md ${selectedVehicleId === v.vehicleUnitId
+                          ? "border-[#627254] bg-[#f6ffed]"
+                          : "border-gray-200 bg-white"
+                          }`}
+                      >
+                        <div className="font-semibold text-[#627254]">{v.vinNumber}</div>
+                        <div className="text-sm text-gray-600">{v.color}</div>
+                        <div className="text-xs text-gray-400 mt-1">Tình trạng: {v.status}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-gray-400 italic text-center py-5">
+                      <Empty
+                        description="Không có xe khả dụng trong khung giờ này"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="col-span-2 text-gray-400 italic text-center py-5">
+                    <Empty
+                      description="Chưa có xe khả dụng"
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </Col>
         </Row>
-
-        <Row gutter={16}>
-          <Col span={16}>
-            <Form.Item
-              label="Model xe"
-              name="model"
-              rules={[{ required: true, message: "Chọn model xe" }]}
-            >
-              <Select
-                placeholder="Chọn model xe"
-                options={modelOptions}
-                showSearch
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={8} className="flex items-end">
-            <Button
-              type="primary"
-              icon={<SearchOutlined />}
-              block
-              onClick={handleFindVehicles}
-              disabled={
-                !form.getFieldValue("date") ||
-                !form.getFieldValue("time") ||
-                !form.getFieldValue("duration") ||
-                !form.getFieldValue("model")
-              }
-              loading={searching}
-              className="!bg-[#627254]"
-            >
-              Tìm xe trống lịch
-            </Button>
-          </Col>
-        </Row>
-
-        {freeVehicles.length > 0 && (
-          <>
-            <Divider orientation="left">Xe trống lịch</Divider>
-            <FreeVehicleCardList
-              vehicles={freeVehicles}
-              onSelect={(id) => setSelectedVehicleId(id)}
-              selectedVehicleId={selectedVehicleId}
-            />
-          </>
-        )}
       </Form>
     </Modal>
   );
