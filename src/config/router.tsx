@@ -1,5 +1,5 @@
 // src/router.tsx
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
 import AuthLayout from "../layout/AuthLayout";
 import { ROUTES } from "../model/routePaths";
@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ==== DASHBOARD ====
+  // ==== DASHBOARD (default for all roles) ====
   {
     path: ROUTES.DASHBOARD,
     element: (
@@ -55,7 +55,8 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      // ⚡ General
+      { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> }, // ✅ Thêm redirect
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.DEALER, element: <DealerPage /> },
@@ -83,6 +84,8 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
+      { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
@@ -99,6 +102,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
     ],
   },
+
   // ==== MANAGER ====
   {
     path: ROUTES.MANAGER,
@@ -108,6 +112,8 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
+      { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
@@ -124,7 +130,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
       { path: ROUTES.CUSTOMERS, element: <h1>Customer</h1> },
       { path: ROUTES.QUOTATION, element: <h1>Quotation</h1> },
-      { path: ROUTES.ACCOUNT, element: <h1>Account</h1> },
+      { path: ROUTES.ACCOUNT, element: <AccountPage /> },
       { path: ROUTES.DEALER_POINT_RULE, element: <h1>Dealer Point Rule</h1> },
     ],
   },
@@ -138,6 +144,8 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
+      { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
@@ -159,8 +167,5 @@ export const router = createBrowserRouter([
   },
 
   // ==== 404 ====
-  {
-    path: ROUTES.NOTFOUND, // *
-    element: <NotFoundPage />,
-  },
+  { path: ROUTES.NOTFOUND, element: <NotFoundPage /> },
 ]);
