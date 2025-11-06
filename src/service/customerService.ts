@@ -1,4 +1,3 @@
-// src/service/customerService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -10,8 +9,26 @@ import {
 const BASE_URL = "/customers";
 
 // ======= Lấy danh sách khách hàng (có phân trang) =======
-export const useCustomerList = (page = 0, size = 10) =>
-  createQueryHook("customerList", BASE_URL)({}, { page, size });
+export const useCustomerList = (params?: {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  status?: string[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) => {
+  return createQueryHook("customerList", BASE_URL)(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      keyword: params?.keyword ?? "",
+      status: params?.status,
+      sortField: params?.sortField ?? "fullName",
+      sortDir: params?.sortDir ?? "desc",
+    }
+  );
+};
 
 // ======= Lấy chi tiết khách hàng theo ID =======
 export const useCustomerById = createQueryWithPathParamHook(
