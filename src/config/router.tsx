@@ -132,9 +132,6 @@ export const router = createBrowserRouter([
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
       // ❌ Không mount: EVM_VEHICLE_PRICE_UPDATE
 
-      // ✅ Cho phép EVM_STAFF xem trang Account (tuỳ bạn kiểm soát read-only trong component)
-      { path: ROUTES.ACCOUNT, element: <AccountPage /> },
-
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
@@ -163,6 +160,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.EVM_VEHICLE_RULES, element: <VehiclePriceRulePage /> },
+      { path: ROUTES.ACCOUNT, element: <AccountPage /> },
     ],
   },
 

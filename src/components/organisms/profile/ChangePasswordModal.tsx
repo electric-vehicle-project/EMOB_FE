@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, Form, Input, message } from "antd";
+import { AxiosError } from "axios";
 import { useChangePassword } from "../../../service/accountService";
 
 interface Props {
@@ -12,27 +13,54 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
   const [form] = Form.useForm();
   const changePassword = useChangePassword();
 
-  const onFinish = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+  const onFinish = async (values: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
     if (values.newPassword !== values.confirmPassword) {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    await changePassword.mutateAsync({
-      currentPassword: values.currentPassword,
-      newPassword: values.newPassword,
-    });
-    message.success("Đổi mật khẩu thành công");
-    onSuccess();
-    form.resetFields();
+
+    try {
+      await changePassword.mutateAsync({
+        newPassword: values.newPassword, // ✅ backend chỉ nhận newPassword
+      });
+      message.success("Đổi mật khẩu thành công");
+      onSuccess();
+      form.resetFields();
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+      message.error(
+        error?.response?.data?.message ||
+          "Đổi mật khẩu thất bại, vui lòng thử lại"
+      );
+    }
   };
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} destroyOnClose centered title="Đổi mật khẩu">
-      <Form layout="vertical" form={form} onFinish={onFinish} requiredMark={false} className="mt-2">
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      destroyOnClose
+      centered
+      title="Đổi mật khẩu"
+    >
+      <Form
+        layout="vertical"
+        form={form}
+        onFinish={onFinish}
+        requiredMark={false}
+        className="mt-2"
+      >
         <Form.Item
           name="currentPassword"
           label="Mật khẩu hiện tại"
-          rules={[{ required: true, message: "Vui lòng nhập mật khẩu hiện tại" }]}
+          rules={[
+            { required: true, message: "Vui lòng nhập mật khẩu hiện tại" },
+          ]}
         >
           <Input.Password placeholder="Nhập mật khẩu hiện tại" />
         </Form.Item>
@@ -57,10 +85,17 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
         </Form.Item>
 
         <div className="flex justify-end gap-2">
-          <button className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50" onClick={onClose} type="button">
+          <button
+            className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50"
+            onClick={onClose}
+            type="button"
+          >
             Hủy
           </button>
-          <button className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white" onClick={() => form.submit()}>
+          <button
+            className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
+            onClick={() => form.submit()}
+          >
             Đổi mật khẩu
           </button>
         </div>

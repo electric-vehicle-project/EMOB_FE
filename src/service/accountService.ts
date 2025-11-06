@@ -68,15 +68,19 @@ export const useBanAccount = () =>
   deleteMutationHook("accounts", `${BASE_URL}`)();
 
 /* ==================== 👤 PROFILE ==================== */
-export const useGetAccountProfile = createQueryHook(
-  "account-profile",
-  `${BASE_URL}/profile`
-);
+// export const useGetAccountProfile = createQueryHook(
+//   "account-profile",
+//   `${BASE_URL}/profile`
+// );
+export const useGetAccountProfile = () =>
+  createQueryHook("account-profile", `/auth/profile`)();
+
 export const useUpdateAccountProfile = createMutationHook(
   "update-account-profile",
   `${BASE_URL}/profile`
 );
+// ✅ Đổi mật khẩu đúng API backend
 export const useChangePassword = createMutationHook(
   "change-password",
-  `${BASE_URL}/change-password`
+  `${BASE_URL}/reset-password`
 );

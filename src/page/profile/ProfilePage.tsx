@@ -1,35 +1,29 @@
 // src/page/profile/ProfilePage.tsx
 import React, { useMemo, useState } from "react";
-import { Card, Tag, Skeleton, Descriptions, Space, Result } from "antd";
+import { Card, Tag, Skeleton, Space, Result } from "antd";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import { useGetAccountProfile } from "../../service/accountService";
+import { useGetAccountById } from "../../service/accountService";
 import { CardWrapper } from "../../components/template/CardWrapper";
-import type {
-  IAccount,
-  Role,
-  AccountStatus,
-  Gender,
-} from "../../model/Account";
-import { formatDateVietnam } from "../../utils/timeFeature";
+import type { IAccount, Role, AccountStatus } from "../../model/Account";
 import EditProfileModal from "../../components/organisms/profile/EditProfileModal";
 import ChangePasswordModal from "../../components/organisms/profile/ChangePasswordModal";
+import ProfileDetailsByRole from "../../components/organisms/profile/ProfileDetailsByRole";
 
-// ===== Mapping tiếng Việt =====
+/* ================================
+   🎨 Tag hiển thị trạng thái & role
+================================== */
 const mapStatusLabel: Record<AccountStatus, string> = {
   ACTIVE: "Đang hoạt động",
   INACTIVE: "Tạm ngưng",
   BANNED: "Đã khóa",
 };
+
 const mapStatusColor: Record<AccountStatus, string> = {
   ACTIVE: "green",
   INACTIVE: "gold",
   BANNED: "red",
 };
-const mapGenderLabel: Record<Gender, string> = {
-  MALE: "Nam",
-  FEMALE: "Nữ",
-  UNKNOWN: "Không xác định",
-};
+
 const mapRoleLabel: Record<Role, string> = {
   ADMIN: "Quản trị (Hãng xe)",
   MANAGER: "Quản lý đại lý",
@@ -37,6 +31,9 @@ const mapRoleLabel: Record<Role, string> = {
   EVM_STAFF: "Nhân viên EVM",
 };
 
+/* ================================
+   🧱 Component Section nhỏ
+================================== */
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
@@ -46,48 +43,60 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   </Card>
 );
 
+/* ================================
+   👤 Trang Hồ sơ cá nhân
+================================== */
 export default function ProfilePage() {
-  const user = useCurrentUser(); // lấy role/token từ Redux
+  const user = useCurrentUser();
   const [editOpen, setEditOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
 
-  // ✅ Chỉ fetch khi đã có token để tránh 400 "Bad Request" do thiếu Authorization
-  const { data, isLoading, isError, error, refetch } = useGetAccountProfile({
-    enabled: !!user?.token,
-  });
+  // ✅ Chỉ ADMIN mới được phép gọi API /api/auth/{id}
+  const canFetchFromApi = user?.role === "ADMIN";
 
-  // ✅ Endpoint /auth/profile có thể trả về:
-  // - trực tiếp object IAccount
-  // - hoặc { result: IAccount }
+  // ✅ Cập nhật đúng thứ tự tham số: (id, options)
+  const { data, isLoading, isError, error, refetch } = useGetAccountById(
+    user?.id as string,
+    { enabled: canFetchFromApi && !!user?.id }
+  );
+
+  // ✅ Ưu tiên Redux user, fallback từ API nếu có
   const profile: IAccount | null = useMemo(() => {
-    if (!data) return null;
-    const maybe = data as any;
-    return (maybe.result ?? maybe) as IAccount;
-  }, [data]);
+    if (user) return user;
+    if (data) {
+      const maybe = data as any;
+      return maybe.result ?? maybe;
+    }
+    return null;
+  }, [data, user]);
 
   const header = useMemo(
     () => ({
-      // fallback sang Redux nếu API chưa trả về kịp
-      fullName: profile?.fullName ?? user?.fullName ?? "",
-      email: profile?.email ?? user?.email ?? "",
-      status: (profile?.status ?? user?.status) as AccountStatus | undefined,
-      role: (profile?.role ?? user?.role) as Role | undefined,
+      fullName: profile?.fullName ?? "",
+      email: profile?.email ?? "",
+      status: profile?.status,
+      role: profile?.role,
     }),
-    [profile, user]
+    [profile]
   );
 
+  /* ================================
+     📦 Render nội dung trang
+  ================================= */
   const content = (() => {
-    if (!user?.token) {
+    // ❌ Nếu chưa login
+    if (!profile) {
       return (
         <Result
           status="403"
-          title="Chưa sẵn sàng"
-          subTitle="Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại."
+          title="Không có dữ liệu hồ sơ"
+          subTitle="Vui lòng đăng nhập lại để xem thông tin cá nhân."
         />
       );
     }
 
-    if (isError) {
+    // ⚠️ Chỉ hiển thị lỗi nếu Admin gọi API thất bại
+    if (isError && canFetchFromApi) {
       return (
         <Result
           status="error"
@@ -105,10 +114,12 @@ export default function ProfilePage() {
       );
     }
 
-    if (isLoading || !profile) {
+    // ⏳ Loading (khi Admin gọi API)
+    if (isLoading) {
       return <Skeleton active paragraph={{ rows: 8 }} />;
     }
 
+    // ✅ Nội dung chính
     return (
       <div className="grid grid-cols-1 gap-12">
         <Section title="Thông tin tổng quan">
@@ -129,30 +140,10 @@ export default function ProfilePage() {
             </Space>
           </div>
 
-          <Descriptions className="mt-4" column={2} size="middle" bordered>
-            <Descriptions.Item label="Số điện thoại">
-              {profile.phone || "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Giới tính">
-              {profile.gender ? mapGenderLabel[profile.gender] : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày sinh">
-              {profile.dateOfBirth
-                ? formatDateVietnam(profile.dateOfBirth)
-                : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Địa chỉ">
-              {profile.address || "-"}
-            </Descriptions.Item>
+          {/* ✅ Component hiển thị theo Role */}
+          <ProfileDetailsByRole profile={profile} />
 
-            {/* Một số role (MANAGER/DEALER_STAFF) có dealerId */}
-            {profile.dealerId && (
-              <Descriptions.Item label="Mã đại lý">
-                {profile.dealerId}
-              </Descriptions.Item>
-            )}
-          </Descriptions>
-
+          {/* ⚙️ Nút hành động */}
           <div className="mt-4 flex gap-2 justify-end">
             <button
               className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
@@ -172,6 +163,9 @@ export default function ProfilePage() {
     );
   })();
 
+  /* ================================
+     📄 Return tổng thể
+  ================================= */
   return (
     <CardWrapper
       title="Hồ sơ cá nhân"
@@ -181,15 +175,14 @@ export default function ProfilePage() {
     >
       {content}
 
-      {/* Modals */}
       {profile && (
         <>
           <EditProfileModal
             open={editOpen}
             onClose={() => setEditOpen(false)}
             profile={profile}
-            onSuccess={async () => {
-              await refetch(); // refetch lại /auth/profile sau khi cập nhật
+            onSuccess={() => {
+              refetch?.();
               setEditOpen(false);
             }}
           />
