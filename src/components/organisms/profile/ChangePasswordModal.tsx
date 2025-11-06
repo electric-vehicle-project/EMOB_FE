@@ -1,7 +1,9 @@
+// src/components/organisms/profile/ChangePasswordModal.tsx
 import React from "react";
 import { Modal, Form, Input, message } from "antd";
 import { AxiosError } from "axios";
 import { useChangePassword } from "../../../service/accountService";
+import { Button } from "../../atoms/Button"; // ⬅️ dùng atoms/Button
 
 interface Props {
   open: boolean;
@@ -62,7 +64,10 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
             { required: true, message: "Vui lòng nhập mật khẩu hiện tại" },
           ]}
         >
-          <Input.Password placeholder="Nhập mật khẩu hiện tại" />
+          <Input.Password
+            placeholder="Nhập mật khẩu hiện tại"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <Form.Item
@@ -73,7 +78,10 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
             { min: 6, message: "Tối thiểu 6 ký tự" },
           ]}
         >
-          <Input.Password placeholder="Nhập mật khẩu mới" />
+          <Input.Password
+            placeholder="Nhập mật khẩu mới"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <Form.Item
@@ -81,23 +89,23 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
           label="Xác nhận mật khẩu"
           rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}
         >
-          <Input.Password placeholder="Nhập lại mật khẩu mới" />
+          <Input.Password
+            placeholder="Nhập lại mật khẩu mới"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <div className="flex justify-end gap-2">
-          <button
-            className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50"
-            onClick={onClose}
-            type="button"
-          >
+          <Button type="default" onClick={onClose}>
             Hủy
-          </button>
-          <button
-            className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
+          </Button>
+          <Button
+            type="primary"
+            loading={changePassword?.isPending}
             onClick={() => form.submit()}
           >
             Đổi mật khẩu
-          </button>
+          </Button>
         </div>
       </Form>
     </Modal>

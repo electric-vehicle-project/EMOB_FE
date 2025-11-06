@@ -1,4 +1,6 @@
 /* EMOB-2025 - Account Service */
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../config/api";
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -75,12 +77,25 @@ export const useBanAccount = () =>
 export const useGetAccountProfile = () =>
   createQueryHook("account-profile", `/auth/profile`)();
 
-export const useUpdateAccountProfile = createMutationHook(
-  "update-account-profile",
-  `${BASE_URL}/profile`
-);
+// export const useUpdateAccountProfile = createMutationHook(
+//   "update-account-profile",
+//   `${BASE_URL}/profile`
+// );
 // ✅ Đổi mật khẩu đúng API backend
 export const useChangePassword = createMutationHook(
   "change-password",
   `${BASE_URL}/reset-password`
 );
+
+// ✅ Dùng PUT đúng theo Swagger để update profile
+export const useUpdateAccountProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Partial<IAccount>) =>
+      api.put(`${BASE_URL}/profile`, payload),
+    onSuccess: () => {
+      // Nếu sau này bạn bật GET /auth/profile thì invalidate là sẵn:
+      queryClient.invalidateQueries({ queryKey: ["account-profile"] });
+    },
+  });
+};

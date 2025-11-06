@@ -1,14 +1,18 @@
 // src/page/profile/ProfilePage.tsx
 import React, { useMemo, useState } from "react";
 import { Card, Tag, Skeleton, Space, Result } from "antd";
+import { useDispatch } from "react-redux";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import { useGetAccountById } from "../../service/accountService";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import type { IAccount, Role, AccountStatus } from "../../model/Account";
 import EditProfileModal from "../../components/organisms/profile/EditProfileModal";
 import ChangePasswordModal from "../../components/organisms/profile/ChangePasswordModal";
 import ProfileDetailsByRole from "../../components/organisms/profile/ProfileDetailsByRole";
+import { useDealerByIdQuery } from "../../service/dealerService";
+import { login as loginAction } from "../../redux/features/userSlice";
+import { Button } from "../../components/atoms/Button"; // ⬅️ dùng atoms/Button
 
+/* ======= Maps ======= */
 const mapStatusLabel: Record<AccountStatus, string> = {
   ACTIVE: "Đang hoạt động",
   INACTIVE: "Tạm ngưng",
@@ -28,6 +32,15 @@ const mapRoleLabel: Record<Role, string> = {
   EVM_STAFF: "Nhân viên EVM",
 };
 
+/* ======= Helpers ======= */
+const initialsOf = (name?: string) =>
+  (name || "")
+    .trim()
+    .split(/\s+/)
+    .slice(-2)
+    .map((w) => w[0]?.toUpperCase() || "")
+    .join("");
+
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
@@ -38,31 +51,27 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
 );
 
 /* ================================
-   👤 Trang Hồ sơ cá nhân
-================================== */
+  👤 Trang Hồ sơ cá nhân (Redux only)
+================================= */
 export default function ProfilePage() {
-  const user = useCurrentUser();
+  const dispatch = useDispatch();
+  const profile = useCurrentUser();
   const [editOpen, setEditOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
 
-  // ✅ Chỉ ADMIN mới được phép gọi API /api/auth/{id}
-  const canFetchFromApi = user?.role === "ADMIN";
+  // ✅ Chỉ ADMIN / EVM_STAFF mới được gọi dealerById để lấy tên
+  const canQueryDealerName =
+    (profile?.role === "ADMIN" || profile?.role === "EVM_STAFF") &&
+    !!profile?.dealerId;
 
-  // ✅ Cập nhật đúng thứ tự tham số: (id, options)
-  const { data, isLoading, isError, error, refetch } = useGetAccountById(
-    user?.id as string,
-    { enabled: canFetchFromApi && !!user?.id }
-  );
+  const dealerQuery = useDealerByIdQuery(profile?.dealerId as string, {
+    enabled: canQueryDealerName,
+  });
 
-  // ✅ Ưu tiên Redux user, fallback từ API nếu có
-  const profile: IAccount | null = useMemo(() => {
-    if (user) return user;
-    if (data) {
-      const maybe = data as any;
-      return maybe.result ?? maybe;
-    }
-    return null;
-  }, [data, user]);
+  const dealerName: string | undefined = useMemo(() => {
+    const d = dealerQuery.data?.result ?? dealerQuery.data;
+    return d?.name || undefined;
+  }, [dealerQuery.data]);
 
   const header = useMemo(
     () => ({
@@ -74,11 +83,9 @@ export default function ProfilePage() {
     [profile]
   );
 
-  /* ================================
-     📦 Render nội dung trang
-  ================================= */
+  const isLoadingDealer = dealerQuery.isFetching && canQueryDealerName;
+
   const content = (() => {
-    // ❌ Nếu chưa login
     if (!profile) {
       return (
         <Result
@@ -89,40 +96,21 @@ export default function ProfilePage() {
       );
     }
 
-    // ⚠️ Chỉ hiển thị lỗi nếu Admin gọi API thất bại
-    if (isError && canFetchFromApi) {
-      return (
-        <Result
-          status="error"
-          title="Không tải được hồ sơ"
-          subTitle={(error as any)?.message || "Vui lòng thử lại."}
-          extra={
-            <button
-              className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
-              onClick={() => refetch()}
-            >
-              Thử lại
-            </button>
-          }
-        />
-      );
-    }
-
-    // ⏳ Loading (khi Admin gọi API)
-    if (isLoading) {
-      return <Skeleton active paragraph={{ rows: 8 }} />;
-    }
-
-    // ✅ Nội dung chính
     return (
       <div className="grid grid-cols-1 gap-12">
         <Section title="Thông tin tổng quan">
+          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div className="text-xl font-bold text-[#2e3825]">
-                {header.fullName}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-700">
+                {initialsOf(header.fullName)}
               </div>
-              <div className="text-gray-600 break-words">{header.email}</div>
+              <div>
+                <div className="text-xl font-bold text-[#2e3825]">
+                  {header.fullName}
+                </div>
+                <div className="text-gray-600 break-words">{header.email}</div>
+              </div>
             </div>
             <Space>
               {header.status && (
@@ -134,32 +122,32 @@ export default function ProfilePage() {
             </Space>
           </div>
 
-          {/* ✅ Component hiển thị theo Role */}
-          <ProfileDetailsByRole profile={profile} />
+          {/* Detail */}
+          <div className="mt-4">
+            {isLoadingDealer ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : (
+              <ProfileDetailsByRole
+                profile={profile as IAccount}
+                dealerName={dealerName}
+              />
+            )}
+          </div>
 
-          {/* ⚙️ Nút hành động */}
+          {/* Actions (đã đồng bộ atoms/Button) */}
           <div className="mt-4 flex gap-2 justify-end">
-            <button
-              className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
-              onClick={() => setEditOpen(true)}
-            >
+            <Button type="primary" onClick={() => setEditOpen(true)}>
               Chỉnh sửa thông tin
-            </button>
-            <button
-              className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50"
-              onClick={() => setPwdOpen(true)}
-            >
+            </Button>
+            <Button type="default" onClick={() => setPwdOpen(true)}>
               Đổi mật khẩu
-            </button>
+            </Button>
           </div>
         </Section>
       </div>
     );
   })();
 
-  /* ================================
-     📄 Return tổng thể
-  ================================= */
   return (
     <CardWrapper
       title="Hồ sơ cá nhân"
@@ -174,9 +162,9 @@ export default function ProfilePage() {
           <EditProfileModal
             open={editOpen}
             onClose={() => setEditOpen(false)}
-            profile={profile}
-            onSuccess={() => {
-              refetch?.();
+            profile={profile as IAccount}
+            onSuccess={(updated) => {
+              if (updated) dispatch(loginAction(updated));
               setEditOpen(false);
             }}
           />

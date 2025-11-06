@@ -2,24 +2,24 @@
 import React from "react";
 import { Descriptions } from "antd";
 import { formatDateVietnam } from "../../../utils/timeFeature";
-import type { IAccount, Role } from "../../../model/Account";
+import type { IAccount } from "../../../model/Account";
 
 interface Props {
   profile: IAccount;
+  dealerName?: string; // nếu có quyền và lấy được thì truyền vào
 }
 
-const ProfileDetailsByRole: React.FC<Props> = ({ profile }) => {
+const genderLabel = (g?: IAccount["gender"]) =>
+  g === "MALE" ? "Nam" : g === "FEMALE" ? "Nữ" : "Không xác định";
+
+const ProfileDetailsByRole: React.FC<Props> = ({ profile, dealerName }) => {
   const baseItems = (
     <>
       <Descriptions.Item label="Số điện thoại">
         {profile.phone || "-"}
       </Descriptions.Item>
       <Descriptions.Item label="Giới tính">
-        {profile.gender === "MALE"
-          ? "Nam"
-          : profile.gender === "FEMALE"
-          ? "Nữ"
-          : "Không xác định"}
+        {genderLabel(profile.gender)}
       </Descriptions.Item>
       <Descriptions.Item label="Ngày sinh">
         {profile.dateOfBirth ? formatDateVietnam(profile.dateOfBirth) : "-"}
@@ -30,80 +30,18 @@ const ProfileDetailsByRole: React.FC<Props> = ({ profile }) => {
     </>
   );
 
-  const renderExtraFields = (role: Role) => {
-    switch (role) {
-      case "ADMIN":
-        return (
-          <>
-            <Descriptions.Item label="Tổng số đại lý">18</Descriptions.Item>
-            <Descriptions.Item label="Tổng số nhân viên EVM">
-              32
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo tài khoản">
-              {profile.createdAt
-                ? formatDateVietnam(profile.createdAt)
-                : "Không có dữ liệu"}
-            </Descriptions.Item>
-          </>
-        );
-
-      case "MANAGER":
-        return (
-          <>
-            <Descriptions.Item label="Đại lý quản lý">
-              {profile.dealerId || "Không có dữ liệu"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Số lượng nhân viên quản lý">
-              12
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo tài khoản">
-              {profile.createdAt
-                ? formatDateVietnam(profile.createdAt)
-                : "Không có dữ liệu"}
-            </Descriptions.Item>
-          </>
-        );
-
-      case "DEALER_STAFF":
-        return (
-          <>
-            <Descriptions.Item label="Đại lý trực thuộc">
-              {profile.dealerId || "Không có dữ liệu"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Chức danh">
-              Nhân viên bán hàng
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tham gia">
-              {profile.createdAt
-                ? formatDateVietnam(profile.createdAt)
-                : "Không có dữ liệu"}
-            </Descriptions.Item>
-          </>
-        );
-
-      case "EVM_STAFF":
-        return (
-          <>
-            <Descriptions.Item label="Khu vực phụ trách">
-              Miền Nam
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tham gia">
-              {profile.createdAt
-                ? formatDateVietnam(profile.createdAt)
-                : "Không có dữ liệu"}
-            </Descriptions.Item>
-          </>
-        );
-
-      default:
-        return null;
-    }
-  };
+  const showDealer =
+    (profile.role === "MANAGER" || profile.role === "DEALER_STAFF") &&
+    !!dealerName; // chỉ hiện khi có tên (tránh lộ id)
 
   return (
-    <Descriptions className="mt-4" column={2} size="middle" bordered>
+    <Descriptions className="mt-2" column={2} size="middle" bordered>
       {baseItems}
-      {renderExtraFields(profile.role)}
+      {showDealer && (
+        <Descriptions.Item label="Đại lý trực thuộc" span={2}>
+          {dealerName}
+        </Descriptions.Item>
+      )}
     </Descriptions>
   );
 };

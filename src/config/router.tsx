@@ -57,6 +57,7 @@ export const router = createBrowserRouter([
     children: [
       // ⚡ General
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.DEALER, element: <DealerPage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
@@ -83,6 +84,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.DEALER, element: <h1>Dealer</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
@@ -107,6 +109,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
@@ -136,6 +139,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
