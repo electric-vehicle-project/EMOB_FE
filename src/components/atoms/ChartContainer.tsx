@@ -1,5 +1,5 @@
 import { Card } from "antd";
-import React, { type ReactNode } from "react";
+import React from "react";
 
 export interface ChartContainerProps {
   title: string;

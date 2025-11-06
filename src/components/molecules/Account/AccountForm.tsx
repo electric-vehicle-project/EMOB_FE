@@ -6,13 +6,6 @@ import dayjs from "dayjs";
 import { Gender, Role } from "../../../model/Account";
 import type { FormInstance } from "antd/es/form";
 
-import type { IDealer } from "../../../model/Dealer";
-import {
-  useGetAccountsByAdmin,
-  useGetAccountsByManager,
-} from "../../../service/accountService";
-import { useDealersQuery } from "../../../service/dealerService";
-
 /* ===== Helpers ===== */
 const trimEdges = (s: string) => (s ?? "").replace(/^\s+|\s+$/g, "");
 const toEmail = (s: string) => trimEdges(s).toLowerCase();
@@ -36,11 +29,11 @@ interface AccountFormValues {
   phone: string;
   address: string;
   gender: Gender;
-  role?: Role;
+  role?: Role; // chỉ dùng khi ADMIN chọn loại tài khoản
   dateOfBirth: Dayjs;
   password: string;
   confirmPassword: string;
-  dealerId?: string;
+  dealerId?: string; // chỉ bắt buộc khi ADMIN tạo MANAGER
 }
 
 export type AccountCreatePayload = Omit<
@@ -53,9 +46,11 @@ export type AccountCreatePayload = Omit<
 interface Props {
   onSubmit: (values: AccountCreatePayload) => void;
   loading?: boolean;
-  role: Role;
-  defaultCreatingRole?: Role | null;
+  role: Role; // role của người tạo (ADMIN | MANAGER)
+  defaultCreatingRole?: Role | null; // nếu ADMIN đã chọn trước loại tạo
   form?: FormInstance<AccountFormValues>;
+  /** Chỉ truyền khi ADMIN tạo MANAGER (để user chọn Dealer). Manager không cần prop này. */
+  dealerOptions?: { label: string; value: string }[];
 }
 
 export const AccountForm: React.FC<Props> = ({
@@ -64,55 +59,48 @@ export const AccountForm: React.FC<Props> = ({
   role,
   defaultCreatingRole,
   form: outerForm,
+  dealerOptions = [],
 }) => {
   const [innerForm] = Form.useForm<AccountFormValues>();
   const form = outerForm ?? innerForm;
 
-  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
-
-  // ✅ Chỉ enable API tương ứng với role để tránh 403
-  const { data: adminAccounts = [] } = useGetAccountsByAdmin(0, 10, {
-    enabled: role === Role.ADMIN,
-  });
-  const { data: managerAccounts = [] } = useGetAccountsByManager(0, 10, {
-    enabled: role === Role.MANAGER,
-  });
-
-  const baseAccounts = role === Role.ADMIN ? adminAccounts : managerAccounts;
-
+  /** Tập kiểm tra trùng email/phone phía FE (có sẵn để reuse) */
   const dupSets = useMemo(() => {
-    const emails = new Set(baseAccounts.map((a) => toEmail(a.email || "")));
-    const phones = new Set<string>();
-    baseAccounts.forEach((a) => {
-      const intl = toIntlPhone(a.phone || "");
-      const local = toLocalPhone(a.phone || "");
-      if (intl) phones.add(intl);
-      if (local) phones.add(local);
-    });
-    return { emails, phones };
-  }, [baseAccounts]);
+    return { emails: new Set<string>(), phones: new Set<string>() };
+  }, []);
 
   const [canSubmit, setCanSubmit] = useState(false);
 
   const handleFinish = (values: AccountFormValues) => {
-    const finalRole =
-      role === Role.MANAGER
-        ? Role.DEALER_STAFF
-        : ((defaultCreatingRole || values.role!) as Role);
-
-    const payload: AccountCreatePayload = {
-      ...values,
+    const base: AccountCreatePayload = {
       fullName: trimEdges(values.fullName),
       email: toEmail(values.email),
       phone: toLocalPhone(values.phone),
       address: trimEdges(values.address),
       dateOfBirth: dayjs(values.dateOfBirth).format("YYYY-MM-DD"),
-      role: finalRole,
+      password: values.password,
+      gender: values.gender,
     };
-    // @ts-expect-error remove confirmPassword
-    delete payload.confirmPassword;
 
-    onSubmit(payload);
+    // Manager tạo Dealer Staff -> không gửi role/dealerId
+    if (role === Role.MANAGER) {
+      onSubmit(base);
+      form.resetFields();
+      setCanSubmit(false);
+      return;
+    }
+
+    // Admin tạo
+    const finalRole = defaultCreatingRole ?? (values.role as Role | undefined);
+    const payloadForAdmin: AccountCreatePayload = {
+      ...base,
+      ...(finalRole ? ({ role: finalRole } as { role: Role }) : {}),
+      ...(finalRole === Role.MANAGER && values.dealerId
+        ? ({ dealerId: values.dealerId } as { dealerId: string })
+        : {}),
+    };
+
+    onSubmit(payloadForAdmin);
     form.resetFields();
     setCanSubmit(false);
   };
@@ -122,14 +110,13 @@ export const AccountForm: React.FC<Props> = ({
     { label: "Nữ", value: Gender.FEMALE },
     { label: "Khác", value: Gender.UNKNOWN },
   ];
-  const dealers = dealersData?.result?.data ?? [];
-  const dealerOptions = dealers.map((d: IDealer) => ({
-    label: d.name,
-    value: d.id,
-  }));
 
+  // ❗️Quy tắc hiển thị chọn đại lý:
+  // - Manager tạo dealer staff: KHÔNG hiển thị (BE tự gán theo manager)
+  // - Admin tạo Manager: BẮT BUỘC chọn dealer
+  // - Admin tạo EVM_STAFF: KHÔNG cần dealer
   const shouldShowDealerSelect = () => {
-    if (role === Role.MANAGER) return true;
+    if (role === Role.MANAGER) return false;
     if (role === Role.ADMIN && defaultCreatingRole === Role.MANAGER)
       return true;
     return false;
@@ -143,6 +130,7 @@ export const AccountForm: React.FC<Props> = ({
       autoComplete="off"
       requiredMark="optional"
       className="space-y-2"
+      initialValues={{ gender: Gender.UNKNOWN }} // ✅ đảm bảo có giá trị mặc định
       onFieldsChange={() => {
         const hasErrors = form
           .getFieldsError()
@@ -166,6 +154,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input placeholder="VD: Nguyễn Văn A" allowClear />
       </Form.Item>
 
+      {/* ADMIN chọn loại tài khoản nếu chưa cố định trước */}
       {role === Role.ADMIN && !defaultCreatingRole && (
         <Form.Item
           name="role"
@@ -182,6 +171,7 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
+      {/* ADMIN tạo Manager -> bắt buộc chọn Dealer */}
       {shouldShowDealerSelect() && (
         <Form.Item
           name="dealerId"

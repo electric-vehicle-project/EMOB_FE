@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Result, Button, Spin, Empty, message } from "antd";
+import { Result, Button, Empty, message } from "antd";
 import type { IDealer } from "../../../model/Dealer";
 import { SearchBar } from "../../molecules/SearchBar";
 import { DealerModal } from "./DealerModal";
@@ -123,7 +122,7 @@ export const DealerList = () => {
     );
 
   return (
-<>
+    <>
       <div className="flex justify-between items-center mb-3">
         <div className="w-full max-w-xs sm:max-w-sm">
           <SearchBar
@@ -189,6 +188,6 @@ export const DealerList = () => {
           />
         </>
       )}
-</>
+    </>
   );
 };
