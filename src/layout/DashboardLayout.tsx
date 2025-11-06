@@ -13,10 +13,11 @@ import {
   MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { logout } from "../redux/features/userSlice"; //action từ slice
 import { useLogoutMutation } from "../service/authenticationService"; //hook API logout
 import { ROUTES } from "../model/routePaths";
+import { useCurrentUser } from "../utils/getCurrentUser";
 
 function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -26,7 +27,7 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const user = useSelector((state: any) => state.user); // Lấy thông tin user từ Redux store
+  const user = useCurrentUser(); // Lấy thông tin user từ Redux store
   console.log(user);
   const role = user?.role;
 
@@ -35,6 +36,7 @@ function DashboardLayout() {
       case "ADMIN":
         return [
           getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
           getItem("Đại lý", ROUTES.DEALER, <DesktopOutlined />),
           getItem(
             "Chính sách chiết khấu",
@@ -54,6 +56,7 @@ function DashboardLayout() {
       case "EVM_STAFF":
         return [
           getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
           getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
           getItem("Đại lý", ROUTES.DEALER, <FileOutlined />),
           getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
@@ -72,6 +75,7 @@ function DashboardLayout() {
       case "MANAGER":
         return [
           getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
           getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
           getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
           getItem(
@@ -98,6 +102,7 @@ function DashboardLayout() {
       case "DEALER_STAFF":
         return [
           getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
           getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
           getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
           getItem(
