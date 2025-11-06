@@ -16,6 +16,7 @@ import ProfilePage from "../page/profile/ProfilePage";
 import { DealerPage } from "../page/DealerPage";
 import { AccountPage } from "../page/account/AccountPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
+import GoogleCallback from "../page/GoogleCallback";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -30,8 +31,11 @@ export const router = createBrowserRouter([
       { path: ROUTES.FORGET_PASSWORD, element: <ForgetPasswordCard /> },
       { path: ROUTES.FORGET_PASSWORD_OTP, element: <OTPCard /> },
       { path: ROUTES.RESET_PASSWORD, element: <ResetPasswordCard /> },
+
     ],
   },
+
+  { path: ROUTES.CALLBACK, element: <GoogleCallback /> },
 
   // ==== DASHBOARD (default for all roles) ====
   {

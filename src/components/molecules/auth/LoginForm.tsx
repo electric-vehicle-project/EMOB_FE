@@ -120,7 +120,7 @@ export const LoginForm = () => {
 
       {/* --- Đăng nhập bằng Google --- */}
       <Form.Item>
-        <ButtonGoogle />
+        <ButtonGoogle/>
       </Form.Item>
     </Form>
   );

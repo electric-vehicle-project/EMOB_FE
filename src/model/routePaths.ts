@@ -11,6 +11,7 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",
 
   // ====== AUTHENTICATION ======
+  CALLBACK: "/callback",
   AUTH: "/auth",
   LOGIN: "login",
   REGISTER: "register",
