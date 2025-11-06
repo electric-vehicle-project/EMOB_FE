@@ -1,41 +1,45 @@
 // src/page/profile/ProfilePage.tsx
 import React, { useMemo, useState } from "react";
-import { Card, Tag, Skeleton, Descriptions, Space, Result } from "antd";
+import { Card, Tag, Skeleton, Space, Result } from "antd";
+import { useDispatch } from "react-redux";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import { useGetAccountProfile } from "../../service/accountService";
 import { CardWrapper } from "../../components/template/CardWrapper";
-import type {
-  IAccount,
-  Role,
-  AccountStatus,
-  Gender,
-} from "../../model/Account";
-import { formatDateVietnam } from "../../utils/timeFeature";
+import type { IAccount, Role, AccountStatus } from "../../model/Account";
 import EditProfileModal from "../../components/organisms/profile/EditProfileModal";
 import ChangePasswordModal from "../../components/organisms/profile/ChangePasswordModal";
+import ProfileDetailsByRole from "../../components/organisms/profile/ProfileDetailsByRole";
+import { useDealerByIdQuery } from "../../service/dealerService";
+import { login as loginAction } from "../../redux/features/userSlice";
+import { Button } from "../../components/atoms/Button"; // ⬅️ dùng atoms/Button
 
-// ===== Mapping tiếng Việt =====
+/* ======= Maps ======= */
 const mapStatusLabel: Record<AccountStatus, string> = {
   ACTIVE: "Đang hoạt động",
   INACTIVE: "Tạm ngưng",
   BANNED: "Đã khóa",
 };
+
 const mapStatusColor: Record<AccountStatus, string> = {
   ACTIVE: "green",
   INACTIVE: "gold",
   BANNED: "red",
 };
-const mapGenderLabel: Record<Gender, string> = {
-  MALE: "Nam",
-  FEMALE: "Nữ",
-  UNKNOWN: "Không xác định",
-};
+
 const mapRoleLabel: Record<Role, string> = {
   ADMIN: "Quản trị (Hãng xe)",
   MANAGER: "Quản lý đại lý",
   DEALER_STAFF: "Nhân viên đại lý",
   EVM_STAFF: "Nhân viên EVM",
 };
+
+/* ======= Helpers ======= */
+const initialsOf = (name?: string) =>
+  (name || "")
+    .trim()
+    .split(/\s+/)
+    .slice(-2)
+    .map((w) => w[0]?.toUpperCase() || "")
+    .join("");
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
@@ -46,78 +50,67 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   </Card>
 );
 
+/* ================================
+  👤 Trang Hồ sơ cá nhân (Redux only)
+================================= */
 export default function ProfilePage() {
-  const user = useCurrentUser(); // lấy role/token từ Redux
+  const dispatch = useDispatch();
+  const profile = useCurrentUser();
   const [editOpen, setEditOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
 
-  // ✅ Chỉ fetch khi đã có token để tránh 400 "Bad Request" do thiếu Authorization
-  const { data, isLoading, isError, error, refetch } = useGetAccountProfile({
-    enabled: !!user?.token,
+  // ✅ Chỉ ADMIN / EVM_STAFF mới được gọi dealerById để lấy tên
+  const canQueryDealerName =
+    (profile?.role === "ADMIN" || profile?.role === "EVM_STAFF") &&
+    !!profile?.dealerId;
+
+  const dealerQuery = useDealerByIdQuery(profile?.dealerId as string, {
+    enabled: canQueryDealerName,
   });
 
-  // ✅ Endpoint /auth/profile có thể trả về:
-  // - trực tiếp object IAccount
-  // - hoặc { result: IAccount }
-  const profile: IAccount | null = useMemo(() => {
-    if (!data) return null;
-    const maybe = data as any;
-    return (maybe.result ?? maybe) as IAccount;
-  }, [data]);
+  const dealerName: string | undefined = useMemo(() => {
+    const d = dealerQuery.data?.result ?? dealerQuery.data;
+    return d?.name || undefined;
+  }, [dealerQuery.data]);
 
   const header = useMemo(
     () => ({
-      // fallback sang Redux nếu API chưa trả về kịp
-      fullName: profile?.fullName ?? user?.fullName ?? "",
-      email: profile?.email ?? user?.email ?? "",
-      status: (profile?.status ?? user?.status) as AccountStatus | undefined,
-      role: (profile?.role ?? user?.role) as Role | undefined,
+      fullName: profile?.fullName ?? "",
+      email: profile?.email ?? "",
+      status: profile?.status,
+      role: profile?.role,
     }),
-    [profile, user]
+    [profile]
   );
 
+  const isLoadingDealer = dealerQuery.isFetching && canQueryDealerName;
+
   const content = (() => {
-    if (!user?.token) {
+    if (!profile) {
       return (
         <Result
           status="403"
-          title="Chưa sẵn sàng"
-          subTitle="Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại."
+          title="Không có dữ liệu hồ sơ"
+          subTitle="Vui lòng đăng nhập lại để xem thông tin cá nhân."
         />
       );
-    }
-
-    if (isError) {
-      return (
-        <Result
-          status="error"
-          title="Không tải được hồ sơ"
-          subTitle={(error as any)?.message || "Vui lòng thử lại."}
-          extra={
-            <button
-              className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
-              onClick={() => refetch()}
-            >
-              Thử lại
-            </button>
-          }
-        />
-      );
-    }
-
-    if (isLoading || !profile) {
-      return <Skeleton active paragraph={{ rows: 8 }} />;
     }
 
     return (
       <div className="grid grid-cols-1 gap-12">
         <Section title="Thông tin tổng quan">
+          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div className="text-xl font-bold text-[#2e3825]">
-                {header.fullName}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-700">
+                {initialsOf(header.fullName)}
               </div>
-              <div className="text-gray-600 break-words">{header.email}</div>
+              <div>
+                <div className="text-xl font-bold text-[#2e3825]">
+                  {header.fullName}
+                </div>
+                <div className="text-gray-600 break-words">{header.email}</div>
+              </div>
             </div>
             <Space>
               {header.status && (
@@ -129,43 +122,26 @@ export default function ProfilePage() {
             </Space>
           </div>
 
-          <Descriptions className="mt-4" column={2} size="middle" bordered>
-            <Descriptions.Item label="Số điện thoại">
-              {profile.phone || "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Giới tính">
-              {profile.gender ? mapGenderLabel[profile.gender] : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày sinh">
-              {profile.dateOfBirth
-                ? formatDateVietnam(profile.dateOfBirth)
-                : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Địa chỉ">
-              {profile.address || "-"}
-            </Descriptions.Item>
-
-            {/* Một số role (MANAGER/DEALER_STAFF) có dealerId */}
-            {profile.dealerId && (
-              <Descriptions.Item label="Mã đại lý">
-                {profile.dealerId}
-              </Descriptions.Item>
+          {/* Detail */}
+          <div className="mt-4">
+            {isLoadingDealer ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : (
+              <ProfileDetailsByRole
+                profile={profile as IAccount}
+                dealerName={dealerName}
+              />
             )}
-          </Descriptions>
+          </div>
 
+          {/* Actions (đã đồng bộ atoms/Button) */}
           <div className="mt-4 flex gap-2 justify-end">
-            <button
-              className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white"
-              onClick={() => setEditOpen(true)}
-            >
+            <Button type="primary" onClick={() => setEditOpen(true)}>
               Chỉnh sửa thông tin
-            </button>
-            <button
-              className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50"
-              onClick={() => setPwdOpen(true)}
-            >
+            </Button>
+            <Button type="default" onClick={() => setPwdOpen(true)}>
               Đổi mật khẩu
-            </button>
+            </Button>
           </div>
         </Section>
       </div>
@@ -181,15 +157,14 @@ export default function ProfilePage() {
     >
       {content}
 
-      {/* Modals */}
       {profile && (
         <>
           <EditProfileModal
             open={editOpen}
             onClose={() => setEditOpen(false)}
-            profile={profile}
-            onSuccess={async () => {
-              await refetch(); // refetch lại /auth/profile sau khi cập nhật
+            profile={profile as IAccount}
+            onSuccess={(updated) => {
+              if (updated) dispatch(loginAction(updated));
               setEditOpen(false);
             }}
           />

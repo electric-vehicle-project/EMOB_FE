@@ -15,6 +15,7 @@ import { AuthProtect } from "../components/atoms/AuthProtect";
 import ProfilePage from "../page/profile/ProfilePage";
 import { DealerPage } from "../page/DealerPage";
 import { AccountPage } from "../page/account/AccountPage";
+import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
     children: [
       // ⚡ General
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.DEALER, element: <DealerPage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
@@ -82,6 +84,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.DEALER, element: <h1>Dealer</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
@@ -106,6 +109,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
@@ -113,7 +117,7 @@ export const router = createBrowserRouter([
         element: <h1>Discount Policy</h1>,
       },
       { path: ROUTES.PROMOTIONS, element: <h1>Promotion</h1> },
-      { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.TEST_DRIVE, element: <h1>Test Drive</h1> },
       { path: ROUTES.SALE_ORDER, element: <h1>Sale Order</h1> },
       { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
@@ -135,6 +139,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
