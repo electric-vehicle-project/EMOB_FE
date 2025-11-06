@@ -63,7 +63,9 @@ export const ROUTES = {
   DEALER_DISCOUNT_POLICY: "dealer-discount-policy",
   // ====== SALE ORDER ======
   SALE_ORDER: "sale-order",
-  SALE_ORDER_DETAIL: "sale-orders/:id",
+  SALE_ORDER_STAFF: "sale-order/staff",
+  SALE_ORDER_DETAIL: "sale-order/:id",
+  SALE_ORDER_STAFF_SUMMARY: "sale-order/staff-summary",
   // ====== REPORT ======
   REPORT: "report",
   // ====== REPORT ======
