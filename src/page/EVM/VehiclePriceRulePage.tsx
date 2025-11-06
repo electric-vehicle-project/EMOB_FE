@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+// EMOB-2025 - Vehicle Price Rule Page (Admin editable, Custom Modal)
+// Tham khảo UI/UX Dealer page, đồng bộ màu & layout, thông báo theo loại thay đổi
+
+import { useEffect, useMemo, useState } from "react";
 import {
   Table,
   InputNumber,
@@ -7,177 +10,231 @@ import {
   message,
   Typography,
   Skeleton,
+  Form,
+  Select,
+  Empty,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { motion } from "framer-motion";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useGetVehiclePriceRules } from "../../service/vehiclePriceRuleService";
 import api from "../../config/api";
 import { Button } from "../../components/atoms/Button";
+import { CardWrapper } from "../../components/template/CardWrapper";
+
+import type {
+  VehiclePriceRule as Rule,
+  VehicleStatus,
+} from "../../model/VehiclePriceRule";
+import {
+  VEHICLE_STATUS_LABELS,
+  VEHICLE_STATUS_COLORS,
+} from "../../model/VehiclePriceRule";
 
 const { Text } = Typography;
 
-interface VehiclePriceRule {
-  vehicleStatus: string;
-  multiplier: number;
-  note: string;
-}
+const GREEN = "#627254";
+const GREEN_HOVER = "#525e46";
+
+const sortRules = (arr: Rule[]) =>
+  [...arr].sort((a, b) => a.vehicleStatus.localeCompare(b.vehicleStatus));
 
 export const VehiclePriceRulePage = () => {
+  // Role: mọi role xem được; chỉ ADMIN được tạo/sửa
   const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+  const role = (user as { role?: string } | null)?.role ?? "";
   const isAdmin = role === "ADMIN";
 
-  const { data, isLoading, error } = useGetVehiclePriceRules();
-  const [rules, setRules] = useState<VehiclePriceRule[]>([]);
+  // Query & state
+  const { data, isLoading, error, refetch } = useGetVehiclePriceRules();
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [baseline, setBaseline] = useState<Rule[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  // ✅ Load data từ API
+  // Modal tạo mới
+  const [showModal, setShowModal] = useState(false);
+  const [form] = Form.useForm();
+
+  // Trạng thái cho phép tạo (loại SOLD ra)
+  const creatableStatuses: VehicleStatus[] = [
+    "NORMAL",
+    "SPECIAL",
+    "TEST_DRIVE",
+    "OLD_STOCK",
+    "RESERVED",
+  ];
+
+  // Load data
   useEffect(() => {
     if (data?.result && Array.isArray(data.result)) {
-      setRules(data.result);
+      const res = data.result as Rule[];
+      setRules(res);
+      setBaseline(res);
     }
   }, [data]);
 
-  // ⚠️ Handle error fetch
   useEffect(() => {
     if (error) {
-      const err = error as { response?: { status?: number } };
-      if (err.response?.status === 401) {
-        message.error("🔒 Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!");
-      } else if (err.response?.status === 403) {
-        message.error("⛔ Bạn không có quyền truy cập trang này!");
-      } else {
-        message.error("❌ Không thể tải dữ liệu quy tắc giá!");
-      }
+      message.error("Không thể tải quy tắc giá. Vui lòng thử lại!");
     }
   }, [error]);
 
-  // 💾 Lưu thay đổi
+  // Dirty check để disable nút Lưu khi không có thay đổi
+  const isDirty = useMemo(() => {
+    return (
+      JSON.stringify(sortRules(rules)) !== JSON.stringify(sortRules(baseline))
+    );
+  }, [rules, baseline]);
+
+  // PUT cập nhật (Admin only)
   const handleSave = async () => {
     if (!isAdmin) {
-      message.warning("⛔ Chỉ Admin mới được chỉnh sửa quy tắc giá!");
+      message.warning("Chỉ Admin được chỉnh sửa!");
       return;
+    }
+    if (!isDirty) return;
+
+    // So sánh trước khi lưu để biết thay đổi gì
+    const baseMap = new Map(baseline.map((r) => [r.vehicleStatus, r]));
+    let addedCount = 0;
+    let changedMultiplierCount = 0;
+    let changedNoteCount = 0;
+
+    for (const r of rules) {
+      const old = baseMap.get(r.vehicleStatus);
+      if (!old) {
+        addedCount++;
+        // coi thêm mới như thay đổi cả giá & ghi chú nếu muốn show chi tiết
+        if (typeof r.multiplier === "number") changedMultiplierCount++;
+        if ((r.note ?? "") !== "") changedNoteCount++;
+      } else {
+        if ((old.multiplier ?? 0) !== (r.multiplier ?? 0))
+          changedMultiplierCount++;
+        if ((old.note ?? "") !== (r.note ?? "")) changedNoteCount++;
+      }
     }
 
     try {
-      await api.put("/vehicle-price-rules", rules);
-      message.success("✅ Cập nhật quy tắc giá thành công!");
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response
-        ?.status;
-      if (status === 401) {
-        message.error("🔒 Token không hợp lệ hoặc đã hết hạn!");
-      } else if (status === 403) {
-        message.error("⛔ Bạn không có quyền cập nhật!");
-      } else if (status === 400) {
-        message.error("⚠️ Dữ liệu không hợp lệ, vui lòng kiểm tra lại!");
-      } else {
-        message.error("❌ Lưu thất bại, vui lòng thử lại!");
+      setSaving(true);
+      await api.put("/vehicle-price-rules", rules); // Body là mảng Rule theo Swagger
+
+      // Thông báo theo loại thay đổi
+      if (addedCount > 0) {
+        message.success(`Đã thêm ${addedCount} quy tắc mới`);
       }
+      if (changedMultiplierCount > 0) {
+        message.success(
+          changedNoteCount > 0 && changedMultiplierCount === 1
+            ? "Sửa giá thành công (1 mục)"
+            : `Sửa giá thành công (${changedMultiplierCount} mục)`
+        );
+      }
+      if (changedNoteCount > 0) {
+        message.success(
+          changedNoteCount === 1
+            ? "Sửa ghi chú thành công (1 mục)"
+            : `Sửa ghi chú thành công (${changedNoteCount} mục)`
+        );
+      }
+      // Trường hợp chỉ reorder hoặc thay đổi không bắt được (hiếm)
+      if (
+        addedCount === 0 &&
+        changedMultiplierCount === 0 &&
+        changedNoteCount === 0
+      ) {
+        message.success("Cập nhật quy tắc giá thành công!");
+      }
+
+      setBaseline(rules);
+      refetch?.();
+    } catch {
+      message.error("Lưu thất bại! Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
     }
   };
 
-  // 🧩 Cập nhật rule
+  // Thêm rule mới (local), cần Lưu để đẩy BE
+  const handleAddRule = async () => {
+    try {
+      const values = await form.validateFields();
+      const newRule: Rule = {
+        vehicleStatus: values.vehicleStatus as VehicleStatus,
+        multiplier: Number(values.multiplier),
+        note: values.note ?? "",
+      };
+      setRules((prev) => [...prev, newRule]);
+      setShowModal(false);
+      form.resetFields();
+      message.success("Đã thêm quy tắc. Nhấn 'Lưu thay đổi' để xác nhận!");
+    } catch {
+      // validate fail -> im lặng
+    }
+  };
+
+  // Sửa multiplier/note inline
   const handleChange = (
-    status: string,
-    field: keyof VehiclePriceRule,
-    value: string | number | null
+    status: VehicleStatus,
+    field: keyof Pick<Rule, "multiplier" | "note">,
+    value: number | string | null
   ) => {
     setRules((prev) =>
       prev.map((r) =>
-        r.vehicleStatus === status ? { ...r, [field]: value ?? "" } : r
+        r.vehicleStatus === status
+          ? field === "multiplier"
+            ? {
+                ...r,
+                multiplier:
+                  typeof value === "number"
+                    ? value
+                    : Number(String(value ?? r.multiplier)),
+              }
+            : { ...r, note: (value ?? "") as string }
+          : r
       )
     );
   };
 
-  // 🟩 Hiển thị trạng thái tiếng Việt
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case "NORMAL":
-        return "Xe tiêu chuẩn";
-      case "SPECIAL":
-        return "Xe đặc biệt / trưng bày";
-      case "OLD_STOCK":
-        return "Xe tồn kho cũ";
-      case "TEST_DRIVE":
-        return "Xe lái thử";
-      case "RESERVED":
-        return "Xe được đặt trước";
-      case "SOLD":
-        return "Xe đã bán";
-      default:
-        return status;
-    }
-  };
+  const usedStatuses = useMemo(
+    () => new Set(rules.map((r) => r.vehicleStatus)),
+    [rules]
+  );
 
-  const getTagColor = (status: string) => {
-    switch (status) {
-      case "NORMAL":
-        return "green";
-      case "SPECIAL":
-        return "purple";
-      case "OLD_STOCK":
-        return "orange";
-      case "TEST_DRIVE":
-        return "blue";
-      case "RESERVED":
-        return "gold";
-      case "SOLD":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  // 🟦 Hàm chọn màu tag cho role (4 loại)
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "ADMIN":
-        return "green";
-      case "EVM_STAFF":
-        return "blue";
-      case "DEALER_MANAGER":
-        return "orange";
-      case "DEALER_STAFF":
-        return "purple";
-      default:
-        return "default";
-    }
-  };
-
-  const columns: ColumnsType<VehiclePriceRule> = [
+  const columns: ColumnsType<Rule> = [
     {
       title: "Trạng thái xe",
       dataIndex: "vehicleStatus",
       align: "center",
-      render: (status: string) => (
-        <Tag color={getTagColor(status)}>{statusLabel(status)}</Tag>
+      render: (status: VehicleStatus) => (
+        <Tag color={VEHICLE_STATUS_COLORS[status]}>
+          {VEHICLE_STATUS_LABELS[status]}
+        </Tag>
       ),
     },
     {
-      title: "Hệ số nhân giá (Multiplier)",
+      title: "Hệ số nhân giá",
       dataIndex: "multiplier",
       align: "center",
-      render: (val: number, record: VehiclePriceRule) =>
+      render: (val: number, record: Rule) =>
         isAdmin ? (
           <InputNumber
             value={val}
+            min={0}
+            step={0.1}
             onChange={(v) =>
               handleChange(record.vehicleStatus, "multiplier", v)
             }
-            style={{
-              textAlign: "center",
-              width: "80px",
-            }}
+            style={{ textAlign: "center", width: 112 }}
           />
         ) : (
           <Text>{val}</Text>
         ),
     },
     {
-      title: <div style={{ textAlign: "center" }}>Ghi chú</div>,
+      title: "Ghi chú",
       dataIndex: "note",
       align: "center",
-      render: (val: string, record: VehiclePriceRule) =>
+      render: (val: string, record: Rule) =>
         isAdmin ? (
           <Input.TextArea
             value={val}
@@ -185,12 +242,6 @@ export const VehiclePriceRulePage = () => {
             onChange={(e) =>
               handleChange(record.vehicleStatus, "note", e.target.value)
             }
-            style={{
-              borderRadius: 8,
-              textAlign: "left",
-              resize: "none",
-              whiteSpace: "pre-wrap",
-            }}
           />
         ) : (
           <Text style={{ whiteSpace: "pre-wrap" }}>{val}</Text>
@@ -199,50 +250,133 @@ export const VehiclePriceRulePage = () => {
   ];
 
   return (
-    <div className="p-6 bg-white shadow rounded-lg">
-      {/* ✅ Tiêu đề giống VehiclePage */}
-      <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-        Quản lý quy tắc giá xe
-      </h1>
+    <CardWrapper
+      title="Quản lý quy tắc giá xe"
+      subtitle="Xem và điều chỉnh hệ số nhân giá theo trạng thái xe"
+      variant="dashboard"
+    >
+      {/* Action bar: căn phải, màu đồng bộ với các controller khác */}
+      {isAdmin && (
+        <div className="flex justify-end items-center mb-3 gap-3">
+          <Button
+            type="default"
+            onClick={() => setShowModal(true)}
+            className={`border-[${GREEN}] text-[${GREEN}] hover:!bg-[${GREEN}] hover:!text-white`}
+          >
+            Tạo quy tắc mới
+          </Button>
+          <Button
+            type="primary"
+            onClick={handleSave}
+            disabled={!isDirty}
+            loading={saving}
+            className={`!bg-[${GREEN}] hover:!bg-[${GREEN_HOVER}] !text-white border-none`}
+          >
+            Lưu thay đổi
+          </Button>
+        </div>
+      )}
 
-      {/* ✅ Thẻ Role đồng bộ hoàn toàn */}
-      <p className="text-gray-600 mb-6">
-        <Tag
-          color={getRoleColor(role)}
-          className="text-base font-medium px-4 py-1"
-        >
-          {role}
-        </Tag>
-      </p>
-
-      {/* ✅ Bảng nội dung */}
-      {isLoading ? (
-        <Skeleton active paragraph={{ rows: 8 }} />
-      ) : (
-        <>
+      {/* Container table: nền trắng bo góc + viền mảnh */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        {isLoading ? (
+          <div className="p-4">
+            <Skeleton active paragraph={{ rows: 6 }} />
+          </div>
+        ) : rules.length > 0 ? (
           <Table
             bordered
-            dataSource={rules}
             pagination={false}
             rowKey="vehicleStatus"
+            dataSource={rules}
             columns={columns}
-            className="rounded-xl overflow-hidden"
-            rowClassName="hover:bg-[#f1f3ef]"
           />
+        ) : (
+          <div className="py-10 flex items-center justify-center">
+            <Empty
+              description={
+                isAdmin
+                  ? "Chưa có quy tắc giá. Hãy tạo quy tắc đầu tiên."
+                  : "Chưa có quy tắc giá."
+              }
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        )}
+      </div>
 
-          {isAdmin && (
-            <div className="flex justify-end mt-6">
+      {/* Modal tạo mới */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <motion.div
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.92, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl p-6 w-[460px] max-w-[92%]"
+          >
+            <h2 className="text-lg font-semibold mb-4 text-[#627254]">
+              Tạo quy tắc giá
+            </h2>
+
+            <Form form={form} layout="vertical">
+              <Form.Item
+                label="Thể loại xe"
+                name="vehicleStatus"
+                rules={[{ required: true, message: "Chọn thể loại xe!" }]}
+              >
+                <Select placeholder="Chọn thể loại xe">
+                  {creatableStatuses
+                    .filter((s) => !usedStatuses.has(s))
+                    .map((s) => (
+                      <Select.Option key={s} value={s}>
+                        {VEHICLE_STATUS_LABELS[s]}
+                      </Select.Option>
+                    ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Hệ số nhân giá"
+                name="multiplier"
+                rules={[
+                  { required: true, message: "Nhập hệ số nhân!" },
+                  {
+                    validator: (_, v) =>
+                      v === undefined || v === null || Number(v) < 0
+                        ? Promise.reject("Hệ số phải ≥ 0")
+                        : Promise.resolve(),
+                  },
+                ]}
+              >
+                <InputNumber min={0} step={0.1} style={{ width: "100%" }} />
+              </Form.Item>
+
+              <Form.Item label="Ghi chú" name="note">
+                <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
+              </Form.Item>
+            </Form>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                type="default"
+                onClick={() => setShowModal(false)}
+                className={`border-[${GREEN}] text-[${GREEN}] hover:!bg-[${GREEN}] hover:!text-white`}
+              >
+                Hủy
+              </Button>
               <Button
                 type="primary"
-                className="!bg-[var(--default-color)] !text-white hover:!bg-[#76885B] rounded-lg"
-                onClick={handleSave}
+                onClick={handleAddRule}
+                className={`!bg-[${GREEN}] hover:!bg-[${GREEN_HOVER}] !text-white border-none`}
               >
-                💾 Lưu thay đổi
+                Thêm
               </Button>
             </div>
-          )}
-        </>
+          </motion.div>
+        </div>
       )}
-    </div>
+    </CardWrapper>
   );
 };
+
+export default VehiclePriceRulePage;

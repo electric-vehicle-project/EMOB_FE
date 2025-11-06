@@ -34,6 +34,7 @@ export const ROUTES = {
   TESTDRIVE: "testdrive",
 
   // ====== PROFILE ======
+  PROFILE: "profile",
   PROFILE_INFO: "profile/info",
   PROFILE_CHANGE: "profile/changeInfo",
   PROFILE_RESET: "profile/resetpassword",
@@ -74,7 +75,6 @@ export const ROUTES = {
   DELIVERY_DEALER_DETAILS: "delivery/:id",
   DELIVERY_CUSTOMER_DETAILS: "delivery/customer/:id",
 
-
   ACCOUNT: "accounts",
 
   NOTFOUND: "*",
@@ -83,6 +83,6 @@ export const ROUTES = {
   CONTRACT: "contract",
   CONTRACT_DETAILS: "contract/:id",
   CONTRACT_CUSTOMERS: "contract/customers",
-  
+
   CONTRACT_CUSTOMER_DETAILS: "contract/customers/:id",
 };
