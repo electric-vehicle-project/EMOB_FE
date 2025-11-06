@@ -3,12 +3,10 @@ import { Divider, Row, Col, Drawer, Button, Card } from "antd";
 import SectionTitle from "../../components/atoms/SectionTitle";
 
 import InventoryChart from "../../components/organisms/Inventory";
-import DealerChart from "../../components/organisms/DealerChart";
+
 import type { InventoryProps } from "../../components/molecules/InventoryTable";
-import type { DealerProps } from "../../components/molecules/Dealer";
 import InventoryTable from "../../components/molecules/InventoryTable";
 import SummaryCards from "../../components/molecules/SummaryCards";
-import Dealer from "../../components/molecules/Dealer";
 
 const Overview: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryProps[]>([]);

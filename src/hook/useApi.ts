@@ -30,7 +30,7 @@ export const createQueryHook =
     params?: any
   ): UseQueryResult<any, AxiosError<{ message: string }>> =>
     useQuery({
-      queryKey: [queryKey],
+      queryKey: [queryKey, params],
       queryFn: async () => (await api.get(url, { params })).data,
       ...options,
     });
