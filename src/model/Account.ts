@@ -36,6 +36,8 @@ export interface IAccount {
   email: string;
   token?: string;
   refreshToken?: string;
+
+  createdAt?: string;
 }
 
 export interface AccountResponse {

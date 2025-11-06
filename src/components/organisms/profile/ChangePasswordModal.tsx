@@ -1,6 +1,9 @@
+// src/components/organisms/profile/ChangePasswordModal.tsx
 import React from "react";
 import { Modal, Form, Input, message } from "antd";
+import { AxiosError } from "axios";
 import { useChangePassword } from "../../../service/accountService";
+import { Button } from "../../atoms/Button"; // ⬅️ dùng atoms/Button
 
 interface Props {
   open: boolean;
@@ -12,29 +15,59 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
   const [form] = Form.useForm();
   const changePassword = useChangePassword();
 
-  const onFinish = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+  const onFinish = async (values: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
     if (values.newPassword !== values.confirmPassword) {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    await changePassword.mutateAsync({
-      currentPassword: values.currentPassword,
-      newPassword: values.newPassword,
-    });
-    message.success("Đổi mật khẩu thành công");
-    onSuccess();
-    form.resetFields();
+
+    try {
+      await changePassword.mutateAsync({
+        newPassword: values.newPassword, // ✅ backend chỉ nhận newPassword
+      });
+      message.success("Đổi mật khẩu thành công");
+      onSuccess();
+      form.resetFields();
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+      message.error(
+        error?.response?.data?.message ||
+          "Đổi mật khẩu thất bại, vui lòng thử lại"
+      );
+    }
   };
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} destroyOnClose centered title="Đổi mật khẩu">
-      <Form layout="vertical" form={form} onFinish={onFinish} requiredMark={false} className="mt-2">
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      destroyOnClose
+      centered
+      title="Đổi mật khẩu"
+    >
+      <Form
+        layout="vertical"
+        form={form}
+        onFinish={onFinish}
+        requiredMark={false}
+        className="mt-2"
+      >
         <Form.Item
           name="currentPassword"
           label="Mật khẩu hiện tại"
-          rules={[{ required: true, message: "Vui lòng nhập mật khẩu hiện tại" }]}
+          rules={[
+            { required: true, message: "Vui lòng nhập mật khẩu hiện tại" },
+          ]}
         >
-          <Input.Password placeholder="Nhập mật khẩu hiện tại" />
+          <Input.Password
+            placeholder="Nhập mật khẩu hiện tại"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <Form.Item
@@ -45,7 +78,10 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
             { min: 6, message: "Tối thiểu 6 ký tự" },
           ]}
         >
-          <Input.Password placeholder="Nhập mật khẩu mới" />
+          <Input.Password
+            placeholder="Nhập mật khẩu mới"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <Form.Item
@@ -53,16 +89,23 @@ const ChangePasswordModal: React.FC<Props> = ({ open, onClose, onSuccess }) => {
           label="Xác nhận mật khẩu"
           rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}
         >
-          <Input.Password placeholder="Nhập lại mật khẩu mới" />
+          <Input.Password
+            placeholder="Nhập lại mật khẩu mới"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <div className="flex justify-end gap-2">
-          <button className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50" onClick={onClose} type="button">
+          <Button type="default" onClick={onClose}>
             Hủy
-          </button>
-          <button className="px-4 py-2 rounded-xl bg-[#627254] hover:bg-[#525e46] text-white" onClick={() => form.submit()}>
+          </Button>
+          <Button
+            type="primary"
+            loading={changePassword?.isPending}
+            onClick={() => form.submit()}
+          >
             Đổi mật khẩu
-          </button>
+          </Button>
         </div>
       </Form>
     </Modal>
