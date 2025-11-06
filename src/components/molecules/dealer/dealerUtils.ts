@@ -1,34 +1,29 @@
-// Utils chuẩn hóa & so sánh để dùng chung
+// src/components/molecules/dealer/dealerUtils.ts
+import type { DealerUpsertPayload } from "../../../model/Dealer";
+
+export type Region = "NORTH" | "CENTRAL" | "SOUTH";
 
 export interface DealerFormValues {
   name: string;
-  contactInfo: string;
+  emailContact: string;
+  phoneContact: string;
   country: string;
   address: string;
+  region: Region;
 }
 
 export const trimEdges = (s: string) => (s ?? "").replace(/^\s+|\s+$/g, "");
-export const stripPhone = (s: string) => (s ?? "").replace(/[^\d+]/g, "");
-
-export const toLocalPhone = (s: string) => {
-  const raw = stripPhone(s);
-  if (raw.startsWith("+84")) return `0${raw.slice(3)}`;
-  return raw;
-};
-
-export const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function normalizeDealerValues(
   values: Partial<DealerFormValues> = {}
 ): DealerFormValues {
   const name = trimEdges(values.name || "");
+  const emailContact = trimEdges(values.emailContact || "");
+  const phoneContact = trimEdges(values.phoneContact || "");
   const country = trimEdges(values.country || "");
   const address = trimEdges(values.address || "");
-  const rawContact = trimEdges(values.contactInfo || "");
-  const contactInfo = emailRegex.test(rawContact.toLowerCase())
-    ? rawContact.toLowerCase()
-    : toLocalPhone(rawContact);
-  return { name, country, address, contactInfo };
+  const region = (values.region || "NORTH") as Region;
+  return { name, emailContact, phoneContact, country, address, region };
 }
 
 export function isSameDealerValues(
@@ -37,8 +32,24 @@ export function isSameDealerValues(
 ): boolean {
   return (
     a.name === b.name &&
+    a.emailContact === b.emailContact &&
+    a.phoneContact === b.phoneContact &&
     a.country === b.country &&
     a.address === b.address &&
-    a.contactInfo === b.contactInfo
+    a.region === b.region
   );
+}
+
+export function buildDealerPayloadFromForm(
+  values: DealerFormValues
+): DealerUpsertPayload {
+  const n = normalizeDealerValues(values);
+  return {
+    name: n.name || "-",
+    emailContact: n.emailContact || "",
+    phoneContact: n.phoneContact || "",
+    country: n.country || "-",
+    address: n.address || "-",
+    region: (n.region || "NORTH") as Region,
+  };
 }

@@ -4,14 +4,14 @@ import TextInput from "../../components/atoms/TextInput";
 import NumberInput from "../../components/atoms/NumberInput";
 import SelectInput from "../../components/atoms/SelectInput";
 import { useCreateVehicleRequest } from "../../service/vehicleRequestService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
   const [form] = Form.useForm();
   const { mutateAsync: createVehicleRequest, isPending } =
     useCreateVehicleRequest();
 
   // lấy danh sách xe
-  const { data: vehiclesData, isLoading: loadingVehicles } = useGetAllVehicles(
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
     0,
     100
   );

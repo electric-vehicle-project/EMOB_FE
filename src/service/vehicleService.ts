@@ -1,3 +1,7 @@
+// ==================================
+// EMOB 2025 - Vehicle Service
+// KHÔNG sửa useApi.ts, KHÔNG sửa api.ts
+// ==================================
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -6,80 +10,163 @@ import {
   deleteMutationHook,
   createMutationUploadFilesHook,
 } from "../hook/useApi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import api from "../config/api";
 
 const BASE_URL = "/vehicle";
+const UNIT_URL = "/vehicle/unit";
 
-/* =====================================================
- 🧩 QUẢN LÝ XE ĐIỆN
-===================================================== */
+// ========== LIST ==========
+export const useGetVehicles = (params?: unknown, options?: unknown) => {
+  const hook = createQueryHook("get-vehicles", BASE_URL);
+  const query = hook(options, params);
 
-// 🔍 Lấy toàn bộ danh sách xe điện
-export const useGetVehicles = createQueryHook("vehicles", BASE_URL);
+  const vehicles =
+    (query.data?.result?.data as unknown[]) ||
+    (query.data?.data as unknown[]) ||
+    [];
+  const metadata = query.data?.result?.metadata || query.data?.metadata;
 
-// 🔍 Lấy chi tiết 1 xe điện theo ID
-export const useGetVehicleById = createQueryWithPathParamHook(
-  "vehicle",
-  BASE_URL
-);
+  return { ...query, vehicles, metadata };
+};
 
-// ➕ Tạo mới xe điện
-export const useCreateVehicle = createMutationHook("vehicles", BASE_URL);
+// ========== DETAIL ==========
+export const useGetVehicleById = (id?: string, options?: unknown) => {
+  const hook = createQueryWithPathParamHook("get-vehicle-by-id", BASE_URL);
+  const query = hook(id, options);
+  const vehicle = query.data?.result || query.data;
+  return { ...query, vehicle };
+};
 
-// ✏️ Cập nhật thông tin xe điện
-export const useUpdateVehicle = updateMutationHook("vehicles", BASE_URL);
+// ========== CREATE ==========
+export const useCreateVehicle = () =>
+  createMutationHook("create-vehicle", BASE_URL)();
 
-// 🗑️ Xóa xe điện (soft delete flag true)
-export const useDeleteVehicle = deleteMutationHook("vehicles", BASE_URL);
+// ========== UPDATE MODEL (không phải giá) ==========
+export const useUpdateVehicle = () =>
+  updateMutationHook("update-vehicle", BASE_URL)();
 
-// 💰 Cập nhật giá nhập / giá bán (chuẩn useApi + đúng endpoint Swagger)
+// ========== DELETE ==========
+export const useDeleteVehicle = () =>
+  deleteMutationHook("delete-vehicle", BASE_URL)();
+
+// ========== UPDATE PRICES (đặc thù: PUT /vehicle/{id}/prices) ==========
 export const useUpdateVehiclePrices = () => {
-  // Giữ pattern của nhóm (có thể dùng baseHook nếu sau này mở rộng)
-
   const queryClient = useQueryClient();
-
   return useMutation({
-    // ✅ Endpoint đúng format: /vehicle/{id}/prices
     mutationFn: async ({
       id,
       data,
     }: {
       id: string;
-      data: Record<string, number>;
+      data: { importPrice: number; retailPrice: number };
     }) => {
       const res = await api.put(`${BASE_URL}/${id}/prices`, data);
       return res.data;
     },
-    onSuccess: () => {
-      // ✅ Làm mới lại cache sau khi cập nhật
-      queryClient.invalidateQueries({ queryKey: ["vehicle"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+    onSuccess: (_data, vars) => {
+      // làm tươi chi tiết xe và list
+      queryClient.invalidateQueries({
+        queryKey: ["get-vehicle-by-id", vars.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["get-vehicles"] });
     },
   });
 };
 
-// 📦 Tạo hàng loạt Vehicle Units (Bulk)
-export const useBulkCreateVehicleUnits = createMutationHook(
-  "vehicleUnitsBulk",
-  `${BASE_URL}/bulk`
-);
+// ========== UPLOAD IMAGES ==========
+export const useUploadVehicleImages = () =>
+  createMutationUploadFilesHook(
+    "upload-vehicle-images",
+    `${BASE_URL}/images`
+  )();
 
-// 🔍 Lấy danh sách Vehicle Units theo ID xe
-export const useGetVehicleUnitsByVehicleId = createQueryWithPathParamHook(
-  "vehicleUnits",
-  `${BASE_URL}`
-);
+// ========== BULK CREATE UNITS ==========
+export const useBulkCreateVehicleUnits = () =>
+  createMutationHook("bulk-create-vehicle-units", `${UNIT_URL}/bulk`)();
 
-// 📤 Upload hình ảnh xe
-export const useUploadVehicleImages = createMutationUploadFilesHook(
-  "vehicleUpload",
-  `${BASE_URL}/upload`
-);
-
-export const useGetAllVehicles = (page = 0, size = 10) => {
-  return createQueryHook(["vehicles", page, size], BASE_URL)(
-    {}, // body
-    { page, size } // params
+// ========== UNITS by MODEL (simple, không params) ==========
+export const useGetVehicleUnitsByVehicleId = (
+  modelId?: string,
+  options?: unknown
+) => {
+  const hook = createQueryWithPathParamHook(
+    "get-vehicle-units-by-model",
+    `${UNIT_URL}/view-all-by-model`
   );
+  const query = hook(modelId, options);
+
+  const units =
+    (query.data?.result?.data as unknown[]) ||
+    (query.data?.data as unknown[]) ||
+    [];
+  const metadata = query.data?.result?.metadata || query.data?.metadata;
+  return { ...query, units, metadata };
 };
+
+// ========== UNITS by MODEL (có params page/size) ==========
+export const useGetVehicleUnitsByVehicleIdPaged = (
+  modelId: string,
+  params: { page: number; size: number },
+  options?: unknown
+): UseQueryResult<{
+  units: unknown[];
+  metadata?: { totalElements?: number } | Record<string, unknown>;
+}> => {
+  return useQuery<{
+    units: unknown[];
+    metadata?: { totalElements?: number } | Record<string, unknown>;
+  }>({
+    queryKey: ["get-vehicle-units-by-model", modelId, params.page, params.size],
+    queryFn: async () => {
+      const res = await api.get(`${UNIT_URL}/view-all-by-model/${modelId}`, {
+        params,
+      });
+      return res.data;
+    },
+    ...(typeof options === "object" && options !== null
+      ? (options as Record<string, unknown>)
+      : {}),
+    select: (data: unknown) => {
+      type ApiResult = {
+        result?: { data?: unknown[]; metadata?: unknown };
+        data?: unknown | unknown[];
+        metadata?: unknown;
+      };
+      const d = data as ApiResult;
+      const units = Array.isArray(d.result?.data)
+        ? d.result?.data
+        : Array.isArray(d.data)
+        ? (d.data as unknown[])
+        : [];
+      const metadata = (d.result?.metadata ?? d.metadata) as
+        | { totalElements?: number }
+        | Record<string, unknown>
+        | undefined;
+      return { units, metadata };
+    },
+  });
+};
+
+// ========== ALL UNITS ==========
+export const useGetAllVehicleUnits = (params?: unknown, options?: unknown) => {
+  const hook = createQueryHook("get-all-vehicle-units", `${UNIT_URL}/view-all`);
+  const query = hook(options, params);
+
+  const units =
+    (query.data?.result?.data as unknown[]) ||
+    (query.data?.data as unknown[]) ||
+    [];
+  const metadata = query.data?.result?.metadata || query.data?.metadata;
+
+  return { ...query, units, metadata };
+};
+
+// ✅ Hook mới dùng đúng endpoint /vehicle/bulk và đúng chuẩn useApi
+export const useCreateVehicleUnitsBulk = () =>
+  createMutationHook("vehicleUnitBulk", "/vehicle/bulk")();

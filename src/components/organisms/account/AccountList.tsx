@@ -1,4 +1,4 @@
-/* EMOB-2025 - AccountList (ADMIN & MANAGER) */
+// src/components/organisms/account/AccountList.tsx
 import { useState, useMemo } from "react";
 import { App, Result, Empty, Button } from "antd";
 import { toast } from "react-toastify";
@@ -9,17 +9,16 @@ import { Button as EmobButton } from "../../atoms/Button";
 import { AccountTable } from "../../molecules/Account/AccountTable";
 import { AccountModal } from "./AccountModal";
 import { AccountRoleSelectModal } from "../../molecules/Account/AccountRoleSelectModal";
-import { DeleteConfirm } from "../DeleteConfirm"; // ✅ dùng chung cho confirm
+import { DeleteConfirm } from "../DeleteConfirm";
 import { useDebounce } from "../../../hook/useDebounce";
 import {
   useGetAccountsByAdmin,
   useGetAccountsByManager,
   useRegisterByAdmin,
-  useRegisterByManager,
   useChangeAccountStatus,
   useBanAccount,
 } from "../../../service/accountService";
-import { useDealers } from "../../../service/dealerService";
+import { useDealersQuery } from "../../../service/dealerService";
 import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 
@@ -35,8 +34,6 @@ export const AccountList = () => {
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [creatingRole, setCreatingRole] = useState<Role | null>(null);
-
-  // popups
   const [confirmBanId, setConfirmBanId] = useState<string | null>(null);
   const [confirmStatus, setConfirmStatus] = useState<{
     id: string;
@@ -46,6 +43,7 @@ export const AccountList = () => {
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
+  // Queries
   const adminQuery = useGetAccountsByAdmin(page, pageSize, {
     enabled: isAdmin,
     queryKey: ["accounts-by-admin", page, pageSize],
@@ -55,7 +53,8 @@ export const AccountList = () => {
     queryKey: ["accounts-by-manager", page, pageSize],
   });
 
-  const { data: dealersData } = useDealers();
+  // Dealer map (for Admin only)
+  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
   const dealerMap = useMemo(() => {
     const dealers = dealersData?.result?.data ?? [];
     const map: Record<string, string> = {};
@@ -66,9 +65,6 @@ export const AccountList = () => {
   }, [dealersData]);
 
   const registerByAdmin = useRegisterByAdmin();
-  const registerByManager = useRegisterByManager();
-  const createAccount = isAdmin ? registerByAdmin : registerByManager;
-
   const changeStatus = useChangeAccountStatus();
   const banAccount = useBanAccount();
 
@@ -106,18 +102,48 @@ export const AccountList = () => {
     );
   }
 
+  /* ======================== CREATE ACCOUNT ======================== */
   const handleCreate = async (values: AccountCreatePayload) => {
     try {
-      await createAccount.mutateAsync(values);
-      toast.success("✅ Tạo tài khoản thành công!");
-      setAccountModalOpen(false);
-      setCreatingRole(null);
-      await refetch();
+      if (isManager) {
+        // ✅ Manager tạo Dealer Staff: gọi trực tiếp bằng fetch (bỏ qua Axios interceptor)
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:8080/api/auth/register-by-manager",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(values),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Tạo tài khoản thất bại!");
+        }
+
+        toast.success("✅ Tạo tài khoản thành công!");
+        setAccountModalOpen(false);
+        setCreatingRole(null);
+        await refetch();
+      } else {
+        // ✅ Admin tạo Manager hoặc EVM Staff (vẫn dùng hook bình thường)
+        await registerByAdmin.mutateAsync(values);
+        toast.success("✅ Tạo tài khoản thành công!");
+        setAccountModalOpen(false);
+        setCreatingRole(null);
+        await refetch();
+      }
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err?.response?.data?.message ?? "";
+      const err = error as { message?: string };
+      const msg = err?.message ?? "";
       let readable = "Không thể tạo tài khoản!";
-      if (msg.includes("Duplicate") && msg.includes("email"))
+      if (msg.includes("Empty token"))
+        readable = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
+      else if (msg.includes("Duplicate") && msg.includes("email"))
         readable = "Email đã tồn tại trong hệ thống!";
       else if (msg.includes("Duplicate") && msg.includes("phone"))
         readable = "Số điện thoại đã được sử dụng!";
@@ -129,6 +155,7 @@ export const AccountList = () => {
     }
   };
 
+  /* ======================== STATUS & BAN ======================== */
   const doChangeStatus = async (id: string, next: "ACTIVE" | "INACTIVE") => {
     await changeStatus.mutateAsync({ id, data: { status: next } });
     message.success(
@@ -155,6 +182,7 @@ export const AccountList = () => {
     showTotal: (total: number) => `Tổng cộng ${total} tài khoản`,
   };
 
+  /* ======================== RENDER ======================== */
   return (
     <div className="space-y-4">
       {/* Search & Add */}
@@ -233,7 +261,7 @@ export const AccountList = () => {
         loading={false}
       />
 
-      {/* ✅ Confirm đổi trạng thái: dùng nhãn đúng hành động, KHÔNG danger */}
+      {/* Confirm đổi trạng thái */}
       <DeleteConfirm
         open={!!confirmStatus}
         onConfirm={async () => {
@@ -251,7 +279,7 @@ export const AccountList = () => {
         }
       />
 
-      {/* ✅ Confirm cấm vĩnh viễn: danger + nhãn đúng */}
+      {/* Confirm cấm vĩnh viễn */}
       <DeleteConfirm
         open={!!confirmBanId}
         onConfirm={async () => {

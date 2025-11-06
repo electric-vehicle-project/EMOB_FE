@@ -6,7 +6,7 @@ import {
   useGetAllDealerDiscountPolicies,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
-import { useGetAllVehicles } from "../../service/vehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
 import type { ColumnsType } from "antd/es/table";
 import type { IDiscountPolicy } from "../../model/DealerDiscountPolicy";
 import {
@@ -56,7 +56,7 @@ const DealerDiscountPolicyPage: React.FC = () => {
   );
   // Fetch danh sách đại lý và xe (prefetch để hiển thị tên)
   const { data: allDealersData } = useGetAllDealers(0, 200);
-  const { data: allVehiclesData } = useGetAllVehicles(0, 200);
+  const { data: allVehiclesData } = useGetVehicles(0, 200);
 
   // Mutation: Xóa chính sách
   const deletePolicy = useDeleteDiscountPolicy();

@@ -1,23 +1,28 @@
+// src/page/promotion/PromotionCreatePage.tsx
 import { useEffect, useState } from "react";
 import {
   Form,
   Input,
   Button,
   Select,
-  message,
+  message as antdMessage,
   Space,
   Spin,
   Typography,
 } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 
 import type { RootState } from "../../redux/store";
 import type { Role } from "../../utils/promotionPermissions";
 
 import { usePromotionCreate } from "../../service/promotionService";
-import { getAllDealers } from "../../service/dealerService";
-import { getAllElectricVehicles } from "../../service/electricVehicleService";
+import { useGetVehicles } from "../../service/vehicleService";
+import {
+  mapDealerOptions,
+  mapVehicleOptions,
+} from "../../utils/mapToSelectOptions";
+import { useDealersQuery } from "../../service/dealerService";
 
 const { Title } = Typography;
 
@@ -32,6 +37,7 @@ export default function PromotionCreatePage() {
   const [form] = Form.useForm<PromotionFormValues>();
   const navigate = useNavigate();
 
+  // ===== USER INFO & ROLE =====
   const user = useSelector((s: RootState) => s.user ?? {}) as Partial<{
     id: string;
     dealerId: string;
@@ -41,63 +47,75 @@ export default function PromotionCreatePage() {
   const role = user.role ?? "EVM_STAFF";
   const isDealerStaff = role === "DEALER_STAFF";
   const isEvmStaff = role === "EVM_STAFF";
+  const isAdmin = role === "ADMIN";
 
+  const canFetchDealers = isEvmStaff || isAdmin;
+
+  // ===== API HOOKS =====
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
+  const { data: dealersData, isLoading: loadingDealers } = useDealersQuery({
+    enabled: canFetchDealers,
+  });
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
+    enabled: true,
+  });
 
+  // ===== STATE LOCAL =====
   const [dealerOptions, setDealerOptions] = useState<
-    { id: string; name: string }[]
+    { label: string; value: string }[]
   >([]);
   const [vehicleOptions, setVehicleOptions] = useState<
-    { id: string; name: string }[]
+    { label: string; value: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // ===== Fetch danh sách dealer & vehicle =====
+  // ===== MAP DỮ LIỆU TỪ API -> SELECT OPTIONS =====
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [dealers, vehicles] = await Promise.all([
-          getAllDealers(),
-          getAllElectricVehicles(),
-        ]);
-        if (Array.isArray(dealers)) setDealerOptions(dealers);
-        if (Array.isArray(vehicles)) setVehicleOptions(vehicles);
-      } catch (err) {
-        console.error("Error fetching select data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    // 🔹 Chuẩn hóa danh sách xe điện
+    setVehicleOptions(mapVehicleOptions(vehiclesData));
 
-  // ===== Khởi tạo giá trị mặc định cho DEALER_STAFF =====
+    // 🔹 Chuẩn hóa danh sách đại lý (chỉ khi có quyền)
+    if (dealersData && canFetchDealers) {
+      setDealerOptions(mapDealerOptions(dealersData));
+    }
+
+    if (vehiclesData || (dealersData && canFetchDealers)) setLoading(false);
+  }, [dealersData, vehiclesData, canFetchDealers]);
+
+  // ===== SET DEALER ID MẶC ĐỊNH CHO DEALER STAFF =====
   useEffect(() => {
     if (isDealerStaff && user.dealerId) {
       form.setFieldsValue({ dealerId: [user.dealerId] });
     }
   }, [isDealerStaff, user.dealerId, form]);
 
-  // ===== Submit form =====
+  // ===== SUBMIT FORM =====
   const handleSubmit = async (values: PromotionFormValues) => {
     try {
       const payload = {
         dealerId: isDealerStaff ? [user.dealerId!] : values.dealerId ?? [],
-        electricVehiclesId: values.electricVehiclesId,
+        electricVehiclesId: values.electricVehiclesId ?? [],
         name: values.name.trim(),
         description: values.description?.trim() || "",
       };
 
+      console.log("📦 Payload gửi BE:", payload);
+
       await createPromotion(payload);
-      message.success("Tạo khuyến mãi thành công!");
+      antdMessage.success("Tạo khuyến mãi thành công!");
       navigate(-1);
-    } catch (err) {
-      console.error(err);
-      message.error("Tạo khuyến mãi thất bại!");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("❌ Lỗi tạo khuyến mãi:", err.message);
+      } else {
+        console.error("❌ Lỗi tạo khuyến mãi:", err);
+      }
+      antdMessage.error("Tạo khuyến mãi thất bại!");
     }
   };
 
-  if (loading) {
+  // ===== LOADING STATE =====
+  if (loading || loadingDealers || loadingVehicles) {
     return (
       <div style={{ textAlign: "center", marginTop: 100 }}>
         <Spin size="large" />
@@ -105,13 +123,14 @@ export default function PromotionCreatePage() {
     );
   }
 
-  // ===== Nếu không phải DEALER_STAFF hoặc EVM_STAFF =====
-  if (!isDealerStaff && !isEvmStaff) {
-    message.warning("Bạn không có quyền truy cập trang này!");
+  // ===== KIỂM TRA QUYỀN TRUY CẬP =====
+  if (!isDealerStaff && !isEvmStaff && !isAdmin) {
+    antdMessage.warning("Bạn không có quyền truy cập trang này!");
     navigate(-1);
     return null;
   }
 
+  // ===== RENDER UI =====
   return (
     <div style={{ padding: 24 }}>
       <Space style={{ marginBottom: 20 }}>
@@ -132,14 +151,14 @@ export default function PromotionCreatePage() {
             disabled={isDealerStaff}
             placeholder={
               isDealerStaff
-                ? "Tự động gán dealerId của bạn"
+                ? "Tự động gán đại lý của bạn"
                 : "Bỏ trống nếu muốn tạo khuyến mãi toàn hệ thống (GLOBAL)"
             }
-            options={dealerOptions.map((d) => ({ label: d.name, value: d.id }))}
+            options={dealerOptions} // ✅ hiển thị name, gửi id
           />
         </Form.Item>
 
-        {/* ELECTRIC VEHICLE ID */}
+        {/* ELECTRIC VEHICLE IDS */}
         <Form.Item
           label="Xe điện áp dụng"
           name="electricVehiclesId"
@@ -151,10 +170,7 @@ export default function PromotionCreatePage() {
             mode="multiple"
             allowClear
             placeholder="Chọn xe điện áp dụng"
-            options={vehicleOptions.map((v) => ({
-              label: v.name,
-              value: v.id,
-            }))}
+            options={vehicleOptions} // ✅ hiển thị brand + model, gửi id
           />
         </Form.Item>
 
