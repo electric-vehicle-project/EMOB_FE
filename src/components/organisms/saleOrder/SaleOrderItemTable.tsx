@@ -1,9 +1,11 @@
+// src/components/organisms/saleOrder/SaleOrderItemTable.tsx
 import { Table, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SaleOrderItemResponse } from "../../../model/SaleOrder";
 import { useGetVehicles } from "../../../service/vehicleService";
+import { useVehicleUnitById as fetchVehicleUnitById } from "../../../service/vehicleUnitService";
 import { mapVehicleOptions } from "../../../utils/mapToSelectOptions";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface Props {
   items: SaleOrderItemResponse[];
@@ -11,7 +13,7 @@ interface Props {
 
 export const SaleOrderItemTable = ({ items }: Props) => {
   // ==============================
-  // 🔍 Prefetch toàn bộ danh sách xe điện
+  // 🔍 Lấy danh sách xe điện
   // ==============================
   const { data: vehicleData, isLoading: loadingVehicles } = useGetVehicles();
   const vehicleOptions = useMemo(
@@ -20,16 +22,44 @@ export const SaleOrderItemTable = ({ items }: Props) => {
   );
 
   // ==============================
-  // 🧩 Hàm map vehicleId → Tên xe (brand + model)
+  // 🧩 Map vehicleUnitIds → vehicleName (fetch song song)
   // ==============================
-  const getVehicleLabel = (vehicleId: string, fallback?: string) => {
-    const found = vehicleOptions.find((v) => v.value === vehicleId);
-    return found ? found.label : fallback ?? "Không xác định";
-  };
+  const [unitMap, setUnitMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchUnits = async () => {
+      const map: Record<string, string> = {};
+
+      const allUnitIds = items.flatMap((i) => i.vehicleUnitIds || []);
+      const uniqueUnitIds = Array.from(new Set(allUnitIds));
+
+      for (const id of uniqueUnitIds) {
+        try {
+          const data = await fetchVehicleUnitById(id); // ✅ Không còn bị hiểu nhầm là Hook
+          if (data?.vehicle?.id && data?.vehicle?.modelName) {
+            map[id] = `${data.vehicle.brand} ${data.vehicle.modelName}`;
+          }
+        } catch {
+          map[id] = "Không xác định";
+        }
+      }
+
+      console.log("✅ VehicleUnit mapping:", map);
+      setUnitMap(map);
+    };
+
+    if (items.some((i) => i.vehicleUnitIds?.length)) fetchUnits();
+  }, [items]);
 
   // ==============================
   // 🧾 Cấu hình cột
   // ==============================
+  const getVehicleLabel = (vehicleId?: string, fallback?: string) => {
+    if (!vehicleId) return fallback ?? "Không xác định";
+    const found = vehicleOptions.find((v) => v.value === vehicleId);
+    return found ? found.label : fallback ?? "Không xác định";
+  };
+
   const columns: ColumnsType<SaleOrderItemResponse> = useMemo(
     () => [
       {
@@ -37,18 +67,24 @@ export const SaleOrderItemTable = ({ items }: Props) => {
         dataIndex: "vehicleId",
         key: "vehicleId",
         width: "22%",
-        sorter: (a, b) =>
-          getVehicleLabel(a.vehicleId).localeCompare(
-            getVehicleLabel(b.vehicleId)
-          ),
-        render: (vehicleId: string, record) =>
-          loadingVehicles ? (
-            <Spin size="small" />
-          ) : (
+        render: (_: string, record) => {
+          const vehicleId = record.vehicleId || record.vehicleUnitIds?.[0];
+          const fallbackName =
+            record.vehicleName ||
+            (record.vehicleUnitIds?.[0]
+              ? unitMap[record.vehicleUnitIds[0]]
+              : "Không xác định");
+
+          if (loadingVehicles && !unitMap[vehicleId ?? ""]) {
+            return <Spin size="small" />;
+          }
+
+          return (
             <span className="font-medium text-gray-800">
-              {getVehicleLabel(vehicleId, record.vehicleName)}
+              {getVehicleLabel(vehicleId, fallbackName)}
             </span>
-          ),
+          );
+        },
       },
       {
         title: "Màu sắc",
@@ -105,7 +141,7 @@ export const SaleOrderItemTable = ({ items }: Props) => {
         render: (text?: string) => text ?? "-",
       },
     ],
-    [vehicleOptions, loadingVehicles]
+    [vehicleOptions, unitMap, loadingVehicles]
   );
 
   // ==============================

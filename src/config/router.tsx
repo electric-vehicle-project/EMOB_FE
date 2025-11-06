@@ -187,8 +187,22 @@ import { AuthProtect } from "../components/atoms/AuthProtect";
 import ProfilePage from "../page/profile/ProfilePage";
 import { DealerPage } from "../page/DealerPage";
 import { AccountPage } from "../page/account/AccountPage";
+import SaleOrderEvmPage from "../page/saleOrder/SaleOrderEvmPage";
+import SaleOrderDealerPage from "../page/saleOrder/SaleOrderDealerPage";
+import { SaleOrderDetailPage } from "../page/saleOrder/SaleOrderDetailPage";
+import { ReportPage } from "../page/report/ReportPage";
+import SaleOrderStaffPage from "../page/saleOrder/SaleOrderStaffPage";
+import SaleOrderByStaffPage from "../page/saleOrder/SaleOrderByStaffPage";
+import { CustomerPage } from "../page/customer/CustomerPage";
+import CustomerDetailPage from "../page/customer/CustomerDetailPage";
+import { CustomerCreatePage } from "../page/customer/CustomerCreatePage";
+import { CustomerEditPage } from "../page/customer/CustomerEditPage";
+import EvmPromotionsPage from "../page/promotions/EvmPromotionsPage";
+import DealerPromotionsPage from "../page/promotions/DealerPromotionsPage";
 import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 import { TestDrivePage } from "../page/test-drive/TestDrivePage";
+import PromotionEditPage from "../page/promotions/PromotionEditPage";
+import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -228,7 +242,7 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> }, // ✅ Thêm redirect
+      { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
@@ -240,9 +254,11 @@ export const router = createBrowserRouter([
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
-      { path: ROUTES.PROMOTIONS, element: <h1>Promotion</h1> },
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
-      { path: ROUTES.SALE_ORDER, element: <h1>Sale Order</h1> },
+      { path: ROUTES.SALE_ORDER, element: <SaleOrderEvmPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
     ],
@@ -260,7 +276,6 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
-      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.DEALER, element: <h1>Dealer</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
@@ -268,9 +283,12 @@ export const router = createBrowserRouter([
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <h1>Discount Policy</h1>,
       },
-      { path: ROUTES.PROMOTIONS, element: <h1>Promotion</h1> },
+      { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
-      { path: ROUTES.SALE_ORDER, element: <h1>Sale Order</h1> },
+      { path: ROUTES.SALE_ORDER, element: <SaleOrderEvmPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
     ],
@@ -287,20 +305,27 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
-      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <h1>Discount Policy</h1>,
       },
-      { path: ROUTES.PROMOTIONS, element: <h1>Promotion</h1> },
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.TEST_DRIVE, element: <h1>Test Drive</h1> },
-      { path: ROUTES.SALE_ORDER, element: <h1>Sale Order</h1> },
+      { path: ROUTES.SALE_ORDER, element: <SaleOrderDealerPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
+      {
+        path: ROUTES.SALE_ORDER_STAFF_SUMMARY,
+        element: <SaleOrderByStaffPage />,
+      },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
       { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
-      { path: ROUTES.CUSTOMERS, element: <h1>Customer</h1> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
       { path: ROUTES.QUOTATION, element: <h1>Quotation</h1> },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
       { path: ROUTES.DEALER_POINT_RULE, element: <h1>Dealer Point Rule</h1> },
@@ -319,20 +344,28 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
-      { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <h1>Discount Policy</h1>,
       },
-      { path: ROUTES.PROMOTIONS, element: <h1>Promotion</h1> },
+      { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
+      { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
+      { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
       { path: ROUTES.TEST_DRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.SALE_ORDER, element: <h1>Sale Order</h1> },
+
+      { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
+      { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
+      { path: ROUTES.REPORT, element: <ReportPage /> },
+
       { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
       { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
-      { path: ROUTES.CUSTOMERS, element: <h1>Customer</h1> },
+      { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
+      { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
+      { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> },
+      { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> },
       { path: ROUTES.QUOTATION, element: <h1>Quotation</h1> },
       { path: ROUTES.DEALER_POINT_RULE, element: <h1>Dealer Point Rule</h1> },
     ],

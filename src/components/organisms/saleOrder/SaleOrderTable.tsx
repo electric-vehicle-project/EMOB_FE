@@ -1,15 +1,15 @@
-import { Table, Tag, Button, Space } from "antd";
+import { Table, Button, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { EyeOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { EyeOutlined, CheckOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../redux/store";
 import type { SaleOrderResponse } from "../../../model/SaleOrder";
 
 interface SaleOrderTableProps {
   data: SaleOrderResponse[];
   loading?: boolean;
-  canDelete?: boolean;
-  canComplete?: boolean;
-  showDealerColumn?: boolean; // ✅ hiển thị cột đại lý khi cần
+  showDealerColumn?: boolean;
   onDelete?: (id: string) => void;
   onComplete?: (id: string) => void;
   onViewDetail?: (id: string) => void;
@@ -19,113 +19,105 @@ interface SaleOrderTableProps {
 export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   data,
   loading = false,
-  canDelete = false,
-  canComplete = false,
   showDealerColumn = false,
   onDelete,
   onComplete,
   onViewDetail,
   onSortChange,
 }) => {
-  // =============================
-  // Columns
-  // =============================
+  const role = useSelector((state: RootState) => (state.user as any)?.role);
+
+  // 🔹 Phân quyền
+  const canComplete = role === "EVM_STAFF" || role === "DEALER_STAFF";
+  const canDelete = role === "EVM_STAFF" || role === "DEALER_STAFF";
+
+  // ==========================
+  // Table columns
+  // ==========================
   const columns: ColumnsType<SaleOrderResponse> = [
     {
       title: "Mã đơn hàng",
       dataIndex: "id",
       key: "id",
-      align: "left",
+      width: 220,
       ellipsis: true,
       render: (id) => (
-        <span className="font-mono text-[#555]">{id?.slice(0, 22)}...</span>
+        <span className="font-medium text-gray-700">{id.slice(0, 30)}...</span>
       ),
-      sorter: true,
-    },
-
-    showDealerColumn
-      ? {
-          title: "Đại lý",
-          dataIndex: "dealerName",
-          key: "dealerName",
-          align: "center",
-          render: (text) => <span>{text || "—"}</span>,
-        }
-      : null,
-
-    {
-      title: "Tổng SL",
-      dataIndex: "totalQuantity",
-      key: "totalQuantity",
-      align: "center",
-      render: (value) => <span>{value ?? 0}</span>,
-    },
-    {
-      title: "Tổng tiền (VNĐ)",
-      dataIndex: "totalPrice",
-      key: "totalPrice",
-      align: "center",
-      render: (price) => (
-        <span>{price ? price.toLocaleString("vi-VN") : "0"}</span>
-      ),
-      sorter: true,
     },
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
-      align: "center",
-      render: (value) =>
-        value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—",
+      width: 180,
       sorter: true,
+      render: (createdAt: string) =>
+        dayjs(createdAt).format("HH:mm DD/MM/YYYY"),
+    },
+    {
+      title: "Tổng số lượng",
+      dataIndex: "totalQuantity",
+      key: "totalQuantity",
+      width: 130,
+      sorter: true,
+      align: "center",
+      render: (qty) => <span>{qty}</span>,
+    },
+    {
+      title: "Tổng tiền (VAT)",
+      dataIndex: "totalPrice",
+      key: "totalPrice",
+      width: 180,
+      sorter: true,
+      align: "center",
+      render: (price: number) => (
+        <span>{price?.toLocaleString("vi-VN")} ₫</span>
+      ),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       align: "center",
-      render: (status) => {
-        const colorMap: Record<string, string> = {
-          CREATED: "processing",
-          COMPLETED: "success",
-          CANCELED: "error",
-        };
-        const textMap: Record<string, string> = {
-          CREATED: "Đang xử lý",
-          COMPLETED: "Hoàn tất",
-          CANCELED: "Đã hủy",
-        };
-        return (
-          <Tag
-            color={colorMap[status] || "default"}
-            style={{
-              display: "inline-flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontWeight: 500,
-              padding: "2px 10px",
-              minWidth: 70, // vừa phải, không bó hẹp
-              borderRadius: 6,
-            }}
-          >
-            {textMap[status] || status}
-          </Tag>
-        );
+      width: 150,
+      filters: [
+        { text: "Đã tạo", value: "CREATED" },
+        { text: "Hoàn tất", value: "COMPLETED" },
+        { text: "Đã huỷ", value: "CANCELED" },
+      ],
+      onFilter: (value, record) => record.status === value,
+      render: (status: string) => {
+        let color = "default";
+        let text = "";
+        switch (status) {
+          case "CREATED":
+            color = "blue";
+            text = "Đã tạo";
+            break;
+          case "COMPLETED":
+            color = "green";
+            text = "Hoàn tất";
+            break;
+          case "CANCELED":
+            color = "red";
+            text = "Đã huỷ";
+            break;
+        }
+        return <Tag color={color}>{text}</Tag>;
       },
     },
-
     {
       title: "Thao tác",
       key: "action",
+      width: 220,
       align: "center",
       render: (_, record) => (
-        <Space size="small" align="center">
+        <div className="flex justify-center gap-2">
           <Button
+            type="primary"
+            size="small"
             icon={<EyeOutlined />}
             onClick={() => onViewDetail?.(record.id)}
-            size="small"
-            type="primary"
-            style={{ display: "flex", alignItems: "center" }}
           >
             Xem
           </Button>
@@ -133,10 +125,9 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
           {canComplete && record.status === "CREATED" && (
             <Button
               type="primary"
+              size="small"
               icon={<CheckOutlined />}
               onClick={() => onComplete?.(record.id)}
-              size="small"
-              style={{ display: "flex", alignItems: "center" }}
             >
               Hoàn tất
             </Button>
@@ -144,35 +135,22 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
 
           {canDelete && record.status === "CREATED" && (
             <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => onDelete?.(record.id)}
               size="small"
-              style={{ display: "flex", alignItems: "center" }}
+              icon={<CloseOutlined />}
+              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none transition-colors duration-200"
+              onClick={() => onDelete?.(record.id)}
             >
-              Hủy
+              Huỷ
             </Button>
           )}
-        </Space>
+        </div>
       ),
     },
-  ].filter(Boolean) as ColumnsType<SaleOrderResponse>;
+  ];
 
-  // =============================
-  // Sort handler
-  // =============================
-  const handleChange = (_: any, __: any, sorter: any) => {
-    if (sorter?.order) {
-      const order = sorter.order === "ascend" ? "asc" : "desc";
-      onSortChange?.(sorter.field, order);
-    } else {
-      onSortChange?.("createdAt", "desc");
-    }
-  };
-
-  // =============================
-  // Render Table
-  // =============================
+  // ==========================
+  // Table render
+  // ==========================
   return (
     <Table
       rowKey="id"
@@ -180,12 +158,14 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       dataSource={data}
       loading={loading}
       pagination={false}
-      onChange={handleChange}
-      bordered={false} // ✅ bỏ border giữa các ô
-      className="rounded-lg shadow-sm text-center"
-      style={{
-        textAlign: "center", // ✅ căn giữa toàn bộ nội dung
+      bordered={false}
+      onChange={(pagination, filters, sorter: any) => {
+        if (onSortChange && sorter.field && sorter.order) {
+          const order = sorter.order === "ascend" ? "asc" : "desc";
+          onSortChange(sorter.field, order);
+        }
       }}
+      className="shadow-sm rounded-lg"
     />
   );
 };
