@@ -8,7 +8,6 @@ import {
   DesktopOutlined,
   FileOutlined,
   PieChartOutlined,
-  TeamOutlined,
   UserOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -18,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/features/userSlice"; //action từ slice
 import { useLogoutMutation } from "../service/authenticationService"; //hook API logout
 import { ROUTES } from "../model/routePaths";
+import type { RootState } from "../redux/store";
 
 function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -27,7 +27,7 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const user = useSelector((state: any) => state.user); // Lấy thông tin user từ Redux store
+  const user = useSelector((state: RootState) => state.user); // Lấy thông tin user từ Redux store
   console.log(user);
   const role = user?.role;
 
@@ -36,6 +36,7 @@ function DashboardLayout() {
       case "ADMIN":
         return [
           getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
           getItem("Đại lý", ROUTES.DEALER, <DesktopOutlined />),
           getItem(
             "Chính sách chiết khấu",

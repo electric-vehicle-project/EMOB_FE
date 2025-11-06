@@ -1,4 +1,5 @@
-import { Modal, Button, message } from "antd";
+// src/components/organisms/account/AccountModal.tsx
+import { Modal, message } from "antd";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
 import { AccountForm } from "../../molecules/Account/AccountForm";
@@ -12,6 +13,8 @@ interface Props {
   creatorRole: Role;
   creatingRole: Role | null;
   loading?: boolean;
+  /** Chỉ truyền khi Admin tạo Manager */
+  dealerOptions?: { label: string; value: string }[];
 }
 
 export const AccountModal = ({
@@ -21,6 +24,7 @@ export const AccountModal = ({
   creatorRole,
   creatingRole,
   loading = false,
+  dealerOptions = [],
 }: Props) => {
   const [form] = useForm();
 
@@ -44,34 +48,22 @@ export const AccountModal = ({
     }
   };
 
-  const footer = (
-    <div className="flex justify-center">
-      <Button
-        type="primary"
-        className="px-6 py-2 rounded-md w-full sm:w-auto bg-evm-green hover:!bg-[#4f6f52]"
-        loading={loading}
-        onClick={() => form.submit()}
-      >
-        Tạo tài khoản
-      </Button>
-    </div>
-  );
-
   return (
     <Modal
       open={open}
       title="Thêm tài khoản mới"
       onCancel={onClose}
-      footer={footer}
-      destroyOnHidden // ✅ thay destroyOnClose
+      destroyOnClose
       centered
+      footer={null} // ✅ bỏ nút OK/Cancel mặc định
     >
       <AccountForm
         form={form}
         onSubmit={handleFinish}
         loading={loading}
         role={creatorRole}
-        defaultCreatingRole={creatingRole}
+        defaultCreatingRole={creatingRole || undefined}
+        dealerOptions={dealerOptions}
       />
     </Modal>
   );
