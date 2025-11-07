@@ -48,6 +48,7 @@ import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
 import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
+import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -91,7 +92,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
-      { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.OVERVIEW, element: <OverviewRevenueDealer /> },
       { path: ROUTES.DEALER, element: <DealerPage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
@@ -171,7 +172,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
-      { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.OVERVIEW, element: <DealerDashboardPage /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {
