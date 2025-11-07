@@ -1,17 +1,19 @@
 import { Checkbox, Form } from "antd";
-import { InputField } from "../atoms/InputField";
-import { ButtonPrimary } from "../atoms/ButtonPrimary";
-import { ButtonGoogle } from "../atoms/ButtonGoogle";
 import { useNavigate, Link } from "react-router-dom";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { useLoginMutation } from "../../service/authenticationService";
 import { useDispatch } from "react-redux";
-import { login } from "../../redux/features/userSlice";
 import { toast } from "react-toastify";
+import { useEffect } from "react";
+import { useLoginMutation } from "../../../service/authenticationService";
+import { login } from "../../../redux/features/userSlice";
+import { InputField } from "../../atoms/InputField";
+import { ButtonPrimary } from "../../atoms/ButtonPrimary";
+import { ButtonGoogle } from "../../atoms/ButtonGoogle";
 
 interface LoginFormValues {
   username: string;
   password: string;
+  remember?: boolean;
 }
 
 export const LoginForm = () => {
@@ -20,39 +22,47 @@ export const LoginForm = () => {
   const { mutate: loginMutation, isPending } = useLoginMutation();
   const [form] = Form.useForm<LoginFormValues>();
 
+  useEffect(() => {
+    const savedUser = localStorage.getItem("rememberedUser");
+    if (savedUser) {
+      const { username, password } = JSON.parse(savedUser);
+      form.setFieldsValue({
+        username,
+        password,
+        remember: true,
+      });
+    }
+  }, [form]);
+
   const handleLogin = (values: LoginFormValues) => {
-    const { username, password } = values;
+    const { username, password, remember } = values;
 
     loginMutation(
       { email: username, password },
       {
         onSuccess: (res) => {
-
-          //lưu token & refreshToken
           const { token, refreshToken, ...user } = res.data.result;
+
           localStorage.setItem("token", token);
           localStorage.setItem("refreshToken", refreshToken);
-
-          //lưu thông tin user vào Redux store
           dispatch(login(user));
 
-          //thông báo & điều hướng
+          if (remember) {
+            localStorage.setItem(
+              "rememberedUser",
+              JSON.stringify({ username, password })
+            );
+          } else {
+            localStorage.removeItem("rememberedUser");
+          }
+
           toast.success("Đăng nhập thành công!");
           navigate(`/${user.role.toLowerCase()}`);
-
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onError: (error: any) => {
-          console.error("Login failed:", error);
+        onError: () => {
           form.setFields([
-            {
-              name: "username",
-              errors: [""],
-            },
-            {
-              name: "password",
-              errors: ["Tên đăng nhập hoặc mật khẩu không đúng"],
-            },
+            { name: "username", errors: [""] },
+            { name: "password", errors: ["Tên đăng nhập hoặc mật khẩu không đúng"] },
           ]);
         },
       }
@@ -66,20 +76,20 @@ export const LoginForm = () => {
       onFinish={handleLogin}
       className="space-y-5"
     >
-      {/* --- Username Field --- */}
+      {/* --- Username --- */}
       <Form.Item
         name="username"
         rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập" }]}
       >
         <InputField
           prefix={<UserOutlined style={{ color: "#627254", fontSize: 19 }} />}
-          className="h-13 !pl-5 !pr-5 "
+          className="h-13 !pl-5 !pr-5"
           type="text"
           placeholder="Tên đăng nhập"
         />
       </Form.Item>
 
-      {/* --- Password Field --- */}
+      {/* --- Password --- */}
       <Form.Item
         name="password"
         rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
@@ -92,7 +102,7 @@ export const LoginForm = () => {
         />
       </Form.Item>
 
-      {/* --- Ghi nhớ & Quên mật khẩu --- */}
+      {/* --- Remember & Forget --- */}
       <div className="flex justify-between items-center px-5">
         <Form.Item name="remember" valuePropName="checked" noStyle>
           <Checkbox className="!text-[var(--primary-color)]">
@@ -107,7 +117,7 @@ export const LoginForm = () => {
         </Link>
       </div>
 
-      {/* --- Nút đăng nhập --- */}
+      {/* --- Submit --- */}
       <Form.Item>
         <ButtonPrimary
           className="!h-12 w-full"
@@ -118,7 +128,7 @@ export const LoginForm = () => {
         </ButtonPrimary>
       </Form.Item>
 
-      {/* --- Đăng nhập bằng Google --- */}
+      {/* --- Google login --- */}
       <Form.Item>
         <ButtonGoogle />
       </Form.Item>

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { Form } from "antd";
-import { ButtonPrimary } from "../atoms/ButtonPrimary";
+import { ButtonPrimary } from "../../atoms/ButtonPrimary";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { useResendOtpMutation, useVerifyOtpMutation } from "../../service/authenticationService";
-import { ROUTES } from "../../model/routePaths";
+import { useResendOtpMutation, useVerifyOtpMutation } from "../../../service/authenticationService";
+import { ROUTES } from "../../../model/routePaths";
 import { toast } from "react-toastify";
 
 export const OTPForm = () => {
