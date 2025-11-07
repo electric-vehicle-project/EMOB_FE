@@ -15,6 +15,10 @@ import { AuthProtect } from "../components/atoms/AuthProtect";
 import ProfilePage from "../page/profile/ProfilePage";
 import { DealerPage } from "../page/DealerPage";
 import { AccountPage } from "../page/account/AccountPage";
+import DealerRevenueDashboard from "../page/overview/OverviewRevenueDealer";
+import DealerEmployeeChart from "../components/organisms/Overview/DealerEmployeeChart";
+import CarBrandDealerDashboard from "../page/overview/OverviewRevenueDealer";
+import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -55,7 +59,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       // ⚡ General
-      { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.OVERVIEW, element: <DealerRevenueDashboard /> },
       { path: ROUTES.DEALER, element: <DealerPage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
@@ -105,7 +109,7 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.OVERVIEW, element: <DealerDashboardPage /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
@@ -134,7 +138,7 @@ export const router = createBrowserRouter([
       </AuthProtect>
     ),
     children: [
-      { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
+      { path: ROUTES.OVERVIEW, element: <DealerEmployeeChart /> },
       { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
       {
