@@ -5,17 +5,28 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { getItem, type MenuItem } from "../utils/menuUtils";
 import MenuDashboard from "../components/atoms/MenuDashboard";
 import {
-  DesktopOutlined,
-  FileOutlined,
-  PieChartOutlined,
+  DashboardOutlined,
   UserOutlined,
+  CarOutlined,
+  SlidersOutlined,
+  GiftOutlined,
+  ShopOutlined,
+  TagsOutlined,
+  InboxOutlined,
+  ShoppingCartOutlined,
+  FileDoneOutlined,
+  SendOutlined,
+  ContactsOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  TeamOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
-import { logout } from "../redux/features/userSlice"; //action từ slice
-import { useLogoutMutation } from "../service/authenticationService"; //hook API logout
+import { logout } from "../redux/features/userSlice"; // action từ slice
+import { useLogoutMutation } from "../service/authenticationService"; // hook API logout
 import { ROUTES } from "../model/routePaths";
 import { useCurrentUser } from "../utils/getCurrentUser";
 
@@ -28,100 +39,143 @@ function DashboardLayout() {
   const dispatch = useDispatch();
 
   const user = useCurrentUser(); // Lấy thông tin user từ Redux store
-  console.log(user);
   const role = user?.role;
 
   const items: MenuItem[] = (() => {
     switch (role) {
+      // ===================== ADMIN =====================
       case "ADMIN":
         return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          // Tổng quan & hồ sơ
+          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
-          getItem("Đại lý", ROUTES.DEALER, <DesktopOutlined />),
+
+          // Sản phẩm & giá
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
+          getItem(
+            "Quy tắc giá xe",
+            ROUTES.EVM_VEHICLE_RULE,
+            <SlidersOutlined />
+          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+
+          // Đại lý & chính sách
+          getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
           getItem(
             "Chính sách chiết khấu",
             ROUTES.DEALER_DISCOUNT_POLICY,
-            <FileOutlined />
+            <TagsOutlined />
           ),
-          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
-          getItem("Tài khoản", ROUTES.ACCOUNT, <UserOutlined />),
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
-          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
-          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
-          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
+
+          // Sales & vận hành
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+
+          // Quản trị
+          getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
         ];
 
+      // ===================== EVM_STAFF =====================
       case "EVM_STAFF":
         return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
-          getItem("Đại lý", ROUTES.DEALER, <FileOutlined />),
-          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+
+          // Sản phẩm & giá
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
           getItem(
-            "Chính sách chiết khấu",
-            ROUTES.DEALER_DISCOUNT_POLICY,
-            <FileOutlined />
+            "Quy tắc giá xe",
+            ROUTES.EVM_VEHICLE_RULE,
+            <SlidersOutlined />
           ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
-          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
-          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
-          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+
+          // Đại lý
+          getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
+
+          // Sales & vận hành
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
         ];
 
+      // ===================== MANAGER =====================
       case "MANAGER":
         return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
-          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+
+          // Sales & khách hàng
+          getItem("Khách hàng", ROUTES.CUSTOMERS, <ContactsOutlined />),
+          getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
+
+          // Sản phẩm & giá
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
+          getItem(
+            "Quy tắc giá xe",
+            ROUTES.EVM_VEHICLE_RULE,
+            <SlidersOutlined />
+          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+
+          // Chính sách đại lý
           getItem(
             "Chính sách chiết khấu",
             ROUTES.DEALER_DISCOUNT_POLICY,
-            <FileOutlined />
+            <TagsOutlined />
           ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
-          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
-          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <FileOutlined />),
-          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
-          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
-          getItem("Khách hàng", ROUTES.CUSTOMERS, <UserOutlined />),
-          getItem("Báo giá", ROUTES.QUOTATION, <FileOutlined />),
-          getItem("Tài khoản", ROUTES.ACCOUNT, <UserOutlined />),
+
+          // Yêu cầu & quản trị
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
+          getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
           getItem(
             "Quy tắc điểm đại lý",
             ROUTES.DEALER_POINT_RULE,
-            <FileOutlined />
+            <TagsOutlined />
           ),
         ];
 
+      // ===================== DEALER_STAFF =====================
       case "DEALER_STAFF":
         return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <PieChartOutlined />),
+          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <DesktopOutlined />),
-          getItem("Quy tắc giá xe", ROUTES.EVM_VEHICLE_RULE, <FileOutlined />),
+
+          // Sales & khách hàng
+          getItem("Khách hàng", ROUTES.CUSTOMERS, <ContactsOutlined />),
+          getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
+          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+
+          // Sản phẩm & giá
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
+          getItem(
+            "Quy tắc giá xe",
+            ROUTES.EVM_VEHICLE_RULE,
+            <SlidersOutlined />
+          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+
+          // Chính sách đại lý & yêu cầu
           getItem(
             "Chính sách chiết khấu",
             ROUTES.DEALER_DISCOUNT_POLICY,
-            <FileOutlined />
+            <TagsOutlined />
           ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <PieChartOutlined />),
-          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <FileOutlined />),
-          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <FileOutlined />),
-          getItem("Đơn bán", ROUTES.SALE_ORDER, <FileOutlined />),
-          getItem("Hợp đồng", ROUTES.CONTRACT, <FileOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <FileOutlined />),
-          getItem("Khách hàng", ROUTES.CUSTOMERS, <UserOutlined />),
-          getItem("Báo giá", ROUTES.QUOTATION, <FileOutlined />),
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem(
             "Quy tắc điểm đại lý",
             ROUTES.DEALER_POINT_RULE,
-            <FileOutlined />
+            <TagsOutlined />
           ),
         ];
 
@@ -134,7 +188,6 @@ function DashboardLayout() {
 
   const handleLogout = () => {
     const token = localStorage.getItem("refreshToken");
-
     logoutMutation(
       { token },
       {
@@ -154,7 +207,6 @@ function DashboardLayout() {
     );
   };
 
-  // Delay để chữ hiện/mất sau khi sidebar animation xong
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (sidebarOpen) {
@@ -167,7 +219,7 @@ function DashboardLayout() {
 
   return (
     <section className="h-screen w-full flex relative">
-      {/* Sidebar: same behavior on all breakpoints (push layout) */}
+      {/* Sidebar */}
       <div
         className={`h-full bg-[var(--secondary-color)] sidebar-decor transition-[width] duration-500 ease-smooth flex flex-col items-center relative ${
           sidebarOpen ? "w-[250px]" : "w-[70px]"
@@ -222,13 +274,10 @@ function DashboardLayout() {
         ${sidebarOpen ? "!w-[90%] !h-12 px-4" : "!w-12 !h-12"}
       `}
             >
-              {/* Icon */}
               <CiLogout
                 size={sidebarOpen ? 22 : 32}
                 className="text-white transition-all duration-500 ease-smooth"
               />
-
-              {/* Label (fade-in sau khi sidebar mở xong) */}
               <span
                 className={`ml-2 text-sm font-medium text-white whitespace-nowrap flex items-center menu-label-transition ${
                   sidebarOpen
