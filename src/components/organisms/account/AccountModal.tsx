@@ -1,4 +1,3 @@
-// src/components/organisms/account/AccountModal.tsx
 import { Modal, message } from "antd";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
@@ -55,7 +54,7 @@ export const AccountModal = ({
       onCancel={onClose}
       destroyOnClose
       centered
-      footer={null} // ✅ bỏ nút OK/Cancel mặc định
+      footer={null}
     >
       <AccountForm
         form={form}
