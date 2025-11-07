@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Table, Button, message, Popconfirm, Tag, Input } from "antd";
 import SectionTitle from "../../components/atoms/SectionTitle";
 import type { ColumnsType } from "antd/es/table";
-import type { IQuotation, IQuotationItem } from "../../model/Quotation";
+import type { IQuotation } from "../../model/Quotation";
 
 import CreateQuotationModal from "./CreateQuotationModal";
 import UpdateQuotationModal from "./UpdateQuotationModal";
@@ -14,7 +14,7 @@ import {
 } from "../../service/quotationService";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerById } from "../../service/customerService";
-import { useGetDealerById } from "../../service/dealerService";
+import { useDealerByIdQuery } from "../../service/dealerService";
 import { SearchOutlined } from "@ant-design/icons";
 
 const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
@@ -25,7 +25,7 @@ const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
 };
 
 const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
-  const { data, isLoading } = useGetDealerById(dealerId);
+  const { data, isLoading } = useDealerByIdQuery(dealerId);
 
   if (isLoading) return <span>...</span>;
   return <span>{data?.result?.name || "-"}</span>;
@@ -94,8 +94,7 @@ const QuotationPage: React.FC = () => {
       dataIndex: "dealerId",
       key: "dealerId",
       render: (dealerId: string) =>
-        // dealerId ? <DealerName dealerId={dealerId} /> : "-",
-        dealerId,
+        dealerId ? <DealerName dealerId={dealerId} /> : "-",
     },
     {
       title: "Số lượng",

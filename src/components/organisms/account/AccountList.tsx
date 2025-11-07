@@ -1,4 +1,3 @@
-// src/components/organisms/account/AccountList.tsx
 import { useState, useMemo } from "react";
 import { App, Result, Empty, Button } from "antd";
 import { toast } from "react-toastify";
@@ -43,7 +42,7 @@ export const AccountList = () => {
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
-  // Queries
+  // ====== Queries ======
   const adminQuery = useGetAccountsByAdmin(page, pageSize, {
     enabled: isAdmin,
     queryKey: ["accounts-by-admin", page, pageSize],
@@ -53,15 +52,27 @@ export const AccountList = () => {
     queryKey: ["accounts-by-manager", page, pageSize],
   });
 
-  // Dealer map (for Admin only)
+  // ====== Dealers (for Admin) ======
+  // Nếu service có hỗ trợ enabled, bạn có thể truyền { enabled: isAdmin } vào đây.
   const { data: dealersData } = useDealersQuery({}, { size: 1000 });
+
+  // Map dealerId -> dealerName (đang dùng cho cột bảng)
   const dealerMap = useMemo(() => {
     const dealers = dealersData?.result?.data ?? [];
     const map: Record<string, string> = {};
-    dealers.forEach((d: { id: string; name: string }) => {
+    (dealers as { id: string; name: string }[]).forEach((d) => {
       map[d.id] = d.name;
     });
     return map;
+  }, [dealersData]);
+
+  // Tạo options cho Select "Đại lý quản lý" trong form (Admin tạo Manager)
+  const dealerOptions = useMemo(() => {
+    const list = dealersData?.result?.data ?? dealersData?.data ?? [];
+    return (list as { id: string; name: string }[]).map((d) => ({
+      label: d.name,
+      value: d.id,
+    }));
   }, [dealersData]);
 
   const registerByAdmin = useRegisterByAdmin();
@@ -106,7 +117,7 @@ export const AccountList = () => {
   const handleCreate = async (values: AccountCreatePayload) => {
     try {
       if (isManager) {
-        // ✅ Manager tạo Dealer Staff: gọi trực tiếp bằng fetch (bỏ qua Axios interceptor)
+        // Manager tạo Dealer Staff: gọi trực tiếp bằng fetch (bỏ qua Axios interceptor)
         const token = localStorage.getItem("token");
         const response = await fetch(
           "http://localhost:8080/api/auth/register-by-manager",
@@ -130,7 +141,7 @@ export const AccountList = () => {
         setCreatingRole(null);
         await refetch();
       } else {
-        // ✅ Admin tạo Manager hoặc EVM Staff (vẫn dùng hook bình thường)
+        // Admin tạo Manager hoặc EVM Staff (vẫn dùng hook bình thường)
         await registerByAdmin.mutateAsync(values);
         toast.success("✅ Tạo tài khoản thành công!");
         setAccountModalOpen(false);
@@ -249,6 +260,7 @@ export const AccountList = () => {
           }}
         />
       )}
+
       <AccountModal
         open={accountModalOpen}
         onClose={() => {
@@ -259,6 +271,8 @@ export const AccountList = () => {
         creatingRole={creatingRole}
         onSubmit={handleCreate}
         loading={false}
+        // ⬇️ Quan trọng: truyền options vào khi Admin đang tạo Manager
+        dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 
       {/* Confirm đổi trạng thái */}

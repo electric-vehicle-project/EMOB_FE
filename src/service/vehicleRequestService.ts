@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMutationHook,
   createQueryHook,
@@ -31,6 +31,10 @@ export const useGetVehicleRequestById = createQueryWithPathParamHook(
 export const useCreateVehicleRequest = createMutationHook(
   "createVehicleRequest",
   BASE_URL
+);
+export const useCreateVehicleRequestForAdmin = createMutationHook(
+  "viewVehicleRequestForAdmin",
+  `${BASE_URL}/for-admin`
 );
 
 // (PUT /vehicle-requests/{id})
@@ -66,6 +70,24 @@ export const useApproveVehicleRequest = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicleRequestDetail"] });
       queryClient.invalidateQueries({ queryKey: ["vehicleRequests"] });
+    },
+  });
+};
+
+// view all for admin
+export const useGetVehicleRequestsForAdmin = (params?: {
+  keyword?: string;
+  statuses?: string[];
+  page?: number;
+  size?: number;
+}) => {
+  return useQuery({
+    queryKey: ["vehicleRequestsForAdmin", params],
+    queryFn: async () => {
+      const response = await api.get("/vehicle-request/for-admin", {
+        params,
+      });
+      return response.data;
     },
   });
 };

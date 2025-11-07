@@ -1,5 +1,5 @@
 import { ContractListAllDealers } from "../../components/organisms/contract/ContractListAllDealers";
-import CardWrapper from "../../components/template/CardWrapper";
+import { CardWrapper } from "../../components/template/CardWrapper";
 // import { useCurrentUser } from "../utils/getCurrentUser";
 
 export const ContractAllDealersPage = () => {

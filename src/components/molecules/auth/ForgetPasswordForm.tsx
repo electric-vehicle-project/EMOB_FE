@@ -1,10 +1,10 @@
 import { Form } from "antd";
-import { InputField } from "../atoms/InputField";
-import { ButtonPrimary } from "../atoms/ButtonPrimary";
+import { InputField } from "../../atoms/InputField";
+import { ButtonPrimary } from "../../atoms/ButtonPrimary";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined } from "@ant-design/icons";
-import { useForgetPasswordMutation } from "../../service/authenticationService";
-import { ROUTES } from "../../model/routePaths";
+import { useForgetPasswordMutation } from "../../../service/authenticationService";
+import { ROUTES } from "../../../model/routePaths";
 
 interface ForgetPasswordFormValues {
   email: string;

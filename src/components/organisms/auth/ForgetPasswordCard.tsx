@@ -1,4 +1,4 @@
-import { ForgetPasswordForm } from "../molecules/ForgetPasswordForm";
+import { ForgetPasswordForm } from "../../molecules/auth/ForgetPasswordForm";
 
 export const ForgetPasswordCard = () => (
   <div className="bg-[#DDDDDD]">
