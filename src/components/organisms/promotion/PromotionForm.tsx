@@ -11,7 +11,7 @@ import {
 
 import dayjs from "dayjs";
 import type { Promotion } from "../../../model/Promotion";
-import { useGetDealers } from "../../../service/dealerService";
+import { useDealersQuery } from "../../../service/dealerService";
 import { useGetVehicles } from "../../../service/vehicleService";
 import { useEffect } from "react";
 import {
@@ -40,8 +40,10 @@ export const PromotionForm = ({
   loading,
 }: Props) => {
   const [form] = Form.useForm();
-  const { data: dealers } = useGetDealers();
+  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
   const { data: vehicles } = useGetVehicles();
+
+  const dealers = dealersData?.result?.data ?? [];
 
   useEffect(() => {
     if (initialValues) {
