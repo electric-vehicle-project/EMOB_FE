@@ -43,7 +43,7 @@ export const ContractDetailCustomer = () => {
   const [form] = Form.useForm();
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Hợp đồng_${contract?.contractNumber}`,
   });
 
@@ -145,9 +145,8 @@ export const ContractDetailCustomer = () => {
           <div className="text-[15px] leading-7 text-justify space-y-4">
             <p>
               Căn cứ Bộ luật Dân sự và các quy định pháp luật có liên quan, hôm
-              nay, ngày{" "}
-              <b>{dayjs(contract?.createdAt).format("DD/MM/YYYY")}</b>, chúng tôi
-              gồm có:
+              nay, ngày <b>{dayjs(contract?.createdAt).format("DD/MM/YYYY")}</b>
+              , chúng tôi gồm có:
             </p>
 
             <p>
@@ -155,22 +154,23 @@ export const ContractDetailCustomer = () => {
               <br />
               Địa chỉ: Tòa nhà F-Town 3, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên hãng xe
+              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên hãng
+              xe
             </p>
 
             <p>
-              <b>BÊN B (Khách hàng):</b> 
+              <b>BÊN B (Khách hàng):</b>
               <br />
               Địa chỉ: ______________________
               <br />
-              Đại diện: Ông/Bà ______________________ 
+              Đại diện: Ông/Bà ______________________
             </p>
 
             <Divider />
 
             <p>
-              Hai bên thống nhất ký kết <b>Hợp đồng mua bán xe điện</b> với
-              các điều khoản sau:
+              Hai bên thống nhất ký kết <b>Hợp đồng mua bán xe điện</b> với các
+              điều khoản sau:
             </p>
 
             <p>
@@ -208,8 +208,8 @@ export const ContractDetailCustomer = () => {
               <b>Điều 5. Điều khoản chung</b>
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
-              <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị
-              pháp lý như nhau.
+              <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
+              trị pháp lý như nhau.
             </p>
           </div>
 
@@ -218,7 +218,9 @@ export const ContractDetailCustomer = () => {
           <div className="flex justify-between items-start mt-8 mr-10 ml-10">
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex" >(đã ký)</div>
+              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
+                (đã ký)
+              </div>
               <p className="mt-1 text-sm text-gray-500">
                 (Ký và ghi rõ họ tên)
               </p>
@@ -291,7 +293,9 @@ export const ContractDetailCustomer = () => {
               <Form.Item
                 name="deposit"
                 label="Tiền đặt cọc (₫)"
-                rules={[{ required: true, message: "Vui lòng nhập tiền đặt cọc" }]}
+                rules={[
+                  { required: true, message: "Vui lòng nhập tiền đặt cọc" },
+                ]}
               >
                 <InputNumber min={0} className="w-full" />
               </Form.Item>
@@ -300,7 +304,10 @@ export const ContractDetailCustomer = () => {
                 name="downPayment"
                 label="Số tiền trả trước (₫)"
                 rules={[
-                  { required: true, message: "Vui lòng nhập số tiền trả trước" },
+                  {
+                    required: true,
+                    message: "Vui lòng nhập số tiền trả trước",
+                  },
                 ]}
               >
                 <InputNumber min={0} className="w-full" />
@@ -322,16 +329,9 @@ export const ContractDetailCustomer = () => {
               <Form.Item
                 name="interestRate"
                 label="Lãi suất (%)"
-                rules={[
-                  { required: true, message: "Vui lòng nhập lãi suất" },
-                ]}
+                rules={[{ required: true, message: "Vui lòng nhập lãi suất" }]}
               >
-                <InputNumber
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  className="w-full"
-                />
+                <InputNumber min={0} max={100} step={0.1} className="w-full" />
               </Form.Item>
             </>
           )}
