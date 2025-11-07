@@ -46,6 +46,7 @@ import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerP
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
 import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
+import QuotationPage from "../page/quotation/QuotationPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -96,7 +97,7 @@ export const router = createBrowserRouter([
         element: <DealerDiscountPolicyPage />,
       },
       { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
-      
+
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
@@ -131,7 +132,8 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
-
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
+      
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
@@ -143,16 +145,16 @@ export const router = createBrowserRouter([
 
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
-        element: <h1>Discount Policy</h1>,
+        element: <DealerDiscountPolicyPage />,
       },
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
-      { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
       { path: ROUTES.SALE_ORDER, element: <SaleOrderEvmPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
-      { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
-      { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
+      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
+      { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
     ],
   },
 
@@ -170,10 +172,10 @@ export const router = createBrowserRouter([
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
-      { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
+      { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
-        element: <h1>Discount Policy</h1>,
+        element: <DealerDiscountPolicyPage />,
       },
       { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
@@ -186,13 +188,14 @@ export const router = createBrowserRouter([
         element: <SaleOrderByStaffPage />,
       },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
-      { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
+      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
+      { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
-      { path: ROUTES.QUOTATION, element: <h1>Quotation</h1> },
+      { path: ROUTES.QUOTATION, element: <QuotationPage /> },
 
-      { path: ROUTES.DEALER_POINT_RULE, element: <h1>Dealer Point Rule</h1> },
+      { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
     ],
   },
 
@@ -208,29 +211,30 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <OverviewRevenueDealer /> },
-      { path: ROUTES.EVM_VEHICLE, element: <h1>Electric Vehicle</h1> },
-      { path: ROUTES.EVM_VEHICLE_RULE, element: <h1>Vehicle Price Rule</h1> },
+      { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
+      { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
-        element: <h1>Discount Policy</h1>,
+        element: <DealerDiscountPolicyPage />,
       },
       { path: ROUTES.PROMOTIONS, element: <DealerPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
-      { path: ROUTES.VEHICLE_REQUEST, element: <h1>Vehicle Request</h1> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.TEST_DRIVE, element: <TestDrivePage /> },
       { path: ROUTES.SALE_ORDER, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CONTRACT, element: <h1>Contract</h1> },
-      { path: ROUTES.DELIVERY, element: <h1>Delivery</h1> },
+      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
+      { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
       { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> },
       { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> },
-      { path: ROUTES.QUOTATION, element: <h1>Quotation</h1> },
-      { path: ROUTES.DEALER_POINT_RULE, element: <h1>Dealer Point Rule</h1> },
+      { path: ROUTES.QUOTATION, element: <QuotationPage /> },
+      { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
     ],
   },
 
