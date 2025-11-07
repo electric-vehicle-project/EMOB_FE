@@ -1,6 +1,6 @@
 
 import { ContractDetailDealer } from "../../components/organisms/contract/ContractDetailDealer";
-import CardWrapper from "../../components/template/CardWrapper";
+import { CardWrapper } from "../../components/template/CardWrapper";
 // import { useCurrentUser } from "../utils/getCurrentUser";
 
 export const ContractDetailDealerPage = () => {

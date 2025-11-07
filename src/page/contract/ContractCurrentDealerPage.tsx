@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { ContractListCurrentDealer } from "../../components/organisms/contract/ContractListCurrentDealer";
-import CardWrapper from "../../components/template/CardWrapper";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 
 export const ContractCurrentDealerPage = () => {
