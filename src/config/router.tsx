@@ -5,10 +5,11 @@ import AuthLayout from "../layout/AuthLayout";
 import { ROUTES } from "../model/routePaths";
 
 // 🔐 Auth Pages
-import { LoginCard } from "../components/organisms/LoginCard";
-import { ForgetPasswordCard } from "../components/organisms/ForgetPasswordCard";
-import { OTPCard } from "../components/organisms/OTPCard";
-import { ResetPasswordCard } from "../components/organisms/ResetPasswordCard";
+
+import { LoginCard } from "../components/organisms/auth/LoginCard";
+import { ForgetPasswordCard } from "../components/organisms/auth/ForgetPasswordCard";
+import { OTPCard } from "../components/organisms/auth/OTPCard";
+import { ResetPasswordCard } from "../components/organisms/auth/ResetPasswordCard";
 import HomePage from "../page/HomePage";
 import { NotFoundPage } from "../page/404Page";
 import { AuthProtect } from "../components/atoms/AuthProtect";
@@ -31,12 +32,14 @@ import VehicleRequestPage from "../page/vehicle-request/VehicleRequestPage";
 import PromotionEditPage from "../page/promotions/PromotionEditPage";
 import PromotionCreatePage from "../page/promotions/PromotionCreatePage";
 import { TestDrivePage } from "../page/test-drive/TestDrivePage";
+import GoogleCallback from "../page/GoogleCallback";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
   { path: ROUTES.HOME, element: <HomePage /> },
 
   // ==== AUTH ====
+  {path: ROUTES.CALLBACK, element: <GoogleCallback/>},
   {
     path: ROUTES.AUTH,
     element: <AuthLayout />,
@@ -127,7 +130,7 @@ export const router = createBrowserRouter([
     path: ROUTES.MANAGER,
     element: (
       <AuthProtect allowedRoles={["MANAGER"]}>
-        
+
         <DashboardLayout />
       </AuthProtect>
     ),
