@@ -29,15 +29,6 @@ export const useGoogleLogin = () => {
       });
 
       if (error) throw error;
-
-      //   if (data?.url) {
-      //     window.open(
-      //       data.url,
-      //       "GoogleLogin",
-      //       "width=600,height=700,left=400,top=100"
-      //     );
-      //   }
-
       if (data?.url) {
         const width = 1000;
         const height = 850;
