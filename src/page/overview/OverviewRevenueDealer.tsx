@@ -1,137 +1,217 @@
-import React, { useEffect, useState } from "react";
-import { Divider, Row, Col, Drawer, Button, Card } from "antd";
-import SectionTitle from "../../components/atoms/SectionTitle";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useDealerReportQuery } from "../../service/overviewRevenueDealer";
+import { getMonthNameVI } from "../../utils/convertMonth";
+import { sumBy } from "lodash";
+import DealerKPI from "../../components/molecules/overview/KpiCard";
+import DealerContractPie from "../../components/organisms/Overview/DealerContractPie";
+import RevenueLineChart from "../../components/organisms/Overview/DealerLineChart";
+import DealerSalesChart from "../../components/organisms/Overview/DealerSaleChart";
 
-import InventoryChart from "../../components/organisms/Inventory";
+export const REGIONS = ["NORTH", "CENTRAL", "SOUTH"];
 
-import type { InventoryProps } from "../../components/molecules/InventoryTable";
-import InventoryTable from "../../components/molecules/InventoryTable";
-import SummaryCards from "../../components/molecules/SummaryCards";
+export default function CarBrandDealerDashboard() {
+  const [selectedRegion, setSelectedRegion] =
+    useState<string>("Tất cả khu vực");
+  const [selectedDealer, setSelectedDealer] = useState<string>("Tất cả đại lý");
+  const [selectedMonth, setSelectedMonth] = useState<number>(11);
 
-const Overview: React.FC = () => {
-  const [inventory, setInventory] = useState<InventoryProps[]>([]);
-  const [dealers, setDealers] = useState<DealerProps[]>([]);
-  const [openDrawer, setOpenDrawer] = useState<"inventory" | "dealer" | null>(
-    null
+  // call api
+  const { data, isLoading, isError } = useDealerReportQuery(
+    {},
+    {
+      month: selectedMonth,
+      region: selectedRegion === "Tất cả khu vực" ? undefined : selectedRegion,
+      dealerId: selectedDealer === "Tất cả đại lý" ? undefined : selectedDealer,
+    }
   );
 
-  useEffect(() => {
-    const initialInventory = [
-      { type: "Sedan", imported: 120, exported: 90, remaining: 30 },
-      { type: "SUV", imported: 200, exported: 150, remaining: 50 },
-      { type: "Truck", imported: 80, exported: 60, remaining: 20 },
-    ] as unknown as InventoryProps[];
-    setInventory(initialInventory);
+  const rows = Array.isArray(data?.data) ? data.data : [];
 
-    const inititalDealer = [
-      { region: "Hà Nội", sales: 1200, debt: 300 },
-      { region: "TP.HCM", sales: 1800, debt: 450 },
-      { region: "Đà Nẵng", sales: 900, debt: 150 },
-    ] as unknown as DealerProps[];
-    setDealers(inititalDealer);
-  }, []);
+  // Lấy danh sách đại lý theo khu vực
+  const dealerList = useMemo(() => {
+    if (selectedRegion === "Tất cả khu vực") return [];
+    const uniqueDealers = Array.from(
+      new Set(
+        rows.map((r) => JSON.stringify({ id: r.dealerId, name: r.country }))
+      )
+    ).map((s) => JSON.parse(s));
+    return uniqueDealers;
+  }, [rows, selectedRegion]);
 
-  const totalImported = inventory.reduce((a, b) => a + (b as any).imported, 0);
-  const totalExported = inventory.reduce((a, b) => a + (b as any).exported, 0);
-  const totalRemaining = inventory.reduce(
-    (a, b) => a + (b as any).remaining,
-    0
+  // Tính toán KPI
+  const totalRevenue = sumBy(rows, "totalRevenue") || 0;
+  const totalContracts = sumBy(rows, "totalContracts") || 0;
+  const totalVehicles = sumBy(rows, "totalVehiclesSold") || 0;
+
+  const prevMonth = selectedMonth > 1 ? selectedMonth - 1 : 1;
+  const revenueNow = sumBy(
+    rows.filter((r) => r.month === selectedMonth),
+    "totalRevenue"
   );
-  const totalDebt = dealers.reduce((a, b) => a + (b as any).debt, 0);
+  const revenuePrev = sumBy(
+    rows.filter((r) => r.month === prevMonth),
+    "totalRevenue"
+  );
+  const growth =
+    revenuePrev > 0 ? ((revenueNow - revenuePrev) / revenuePrev) * 100 : 0;
 
+  // chart data
+  const charts = useMemo(() => {
+    if (!rows.length) return { line: [], bar: [], pie: [] };
+    const sortedRows = [...rows].sort((a, b) => a.month - b.month);
+
+    return {
+      line: [
+        {
+          id:
+            selectedDealer !== "Tất cả đại lý"
+              ? `Doanh thu – ${selectedDealer}`
+              : selectedRegion !== "Tất cả khu vực"
+              ? `Doanh thu – ${selectedRegion}`
+              : "Tổng doanh thu",
+          data: sortedRows.map((r) => ({
+            x: getMonthNameVI(r.month),
+            y: r.totalRevenue ?? 0,
+          })),
+        },
+      ],
+      bar: sortedRows.map((r) => ({
+        dealer: r.country || "N/A",
+        cars: r.totalVehiclesSold ?? 0,
+      })),
+      pie: [
+        { id: "Đã ký", value: totalContracts },
+        { id: "Chờ ký", value: Math.round(totalContracts * 0.25) },
+      ],
+    };
+  }, [rows, selectedRegion, selectedDealer, totalContracts]);
+
+  // KPI list
+  const kpi = [
+    {
+      title: "Doanh thu",
+      value: `${totalRevenue.toLocaleString("vi-VN")} USD`,
+      sub: `Tháng ${getMonthNameVI(selectedMonth)}`,
+      icon: "💲",
+      color: "from-emerald-400 to-teal-500",
+    },
+    {
+      title: "Xe đã bán",
+      value: `${totalVehicles.toLocaleString("vi-VN")} xe`,
+      sub: `Tháng ${getMonthNameVI(selectedMonth)}`,
+      icon: "🚗",
+      color: "from-sky-400 to-blue-500",
+    },
+    {
+      title: "Hợp đồng",
+      value: `${totalContracts.toLocaleString("vi-VN")} hợp đồng`,
+      sub: "Đã ký + Chờ ký",
+      icon: "📄",
+      color: "from-amber-400 to-orange-500",
+    },
+    {
+      title: "Tăng trưởng",
+      value: `${growth.toFixed(1)}%`,
+      sub: `So với ${getMonthNameVI(prevMonth)}`,
+      icon: "📈",
+      color: "from-fuchsia-400 to-purple-500",
+    },
+  ];
+
+  // Trạng thái tải
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <motion.div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  if (isError)
+    return (
+      <div className="p-8 text-red-500 text-center bg-white">
+        Lỗi tải dữ liệu từ API!
+      </div>
+    );
+
+  // Giao diện chính
   return (
-    <div style={{ padding: 24, background: "#f5f5f5" }}>
-      <SectionTitle text="Tổng Quan Hãng Xe" />
-
-      {/* Thẻ tổng quan */}
-      <SummaryCards
-        imported={totalImported}
-        exported={totalExported}
-        remaining={totalRemaining}
-        debt={totalDebt}
-      />
-
-      {/* Biểu đồ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-8">
-        <Card
-          className="rounded-2xl shadow-md"
-          title="Nhập - Xuất - Tồn kho theo loại xe"
-          extra={
-            <Button
-              type="link"
-              className="text-blue-600"
-              onClick={() => setOpenDrawer("inventory")}
-            >
-              Xem chi tiết
-            </Button>
-          }
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 text-gray-800 p-6 md:p-10 space-y-8">
+      {/* Bộ lọc */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* REGION */}
+        <select
+          className="rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm hover:shadow focus:outline-none"
+          value={selectedRegion}
+          onChange={(e) => {
+            setSelectedRegion(e.target.value);
+            setSelectedDealer("Tất cả đại lý");
+          }}
         >
-          <InventoryChart data={inventory} />
-        </Card>
+          <option>Tất cả khu vực</option>
+          {REGIONS.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </select>
 
-        <Card
-          className="rounded-2xl shadow-md"
-          title="Doanh số & Công nợ đại lý"
-          extra={
-            <Button
-              type="link"
-              className="text-green-600"
-              onClick={() => setOpenDrawer("dealer")}
-            >
-              Xem chi tiết
-            </Button>
-          }
+        {/* DEALER */}
+        <select
+          className="rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm hover:shadow focus:outline-none"
+          value={selectedDealer}
+          onChange={(e) => setSelectedDealer(e.target.value)}
+          disabled={selectedRegion === "Tất cả khu vực"}
         >
-          <DealerChart data={dealers} />
-        </Card>
+          <option>Tất cả đại lý</option>
+          {dealerList.map((d) => (
+            <option key={d.id}>{d.name}</option>
+          ))}
+        </select>
+
+        {/* MONTH */}
+        <select
+          className="rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm hover:shadow focus:outline-none"
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+        >
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+            <option key={num} value={num}>
+              {getMonthNameVI(num)}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <Divider className="border-gray-300" />
+      {/* KPI + Biểu đồ */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`${selectedRegion}-${selectedDealer}-${selectedMonth}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-8"
+        >
+          {/* KPI */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {kpi.map((item, i) => (
+              <DealerKPI key={i} {...item} />
+            ))}
+          </div>
 
-      {/* Drawer hiển thị bảng */}
-      <Drawer
-        title={
-          openDrawer === "inventory"
-            ? "Chi tiết tồn kho xe"
-            : "Chi tiết đại lý & doanh số"
-        }
-        placement="right"
-        width={700}
-        onClose={() => setOpenDrawer(null)}
-        open={!!openDrawer}
-      >
-        {openDrawer === "inventory" && <InventoryTable data={inventory} />}
-        {openDrawer === "dealer" && <Dealer data={dealers} />}
-      </Drawer>
-      {/* <SectionTitle text="Tổng Quan Hoạt Động Hãng Xe" />
+          {/* Biểu đồ */}
+          <RevenueLineChart
+            data={charts.line}
+            region={selectedRegion}
+            dealer={selectedDealer}
+          />
+          <DealerSalesChart data={charts.bar} region={selectedRegion} />
+          <DealerContractPie data={charts.pie} />
+        </motion.div>
+      </AnimatePresence>
 
-      <SummaryCards
-        imported={totalImported}
-        exported={totalExported}
-        remaining={totalRemaining}
-        debt={totalDebt}
-      />
-
-      <Divider />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <InventoryTable data={inventory} />
-        <Dealer data={dealers} />
+      {/* Footer */}
+      <div className="text-xs text-gray-500 mt-8 text-center">
+        © {new Date().getFullYear()} Hệ thống báo cáo đại lý khu vực
       </div>
-
-      <InventoryChart data={inventory} />
-      <DealerChart data={dealers} />
-
-      <Divider />
-      {/* <Row gutter={16}>
-        <Col span={12}>
-          <InventoryTable data={inventory} />
-        </Col>
-        <Col span={12}>
-          <Dealer data={dealers} />
-        </Col>
-      </Row> */}
     </div>
   );
-};
-
-export default Overview;
+}

@@ -149,7 +149,7 @@ const VehicleRequestPage: React.FC = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <SectionTitle text="Vehicle Requests Management" />
+        <SectionTitle text="Quản lý yêu cầu xe" />
         <Input.Search
           placeholder="Tìm kiếm theo mã hoặc đại lý..."
           allowClear

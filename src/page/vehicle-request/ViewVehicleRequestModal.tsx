@@ -16,7 +16,7 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
 }) => {
   const { data, isLoading } = useGetVehicleRequestById(requestId);
 
-  // ✅ Nếu API có dữ liệu thì lấy, nếu không có thì dùng mock
+  // Nếu API có dữ liệu thì lấy, nếu không có thì dùng mock
   const request = data?.result || {
     id: "MOCK-12345678",
     status: "PENDING",

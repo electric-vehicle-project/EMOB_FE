@@ -88,6 +88,7 @@ export const ROUTES = {
 
   CONTRACT_CUSTOMER_DETAIL: "contract/customers/:id",
 
+  // OVERVIEW
   OVERVIEW: "overview",
 
   // TEST DRIVE
