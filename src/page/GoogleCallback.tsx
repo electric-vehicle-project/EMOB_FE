@@ -4,8 +4,15 @@ import { supabase } from "../config/supabase";
 export const GoogleCallback = () => {
   useEffect(() => {
     const handleAuth = async () => {
-      await supabase.auth.getSession();
-      window.opener?.postMessage({ type: "GOOGLE_SIGNED_IN" }, window.location.origin);
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error getting session:", error);
+        return;
+      }
+      window.opener?.postMessage(
+        { access_token: data.session?.access_token },
+        window.location.origin
+      );
       window.close();
     };
     handleAuth();

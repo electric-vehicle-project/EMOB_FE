@@ -4,11 +4,14 @@ import { useDispatch } from "react-redux";
 import { login } from "../redux/features/userSlice";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useLoginByGoogleMutation } from "../service/authenticationService";
 
 /**
  * Custom hook để xử lý luồng đăng nhập Google
  */
 export const useGoogleLogin = () => {
+  const { mutate: loginMutation, isPending } = useLoginByGoogleMutation();
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -56,44 +59,42 @@ export const useGoogleLogin = () => {
   };
 
   useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.data?.type === "GOOGLE_SIGNED_IN") {
-        try {
-          const session = await supabase.auth.getSession();
-          const googleToken = session.data.session?.access_token;
+    const handleMessage = (event: any) => {
+      // Kiểm tra nguồn gửi có hợp lệ không
+      if (event.origin !== window.location.origin) return;
 
-          if (!googleToken) {
-            toast.error("Không tìm thấy token Google");
-            return;
+      const { access_token } = event.data;
+
+      // Nếu type là session của Supabase
+      if (access_token) {
+        console.log("Nhận được session:", access_token);
+
+        loginMutation(
+          { token: access_token }, // đây là "variables" gửi lên backend
+          {
+            onSuccess: (res) => {
+              const { token, refreshToken, ...user } = res.data.result;
+              localStorage.setItem("token", token);
+              localStorage.setItem("refreshToken", refreshToken);
+
+              //lưu thông tin user vào Redux store
+              dispatch(login(user));
+
+              //thông báo & điều hướng
+              toast.success("Đăng nhập thành công!");
+              navigate(`/${user.role.toLowerCase()}`);
+            },
+            onError: (error) => {
+              console.error("Login thất bại:", error);
+            },
           }
-
-          const res = await fetch(
-            `${import.meta.env.VITE_BASE_URL}/auth/google`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token: googleToken }),
-            }
-          );
-
-          if (!res.ok) throw new Error("Xác thực Google thất bại");
-          const data = await res.json();
-          const user = data.result;
-
-          localStorage.setItem("token", user.token);
-          localStorage.setItem("refreshToken", user.refreshToken);
-          dispatch(login(user));
-
-          toast.success("Đăng nhập Google thành công!");
-          navigate(`/${user.role.toLowerCase()}`);
-        } catch (error) {
-          console.error("Error handling Google login:", error);
-          toast.error("Đăng nhập Google thất bại");
-        }
+        );
       }
     };
 
     window.addEventListener("message", handleMessage);
+
+    // Dọn dẹp
     return () => window.removeEventListener("message", handleMessage);
   }, [dispatch, navigate]);
 
