@@ -39,7 +39,7 @@ export const router = createBrowserRouter([
   { path: ROUTES.HOME, element: <HomePage /> },
 
   // ==== AUTH ====
-  {path: ROUTES.CALLBACK, element: <GoogleCallback/>},
+  { path: ROUTES.CALLBACK, element: <GoogleCallback/>},
   {
     path: ROUTES.AUTH,
     element: <AuthLayout />,
