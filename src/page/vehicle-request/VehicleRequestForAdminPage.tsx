@@ -17,7 +17,7 @@ const AdminVehicleRequestPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // ✅ Gọi API for-admin
+  // Gọi API for-admin
   const { data, isLoading, refetch } = useGetVehicleRequestsForAdmin({
     keyword: searchTerm,
     page: page - 1,
@@ -37,7 +37,7 @@ const AdminVehicleRequestPage: React.FC = () => {
     }
   };
 
-  // ✅ Đọc đúng cấu trúc dữ liệu từ backend
+  // Đọc đúng cấu trúc dữ liệu từ backend
   const vehicleRequests: IVehicleRequest[] = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
 
