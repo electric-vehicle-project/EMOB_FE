@@ -49,6 +49,7 @@ import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
+import { InstallmentPlanPage } from "../page/IntallmentPlanPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -119,6 +120,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
   },
 
@@ -157,6 +159,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
   },
 
@@ -198,6 +201,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.QUOTATION, element: <QuotationPage /> },
 
       { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
+      { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
   },
 
@@ -237,6 +241,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.CUSTOMER_EDIT, element: <CustomerEditPage /> },
       { path: ROUTES.QUOTATION, element: <QuotationPage /> },
       { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
+      { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
   },
 

@@ -32,7 +32,7 @@ export const createQueryHook =
     useQuery({
       queryKey: [queryKey, params],
       queryFn: async () => (await api.get(url, { params })).data,
-      ...options,
+      ...{ ...options, retry: 0 },
     });
 
 // ==========GET-WITH-PARAM===============
@@ -45,7 +45,7 @@ export const createQueryWithPathParamHook =
     return useQuery({
       queryKey: id ? [queryKey, id] : [queryKey],
       queryFn: async () => (await api.get(`${url}/${id}`)).data,
-      ...options,
+      ...{ ...options, retry: 0 },
     });
   };
 
