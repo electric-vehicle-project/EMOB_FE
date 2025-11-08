@@ -8,8 +8,17 @@ import { persistor, store } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+// Tạo QueryClient bên ngoài component để tránh tạo mới mỗi lần render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Tắt refetch khi focus window (tránh gọi API không cần thiết)
+      staleTime: 5 * 60 * 1000, // Dữ liệu được coi là "fresh" trong 5 phút
+    },
+  },
+});
+
 function App() {
-  const queryClient = new QueryClient();
   return (
     <ConfigProvider theme={theme}>
       <Provider store={store}>
