@@ -37,7 +37,7 @@ const AdminVehicleRequestPage: React.FC = () => {
     }
   };
 
-  // ✅ Đọc đúng cấu trúc dữ liệu từ backend
+  // Đọc đúng cấu trúc dữ liệu từ backend
   const vehicleRequests: IVehicleRequest[] = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
 
