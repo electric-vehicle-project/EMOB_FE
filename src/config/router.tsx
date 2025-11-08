@@ -134,7 +134,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.OVERVIEW, element: <h1>Overview</h1> },
-      { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
+      { path: ROUTES.VEHICLE_REQUEST, element: <AdminVehicleRequestPage /> },
 
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },

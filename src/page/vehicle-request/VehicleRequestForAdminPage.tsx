@@ -17,7 +17,7 @@ const AdminVehicleRequestPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // ✅ Gọi API for-admin
+  // Gọi API for-admin
   const { data, isLoading, refetch } = useGetVehicleRequestsForAdmin({
     keyword: searchTerm,
     page: page - 1,
