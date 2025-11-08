@@ -18,6 +18,7 @@ export const useDealerReportQuery = createQueryHook(
   data?: DealerApiResponse;
   isLoading: boolean;
   isError: boolean;
+  isFetching: boolean;
 };
 
 export const useDealerCustomerReportQuery = createQueryHook(
