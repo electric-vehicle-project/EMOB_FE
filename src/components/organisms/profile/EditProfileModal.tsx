@@ -1,10 +1,9 @@
 // src/components/organisms/profile/EditProfileModal.tsx
-import React, { useEffect } from "react";
-import { Modal, Form, Input, Select, DatePicker, message } from "antd";
+import React, { useEffect, useMemo, useState } from "react";
+import { Modal, Form, Input, Select, DatePicker, message, Tooltip } from "antd";
 import dayjs from "dayjs";
 import { AxiosError } from "axios";
-import { SaveOutlined, CloseOutlined } from "@ant-design/icons";
-
+import { SaveOutlined, CloseOutlined, LockOutlined } from "@ant-design/icons";
 import type { IAccount, Gender } from "../../../model/Account";
 import { useUpdateAccountProfile } from "../../../service/accountService";
 import { Button } from "../../atoms/Button";
@@ -12,7 +11,7 @@ import { Button } from "../../atoms/Button";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSuccess: (updated?: IAccount) => void; // parent sẽ dispatch Redux nếu có updated
+  onSuccess: (updated?: IAccount) => void;
   profile: IAccount;
 }
 
@@ -35,6 +34,20 @@ const EditProfileModal: React.FC<Props> = ({
 }) => {
   const [form] = Form.useForm();
   const updateProfile = useUpdateAccountProfile();
+  const [canSubmit, setCanSubmit] = useState(false);
+
+  const emailEditable = useMemo<boolean>(() => false, []);
+  const baseline = useMemo(
+    () => ({
+      fullName: (profile.fullName || "").trim(),
+      phone: (profile.phone || "").trim(),
+      email: (profile.email || "").trim(),
+      gender: profile.gender,
+      address: (profile.address || "").trim(),
+      dateOfBirth: profile.dateOfBirth || "",
+    }),
+    [profile]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +59,23 @@ const EditProfileModal: React.FC<Props> = ({
       address: profile.address,
       dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth) : undefined,
     });
+    setCanSubmit(false);
   }, [open, form, profile]);
+
+  const computeDiff = () => {
+    const v = form.getFieldsValue();
+    const curr = {
+      fullName: (v.fullName || "").trim(),
+      phone: (v.phone || "").trim(),
+      email: (v.email || "").trim(),
+      gender: v.gender,
+      address: (v.address || "").trim(),
+      dateOfBirth: v.dateOfBirth ? v.dateOfBirth.format("YYYY-MM-DD") : "",
+    };
+    return JSON.stringify(curr) !== JSON.stringify(baseline);
+  };
+
+  const onValuesChange = () => setCanSubmit(computeDiff());
 
   const onFinish = async (values: {
     fullName: string;
@@ -57,16 +86,32 @@ const EditProfileModal: React.FC<Props> = ({
     dateOfBirth?: dayjs.Dayjs;
   }) => {
     try {
-      const payload = {
-        fullName: values.fullName?.trim(),
-        phone: values.phone?.trim(),
-        email: values.email?.trim(),
-        gender: values.gender,
-        address: values.address?.trim(),
-        dateOfBirth: values.dateOfBirth
-          ? values.dateOfBirth.format("YYYY-MM-DD")
-          : "",
-      };
+      const payload: Partial<IAccount> = {};
+      if (values.fullName?.trim() !== baseline.fullName)
+        payload.fullName = values.fullName.trim();
+      if (values.phone?.trim() !== baseline.phone)
+        payload.phone = values.phone.trim();
+      if (
+        values.email?.trim() &&
+        emailEditable &&
+        values.email.trim() !== baseline.email
+      ) {
+        payload.email = values.email.trim();
+      }
+      if (values.gender && values.gender !== baseline.gender)
+        payload.gender = values.gender;
+      if (values.address?.trim() !== baseline.address)
+        payload.address = values.address.trim();
+      if (values.dateOfBirth) {
+        const dob = values.dateOfBirth.format("YYYY-MM-DD");
+        if (dob !== baseline.dateOfBirth) payload.dateOfBirth = dob;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        message.info("Bạn chưa thay đổi thông tin nào");
+        return;
+      }
+
       const resp = await updateProfile.mutateAsync(payload);
       const updated: IAccount | undefined =
         resp?.data?.result ?? resp?.data ?? undefined;
@@ -74,6 +119,7 @@ const EditProfileModal: React.FC<Props> = ({
       message.success("Cập nhật thông tin thành công");
       onSuccess(updated);
       form.resetFields();
+      setCanSubmit(false);
     } catch (err) {
       const e = err as AxiosError<{ message?: string }>;
       message.error(
@@ -91,83 +137,101 @@ const EditProfileModal: React.FC<Props> = ({
       centered
       title="Chỉnh sửa thông tin"
     >
-      <Form
-        layout="vertical"
-        form={form}
-        onFinish={onFinish}
-        requiredMark={false}
-        className="mt-2"
-      >
-        <Form.Item
-          name="fullName"
-          label="Họ và tên"
-          rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+      <div className="relative">
+        <Form
+          layout="vertical"
+          form={form}
+          onFinish={onFinish}
+          onValuesChange={onValuesChange}
+          requiredMark={false}
+          className="mt-2"
         >
-          <Input
-            placeholder="Nhập họ và tên"
-            allowClear
-            className="!rounded-xl"
-          />
-        </Form.Item>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Form.Item
-            name="phone"
-            label="Số điện thoại"
-            rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại" },
-              phoneRule,
-            ]}
+            name="fullName"
+            label="Họ và tên"
+            rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
           >
             <Input
-              placeholder="Nhập số điện thoại"
+              placeholder="Nhập họ và tên"
               allowClear
-              className="!rounded-xl"
+              className="!rounded-full !px-4 !py-2"
             />
           </Form.Item>
 
-          <Form.Item name="email" label="Email">
-            <Input
-              placeholder="Nhập email"
-              type="email"
-              allowClear
-              className="!rounded-xl"
-            />
-          </Form.Item>
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Form.Item
+              name="phone"
+              label="Số điện thoại"
+              rules={[
+                { required: true, message: "Vui lòng nhập số điện thoại" },
+                phoneRule,
+              ]}
+            >
+              <Input
+                placeholder="Nhập số điện thoại"
+                allowClear
+                className="!rounded-full !px-4 !py-2"
+              />
+            </Form.Item>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Form.Item name="email" label="Email">
+              {emailEditable ? (
+                <Input
+                  type="email"
+                  allowClear
+                  className="!rounded-full !px-4 !py-2"
+                  placeholder="Nhập email"
+                />
+              ) : (
+                <Tooltip title="Email là định danh tài khoản, không thể thay đổi">
+                  <Input
+                    disabled
+                    suffix={<LockOutlined />}
+                    className="!rounded-full !px-4 !py-2"
+                  />
+                </Tooltip>
+              )}
+            </Form.Item>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Form.Item
+              name="gender"
+              label="Giới tính"
+              rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}
+            >
+              <Select
+                options={genderOptions}
+                placeholder="Chọn giới tính"
+                className="!rounded-full"
+              />
+            </Form.Item>
+
+            <Form.Item name="dateOfBirth" label="Ngày sinh">
+              <DatePicker
+                className="w-full !rounded-full !px-4 !py-2"
+                format="YYYY-MM-DD"
+              />
+            </Form.Item>
+          </div>
+
           <Form.Item
-            name="gender"
-            label="Giới tính"
-            rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}
+            name="address"
+            label="Địa chỉ"
+            rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
           >
-            <Select
-              options={genderOptions}
-              placeholder="Chọn giới tính"
-              className="!rounded-xl"
+            <Input.TextArea
+              placeholder="Nhập địa chỉ"
+              autoSize={{ minRows: 3, maxRows: 5 }}
+              className="!rounded-xl !px-3 !py-2 resize-none"
+              showCount
+              maxLength={250}
             />
           </Form.Item>
+        </Form>
 
-          <Form.Item name="dateOfBirth" label="Ngày sinh">
-            <DatePicker className="w-full !rounded-xl" format="YYYY-MM-DD" />
-          </Form.Item>
-        </div>
-
-        {/* 🧱 Địa chỉ: gọn, không pill, không allowClear, không “hở sườn” */}
-        <Form.Item
-          name="address"
-          label="Địa chỉ"
-          rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
-        >
-          <Input.TextArea
-            placeholder="Nhập địa chỉ"
-            autoSize={{ minRows: 3, maxRows: 5 }}
-            className="!rounded-xl !px-3 !py-2 resize-none"
-          />
-        </Form.Item>
-
-        <div className="flex justify-end gap-2">
+        {/* Sticky footer */}
+        <div className="sticky bottom-0 bg-white pt-3 mt-4 border-t z-10 flex justify-end gap-2">
           <Button type="default" icon={<CloseOutlined />} onClick={onClose}>
             Hủy
           </Button>
@@ -176,11 +240,12 @@ const EditProfileModal: React.FC<Props> = ({
             icon={<SaveOutlined />}
             loading={updateProfile?.isPending}
             onClick={() => form.submit()}
+            disabled={!canSubmit}
           >
             Lưu thay đổi
           </Button>
         </div>
-      </Form>
+      </div>
     </Modal>
   );
 };

@@ -93,4 +93,7 @@ export const ROUTES = {
 
   // TEST DRIVE
   TEST_DRIVE: "test-drive",
+
+  //InstallmentPlan
+  INSTALLMENT_PLAN: "installment-plan",
 };

@@ -72,7 +72,11 @@ function DashboardLayout() {
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
           getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
-
+          getItem(
+            "Danh mục trả góp",
+            ROUTES.INSTALLMENT_PLAN,
+            <FileTextOutlined />
+          ),
           // Quản trị
           getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
         ];
@@ -94,7 +98,11 @@ function DashboardLayout() {
 
           // Đại lý
           getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
-
+          getItem(
+            "Danh mục trả góp",
+            ROUTES.INSTALLMENT_PLAN,
+            <FileTextOutlined />
+          ),
           // Sales & vận hành
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
@@ -131,7 +139,11 @@ function DashboardLayout() {
             ROUTES.DEALER_DISCOUNT_POLICY,
             <TagsOutlined />
           ),
-
+          getItem(
+            "Danh mục trả góp",
+            ROUTES.INSTALLMENT_PLAN,
+            <FileTextOutlined />
+          ),
           // Yêu cầu & quản trị
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
@@ -155,6 +167,11 @@ function DashboardLayout() {
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
           getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem(
+            "Danh mục trả góp",
+            ROUTES.INSTALLMENT_PLAN,
+            <FileTextOutlined />
+          ),
 
           // Sản phẩm & giá
           getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),

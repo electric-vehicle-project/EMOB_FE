@@ -30,9 +30,8 @@ const ProfileDetailsByRole: React.FC<Props> = ({ profile, dealerName }) => {
     </>
   );
 
-  const showDealer =
-    (profile.role === "MANAGER" || profile.role === "DEALER_STAFF") &&
-    !!dealerName; // chỉ hiện khi có tên (tránh lộ id)
+  // Chỉ hiện "Đại lý trực thuộc" khi có tên (đã được phía ngoài kiểm soát quyền gọi API)
+  const showDealer = !!dealerName;
 
   return (
     <Descriptions className="mt-2" column={2} size="middle" bordered>
