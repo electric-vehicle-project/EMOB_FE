@@ -75,6 +75,7 @@ export const ROUTES = {
   DELIVERY: "delivery",
   DELIVERY_CURRENT_DEALER: "delivery/current",
   DELIVERY_DEALER_DETAIL: "delivery/:id",
+  DELIVERY_CUSTOMERS: "delivery/customers",
   DELIVERY_CUSTOMER_DETAIL: "delivery/customer/:id",
 
   ACCOUNT: "accounts",
@@ -85,7 +86,6 @@ export const ROUTES = {
   CONTRACT: "contract",
   CONTRACT_DETAIL: "contract/:id",
   CONTRACT_CUSTOMER: "contract/customers",
-
   CONTRACT_CUSTOMER_DETAIL: "contract/customers/:id",
 
   // OVERVIEW

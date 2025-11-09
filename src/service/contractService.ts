@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation } from "@tanstack/react-query";
 import {
   createQueryHook,
   createQueryWithPathParamHook,
-  createMutationHook
+  createMutationHook,
 } from "../hook/useApi";
 import api from "../config/api";
 
@@ -43,7 +44,21 @@ export const useContractDetailQuery = createQueryWithPathParamHook(
 // ===============================
 // MUTATION HOOKS
 // ===============================
-export const useContractSignMutation = createMutationHook("contract", "/contract/sign"); 
+// export const useContractSignMutation = createMutationHook("contract", "/contract/sign");
+
+export const useContractSignMutation = () =>
+  useMutation({
+    mutationFn: async ({
+      params,
+      body,
+    }: {
+      params: Record<string, any>;
+      body: Record<string, any>;
+    }) => {
+      const { data } = await api.post("/contract/sign", body, { params });
+      return data;
+    },
+  });
 
 // ===============================
 // CUSTOM MUTATION HOOKS (POST có path param)
@@ -55,5 +70,5 @@ export const useContractCancelMutation = () =>
     mutationFn: async (contractId: string) => {
       const { data } = await api.post(`/contract/cancel/${contractId}`);
       return data;
-    }
+    },
   });

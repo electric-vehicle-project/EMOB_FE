@@ -1,6 +1,5 @@
-
 import { DeliveryDealerDetail } from "../../components/organisms/delivery/DeliveryDealerDetail";
-import CardWrapper from "../../components/template/CardWrapper";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 export const DeliveryCustomerDetailPage = () => {
   // const user = useCurrentUser();

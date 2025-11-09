@@ -91,9 +91,14 @@ export const DeliveryEVMAndDealerList = () => {
       setOpenModal(false);
       form.resetFields();
       refetch();
-    } catch {
-      toast.error("Không thể tạo đơn vận chuyển.");
-    }
+    } catch (err: any) {
+    // ✅ Ưu tiên message trong response.data nếu có
+    const errorMessage =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Đã xảy ra lỗi không xác định!";
+    toast.error(errorMessage);
+  }
   };
 
   return (

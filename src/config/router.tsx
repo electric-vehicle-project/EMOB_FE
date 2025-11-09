@@ -35,21 +35,26 @@ import { ResetPasswordCard } from "../components/organisms/auth/ResetPasswordCar
 import GoogleCallback from "../page/GoogleCallback";
 import OverviewRevenueDealer from "../page/overview/OverviewRevenueDealer";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
-import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
-import VehicleDetailPage from "../page/EVM/VehicleDetailPage";
-import VehicleCreatePage from "../page/EVM/VehicleCreatePage";
-import VehicleEditPage from "../page/EVM/VehicleEditPage";
-import VehicleListPage from "../page/EVM/VehicleListPage";
+import VehiclePriceRulePage from "../page/evm/VehiclePriceRulePage";
+import VehicleDetailPage from "../page/evm/VehicleDetailPage";
+import VehicleCreatePage from "../page/evm/VehicleCreatePage";
+import VehicleEditPage from "../page/evm/VehicleEditPage";
+import VehicleListPage from "../page/evm/VehicleListPage";
 import { ContractDetailDealerPage } from "../page/contract/ContractDetailDealerPage";
 import { ContractAllDealersPage } from "../page/contract/ContractAllDealersPage";
 import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerPage";
-import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
-import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
+import { VehiclePriceUpdatePage } from "../page/evm/VehiclePriceUpdatePage";
+import { VehicleBulkPage } from "../page/evm/VehicleBulkPage";
 import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
 import { InstallmentPlanPage } from "../page/IntallmentPlanPage";
+import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDealerPage";
+import { DeliveryDealerDetailPage } from "../page/delivery/DeliveryDealerDetailPage";
+import { DeliveryEVMAndCurrentDealerPage } from "../page/delivery/DeliveryEVMAndCurrentDealerPage";
+import { DeliveryDealerAndCustomerPage } from "../page/delivery/DeliveryDealerAndCustomerPage";
+import { DeliveryCustomerDetailPage } from "../page/delivery/DeliveryCustomerDetailPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -120,6 +125,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.DELIVERY_DEALER_DETAIL, element: <DeliveryDealerDetailPage/> },
       { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
   },
@@ -159,6 +165,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.DELIVERY_DEALER_DETAIL, element: <DeliveryDealerDetailPage/> },
       { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
   },
@@ -193,13 +200,15 @@ export const router = createBrowserRouter([
         element: <SaleOrderByStaffPage />,
       },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage/> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.DELIVERY_CURRENT_DEALER, element: <DeliveryEVMAndCurrentDealerPage /> },
+      { path: ROUTES.DELIVERY_CUSTOMERS, element: <DeliveryDealerAndCustomerPage/> },
+      { path: ROUTES.DELIVERY_CUSTOMER_DETAIL, element: <DeliveryCustomerDetailPage/> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
       { path: ROUTES.QUOTATION, element: <QuotationPage /> },
-
       { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
       { path: ROUTES.INSTALLMENT_PLAN, element: <InstallmentPlanPage /> },
     ],
@@ -235,6 +244,9 @@ export const router = createBrowserRouter([
       { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
+      { path: ROUTES.DELIVERY_CURRENT_DEALER, element: <DeliveryEVMAndCurrentDealerPage /> },
+      { path: ROUTES.DELIVERY_CUSTOMERS, element: <DeliveryDealerAndCustomerPage/> },
+      { path: ROUTES.DELIVERY_CUSTOMER_DETAIL, element: <DeliveryCustomerDetailPage/> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
       { path: ROUTES.CUSTOMER_DETAIL, element: <CustomerDetailPage /> },
       { path: ROUTES.CUSTOMER_CREATE, element: <CustomerCreatePage /> },

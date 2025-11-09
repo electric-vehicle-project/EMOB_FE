@@ -65,14 +65,17 @@ export const ContractDetailDealer = () => {
         paymentStatus === "FULL"
           ? { contractId: contract.contractId }
           : {
-              contractId: contract.contractId,
-              deposit: formValues.deposit,
-              downPayment: formValues.downPayment,
-              termMonths: formValues.termMonths,
-              interestRate: formValues.interestRate,
-            };
+            contractId: contract.contractId,
+            deposit: formValues.deposit,
+            downPayment: formValues.downPayment,
+            termMonths: formValues.termMonths,
+            interestRate: formValues.interestRate,
+          };
 
-      await signContract({ params: baseParams, body });
+      await signContract({
+        params: baseParams,
+        body
+      });
       toast.success("Đã ký hợp đồng thành công!");
       refetch();
       handleCancelModal();
