@@ -68,6 +68,7 @@ export const ROUTES = {
   SALE_ORDER_STAFF_SUMMARY: "sale-order/staff-summary",
   // ====== REPORT ======
   REPORT: "report",
+  REPORT_DETAIL: "report/:id",
   // ====== REPORT ======
   VEHICLE_REQUEST: "vehicle-request",
 

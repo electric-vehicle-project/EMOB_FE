@@ -47,7 +47,6 @@ export const ReportPage = () => {
   const handleSubmit = async (values: any) => {
     try {
       if (editing) {
-        // ✅ Gộp dữ liệu cũ và mới để tránh null
         const mergedValues = {
           title: values.title || editing.title,
           description: values.description || editing.description,

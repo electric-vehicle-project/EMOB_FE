@@ -2,7 +2,7 @@
 import { Input, Select, Space } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { mapToSelectOptions } from "../../../utils/mapToSelectOptions";
-import type { IReport } from "../../../model/report";
+import type { IReport } from "../../../model/Report";
 
 interface Props {
   keyword: string;

@@ -1,10 +1,16 @@
-// EMOB-2025 - ReportTable (fix tràn nút + điều chỉnh layout)
+// src/components/organisms/report/ReportTable.tsx
+// EMOB-2025 - ReportTable (v3)
+// ✅ Click vào tên để xem chi tiết
+// ✅ Bỏ cột Nội dung chi tiết, thêm lại Người tạo
+// ✅ Tăng width cột Tên báo cáo
+
 import { Table, Button, Tag, Tooltip, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined, ToolOutlined } from "@ant-design/icons";
 import type { IReport } from "../../../model/Report";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
+import { Link, useLocation } from "react-router-dom";
 
 interface Props {
   loading?: boolean;
@@ -24,17 +30,29 @@ export const ReportTable = ({
   onProcess,
 }: Props) => {
   const role = useSelector((state: RootState) => state.user?.role ?? "");
+  const location = useLocation();
+
+  // Xác định base path động (vd: /dealer_staff/report → /dealer_staff/report/:id)
+  const base = location.pathname.replace(/\/$/, "");
 
   const columns: ColumnsType<IReport> = [
     {
-      title: "Tiêu đề",
+      title: "Tên báo cáo",
       dataIndex: "title",
       key: "title",
+      align: "left",
+      width: 300,
       sorter: (a, b) =>
         a.title.localeCompare(b.title, "vi", { sensitivity: "base" }),
-      align: "left",
-      width: 220,
       ellipsis: true,
+      render: (text: string, record) => (
+        <Link
+          to={`${base}/${record.reportId}`}
+          className="text-[#3b6e58] hover:underline font-medium"
+        >
+          {text}
+        </Link>
+      ),
     },
     {
       title: "Loại báo cáo",
@@ -89,8 +107,9 @@ export const ReportTable = ({
         );
       },
     },
+    // ✅ Thêm lại cột Người tạo
     {
-      title: "Khách hàng",
+      title: "Người tạo",
       dataIndex: "fullName",
       key: "fullName",
       align: "center",

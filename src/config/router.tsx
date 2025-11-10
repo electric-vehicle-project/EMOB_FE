@@ -50,6 +50,8 @@ import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
 import { InstallmentPlanPage } from "../page/IntallmentPlanPage";
+import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDealerPage";
+import ReportDetailPage from "../page/report/ReportDetailPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -193,7 +195,8 @@ export const router = createBrowserRouter([
         element: <SaleOrderByStaffPage />,
       },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
@@ -232,7 +235,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.CONTRACT, element: <ContractAllDealersPage /> },
+      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage /> },
+      { path: ROUTES.CONTRACT, element: <ContractCurrentDealerPage /> },
       { path: ROUTES.CONTRACT_DETAIL, element: <ContractDetailDealerPage /> },
       { path: ROUTES.DELIVERY, element: <DeliveryEVMAndDealerPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomerPage /> },
