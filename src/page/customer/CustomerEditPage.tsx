@@ -1,56 +1,68 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { message, Skeleton, Card } from "antd";
+import { Skeleton, Card } from "antd";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import type { RootState } from "../../redux/store";
 import {
   useCustomerById,
   useCustomerUpdate,
 } from "../../service/customerService";
-import { CustomerForm } from "../../components/organisms/customer/CustomerForm";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import type { ICustomer } from "../../model/Customer";
+import { CustomerForm } from "../../components/organisms/customer/CustomerForm";
+
+interface CustomerFormData {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  dateOfBirth?: string | Date;
+  gender?: "MALE" | "FEMALE";
+  loyaltyPoints?: number;
+  note?: string;
+}
 
 export const CustomerEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const user = useSelector((state: RootState) => state.user);
 
-  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
+  const user = useSelector((state: RootState) => state.user);
+  const role: "MANAGER" | "DEALER_STAFF" =
+    (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
   const canEdit = role === "DEALER_STAFF";
 
-  // FETCH CUSTOMER DETAIL
   const { data, isLoading } = useCustomerById(id || "");
   const { mutateAsync: updateCustomer, isPending } = useCustomerUpdate(id);
 
-  const customer = data?.result;
+  const customer: ICustomer | undefined = data?.result;
 
   const transformedCustomer = customer
     ? {
         ...customer,
-        dateOfBirth: customer.dateOfBirth ? dayjs(customer.dateOfBirth) : null,
+        dateOfBirth: customer.dateOfBirth
+          ? dayjs(customer.dateOfBirth)
+          : undefined,
       }
-    : null;
+    : undefined;
 
-  // HANDLE SUBMIT
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: CustomerFormData): Promise<void> => {
     if (!canEdit) {
-      message.warning("Bạn không có quyền chỉnh sửa khách hàng!");
+      toast.warning("Bạn không có quyền chỉnh sửa khách hàng!");
       return;
     }
 
     if (!id) {
-      message.error("Không thể xác định ID khách hàng để cập nhật.");
+      toast.error("Không thể xác định ID khách hàng để cập nhật!");
       return;
     }
 
     try {
       await updateCustomer({ id, data: values });
-
-      message.success("Cập nhật khách hàng thành công!");
+      toast.success("Cập nhật khách hàng thành công!");
       navigate("/dealer_staff/customers");
-    } catch (err) {
-      console.error("Customer update failed:", err);
-      message.error("Không thể cập nhật khách hàng, vui lòng thử lại.");
+    } catch {
+      toast.error("Không thể cập nhật khách hàng, vui lòng thử lại!");
     }
   };
 
@@ -69,7 +81,6 @@ export const CustomerEditPage: React.FC = () => {
 
       <Card bordered>
         <CustomerForm
-          mode="edit"
           initialValues={transformedCustomer}
           onSubmit={handleSubmit}
           loading={isPending}

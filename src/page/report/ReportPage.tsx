@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Button, Input, Select, Space, message } from "antd";
+import { Button, Input, Select, Space } from "antd";
+import { toast } from "react-toastify";
 import {
   PlusOutlined,
   SearchOutlined,
@@ -82,9 +83,7 @@ export const ReportPage = () => {
   const [processing, setProcessing] = useState<IReport | null>(null);
   const [deleting, setDeleting] = useState<IReport | null>(null);
 
-  /**
-   * Handle create or update report
-   */
+  /** Handle create or update report */
   const handleSubmit = async (values: ReportFormValues): Promise<void> => {
     try {
       if (editing) {
@@ -101,35 +100,31 @@ export const ReportPage = () => {
           id: editing.reportId,
           data: mergedValues,
         });
-        message.success("Cập nhật báo cáo thành công!");
+        toast.success("Cập nhật báo cáo thành công!");
       } else {
         await createReport.mutateAsync(values);
-        message.success("Tạo báo cáo mới thành công!");
+        toast.success("Tạo báo cáo mới thành công!");
       }
 
       setOpenForm(false);
       setEditing(null);
     } catch {
-      message.error("Thao tác thất bại, vui lòng thử lại!");
+      toast.error("Thao tác thất bại, vui lòng thử lại!");
     }
   };
 
-  /**
-   * Handle delete report
-   */
+  /** Handle delete report */
   const handleDelete = async (id: string): Promise<void> => {
     try {
       await deleteReport.mutateAsync(id);
-      message.success("Xóa báo cáo thành công!");
+      toast.success("Xóa báo cáo thành công!");
       setDeleting(null);
     } catch {
-      message.error("Không thể xóa báo cáo này!");
+      toast.error("Không thể xóa báo cáo này!");
     }
   };
 
-  /**
-   * Handle process report (change status)
-   */
+  /** Handle process report (change status) */
   const handleProcess = async (
     nextStatus: IReport["status"],
     solution?: string
@@ -140,11 +135,11 @@ export const ReportPage = () => {
         id: `process-report/${processing.reportId}?status=${nextStatus}`,
         data: nextStatus === "RESOLVED" ? { solution } : {},
       });
-      message.success("Cập nhật trạng thái báo cáo thành công!");
+      toast.success("Cập nhật trạng thái báo cáo thành công!");
       setOpenProcess(false);
       setProcessing(null);
     } catch {
-      message.error("Không thể xử lý báo cáo!");
+      toast.error("Không thể xử lý báo cáo!");
     }
   };
 
@@ -155,9 +150,7 @@ export const ReportPage = () => {
     [data]
   );
 
-  /**
-   * Reset filters and sort state
-   */
+  /** Reset filters and sort state */
   const resetFilters = (): void => {
     setKeyword("");
     setStatus(undefined);
