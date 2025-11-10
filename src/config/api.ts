@@ -4,7 +4,7 @@ import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
 
 const api = axios.create({
-  // baseURL: "http://103.200.20.149/:8080/api/",
+  // baseURL: "http://103.90.226.19:8080/api/",
   baseURL: "http://localhost:8080/api",
 });
 

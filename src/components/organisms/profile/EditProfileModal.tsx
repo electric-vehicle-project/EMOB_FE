@@ -37,11 +37,12 @@ const EditProfileModal: React.FC<Props> = ({
   const [canSubmit, setCanSubmit] = useState(false);
 
   const emailEditable = useMemo<boolean>(() => false, []);
+
+  // ✅ baseline chỉ gồm 5 field đúng schema PUT /api/auth/profile
   const baseline = useMemo(
     () => ({
       fullName: (profile.fullName || "").trim(),
       phone: (profile.phone || "").trim(),
-      email: (profile.email || "").trim(),
       gender: profile.gender,
       address: (profile.address || "").trim(),
       dateOfBirth: profile.dateOfBirth || "",
@@ -67,8 +68,7 @@ const EditProfileModal: React.FC<Props> = ({
     const curr = {
       fullName: (v.fullName || "").trim(),
       phone: (v.phone || "").trim(),
-      email: (v.email || "").trim(),
-      gender: v.gender,
+      gender: v.gender as Gender,
       address: (v.address || "").trim(),
       dateOfBirth: v.dateOfBirth ? v.dateOfBirth.format("YYYY-MM-DD") : "",
     };
@@ -86,28 +86,18 @@ const EditProfileModal: React.FC<Props> = ({
     dateOfBirth?: dayjs.Dayjs;
   }) => {
     try {
-      const payload: Partial<IAccount> = {};
-      if (values.fullName?.trim() !== baseline.fullName)
-        payload.fullName = values.fullName.trim();
-      if (values.phone?.trim() !== baseline.phone)
-        payload.phone = values.phone.trim();
-      if (
-        values.email?.trim() &&
-        emailEditable &&
-        values.email.trim() !== baseline.email
-      ) {
-        payload.email = values.email.trim();
-      }
-      if (values.gender && values.gender !== baseline.gender)
-        payload.gender = values.gender;
-      if (values.address?.trim() !== baseline.address)
-        payload.address = values.address.trim();
-      if (values.dateOfBirth) {
-        const dob = values.dateOfBirth.format("YYYY-MM-DD");
-        if (dob !== baseline.dateOfBirth) payload.dateOfBirth = dob;
-      }
+      // ✅ Gửi đầy đủ shape đúng Swagger
+      const payload = {
+        fullName: values.fullName.trim(),
+        gender: values.gender,
+        address: values.address.trim(),
+        dateOfBirth: values.dateOfBirth
+          ? values.dateOfBirth.format("YYYY-MM-DD")
+          : baseline.dateOfBirth || undefined,
+        phone: values.phone.trim(),
+      };
 
-      if (Object.keys(payload).length === 0) {
+      if (!computeDiff()) {
         message.info("Bạn chưa thay đổi thông tin nào");
         return;
       }
@@ -211,6 +201,10 @@ const EditProfileModal: React.FC<Props> = ({
               <DatePicker
                 className="w-full !rounded-full !px-4 !py-2"
                 format="YYYY-MM-DD"
+                // ✅ Không cho chọn ngày trong tương lai
+                disabledDate={(current) =>
+                  current && current > dayjs().endOf("day")
+                }
               />
             </Form.Item>
           </div>
