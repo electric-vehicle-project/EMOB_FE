@@ -1,4 +1,3 @@
-// src/service/promotionService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -10,10 +9,26 @@ import {
 const BASE_URL = "/promotion";
 
 // ======= Lấy danh sách khuyến mãi theo phạm vi (GLOBAL / LOCAL) =======
-export const usePromotionList = (scope: string, page = 0, size = 10) =>
+export const usePromotionList = (
+  scope: string | string[],
+  page = 0,
+  size = 10,
+  keyword?: string,
+  status?: string,
+  sortField = "createAt",
+  sortDir: "asc" | "desc" = "desc"
+) =>
   createQueryHook("promotionList", `${BASE_URL}/view-all/{scope}`)(
     {},
-    { scope, page, size }
+    {
+      scope, // cho phép truyền mảng scope
+      page,
+      size,
+      keyword,
+      status,
+      sortField,
+      sortDir,
+    }
   );
 
 // ======= Lấy danh sách khuyến mãi của đại lý =======
