@@ -1,7 +1,10 @@
-// EMOB-2025 - ReportPage (bỏ thanh filter ngoài)
-import { useState } from "react";
-import { Button, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { useMemo, useState } from "react";
+import { Button, Input, Select, Space, message } from "antd";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import { ReportTable } from "../../components/molecules/report/ReportTable";
 import { ReportFormModal } from "../../components/molecules/report/ReportFormModal";
 import { ProcessReportModal } from "../../components/molecules/report/ProcessReportModal";
@@ -18,48 +21,86 @@ import type { IReport } from "../../model/Report";
 import useGetParams from "../../hook/useGetParams";
 import { CardWrapper } from "../../components/template/CardWrapper";
 
+interface ReportFormValues {
+  title: string;
+  description: string;
+  type: IReport["type"];
+  status?: IReport["status"];
+  customerId: string;
+  vinNumber?: string;
+}
+
+const STATUS_OPTIONS = [
+  { label: "Đang chờ", value: "PENDING" },
+  { label: "Đang xử lý", value: "IN_PROGRESS" },
+  { label: "Đã giải quyết", value: "RESOLVED" },
+  { label: "Đã xóa", value: "DELETED" },
+];
+
 export const ReportPage = () => {
-  const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState<IReport["status"] | undefined>();
-  const debouncedKeyword = useDebounce(keyword, 500);
   const getParam = useGetParams();
+
+  // --- Search & Filter
+  const [keyword, setKeyword] = useState(getParam("keyword") ?? "");
+  const [status, setStatus] = useState<IReport["status"] | undefined>(
+    (getParam("status") as IReport["status"]) || undefined
+  );
+  const debouncedKeyword = useDebounce(keyword, 400);
+
+  // --- Pagination
   const [page, setPage] = useState(Number(getParam("page")) || 0);
   const [size, setSize] = useState(Number(getParam("size")) || 10);
 
+  // --- Sort (server-based)
+  const [sortField, setSortField] = useState(
+    getParam("sortField") || "createdAt"
+  );
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(
+    (getParam("sortDir") as "asc" | "desc") || "desc"
+  );
+
+  // --- Query: Fetch report list
   const { data, isLoading } = useReportList(
     page,
     size,
     debouncedKeyword,
-    status
+    status,
+    sortField,
+    sortDir
   );
 
+  // --- Mutations
   const createReport = useReportCreate();
   const updateReport = useReportUpdate();
   const deleteReport = useReportDelete();
   const processReport = useReportProcess();
 
+  // --- Modal state
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<IReport | null>(null);
   const [openProcess, setOpenProcess] = useState(false);
   const [processing, setProcessing] = useState<IReport | null>(null);
   const [deleting, setDeleting] = useState<IReport | null>(null);
 
-  const handleSubmit = async (values: any) => {
+  /**
+   * Handle create or update report
+   */
+  const handleSubmit = async (values: ReportFormValues): Promise<void> => {
     try {
       if (editing) {
-        const mergedValues = {
-          title: values.title || editing.title,
-          description: values.description || editing.description,
-          type: values.type || editing.type,
-          status: values.status || editing.status,
-          customerId: values.customerId || editing.customerId,
+        const mergedValues: ReportFormValues = {
+          title: values.title ?? editing.title,
+          description: values.description ?? editing.description,
+          type: values.type ?? editing.type,
+          status: values.status ?? editing.status,
+          customerId: values.customerId ?? editing.customerId,
+          vinNumber: values.vinNumber ?? undefined,
         };
 
         await updateReport.mutateAsync({
           id: editing.reportId,
           data: mergedValues,
         });
-
         message.success("Cập nhật báo cáo thành công!");
       } else {
         await createReport.mutateAsync(values);
@@ -73,7 +114,10 @@ export const ReportPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  /**
+   * Handle delete report
+   */
+  const handleDelete = async (id: string): Promise<void> => {
     try {
       await deleteReport.mutateAsync(id);
       message.success("Xóa báo cáo thành công!");
@@ -83,14 +127,20 @@ export const ReportPage = () => {
     }
   };
 
-  const handleProcess = async (status: string, solution?: string) => {
+  /**
+   * Handle process report (change status)
+   */
+  const handleProcess = async (
+    nextStatus: IReport["status"],
+    solution?: string
+  ): Promise<void> => {
     if (!processing) return;
     try {
       await processReport.mutateAsync({
-        id: `process-report/${processing.reportId}?status=${status}`,
-        data: status === "RESOLVED" ? { solution } : {},
+        id: `process-report/${processing.reportId}?status=${nextStatus}`,
+        data: nextStatus === "RESOLVED" ? { solution } : {},
       });
-      message.success("Đã cập nhật trạng thái báo cáo!");
+      message.success("Cập nhật trạng thái báo cáo thành công!");
       setOpenProcess(false);
       setProcessing(null);
     } catch {
@@ -98,13 +148,30 @@ export const ReportPage = () => {
     }
   };
 
-  const reports = data?.result?.data || [];
-  const totalElements = data?.result?.metadata?.totalElements || 0;
+  // --- Derived data
+  const reports = useMemo(() => data?.result?.data ?? [], [data]);
+  const totalElements = useMemo(
+    () => data?.result?.metadata?.totalElements ?? 0,
+    [data]
+  );
+
+  /**
+   * Reset filters and sort state
+   */
+  const resetFilters = (): void => {
+    setKeyword("");
+    setStatus(undefined);
+    setSortField("createdAt");
+    setSortDir("desc");
+    setPage(0);
+    setSize(10);
+  };
 
   return (
     <CardWrapper>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[#627254] text-xl font-semibold">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-[#627254]">
           Quản lý Báo cáo
         </h2>
         <Button
@@ -117,9 +184,49 @@ export const ReportPage = () => {
         </Button>
       </div>
 
+      {/* Filter Section */}
+      <div className="mb-4">
+        <Space wrap size="middle">
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm kiếm theo tiêu đề hoặc người tạo…"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ width: 320 }}
+          />
+          <Select
+            allowClear
+            placeholder="Trạng thái"
+            style={{ width: 200 }}
+            value={status}
+            onChange={(val) => {
+              setStatus(val);
+              setPage(0);
+            }}
+            options={STATUS_OPTIONS}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={resetFilters}
+            type="primary"
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+
+      {/* Data Table */}
       <ReportTable
         loading={isLoading}
         data={reports}
+        sortField={sortField}
+        sortDir={sortDir}
+        onChangeSort={(field, dir) => {
+          setSortField(field || "createdAt");
+          setSortDir(dir === "ascend" ? "asc" : "desc");
+          setPage(0);
+        }}
         pagination={{
           current: page + 1,
           pageSize: size,
@@ -141,6 +248,7 @@ export const ReportPage = () => {
         }}
       />
 
+      {/* Create / Edit Modal */}
       <ReportFormModal
         open={openForm}
         onCancel={() => {
@@ -151,6 +259,7 @@ export const ReportPage = () => {
         onSubmit={handleSubmit}
       />
 
+      {/* Process Modal */}
       <ProcessReportModal
         open={openProcess}
         onCancel={() => {
@@ -160,6 +269,7 @@ export const ReportPage = () => {
         onSubmit={handleProcess}
       />
 
+      {/* Delete Confirmation */}
       <ReportDeleteConfirm
         open={!!deleting}
         onCancel={() => setDeleting(null)}

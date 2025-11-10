@@ -1,15 +1,17 @@
 import { Modal, Form, Select, Input, Button, Row, Col } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   open: boolean;
   onCancel: () => void;
-  onSubmit: (status: string, solution?: string) => void;
+  onSubmit: (status: "IN_PROGRESS" | "RESOLVED", solution?: string) => void;
 }
 
 export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
   const [form] = Form.useForm();
-  const [status, setStatus] = useState<string>("IN_PROGRESS");
+  const [status, setStatus] = useState<"IN_PROGRESS" | "RESOLVED">(
+    "IN_PROGRESS"
+  );
 
   const handleOk = async () => {
     try {
@@ -17,22 +19,30 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
       onSubmit(values.status, values.solution);
       form.resetFields();
     } catch {
-      /* validation failed */
+      // validation failed
     }
   };
+
+  // Reset form mỗi khi modal mở lại
+  useEffect(() => {
+    if (open) {
+      form.resetFields();
+      setStatus("IN_PROGRESS");
+    }
+  }, [open, form]);
 
   return (
     <Modal
       open={open}
       centered
+      destroyOnClose
+      onCancel={onCancel}
+      footer={null}
       title={
         <span className="text-[#627254] text-lg font-semibold">
           Xử lý Báo cáo
         </span>
       }
-      onCancel={onCancel}
-      footer={null}
-      destroyOnClose
     >
       <Form
         layout="vertical"
@@ -66,12 +76,13 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập nội dung giải pháp",
+                    message:
+                      "Vui lòng nhập nội dung giải pháp khi chọn 'Đã giải quyết'",
                   },
                 ]}
               >
                 <Input.TextArea
-                  rows={3}
+                  rows={4}
                   placeholder="Nhập mô tả giải pháp cho báo cáo..."
                   className="!resize-none !rounded-lg"
                 />

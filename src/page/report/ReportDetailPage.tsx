@@ -1,6 +1,3 @@
-// src/pages/report/ReportDetailPage.tsx
-// EMOB-2025 — ReportDetailPage (đồng bộ UI với CardWrapper)
-
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tag, Descriptions, Button, Typography, Skeleton, message } from "antd";

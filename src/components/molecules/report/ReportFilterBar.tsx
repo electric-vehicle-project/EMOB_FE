@@ -1,4 +1,3 @@
-// EMOB-2025 - ReportFilterBar (UI synced with promotion filter)
 import { Input, Select, Space } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { mapToSelectOptions } from "../../../utils/mapToSelectOptions";

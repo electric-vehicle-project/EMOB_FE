@@ -1,11 +1,9 @@
-// src/components/organisms/report/ReportTable.tsx
-// EMOB-2025 - ReportTable (v3)
-// ✅ Click vào tên để xem chi tiết
-// ✅ Bỏ cột Nội dung chi tiết, thêm lại Người tạo
-// ✅ Tăng width cột Tên báo cáo
-
 import { Table, Button, Tag, Tooltip, Space } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import type {
+  ColumnsType,
+  TableProps,
+  TablePaginationConfig,
+} from "antd/es/table";
 import { EditOutlined, DeleteOutlined, ToolOutlined } from "@ant-design/icons";
 import type { IReport } from "../../../model/Report";
 import { useSelector } from "react-redux";
@@ -15,11 +13,21 @@ import { Link, useLocation } from "react-router-dom";
 interface Props {
   loading?: boolean;
   data: IReport[];
-  pagination?: any;
+  pagination?: TablePaginationConfig;
   onEdit?: (record: IReport) => void;
   onDelete?: (record: IReport) => void;
   onProcess?: (record: IReport) => void;
+  sortField: string;
+  sortDir: "asc" | "desc";
+  onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
 }
+
+// Header style definition
+const headerStyle: React.CSSProperties & Record<string, string> = {
+  backgroundColor: "#394e31",
+  color: "#fff",
+  ["--ant-table-header-sort-active-bg"]: "#394e31",
+};
 
 export const ReportTable = ({
   loading,
@@ -28,11 +36,12 @@ export const ReportTable = ({
   onEdit,
   onDelete,
   onProcess,
+  sortField,
+  sortDir,
+  onChangeSort,
 }: Props) => {
   const role = useSelector((state: RootState) => state.user?.role ?? "");
   const location = useLocation();
-
-  // Xác định base path động (vd: /dealer_staff/report → /dealer_staff/report/:id)
   const base = location.pathname.replace(/\/$/, "");
 
   const columns: ColumnsType<IReport> = [
@@ -41,14 +50,20 @@ export const ReportTable = ({
       dataIndex: "title",
       key: "title",
       align: "left",
-      width: 300,
-      sorter: (a, b) =>
-        a.title.localeCompare(b.title, "vi", { sensitivity: "base" }),
-      ellipsis: true,
+      width: 320,
+      sorter: true,
+      sortOrder:
+        sortField === "title"
+          ? sortDir === "asc"
+            ? "ascend"
+            : "descend"
+          : null,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (text: string, record) => (
         <Link
           to={`${base}/${record.reportId}`}
-          className="text-[#3b6e58] hover:underline font-medium"
+          className="hover:underline font-medium"
+          style={{ color: "#3b6e58" }}
         >
           {text}
         </Link>
@@ -59,20 +74,23 @@ export const ReportTable = ({
       dataIndex: "type",
       key: "type",
       align: "center",
-      width: 140,
-      filters: [
-        { text: "Phản hồi", value: "FEEDBACK" },
-        { text: "Khiếu nại", value: "COMPLAINT" },
-      ],
-      onFilter: (value, record) => record.type === value,
-      render: (v: string) => (
-        <Tag
-          color={v === "COMPLAINT" ? "red" : "green"}
-          className="rounded-full px-3 py-1 text-sm"
-        >
-          {v === "COMPLAINT" ? "Khiếu nại" : "Phản hồi"}
-        </Tag>
-      ),
+      width: 150,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (v: IReport["type"]) => {
+        const map: Record<IReport["type"], { label: string; color: string }> = {
+          FEEDBACK: { label: "Phản hồi", color: "green" },
+          COMPLAINT: { label: "Khiếu nại", color: "red" },
+          DAMAGE: { label: "Hư hỏng", color: "volcano" },
+          MAINTENANCE: { label: "Bảo trì", color: "geekblue" },
+          PERFORMANCE: { label: "Hiệu suất", color: "purple" },
+        };
+        const m = map[v];
+        return (
+          <Tag color={m.color} className="rounded-full px-3 py-1 text-sm">
+            {m.label}
+          </Tag>
+        );
+      },
     },
     {
       title: "Trạng thái",
@@ -80,21 +98,15 @@ export const ReportTable = ({
       key: "status",
       align: "center",
       width: 150,
-      filters: [
-        { text: "Đang chờ", value: "PENDING" },
-        { text: "Đang xử lý", value: "IN_PROGRESS" },
-        { text: "Đã giải quyết", value: "RESOLVED" },
-        { text: "Đã xóa", value: "DELETED" },
-      ],
-      onFilter: (value, record) => record.status === value,
-      render: (s: string) => {
-        const colorMap: Record<string, string> = {
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (s: IReport["status"]) => {
+        const colorMap: Record<IReport["status"], string> = {
           PENDING: "orange",
           IN_PROGRESS: "blue",
           RESOLVED: "green",
           DELETED: "red",
         };
-        const labelMap: Record<string, string> = {
+        const labelMap: Record<IReport["status"], string> = {
           PENDING: "Đang chờ",
           IN_PROGRESS: "Đang xử lý",
           RESOLVED: "Đã giải quyết",
@@ -102,22 +114,18 @@ export const ReportTable = ({
         };
         return (
           <Tag color={colorMap[s]} className="rounded-full px-3 py-1 text-sm">
-            {labelMap[s] || s}
+            {labelMap[s]}
           </Tag>
         );
       },
     },
-    // ✅ Thêm lại cột Người tạo
     {
       title: "Người tạo",
       dataIndex: "fullName",
       key: "fullName",
       align: "center",
       width: 180,
-      sorter: (a, b) =>
-        a.fullName?.localeCompare(b.fullName ?? "", "vi", {
-          sensitivity: "base",
-        }) || 0,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (t: string) => t || "--",
     },
     {
@@ -125,9 +133,15 @@ export const ReportTable = ({
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
-      width: 180,
-      sorter: (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      width: 190,
+      sorter: true,
+      sortOrder:
+        sortField === "createdAt"
+          ? sortDir === "asc"
+            ? "ascend"
+            : "descend"
+          : null,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (v: string) =>
         new Date(v).toLocaleString("vi-VN", {
           day: "2-digit",
@@ -142,6 +156,7 @@ export const ReportTable = ({
       key: "actions",
       align: "center",
       width: 240,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (_, record) => (
         <Space size="small" className="whitespace-nowrap justify-center">
           <Tooltip title="Chỉnh sửa báo cáo">
@@ -201,6 +216,14 @@ export const ReportTable = ({
     },
   ];
 
+  const handleChange: TableProps<IReport>["onChange"] = (_p, _f, sorter) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    onChangeSort(
+      (s?.field as string) || "createdAt",
+      (s?.order as "ascend" | "descend") || undefined
+    );
+  };
+
   return (
     <div className="flex flex-col items-center">
       <Table
@@ -209,15 +232,13 @@ export const ReportTable = ({
         loading={loading}
         columns={columns}
         dataSource={data}
+        onChange={handleChange}
         pagination={{
           ...pagination,
-          showSizeChanger: false,
           position: ["bottomCenter"],
         }}
         className="shadow-sm rounded-lg w-full"
-        locale={{
-          emptyText: "Không có dữ liệu báo cáo",
-        }}
+        locale={{ emptyText: "Không có dữ liệu báo cáo" }}
       />
     </div>
   );
