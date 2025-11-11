@@ -10,7 +10,6 @@ import {
   InputNumber,
   Form,
   DatePicker,
-  Table,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -22,7 +21,7 @@ import { useReactToPrint } from "react-to-print";
 import dayjs from "dayjs";
 import {
   useContractCancelMutation,
-  useContractQueryByCustomer,
+  useContractDetailQuery,
   useContractSignMutation,
 } from "../../../service/contractService";
 import { toast } from "react-toastify";
@@ -35,7 +34,7 @@ import { useDealerByIdQuery } from "../../../service/dealerService";
 export const ContractDetailCustomer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { data, isLoading, refetch } = useContractQueryByCustomer(id);
+  const { data, isLoading, refetch } = useContractDetailQuery(id);
 
   const { mutateAsync: signContract, isPending: signing } =
     useContractSignMutation();
@@ -46,7 +45,7 @@ export const ContractDetailCustomer = () => {
   const saleOrder = useSaleOrderById(contract?.orderId).data?.result;
   const customer = useCustomerById(saleOrder?.customerId).data?.result;
   const dealer = useDealerByIdQuery(user.dealerId).data?.result;
-
+   
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -172,17 +171,19 @@ export const ContractDetailCustomer = () => {
             <p>
               <b>BÊN A (Đại lý):</b>  {dealer?.name ?? "______________________"}
               <br />
-              Địa chỉ: {dealer?.address ?? "______________________"}
-              <br />
               Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên đại lý
+              <br />
+              Địa chỉ: {dealer?.address ?? "______________________"}
             </p>
 
             <p>
-              <b>BÊN B (Khách hàng):</b> {customer?.fullName ?? "______________________"}
+              <b>BÊN B (Khách hàng):</b>
+              <br />
+              Đại diện: Ông/Bà <b>{customer?.fullName ?? "______________________"}</b>
               <br />
               Địa chỉ: {customer?.address ?? "______________________"}
               <br />
-              Số điện thoại: {customer?.phone ?? "______________________"}
+              Số điện thoại: {customer?.phoneNumber ?? "______________________"}
             </p>
 
             <Divider />
@@ -243,106 +244,63 @@ export const ContractDetailCustomer = () => {
                   (Chi tiết các dòng xe thuộc hợp đồng)
                 </p>
 
-                <Table
-                  bordered
-                  size="middle"
-                  pagination={false}
-                  dataSource={contract?.items || []}
-                  rowKey="id"
-                  columns={[
-                    {
-                      title: "STT",
-                      render: (_: any, __: any, index: number) => index + 1,
-                      width: 60,
-                      align: "center",
-                    },
-                    {
-                      title: "Mã xe (Vehicle ID)",
-                      dataIndex: "vehicleId",
-                      key: "vehicleId",
-                      width: 180,
-                    },
-                    {
-                      title: "Màu sắc",
-                      dataIndex: "color",
-                      key: "color",
-                      width: 120,
-                    },
-                    {
-                      title: "Tình trạng xe",
-                      dataIndex: "vehicleStatus",
-                      key: "vehicleStatus",
-                      render: (v: string) => {
-                        switch (v) {
-                          case "NORMAL":
-                            return "Xe tiêu chuẩn";
-                          case "TEST_DRIVE":
-                            return "Xe lái thử";
-                          case "SPECIAL":
-                            return "Xe đặc biệt";
-                          default:
-                            return v ?? "Khác";
-                        }
-                      },
-                      width: 150,
-                    },
-                    {
-                      title: "Số lượng",
-                      dataIndex: "quantity",
-                      key: "quantity",
-                      align: "center",
-                      width: 100,
-                    },
-                    {
-                      title: "Đơn giá (₫)",
-                      dataIndex: "unitPrice",
-                      key: "unitPrice",
-                      render: (v: number) => v?.toLocaleString("vi-VN"),
-                      align: "right",
-                      width: 140,
-                    },
-                    {
-                      title: "Giảm giá (₫)",
-                      dataIndex: "discountPrice",
-                      key: "discountPrice",
-                      render: (v: number) => v?.toLocaleString("vi-VN"),
-                      align: "right",
-                      width: 140,
-                    },
-                    {
-                      title: "Thành tiền (₫)",
-                      dataIndex: "totalPrice",
-                      key: "totalPrice",
-                      render: (v: number) => v?.toLocaleString("vi-VN"),
-                      align: "right",
-                      width: 160,
-                    },
-                    {
-                      title: "Mã khuyến mãi (Promotion ID)",
-                      dataIndex: "promotionId",
-                      key: "promotionId",
-                      width: 200,
-                      render: (id: string) => id ?? "Không áp dụng",
-                    },
-                    {
-                      title: "Danh sách mã xe con (Vehicle Unit IDs)",
-                      dataIndex: "vehicleUnitIds",
-                      key: "vehicleUnitIds",
-                      render: (ids: string[]) =>
-                        ids && ids.length > 0 ? (
-                          <ul className="list-disc ml-5">
-                            {ids.map((uid) => (
-                              <li key={uid}>{uid}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          "Không có"
-                        ),
-                    },
-                  ]}
-                />
+                <div className="space-y-6">
+                  {(contract?.items || []).map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
+                    >
+                      <h4 className="font-semibold mb-3 text-[#394a2f]">
+                        #{index + 1}. Xe {item.vehicleStatus === "TEST_DRIVE"
+                          ? "lái thử"
+                          : item.vehicleStatus === "SPECIAL"
+                            ? "đặc biệt"
+                            : "tiêu chuẩn"}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
+                        <p>
+                          <b>Mẫu xe :</b> {item.id}
+                        </p>
+                        <p>
+                          <b>Màu sắc:</b> {item.color || "Không xác định"}
+                        </p>
+                        <p>
+                          <b>Số lượng:</b> {item.quantity ?? 0}
+                        </p>
+                        <p>
+                          <b>Đơn giá:</b>{" "}
+                          {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                        </p>
+                        <p>
+                          <b>Giảm giá:</b>{" "}
+                          {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                        </p>
+                        <p>
+                          <b>Thành tiền:</b>{" "}
+                          {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                        </p>
+                        <p>
+                          <b>Mã khuyến mãi :</b>{" "}
+                          {item.promotionId || "Không áp dụng"}
+                        </p>
+                        <div className="col-span-2">
+                          <b>Danh sách mã xe con thuộc mẫu:</b>
+                          {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
+                            <ul className="list-disc ml-6 mt-1 text-[14px]">
+                              {item.vehicleUnitIds.map((uid: string) => (
+                                <li key={uid}>{uid}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-500 ml-2 mt-1">Không có</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                <div className="flex justify-end mt-4 text-[15px]">
+                <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
                     <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
                     <b>Tổng giá trị (chưa VAT):</b>{" "}
@@ -354,6 +312,7 @@ export const ContractDetailCustomer = () => {
                   </p>
                 </div>
               </div>
+
 
 
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.

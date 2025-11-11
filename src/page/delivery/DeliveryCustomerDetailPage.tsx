@@ -1,4 +1,4 @@
-import { DeliveryDealerDetail } from "../../components/organisms/delivery/DeliveryDealerDetail";
+import { DeliveryCustomerDetail } from "../../components/organisms/delivery/DeliveryCustomerDetail";
 import { CardWrapper } from "../../components/template/CardWrapper";
 
 export const DeliveryCustomerDetailPage = () => {
@@ -18,7 +18,7 @@ export const DeliveryCustomerDetailPage = () => {
       variant="dashboard"
     >
       {/* {canAccess ? ( */}
-        <DeliveryDealerDetail />
+        <DeliveryCustomerDetail />
       {/* ) : (
         <p className="text-center text-red-500 py-10 font-medium">
           Access Denied

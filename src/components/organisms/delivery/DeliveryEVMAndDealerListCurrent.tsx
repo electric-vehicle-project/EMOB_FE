@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
-import { Card, Select, Space } from "antd";
+import { Card, Pagination, Select, Space } from "antd";
 import {
   useDeliveryDeleteMutation,
   useDeliveryCompleteMutation,
@@ -8,6 +8,9 @@ import {
 } from "../../../service/deliveryService";
 import { DeliveryTable } from "../../molecules/delivery/DeliveryTable";
 import { toast } from "react-toastify";
+import { ROUTES } from "../../../model/routePaths";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -18,6 +21,9 @@ export const DeliveryEVMAndDealerListCurrent = () => {
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statuses, setStatuses] = useState<string[]>([]);
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
+  const navigate = useNavigate();
 
   const { data, isLoading, refetch } = useDeliveryQueryByCurrentDealer({}, {
     page,
@@ -57,63 +63,74 @@ export const DeliveryEVMAndDealerListCurrent = () => {
   };
 
   return (
-    <Card
-      title="Danh sách đơn vận chuyển từ Hãng về Đại lý"
-      extra={
-        <Space>
-          <Select
-            placeholder="Trạng thái"
-            mode="multiple"
-            value={statuses}
-            onChange={setStatuses}
-            style={{ width: 180 }}
-            allowClear
-          >
-            <Option value="IN_PROGRESS">IN_PROGRESS</Option>
-            <Option value="SUCCESS">SUCCESS</Option>
-          </Select>
+    <div>
+      <span className="flex justify-between p-5">
+        <b className="text-[#627254]">Danh sách đơn vận chuyển từ Hãng xe đến Đại lý</b>
+        <b
+          onClick={() => navigate("/" + role.toLowerCase() + "/" + ROUTES.DELIVERY_CUSTOMERS)}
+          className="underline gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
+        >
+          Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
+        </b>
+      </span>
+      <Card
+        extra={
+          <Space>
+            <Select
+              placeholder="Trạng thái"
+              mode="multiple"
+              value={statuses}
+              onChange={setStatuses}
+              style={{ width: 180 }}
+              allowClear
+            >
+              <Option value="IN_PROGRESS">IN_PROGRESS</Option>
+              <Option value="SUCCESS">SUCCESS</Option>
+            </Select>
 
-          <Select
-            value={sortField}
-            onChange={(v) => setSortField(v)}
-            style={{ width: 150 }}
-          >
-            <Option value="createAt">Ngày tạo</Option>
-            <Option value="deliveryDate">Ngày giao hàng</Option>
-          </Select>
+            <Select
+              value={sortField}
+              onChange={(v) => setSortField(v)}
+              style={{ width: 150 }}
+            >
+              <Option value="createAt">Ngày tạo</Option>
+              <Option value="deliveryDate">Ngày giao hàng</Option>
+            </Select>
 
-          <Select
-            value={sortDir}
-            onChange={(v) => setSortDir(v)}
-            style={{ width: 100 }}
-          >
-            <Option value="asc">ASC</Option>
-            <Option value="desc">DESC</Option>
-          </Select>
+            <Select
+              value={sortDir}
+              onChange={(v) => setSortDir(v)}
+              style={{ width: '100%' }}
+            >
+              <Option value="asc">Tăng dần</Option>
+              <Option value="desc">Giảm dần</Option>
+            </Select>
+            
+          </Space>
+        }
+      >
+        <DeliveryTable
+          data={deliveries}
+          loading={isLoading || deleting || completing}
+          page={page}
+          size={size}
+          total={total}
+          onPageChange={(newPage) => setPage(newPage - 1)} // convert to 0-index
+          onComplete={handleComplete}
+          onDelete={handleDelete}
+        />
 
-          <Select
-            value={size}
+        <div className="p-3 flex justify-center">
+          <Pagination
+            current={page + 1}
+            pageSize={size}
+            total={total}
+            showSizeChanger={true}
             onChange={(v) => setSize(v)}
-            style={{ width: 100 }}
-          >
-            <Option value={10}>10 / page</Option>
-            <Option value={20}>20 / page</Option>
-            <Option value={50}>50 / page</Option>
-            <Option value={100}>100 / page</Option>
-          </Select>
-        </Space>
-      }
-    >
-      <DeliveryTable
-        data={deliveries}
-        loading={isLoading || deleting || completing}
-        page={page}
-        size={size}
-        total={total}
-        onPageChange={(newPage) => setPage(newPage - 1)} // convert to 0-index
-        onComplete={handleComplete}
-        onDelete={handleDelete}
-      />
-    </Card>
+            showTotal={(total) => `Tổng ${total} đơn giao hàng`}
+          />
+        </div>
+      </Card>
+    </div>
   );
 };

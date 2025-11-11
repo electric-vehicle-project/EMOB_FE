@@ -1,39 +1,46 @@
-/* EMOB-2025 - DeliveryDetail */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Button, Divider, Space, Tag, Spin } from "antd";
-import { ArrowLeftOutlined, PrinterOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, CheckCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { useRef } from "react";
-import { useReactToPrint } from "react-to-print";
 import {
     useDeliveryCompleteMutation,
-    useDeliveryQueryByCustomer,
+    useDeliveryDeleteMutation,
+    useDeliveryDetailQuery,
 } from "../../../service/deliveryService";
 import { toast } from "react-toastify";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
 
 export const DeliveryCustomerDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // route: /delivery/:id
-    const { data, isLoading, refetch } = useDeliveryQueryByCustomer(id);
+    const { data, isLoading, refetch } = useDeliveryDetailQuery(id);
+    const { mutateAsync: deleteDelivery, isPending: deleting } =
+        useDeliveryDeleteMutation();
     const { mutateAsync: completeDelivery, isPending: completing } =
         useDeliveryCompleteMutation();
 
     const delivery = data?.result;
-    const printRef = useRef<HTMLDivElement>(null);
+    const user = useCurrentUser();
+    const role = (user as { role?: string } | null)?.role || "";
 
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: `Delivery_${delivery?.id}`,
-    });
-
-    const handleComplete = async () => {
-        if (!id) return;
+    const handleComplete = async (record: any) => {
         try {
-            await completeDelivery(id);
-            toast.success("Đã hoàn tất giao hàng!");
+            await completeDelivery(record.id);
+            toast.success("Đã đánh dấu hoàn tất giao hàng!");
             refetch();
         } catch {
             toast.error("Không thể hoàn tất giao hàng.");
+        }
+    };
+
+    const handleDelete = async (record: any) => {
+        try {
+            await deleteDelivery(record.id);
+            toast.success("Xóa giao hàng thành công!");
+            refetch();
+        } catch {
+            toast.error("Không thể xóa giao hàng.");
         }
     };
 
@@ -62,44 +69,40 @@ export const DeliveryCustomerDetail = () => {
                 <ArrowLeftOutlined />
                 <span className="font-medium">Quay lại trang trước</span>
             </div>
-
             <Card
                 title={
-
-
                     <div className="flex justify-between items-center mb-3">
                         <span className="text-lg font-semibold text-[#627254]">
                             Chi tiết đơn giao hàng
                         </span>
-                        <Button
-                            icon={<PrinterOutlined />}
-                            type="default"
-                            onClick={handlePrint}
-                            className="border-[#627254] text-[#627254] hover:!bg-[#627254] hover:!text-white"
-                        >
-                            In / Xuất PDF
-                        </Button>
                     </div>
-
                 }
                 extra={
                     <Space>
-
-                        {delivery.status === "IN_PROGRESS" && (
-                            <Button
-                                icon={<CheckCircleOutlined />}
-                                loading={completing}
-                                onClick={handleComplete}
-                                className="!bg-green-600 !border-none text-white"
-                            >
-                                Hoàn tất giao hàng
-                            </Button>
+                        {delivery.status === "IN_PROGRESS" && role === "DEALER_STAFF" && (
+                            <>
+                                <Button
+                                    icon={<CheckCircleOutlined />}
+                                    loading={completing}
+                                    onClick={handleComplete}
+                                    className="!bg-[var(--primary-color)] hover:!bg-[var(--secondary-color)] !border-none text-white"
+                                >
+                                    Hoàn tất giao hàng
+                                </Button>,
+                                <Button
+                                    icon={<DeleteOutlined />}
+                                    loading={deleting}
+                                    onClick={handleDelete}
+                                    className="!bg-red-700 hover:!bg-red-600 !border-none text-white"
+                                >
+                                    Xóa đơn giao hàng
+                                </Button>
+                            </>
                         )}
                     </Space>
                 }
             >
-                <div ref={printRef} className="text-gray-700 space-y-4">
-                    <Divider className="!my-3" />
+                <div className="text-gray-700 space-y-4">
                     <div className="grid grid-cols-2 gap-x-10 gap-y-4">
                         <div>
                             <p className="text-sm text-gray-500">Mã giao hàng</p>

@@ -71,7 +71,7 @@ function DashboardLayout() {
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_DEALERS, <SendOutlined />),
           getItem(
             "Danh mục trả góp",
             ROUTES.INSTALLMENT_PLAN,
@@ -107,7 +107,7 @@ function DashboardLayout() {
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_DEALERS, <SendOutlined />),
         ];
 
       // ===================== MANAGER =====================
@@ -121,7 +121,7 @@ function DashboardLayout() {
           getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
           getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
 
           // Sản phẩm & giá
@@ -166,7 +166,7 @@ function DashboardLayout() {
           getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
           getItem(
             "Danh mục trả góp",
             ROUTES.INSTALLMENT_PLAN,
