@@ -170,3 +170,23 @@ export const useGetAllVehicleUnits = (params?: unknown, options?: unknown) => {
 // ✅ Hook mới dùng đúng endpoint /vehicle/bulk và đúng chuẩn useApi
 export const useCreateVehicleUnitsBulk = () =>
   createMutationHook("vehicleUnitBulk", "/vehicle/bulk")();
+
+// ========== BULK DELETE VEHICLE UNITS ==========
+export const useDeleteVehicleUnitsBulk = () => {
+  const queryClient = useQueryClient(); // ✅ Thêm dòng này
+
+  return useMutation({
+    mutationFn: async (vehicleUnitIds: string[]) => {
+      const body = { vehicleUnitIds };
+      const res = await api.delete(`/vehicle/vehicle-units`, { data: body });
+      return res.data;
+    },
+    onSuccess: () => {
+      // ✅ Làm tươi dữ liệu các list units liên quan
+      queryClient.invalidateQueries({
+        queryKey: ["get-vehicle-units-by-model"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["get-all-vehicle-units"] });
+    },
+  });
+};

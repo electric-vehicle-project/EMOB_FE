@@ -3,6 +3,7 @@ import { VehicleForm } from "../../molecules/EVM/VehicleForm";
 import type { IVehicle } from "../../../model/Vehicle";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
+import { CarOutlined } from "@ant-design/icons";
 
 interface Props {
   open: boolean;
@@ -34,11 +35,32 @@ export const VehicleModal = ({
   return (
     <Modal
       open={open}
-      title={initialValues ? "Chỉnh sửa thông tin xe" : "Thêm xe điện mới"}
       onCancel={onClose}
-      okText="Lưu"
-      cancelText="Huỷ"
       onOk={() => form.submit()}
+      okText={initialValues ? "Lưu thay đổi" : "Tạo mới"}
+      cancelText="Huỷ"
+      width={860}
+      destroyOnClose
+      maskClosable={false}
+      centered
+      title={
+        <div className="flex items-center gap-2">
+          <CarOutlined className="text-[#627254]" />
+          <span>
+            {initialValues ? "Chỉnh sửa thông tin xe" : "Thêm xe điện mới"}
+          </span>
+        </div>
+      }
+      styles={{
+        body: { paddingTop: 12, paddingBottom: 8 },
+        header: { borderBottom: "1px solid #f0f0f0" },
+        footer: { borderTop: "1px solid #f0f0f0" },
+      }}
+      okButtonProps={{
+        className:
+          "!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] !rounded-md",
+      }}
+      cancelButtonProps={{ className: "!rounded-md" }}
     >
       <VehicleForm
         form={form}
@@ -48,3 +70,5 @@ export const VehicleModal = ({
     </Modal>
   );
 };
+
+export default VehicleModal;

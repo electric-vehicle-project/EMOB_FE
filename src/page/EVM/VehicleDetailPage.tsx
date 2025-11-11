@@ -1,6 +1,6 @@
 /* EMOB-2025 - VehicleDetailPage */
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { Card, Tag, Space, Tooltip, message, Popconfirm } from "antd";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { Card, Tag, Space, Tooltip, message, Popconfirm, Image } from "antd";
 import {
   useLocation,
   useNavigate,
@@ -35,6 +35,7 @@ import {
   AppstoreOutlined,
   ColumnWidthOutlined,
   DeleteOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { ROUTES } from "../../model/routePaths";
 import { Button } from "../../components/atoms/Button";
@@ -99,37 +100,64 @@ export const VehicleDetailPage = () => {
 
   const [compareOpen, setCompareOpen] = useState(false);
 
-  // Modal Units theo query
-  const [searchParams, setSearchParams] = useSearchParams();
+  // =========================
+  // Xem lô xe bằng query param
+  // =========================
+  const [searchParams] = useSearchParams();
   const [unitsOpen, setUnitsOpen] = useState(false);
   useEffect(() => {
     setUnitsOpen(searchParams.get("openUnits") === "1");
   }, [searchParams]);
 
+  // ⚠️ Cache nguồn điều hướng (list/edit) để không bị mất khi đổi query
+  const fromRef = useRef<"list" | "edit" | null>(null);
+  useEffect(() => {
+    const from =
+      typeof location.state === "object" &&
+      (location.state as Record<string, unknown>)?.from;
+    if (from === "list" || from === "edit") fromRef.current = from;
+  }, [location.state]);
+
+  // Mở modal: thêm openUnits=1 nhưng GIỮ state hiện tại
+  const handleOpenUnits = useCallback(() => {
+    const next = new URLSearchParams(location.search);
+    next.set("openUnits", "1");
+    setUnitsOpen(true);
+    navigate(
+      { search: `?${next.toString()}` },
+      { replace: true, state: location.state }
+    );
+  }, [location.search, navigate, location.state]);
+
+  // Đóng modal: xóa openUnits và GIỮ state
+  const handleCloseUnits = useCallback(() => {
+    const next = new URLSearchParams(location.search);
+    next.delete("openUnits");
+    setUnitsOpen(false);
+    navigate(
+      { search: next.toString() ? `?${next.toString()}` : "" },
+      { replace: true, state: location.state }
+    );
+  }, [location.search, navigate, location.state]);
+
   const priced = hasVehiclePriced(vehicle);
 
-  // Back button logic:
-  // - Nếu đi từ trang Bulk (location.state?.from === 'bulk'), back sẽ giữ nguyên ở Detail
-  //   để tránh quay về Bulk theo mong muốn của bạn.
+  // Back button logic (ổn định dù đã mở/đóng modal)
   const handleBack = useCallback(() => {
-    const fromState =
-      typeof location.state === "object"
-        ? (location.state as Record<string, unknown>).from
-        : null;
-
-    // Nếu vừa quay lại từ Edit thì về luôn List
+    const fromState = fromRef.current;
     if (fromState === "edit" || fromState === "list") {
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
       return;
     }
-
-    navigate(-1);
-  }, [location.state, navigate, basePath]);
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
+    }
+  }, [navigate, basePath]);
 
   const actions = useMemo(() => {
     const arr: ReactElement[] = [];
-
-    // Quay lại
     arr.push(
       <Button key="back" icon={<ArrowLeftOutlined />} onClick={handleBack}>
         Quay lại
@@ -236,10 +264,7 @@ export const VehicleDetailPage = () => {
         <Button
           key="view-units"
           icon={<AppstoreOutlined />}
-          onClick={() => {
-            setSearchParams({ openUnits: "1" }, { replace: true });
-            setUnitsOpen(true);
-          }}
+          onClick={handleOpenUnits}
           className="rounded-md"
         >
           Xem lô xe
@@ -270,8 +295,8 @@ export const VehicleDetailPage = () => {
     priced,
     deleting,
     deleteVehicle,
-    setSearchParams,
     handleBack,
+    handleOpenUnits,
   ]);
 
   const name = `${vehicle?.brand ?? ""} ${vehicle?.model ?? ""}`.trim();
@@ -279,6 +304,10 @@ export const VehicleDetailPage = () => {
     ? vehicle!.images
     : [];
   const mainImage = images[0] || "/images/vehicle-placeholder.png";
+
+  // --- Lightbox preview (Antd Image.PreviewGroup) ---
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   return (
     <CardWrapper
@@ -292,40 +321,92 @@ export const VehicleDetailPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* ====== ẢNH & GALLERY ====== */}
         <Card loading={isLoading} className="rounded-2xl lg:col-span-5">
-          <div className="w-full h-72 sm:h-80 overflow-hidden flex items-center justify-center bg-white rounded-xl border">
+          {/* Lightbox viewer (ẩn, điều khiển qua state) */}
+          <Image.PreviewGroup
+            items={(images.length ? images : [mainImage]) as string[]}
+            preview={{
+              visible: previewOpen,
+              current: previewIndex,
+              onVisibleChange: (v) => setPreviewOpen(v),
+              onChange: (idx) => setPreviewIndex(idx),
+            }}
+          />
+
+          {/* Ảnh chính */}
+          <div
+            className="group w-full aspect-[4/3] overflow-hidden flex items-center justify-center bg-white rounded-xl border cursor-zoom-in"
+            onClick={() => {
+              setPreviewIndex(0);
+              setPreviewOpen(true);
+            }}
+          >
             <img
               src={mainImage}
               alt={name || "vehicle"}
-              className="object-contain h-full"
+              className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src =
                   "/images/vehicle-placeholder.png";
               }}
             />
+            <div className="pointer-events-none absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1 rounded-md bg-black/50 text-white text-xs px-2 py-1">
+              <PictureOutlined />
+              Nhấn để phóng to
+            </div>
           </div>
+
+          {/* Thumbnails */}
           {images.length > 1 && (
-            <div className="mt-3 grid grid-cols-4 gap-3">
-              {images.slice(0, 4).map((url, i) => (
-                <div
+            <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2">
+              {images.slice(0, 6).map((url, i) => (
+                <button
                   key={i}
-                  className="h-16 border rounded-lg overflow-hidden flex items-center justify-center bg-white"
+                  type="button"
+                  className={`h-16 rounded-xl border overflow-hidden bg-white focus:outline-none focus:ring-2 focus:ring-[#627254] ${
+                    i === previewIndex
+                      ? "ring-2 ring-[#627254]"
+                      : "border-gray-300"
+                  }`}
+                  onClick={() => {
+                    setPreviewIndex(i);
+                    setPreviewOpen(true);
+                  }}
+                  title={`Xem ảnh ${i + 1}`}
                 >
                   <img
                     src={url}
                     alt={`thumb-${i}`}
-                    className="object-contain h-full"
+                    className="object-cover w-full h-full"
+                    loading="lazy"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src =
                         "/images/vehicle-placeholder.png";
                     }}
                   />
-                </div>
+                </button>
               ))}
+
+              {images.length > 6 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewIndex(0);
+                    setPreviewOpen(true);
+                  }}
+                  className="h-16 rounded-xl border border-dashed bg-gray-50 hover:bg-gray-100 transition text-sm text-gray-600"
+                  title="Xem tất cả ảnh"
+                >
+                  +{images.length - 6} ảnh
+                </button>
+              )}
             </div>
           )}
         </Card>
 
+        {/* ====== THÔNG TIN CHI TIẾT ====== */}
         <Card loading={isLoading} className="rounded-2xl lg:col-span-7">
           {!isLoading && vehicle && (
             <>
@@ -429,11 +510,7 @@ export const VehicleDetailPage = () => {
       {id && (
         <VehicleUnitListModal
           open={unitsOpen}
-          onClose={() => {
-            setUnitsOpen(false);
-            searchParams.delete("openUnits");
-            setSearchParams(searchParams, { replace: true });
-          }}
+          onClose={handleCloseUnits}
           vehicleId={id}
         />
       )}
