@@ -5,11 +5,8 @@ import type { SalesByStaffResponse } from "../../../model/SaleOrder";
 interface Props {
   data: SalesByStaffResponse[];
   loading?: boolean;
-
-  // ✅ Thêm để đồng bộ hiển thị mũi tên sort và xử lý sort backend
   sortField?: keyof SalesByStaffResponse;
   sortDir?: "asc" | "desc";
-
   onSortChange?: (
     field: keyof SalesByStaffResponse,
     order: "asc" | "desc"
@@ -23,16 +20,22 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
   sortDir = "desc",
   onSortChange,
 }) => {
-  // ✅ Map Ant Design sort direction
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
+
+  const headerStyle: React.CSSProperties = {
+    backgroundColor: "#394e31",
+    color: "white",
+    textAlign: "center",
+  };
 
   const columns: ColumnsType<SalesByStaffResponse> = [
     {
       title: "Nhân viên",
       dataIndex: "staffName",
       key: "staffName",
-      width: 300,
+      align: "left",
       ellipsis: true,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (text: string) => (
         <span className="font-medium text-gray-700">{text}</span>
       ),
@@ -44,6 +47,10 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       align: "center",
       sorter: true,
       sortOrder: sortField === "orderCount" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (value: number) => (
+        <span className="text-gray-800 font-semibold">{value}</span>
+      ),
     },
     {
       title: "Tổng doanh thu (₫)",
@@ -52,15 +59,15 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       align: "center",
       sorter: true,
       sortOrder: sortField === "amount" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (value: number) => (
-        <span className="text-[#2563eb] font-medium">
-          {value?.toLocaleString("vi-VN")}
+        <span className="text-[#2563eb] font-semibold whitespace-nowrap">
+          {value != null ? value.toLocaleString("vi-VN") : "0"}
         </span>
       ),
     },
   ];
 
-  // ✅ Đồng bộ backend sort handler
   const handleChange: TableProps<SalesByStaffResponse>["onChange"] = (
     _pagination,
     _filters,
@@ -81,8 +88,9 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       loading={loading}
       pagination={false}
       bordered={false}
-      className="shadow-sm rounded-lg"
+      className="rounded-lg shadow-sm bg-white [&_.ant-table-thead>tr>th]:!text-white"
       onChange={handleChange}
+      scroll={{ x: "max-content" }}
     />
   );
 };

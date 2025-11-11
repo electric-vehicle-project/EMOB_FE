@@ -53,7 +53,6 @@ import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDeale
 import ReportDetailPage from "../page/report/ReportDetailPage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import DealerPointRuleAdminPage from "../page/dealer-point-rule/DealerPointRuleAdminPage";
-import DealerEmployeeChart from "../page/overview/DealerEmployeeChart";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
