@@ -1,5 +1,5 @@
 // src/page/profile/ProfilePage.tsx
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   Card,
   Form,
@@ -13,7 +13,7 @@ import {
   Tag,
   Skeleton,
   Tabs,
-  Progress,
+  Modal, // ✅ thêm Modal để bật popup cảnh báo
 } from "antd";
 import {
   MailOutlined,
@@ -108,18 +108,14 @@ const shallowEqual = (a: NormalizedProfile, b: NormalizedProfile) =>
   a.dateOfBirth === b.dateOfBirth;
 
 /* =================== Change Password Tab =================== */
-const getStrength = (pwd: string) => {
-  let score = 0;
-  if (pwd.length >= 8) score++;
-  if (/[a-z]/.test(pwd)) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/\d/.test(pwd)) score++;
-  if (/[^A-Za-z0-9]/.test(pwd)) score++;
-  const percent = Math.min(100, (score / 5) * 100);
-  const label = percent >= 80 ? "Mạnh" : percent >= 60 ? "Trung bình" : "Yếu";
-  const status: "exception" | "active" | "success" =
-    percent >= 80 ? "success" : percent >= 60 ? "active" : "exception";
-  return { percent, label, status };
+// Helper: extract API error message safely
+const getApiErrorMessage = (err: unknown): string | undefined => {
+  if (typeof err === "object" && err !== null && "response" in err) {
+    const resp = (err as { response?: { data?: { message?: string } } })
+      .response;
+    return resp?.data?.message;
+  }
+  return undefined;
 };
 
 const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
@@ -129,54 +125,63 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
     confirmPassword: string;
   }>();
   const changePassword = useChangePassword();
-  const [newPwd, setNewPwd] = useState("");
-  const [capsLock, setCapsLock] = useState(false);
-  const strength = getStrength(newPwd);
 
-  // enable/disable submit
-  Form.useWatch([], form); // trigger re-render on change
-  const hasErrors = form.getFieldsError().some((f) => f.errors.length);
-  const canSubmit = !!form.isFieldsTouched(true) && !hasErrors;
+  const clean = (s: string) =>
+    (s ?? "")
+      .normalize("NFKC")
+      .replace(
+        /[\u00A0\u2000-\u200F\u2028\u202F\u205F\u2060-\u206F\uFEFF]/g,
+        ""
+      )
+      .trim();
 
-  const onFinish = async (values: {
+  // 🔍 State theo dõi hai ô mới và xác nhận
+  const newPassword = Form.useWatch("newPassword", form) ?? "";
+  const confirmPassword = Form.useWatch("confirmPassword", form) ?? "";
+
+  // ✅ Auto validate khi 2 ô thay đổi
+  useEffect(() => {
+    const next = clean(newPassword);
+    const cf = clean(confirmPassword);
+    if (!cf) return;
+    if (next === cf) {
+      form.setFields([{ name: "confirmPassword", errors: [] }]);
+    } else {
+      form.setFields([
+        { name: "confirmPassword", errors: ["Xác nhận mật khẩu không khớp"] },
+      ]);
+    }
+  }, [newPassword, confirmPassword, form]);
+
+  const onFinish = async (v: {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
   }) => {
-    if (values.newPassword !== values.confirmPassword) {
+    const current = clean(v.currentPassword);
+    const next = clean(v.newPassword);
+    const confirm = clean(v.confirmPassword);
+
+    if (next !== confirm) {
       message.error("Xác nhận mật khẩu không khớp");
       return;
     }
-    if (values.newPassword === values.currentPassword) {
-      message.error("Mật khẩu mới không được trùng mật khẩu hiện tại");
+    if (current === next) {
+      Modal.warning({
+        title: "Mật khẩu mới trùng mật khẩu hiện tại",
+        content: "Vui lòng dùng mật khẩu khác.",
+        okText: "Đã hiểu",
+      });
       return;
     }
 
     try {
-      // Xác thực currentPassword
-      await api.post("/auth/login", {
-        email,
-        password: values.currentPassword,
-      });
-
-      // Reset password
-      await changePassword.mutateAsync({ newPassword: values.newPassword });
-
+      await api.post("/auth/login", { email, password: current });
+      await changePassword.mutateAsync({ newPassword: next });
       message.success("Đổi mật khẩu thành công");
       form.resetFields();
-      setNewPwd("");
-    } catch (error) {
-      const isApiError =
-        error &&
-        typeof error === "object" &&
-        "response" in error &&
-        error.response &&
-        typeof error.response === "object" &&
-        "data" in error.response;
-      const msg = isApiError
-        ? (error.response as { data?: { message?: string } })?.data?.message ||
-          "Đổi mật khẩu thất bại"
-        : "Đổi mật khẩu thất bại";
+    } catch (e: unknown) {
+      const msg = getApiErrorMessage(e) || "Đổi mật khẩu thất bại";
       message.error(msg);
     }
   };
@@ -188,7 +193,7 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
         layout="vertical"
         requiredMark={false}
         onFinish={onFinish}
-        validateTrigger={["onChange", "onBlur"]}
+        validateTrigger={["onBlur", "onSubmit"]}
       >
         <Title level={5} className="!mt-0">
           Đổi mật khẩu
@@ -203,19 +208,16 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
           ]}
         >
           <Input.Password
+            autoComplete="current-password"
             placeholder="Nhập mật khẩu hiện tại"
             className="!rounded-xl"
-            onKeyUp={(e) => {
-              if (e.nativeEvent instanceof KeyboardEvent) {
-                setCapsLock(e.nativeEvent.getModifierState("CapsLock"));
-              }
-            }}
           />
         </Form.Item>
 
         <Form.Item
           name="newPassword"
           label="Mật khẩu mới"
+          dependencies={["currentPassword"]}
           rules={[
             { required: true, message: "Vui lòng nhập mật khẩu mới" },
             { min: 8, message: "Mật khẩu tối thiểu 8 ký tự" },
@@ -225,54 +227,20 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
             },
           ]}
         >
-          <>
-            <Input.Password
-              placeholder="Nhập mật khẩu mới"
-              className="!rounded-xl"
-              value={newPwd}
-              onChange={(e) => setNewPwd(e.target.value)}
-              onKeyUp={(e) => {
-                if (e.nativeEvent instanceof KeyboardEvent) {
-                  setCapsLock(e.nativeEvent.getModifierState("CapsLock"));
-                }
-              }}
-            />
-            <div className="mt-2 flex items-center justify-between">
-              <div className="text-xs text-gray-500">
-                {capsLock ? "⚠️ CapsLock đang bật" : " "}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600">{strength.label}</span>
-                <Progress
-                  percent={strength.percent}
-                  size="small"
-                  status={strength.status}
-                  showInfo={false}
-                  className="min-w-[100px]"
-                />
-              </div>
-            </div>
-          </>
+          <Input.Password
+            autoComplete="new-password"
+            placeholder="Nhập mật khẩu mới"
+            className="!rounded-xl"
+          />
         </Form.Item>
 
         <Form.Item
           name="confirmPassword"
           label="Xác nhận mật khẩu"
-          dependencies={["newPassword"]}
-          rules={[
-            { required: true, message: "Vui lòng xác nhận mật khẩu" },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value || getFieldValue("newPassword") === value)
-                  return Promise.resolve();
-                return Promise.reject(
-                  new Error("Xác nhận mật khẩu không khớp")
-                );
-              },
-            }),
-          ]}
+          rules={[{ required: true, message: "Vui lòng xác nhận mật khẩu" }]}
         >
           <Input.Password
+            autoComplete="off"
             placeholder="Nhập lại mật khẩu mới"
             className="!rounded-xl"
           />
@@ -284,7 +252,6 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
             icon={<KeyOutlined />}
             loading={changePassword.isPending}
             onClick={() => form.submit()}
-            disabled={!canSubmit}
           >
             Đổi mật khẩu
           </Button>
@@ -300,7 +267,6 @@ export default function ProfilePage() {
   const profile = useCurrentUser();
   const updateProfile = useUpdateAccountProfile();
 
-  // only MANAGER / DEALER_STAFF may have dealerId to show dealer name
   const canQueryDealerName =
     (profile?.role === "MANAGER" || profile?.role === "DEALER_STAFF") &&
     !!profile?.dealerId;
@@ -314,7 +280,6 @@ export default function ProfilePage() {
     return d?.name || undefined;
   }, [dealerQuery.data]);
 
-  // If profile not ready
   if (!profile) {
     return (
       <CardWrapper
@@ -331,7 +296,6 @@ export default function ProfilePage() {
   /* ---------- Edit Profile Tab ---------- */
   const EditProfileTab: React.FC = () => {
     const [form] = Form.useForm<ProfileFormValues>();
-    // Baseline ref to compare diffs reliably
     const baselineRef = useRef<NormalizedProfile>({
       fullName: profile.fullName?.trim() || "",
       phone: profile.phone?.trim() || "",
@@ -340,7 +304,6 @@ export default function ProfilePage() {
       dateOfBirth: profile.dateOfBirth || "",
     });
 
-    // initial values for the form
     const initialValues: ProfileFormValues = {
       fullName: profile.fullName || "",
       email: profile.email || "",
@@ -350,7 +313,6 @@ export default function ProfilePage() {
       dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth) : undefined,
     };
 
-    // watch all fields -> re-render when any changes
     const watched = Form.useWatch([], form);
     const currentValues: ProfileFormValues =
       watched || (initialValues as ProfileFormValues);
@@ -360,9 +322,7 @@ export default function ProfilePage() {
       [currentValues]
     );
 
-    // Recalculate errors when form values change (watched triggers re-render)
     const hasErrors = form.getFieldsError().some((f) => f.errors.length);
-
     const hasDiff = useMemo(
       () => !shallowEqual(currentNorm, baselineRef.current),
       [currentNorm]
@@ -387,32 +347,19 @@ export default function ProfilePage() {
 
         message.success("Cập nhật thông tin thành công");
         if (updated) {
-          // update redux
           dispatch(loginAction(updated));
-          // refresh baseline with current normalized values
           baselineRef.current = normalize({
             ...values,
             email: profile.email,
           });
         }
-      } catch (err) {
-        // Check if it's a form validation error (has errorFields)
+      } catch (err: unknown) {
         const isValidationError =
           err && typeof err === "object" && "errorFields" in err;
 
         if (!isValidationError) {
-          // It's an API error, extract message if available
-          const isApiError =
-            err &&
-            typeof err === "object" &&
-            "response" in err &&
-            err.response &&
-            typeof err.response === "object" &&
-            "data" in err.response;
-          const errorMessage = isApiError
-            ? (err.response as { data?: { message?: string } })?.data
-                ?.message || "Cập nhật thất bại, vui lòng thử lại"
-            : "Cập nhật thất bại, vui lòng thử lại";
+          const errorMessage =
+            getApiErrorMessage(err) || "Cập nhật thất bại, vui lòng thử lại";
           message.error(errorMessage);
         }
       }
@@ -421,14 +368,13 @@ export default function ProfilePage() {
     return (
       <Card className="rounded-2xl border border-gray-100 shadow-sm">
         <Form
-          key={profile.id || profile.email} // re-init when profile updates
+          key={profile.id || profile.email}
           form={form}
           layout="vertical"
           requiredMark={false}
           initialValues={initialValues}
           validateTrigger={["onChange", "onBlur"]}
         >
-          {/* Header info row (name + status + role + dealer) */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
             <div className="flex items-center gap-2">
               <UserOutlined />
@@ -458,7 +404,6 @@ export default function ProfilePage() {
           <Divider className="!my-3" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Fullname */}
             <Form.Item
               label="Họ và tên"
               name="fullName"
@@ -473,7 +418,6 @@ export default function ProfilePage() {
               />
             </Form.Item>
 
-            {/* Email (disabled) */}
             <Form.Item label="Email" name="email">
               <Input
                 disabled
@@ -482,7 +426,6 @@ export default function ProfilePage() {
               />
             </Form.Item>
 
-            {/* Phone */}
             <Form.Item
               label="Số điện thoại"
               name="phone"
@@ -498,7 +441,6 @@ export default function ProfilePage() {
               />
             </Form.Item>
 
-            {/* Gender */}
             <Form.Item
               label="Giới tính"
               name="gender"
@@ -518,7 +460,6 @@ export default function ProfilePage() {
               />
             </Form.Item>
 
-            {/* Date of birth */}
             <Form.Item label="Ngày sinh" name="dateOfBirth">
               <DatePicker
                 className="w-full !rounded-full !px-4 !py-2"
@@ -531,7 +472,6 @@ export default function ProfilePage() {
               />
             </Form.Item>
 
-            {/* Address */}
             <Form.Item
               label="Địa chỉ"
               name="address"
@@ -568,7 +508,6 @@ export default function ProfilePage() {
     );
   };
 
-  /* ---------- Render Page with Tabs ---------- */
   return (
     <CardWrapper
       title="Hồ sơ cá nhân"
