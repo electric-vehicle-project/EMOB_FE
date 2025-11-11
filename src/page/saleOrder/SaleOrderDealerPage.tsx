@@ -7,7 +7,7 @@ import type { RootState } from "../../redux/store";
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 
 import {
-  useSaleOrdersOfCurrentDealer,
+  useSaleOrderListCurrentDealer,
   useSaleOrderDelete,
 } from "../../service/saleOrderService";
 
@@ -16,71 +16,66 @@ import { SaleOrderFilterBar } from "../../components/organisms/saleOrder/SaleOrd
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
 
+// ROLE TYPE CHUẨN
+type DealerRole = "MANAGER" | "DEALER_STAFF";
+
 const SaleOrderDealerPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user);
-  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
+  const role = user?.role as DealerRole | undefined;
 
-  // ========================
   // State
-  // ========================
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL");
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SaleOrderResponse | null>(
     null
   );
-  const [sortField, setSortField] = useState<string>("createdAt");
-  const [sortDir, setSortDir] = useState<string>("desc");
+  const [sortField, setSortField] =
+    useState<keyof SaleOrderResponse>("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // ========================
   // Query Params
-  // ========================
+
   const params = useMemo(() => {
     const statuses = statusFilter === "ALL" ? undefined : [statusFilter];
     return { page: 0, size: 10, statuses, sortField, sortDir };
   }, [statusFilter, sortField, sortDir]);
 
-  // ========================
   // Fetch Data
-  // ========================
-  const { data, isLoading, isFetching, refetch } = useSaleOrdersOfCurrentDealer(
-    {},
-    params
-  );
-  const orders: SaleOrderResponse[] =
-    ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
+
+  const { data, isLoading, isFetching, refetch } =
+    useSaleOrderListCurrentDealer(params);
+
+  const orders: SaleOrderResponse[] = data?.result?.data ?? data?.data ?? [];
 
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, sortField, sortDir]);
 
-  // ========================
   // Summary for Filter Bar
-  // ========================
+
   const statusCounts = useMemo(() => {
     const counts = { all: 0, created: 0, completed: 0, canceled: 0 };
-    orders.forEach((o) => {
+    for (const o of orders) {
       counts.all++;
       if (o.status === "CREATED") counts.created++;
       else if (o.status === "COMPLETED") counts.completed++;
       else if (o.status === "CANCELED") counts.canceled++;
-    });
+    }
     return counts;
   }, [orders]);
 
-  // ========================
   // Mutations
-  // ========================
+
   const { mutateAsync: cancelOrder, isPending: canceling } =
     useSaleOrderDelete();
 
-  // ========================
   // Handlers
-  // ========================
+
   const handleViewDetail = (id: string) => {
-    const base = `/${String(role || "").toLowerCase()}`;
-    navigate(`${base}/sale-order/${id}`, { replace: false });
+    const base = `/${role?.toLowerCase()}`;
+    navigate(`${base}/sale-order/${id}`);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -103,13 +98,8 @@ const SaleOrderDealerPage: React.FC = () => {
     }
   };
 
-  const handleNavigateToStaffOrders = () => {
-    navigate("/dealer_staff/sale-order/staff");
-  };
-
-  // ========================
   // Render
-  // ========================
+
   return (
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">

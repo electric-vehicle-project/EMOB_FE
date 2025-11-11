@@ -2,114 +2,160 @@ import {
   createQueryHook,
   createQueryWithPathParamHook,
   createMutationHook,
+  updateMutationHook,
   deleteMutationHook,
 } from "../hook/useApi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../config/api";
+import type { OrderStatus } from "../model/SaleOrder";
 
 const BASE_URL = "/sale-order";
 
-// ==========================
-// GET LIST - current dealer (MANAGER)
-// ==========================
-export const useSaleOrdersOfCurrentDealer = (
-  options?: Record<string, any>,
-  params?: Record<string, any>
-) =>
-  createQueryHook("saleOrdersCurrentDealer", `${BASE_URL}/current-dealer`)(
-    options,
-    params
+/* ======================================================
+   SALE ORDER SERVICE – HỖ TRỢ SORT, FILTER, PAGINATION
+   ====================================================== */
+
+//  GET /sale-order/current-dealer?page=&size=&keyword=&statuses=&sortField=&sortDir=
+// (MANAGER, DEALER_STAFF xem đơn hàng của đại lý hiện tại)
+export const useSaleOrderListCurrentDealer = (params?: {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  statuses?: OrderStatus[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) =>
+  createQueryHook("saleOrderListCurrentDealer", `${BASE_URL}/current-dealer`)(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      keyword: params?.keyword ?? "",
+      statuses: params?.statuses,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
   );
 
-// ==========================
-// GET LIST - current staff (DEALER_STAFF)
-// ==========================
-export const useSaleOrdersOfCurrentStaff = (
-  options?: Record<string, any>,
-  params?: Record<string, any>
-) =>
-  createQueryHook("saleOrdersCurrentStaff", `${BASE_URL}/staff/current`)(
-    options,
-    params
+//  GET /sale-order/staff/current?page=&size=&keyword=&statuses=&sortField=&sortDir=
+// (DEALER_STAFF xem đơn hàng do chính nhân viên đó tạo)
+export const useSaleOrderListStaffCurrent = (params?: {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  statuses?: OrderStatus[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) =>
+  createQueryHook("saleOrderListStaffCurrent", `${BASE_URL}/staff/current`)(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      keyword: params?.keyword ?? "",
+      statuses: params?.statuses,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
   );
 
-// ==========================
-// GET LIST - all dealers (EVM)
-// ==========================
-export const useSaleOrdersOfDealers = (
-  options?: Record<string, any>,
-  params?: Record<string, any>
-) =>
-  createQueryHook("saleOrdersOfDealers", `${BASE_URL}/dealers`)(
-    options,
-    params
+//  GET /sale-order/dealers?page=&size=&keyword=&statuses=&sortField=&sortDir=
+// (EVM_STAFF, ADMIN xem tất cả đơn hàng của các đại lý)
+export const useSaleOrderListDealers = (params?: {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  statuses?: OrderStatus[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) =>
+  createQueryHook("saleOrderListDealers", `${BASE_URL}/dealers`)(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      keyword: params?.keyword ?? "",
+      statuses: params?.statuses,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
   );
 
-// ==========================
-// GET SUMMARY BY STAFF (MANAGER)
-// ==========================
-export const useSalesByStaffSummary = (
-  options?: Record<string, any>,
-  params?: Record<string, any>
-) =>
-  createQueryHook("salesByStaffSummary", `${BASE_URL}/sale-of-staff`)(
-    options,
-    params
-  );
-
-// ==========================
-// GET LIST - by customerId (MANAGER, DEALER_STAFF)
-// ==========================
-export const useSaleOrdersByCustomerId = (
+//  GET /sale-order/customers/{customerId}?page=&size=&keyword=&statuses=&sortField=&sortDir=
+// (MANAGER, DEALER_STAFF xem đơn hàng của khách hàng cụ thể)
+export const useSaleOrderListByCustomer = (
   customerId: string,
-  options?: Record<string, any>,
-  params?: Record<string, any>
+  params?: {
+    page?: number;
+    size?: number;
+    keyword?: string;
+    statuses?: OrderStatus[];
+    sortField?: string;
+    sortDir?: "asc" | "desc";
+  }
 ) =>
   createQueryHook(
-    "saleOrdersByCustomer",
+    "saleOrderListByCustomer",
     `${BASE_URL}/customers/${customerId}`
-  )(options, params);
+  )(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      keyword: params?.keyword ?? "",
+      statuses: params?.statuses,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
+  );
 
-// ==========================
-// GET DETAIL - by orderId (ALL ROLES ALLOWED)
-// ==========================
+//  GET /sale-order/sale-of-staff?page=&size=&sortField=&sortDir=
+// (MANAGER xem thống kê doanh số theo nhân viên)
+export const useSalesByStaff = (params?: {
+  page?: number;
+  size?: number;
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) =>
+  createQueryHook("salesByStaff", `${BASE_URL}/sale-of-staff`)(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
+  );
+
+//  GET /sale-order/{id}
+// (Lấy chi tiết đơn hàng)
 export const useSaleOrderById = createQueryWithPathParamHook(
   "saleOrderDetail",
   BASE_URL
 );
 
-// ==========================
-// ✅ COMPLETE ORDER (DEALER_STAFF, EVM_STAFF)
-// POST /sale-order/{id}/completed
-// ==========================
-export const useSaleOrderComplete = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.post(`${BASE_URL}/${id}/completed`);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saleOrdersCurrentDealer"] });
-      queryClient.invalidateQueries({ queryKey: ["saleOrdersCurrentStaff"] });
-    },
-  });
-};
-
-// ==========================
-// CANCEL ORDER (DEALER_STAFF, EVM_STAFF)
-// DELETE /sale-order/{id}
-// ==========================
-export const useSaleOrderDelete = deleteMutationHook(
-  "saleOrderDelete",
+//  POST /sale-order/{id}/completed
+// (Hoàn tất đơn hàng)
+export const useSaleOrderComplete = createMutationHook(
+  "saleOrderListCurrentDealer",
   BASE_URL
 );
 
-// ==========================
-// CREATE ORDER (for future features)
-// ==========================
+//  DELETE /sale-order/{id}
+// (Hủy đơn hàng)
+export const useSaleOrderDelete = deleteMutationHook(
+  "saleOrderListCurrentDealer",
+  BASE_URL
+);
+
+//  POST /sale-order
+// (Tạo mới đơn hàng)
 export const useSaleOrderCreate = createMutationHook(
-  "saleOrderCreate",
+  "saleOrderListCurrentDealer",
+  BASE_URL
+);
+
+//  PUT /sale-order/{id}
+// (Cập nhật đơn hàng)
+export const useSaleOrderUpdate = updateMutationHook(
+  "saleOrderListCurrentDealer",
   BASE_URL
 );

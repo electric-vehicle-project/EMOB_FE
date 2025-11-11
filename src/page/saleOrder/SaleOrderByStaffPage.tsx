@@ -1,59 +1,64 @@
 import { useEffect, useMemo, useState } from "react";
-import { CardWrapper } from "../../components/template/CardWrapper";
-import { useSalesByStaffSummary } from "../../service/saleOrderService";
-import { useGetAccountsByManager } from "../../service/accountService";
-import { SaleOrderByStaffTable } from "../../components/organisms/saleOrder/SaleOrderByStaffTable";
 import { message } from "antd";
-import { mapToSelectOptions } from "../../utils/mapToSelectOptions";
+import { CardWrapper } from "../../components/template/CardWrapper";
+import { SaleOrderByStaffTable } from "../../components/organisms/saleOrder/SaleOrderByStaffTable";
 
+import { useSalesByStaff } from "../../service/saleOrderService";
+import { useGetAccountsByManager } from "../../service/accountService";
+import { mapToSelectOptions } from "../../utils/mapToSelectOptions";
+import type { SalesByStaffResponse } from "../../model/SaleOrder";
+
+// ==============================
+// Trang thống kê doanh số theo nhân viên
+// ==============================
 const SaleOrderByStaffPage: React.FC = () => {
-  const [sortField, setSortField] = useState("createdAt");
+  // Bộ lọc sắp xếp
+  const [sortField, setSortField] =
+    useState<keyof SalesByStaffResponse>("amount");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // ========================
-  // Query Params
-  // ========================
+  // Tham số truy vấn
   const params = useMemo(
-    () => ({ page: 0, size: 10, sortField, sortDir }),
+    () => ({
+      page: 0,
+      size: 10,
+      sortField,
+      sortDir,
+    }),
     [sortField, sortDir]
   );
 
-  // ========================
-  // API Calls
-  // ========================
+  // API doanh số nhân viên
   const { data, isLoading, isFetching, refetch, isError } =
-    useSalesByStaffSummary({}, params);
+    useSalesByStaff(params);
 
+  // Lấy danh sách nhân viên
   const { data: accountsData } = useGetAccountsByManager(0, 50);
   const accountOptions = mapToSelectOptions(accountsData, "fullName", "id");
 
-  // ========================
-  // Effects
-  // ========================
+  // Thông báo lỗi
   useEffect(() => {
     if (isError) message.error("Không thể tải dữ liệu doanh số!");
   }, [isError]);
 
+  // Tự động refetch khi sắp xếp thay đổi
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortDir]);
 
-  // ========================
-  // Mapping Data
-  // ========================
-  const staffSales = ((data as any)?.result?.data ?? []).map(
-    (s: any, index: number) => {
+  // Ánh xạ dữ liệu hiển thị
+  const staffSales: SalesByStaffResponse[] = useMemo(() => {
+    const raw = data?.result?.data ?? data?.data ?? [];
+    return raw.map((s: SalesByStaffResponse, index: number) => {
       const matched =
         accountOptions.find((a) => a.value === s.accountId)?.label ??
         `Nhân viên ${index + 1}`;
-      return {
-        ...s,
-        staffName: matched,
-      };
-    }
-  );
+      return { ...s, staffName: matched };
+    });
+  }, [data, accountOptions]);
 
+  // Render
   return (
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">

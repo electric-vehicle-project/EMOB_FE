@@ -6,84 +6,81 @@ import type { RootState } from "../../redux/store";
 
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 import {
-  useSaleOrdersOfDealers,
+  useSaleOrderListDealers,
   useSaleOrderComplete,
 } from "../../service/saleOrderService";
 import { useGetAccountsByManager } from "../../service/accountService";
-import { mapDealerOptions } from "../../utils/mapToSelectOptions";
+import { mapDealerOptionsFromAccounts } from "../../utils/mapToSelectOptions";
 
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderFilterBar } from "../../components/organisms/saleOrder/SaleOrderFilterBar";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 
+// Kiểu role dành cho nhân viên EVM
+type EvmRole = "EVM_STAFF" | "ADMIN";
+
 const SaleOrderEvmPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user);
-  const role = (user as any)?.role ?? "EVM_STAFF";
+  const role = (user?.role as EvmRole) ?? "EVM_STAFF";
 
-  // ==============================
-  // State
-  // ==============================
-  const [dealerId, setDealerId] = useState<string | undefined>(undefined);
+  // Trạng thái filter và sort
+  const [dealerId, setDealerId] = useState<string>();
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL");
-  const [sortField, setSortField] = useState<string>("createdAt");
-  const [sortDir, setSortDir] = useState<string>("desc");
+  const [sortField, setSortField] =
+    useState<keyof SaleOrderResponse>("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // ==============================
-  // Fetch dealer list
-  // ==============================
-  const { data: dealerData } = useGetAccountsByManager(0, 50, {
+  // Danh sách đại lý (account)
+  const { data: accountData } = useGetAccountsByManager(0, 50, {
     enabled: true,
   });
-  const dealerOptions = mapDealerOptions(dealerData);
+  const dealerOptions = mapDealerOptionsFromAccounts(accountData ?? []);
 
-  // ==============================
-  // Query params
-  // ==============================
+  // Tham số truy vấn API
   const params = useMemo(() => {
     const statuses = statusFilter === "ALL" ? undefined : [statusFilter];
-    return { page: 0, size: 10, dealerId, statuses, sortField, sortDir };
-  }, [dealerId, statusFilter, sortField, sortDir]);
+    return { page: 0, size: 10, keyword: "", statuses, sortField, sortDir };
+  }, [statusFilter, sortField, sortDir]);
 
-  // ==============================
-  // Fetch sale orders
-  // ==============================
+  // Lấy dữ liệu đơn hàng
   const { data, isLoading, isFetching, refetch, error } =
-    useSaleOrdersOfDealers({}, params);
-  const orders: SaleOrderResponse[] =
-    ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
+    useSaleOrderListDealers(params);
+
+  const allOrders = useMemo<SaleOrderResponse[]>(() => {
+    return data?.result?.data ?? data?.data ?? [];
+  }, [data]);
+
+  // Lọc theo đại lý được chọn
+  const orders = useMemo(() => {
+    if (!dealerId) return allOrders;
+    return allOrders.filter((o) => o.dealerId === dealerId);
+  }, [allOrders, dealerId]);
 
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealerId, statusFilter, sortField, sortDir]);
 
-  // ==============================
-  // Filter summary
-  // ==============================
+  // Đếm trạng thái đơn hàng
   const statusCounts = useMemo(() => {
     const counts = { all: 0, created: 0, completed: 0, canceled: 0 };
-    orders.forEach((o) => {
+    for (const o of orders) {
       counts.all++;
       if (o.status === "CREATED") counts.created++;
       else if (o.status === "COMPLETED") counts.completed++;
       else if (o.status === "CANCELED") counts.canceled++;
-    });
+    }
     return counts;
   }, [orders]);
 
-  // ==============================
-  // Mutations
-  // ==============================
+  // Hoàn tất đơn hàng
   const { mutateAsync: completeOrder, isPending: completing } =
     useSaleOrderComplete();
 
-  // ==============================
-  // Handlers
-  // ==============================
   const handleViewDetail = (id: string) => {
-    const base = `/${String(role || "").toLowerCase()}`;
-    navigate(`${base}/sale-order/${id}`, { replace: false });
+    const base = `/${role.toLowerCase()}`;
+    navigate(`${base}/sale-order/${id}`);
   };
 
   const handleCompleteClick = async (id: string) => {
@@ -91,17 +88,13 @@ const SaleOrderEvmPage: React.FC = () => {
       await completeOrder(id);
       message.success("Đã hoàn tất đơn hàng!");
       refetch();
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error("Không thể hoàn tất đơn hàng!");
     }
   };
 
   if (error) message.error("Không thể tải dữ liệu đơn hàng của đại lý!");
 
-  // ==============================
-  // Render
-  // ==============================
   return (
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">
@@ -120,7 +113,7 @@ const SaleOrderEvmPage: React.FC = () => {
       <SaleOrderFilterBar
         counts={statusCounts}
         defaultStatus={statusFilter}
-        onStatusChange={(s) => setStatusFilter(s)}
+        onStatusChange={setStatusFilter}
       />
 
       <SaleOrderTable
@@ -129,7 +122,7 @@ const SaleOrderEvmPage: React.FC = () => {
         loading={isLoading || isFetching || completing}
         showDealerColumn
         onViewDetail={handleViewDetail}
-        onComplete={handleCompleteClick} // ✅ Truyền handler hoàn tất
+        onComplete={handleCompleteClick}
         onSortChange={(field, order) => {
           setSortField(field);
           setSortDir(order);

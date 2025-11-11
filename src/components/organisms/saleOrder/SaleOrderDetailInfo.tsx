@@ -1,162 +1,103 @@
-// src/components/organisms/saleOrder/SaleOrderDetailInfo.tsx
-import { Descriptions, Tag, Spin } from "antd";
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../../redux/store";
-import { useCustomerById } from "../../../service/customerService";
-import { useDealerByIdQuery } from "../../../service/dealerService";
+import React from "react";
 import type { SaleOrderResponse } from "../../../model/SaleOrder";
-import { formatDateVietnam } from "../../../utils/timeFeature";
 
 interface Props {
   order: SaleOrderResponse;
+  role?: "MANAGER" | "DEALER_STAFF" | "EVM_STAFF" | "ADMIN" | null;
 }
 
-export const SaleOrderDetailInfo = ({ order }: Props) => {
-  const navigate = useNavigate();
-  const role = useSelector((state: RootState) => state?.user?.role ?? null);
+// Tạo type phụ có thể chứa các field linh hoạt
+type PartialSaleOrder = SaleOrderResponse & {
+  totalPrice?: number;
+  totalAmount?: number;
+  grandTotal?: number;
+  customerName?: string;
+  customerFullName?: string;
+  customerEmail?: string;
+  email?: string;
+  createdAt?: string;
+  customerId?: string;
+};
 
-  // ==============================
-  // 🧩 Local state
-  // ==============================
-  const [customerName, setCustomerName] = useState("Không xác định");
-  const [dealerName, setDealerName] = useState("Không xác định");
+export const SaleOrderDetailInfo: React.FC<Props> = ({ order, role }) => {
+  const isDealerStaff = role === "DEALER_STAFF";
+  const isEvmStaff = role === "EVM_STAFF";
+  const isManager = role === "MANAGER";
 
-  // ==============================
-  // 🔄 API calls
-  // ==============================
-  const { data: customerData, isLoading: loadingCustomer } = useCustomerById(
-    order.customerId ?? "",
-    { enabled: !!order.customerId }
-  );
+  const o = order as PartialSaleOrder;
 
-  // ❗️ Chỉ ADMIN hoặc EVM_STAFF mới được gọi API dealer
-  const canViewDealer = role === "ADMIN" || role === "EVM_STAFF";
-  const { data: dealerData, isLoading: loadingDealer } = useDealerByIdQuery(
-    order.dealerId ?? "",
-    {
-      enabled: canViewDealer && !!order.dealerId,
-    }
-  );
-
-  // ==============================
-  // 🧮 Set tên hiển thị
-  // ==============================
-  useEffect(() => {
-    if (order.customerId && customerData?.result) {
-      setCustomerName(customerData.result.fullName ?? "Không xác định");
-    }
-    if (canViewDealer && order.dealerId && dealerData?.result) {
-      setDealerName(dealerData.result.name ?? "Không xác định");
-    }
-  }, [order, customerData, dealerData, canViewDealer]);
-
-  // ==============================
-  // 🏷️ Trạng thái đơn
-  // ==============================
-  const statusTag = useMemo(() => {
-    const color =
-      order.status === "CREATED"
-        ? "processing"
-        : order.status === "COMPLETED"
-        ? "success"
-        : "error";
-
-    const text =
-      order.status === "CREATED"
-        ? "Đã tạo"
-        : order.status === "COMPLETED"
-        ? "Hoàn tất"
-        : "Đã hủy";
-
-    return <Tag color={color}>{text}</Tag>;
-  }, [order.status]);
-
-  // ==============================
-  // 🧾 Danh sách ô hiển thị
-  // ==============================
-  const baseItems = [
-    { key: "id", label: "Mã đơn hàng", children: order.id ?? "-" },
-    { key: "status", label: "Trạng thái", children: statusTag },
-    {
-      key: "createdAt",
-      label: "Ngày tạo",
-      children: formatDateVietnam(order.createdAt),
-    },
-    {
-      key: "totalQuantity",
-      label: "Tổng số lượng",
-      children: order.totalQuantity ?? "-",
-    },
-    {
-      key: "totalPrice",
-      label: "Tổng tiền (VNĐ)",
-      children: order.totalPrice?.toLocaleString("vi-VN") ?? "-",
-    },
-  ];
-
-  const partnerItem = (() => {
-    // --- Trường hợp đơn đại lý ↔ khách hàng ---
-    if (order.customerId) {
-      return {
-        key: "customer",
-        label: "Khách hàng",
-        children: loadingCustomer ? (
-          <Spin size="small" />
-        ) : (
-          <a
-            onClick={() =>
-              navigate(`/dealer_staff/customers/${order.customerId}`)
-            }
-            className="text-blue-600 hover:underline cursor-pointer"
-          >
-            {customerName}
-          </a>
-        ),
-      };
-    }
-
-    // --- Trường hợp đơn EVM ↔ đại lý ---
-    if (!order.customerId && canViewDealer && order.dealerId) {
-      return {
-        key: "dealer",
-        label: "Đại lý",
-        children: loadingDealer ? (
-          <Spin size="small" />
-        ) : (
-          <span className="font-medium text-gray-800">{dealerName}</span>
-        ),
-      };
-    }
-
-    // --- Trường hợp role không có quyền xem đại lý ---
-    return null;
-  })();
-
-  const contractItem = {
-    key: "contract",
-    label: "Hợp đồng",
-    children: order.saleContractId ? (
-      <Tag color="blue">{order.saleContractId}</Tag>
-    ) : (
-      "-"
-    ),
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Không xác định";
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN");
   };
 
-  // Gộp tất cả, loại bỏ null
-  const items = [...baseItems, partnerItem, contractItem].filter(Boolean);
+  const customerName =
+    o.customerName ||
+    o.customerFullName ||
+    `Khách hàng #${o.customerId ?? "?"}`;
 
-  // ==============================
-  // 🖥️ Render
-  // ==============================
+  const customerEmail = o.customerEmail || o.email || "Không có email";
+
+  const total = o.totalPrice || o.totalAmount || o.grandTotal || 0;
+
   return (
-    <Descriptions
-      title="Thông tin chi tiết đơn hàng"
-      bordered
-      column={2}
-      items={items}
-      className="bg-white rounded-xl p-4"
-    />
+    <div className="grid grid-cols-2 gap-y-3 gap-x-8 text-[15px]">
+      {/* ===== Thông tin cơ bản ===== */}
+      <p>
+        <strong>Mã đơn hàng:</strong> {o.id || "Không có"}
+      </p>
+
+      <p>
+        <strong>Trạng thái:</strong>{" "}
+        {o.status === "CREATED"
+          ? "Đã tạo"
+          : o.status === "COMPLETED"
+          ? "Hoàn tất"
+          : o.status === "CANCELED"
+          ? "Đã hủy"
+          : "Không xác định"}
+      </p>
+
+      <p>
+        <strong>Ngày tạo:</strong> {formatDate(o.createdAt)}
+      </p>
+
+      <p>
+        <strong>Tổng tiền:</strong>{" "}
+        {total ? total.toLocaleString("vi-VN") + " ₫" : "Chưa có"}
+      </p>
+
+      {/* ===== Thông tin khách hàng ===== */}
+      <p>
+        <strong>Khách hàng:</strong> {customerName}
+      </p>
+
+      <p>
+        <strong>Email khách hàng:</strong> {customerEmail}
+      </p>
+
+      {/* ===== Hiển thị thêm theo vai trò ===== */}
+      {isDealerStaff && (
+        <p className="col-span-2 text-[#4f6f52]">
+          <strong>Vai trò:</strong> Nhân viên đại lý - được phép hoàn tất hoặc
+          hủy đơn hàng.
+        </p>
+      )}
+
+      {isEvmStaff && (
+        <p className="col-span-2 text-[#4f6f52]">
+          <strong>Vai trò:</strong> Nhân viên EVM - theo dõi và xác nhận các đơn
+          hàng của đại lý.
+        </p>
+      )}
+
+      {isManager && (
+        <p className="col-span-2 text-[#4f6f52]">
+          <strong>Vai trò:</strong> Quản lý đại lý - có thể xem tất cả đơn hàng
+          thuộc quyền quản lý.
+        </p>
+      )}
+    </div>
   );
 };

@@ -1,17 +1,14 @@
 import { Table } from "antd";
-import type { ColumnsType } from "antd/es/table";
-
-interface StaffSalesSummary {
-  accountId: string;
-  staffName?: string;
-  orderCount: number;
-  amount: number;
-}
+import type { ColumnsType, TableProps } from "antd/es/table";
+import type { SalesByStaffResponse } from "../../../model/SaleOrder";
 
 interface Props {
-  data: StaffSalesSummary[];
+  data: SalesByStaffResponse[];
   loading?: boolean;
-  onSortChange?: (field: string, order: "asc" | "desc") => void;
+  onSortChange?: (
+    field: keyof SalesByStaffResponse,
+    order: "asc" | "desc"
+  ) => void;
 }
 
 export const SaleOrderByStaffTable: React.FC<Props> = ({
@@ -19,15 +16,15 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
   loading = false,
   onSortChange,
 }) => {
-  const columns: ColumnsType<StaffSalesSummary> = [
+  const columns: ColumnsType<SalesByStaffResponse> = [
     {
       title: "Nhân viên",
-      dataIndex: "staffName",
-      key: "staffName",
+      dataIndex: "accountId",
+      key: "accountId",
       width: 300,
       ellipsis: true,
-      render: (name) => (
-        <span className="font-medium text-gray-700">{name}</span>
+      render: (_, record) => (
+        <span className="font-medium text-gray-700">{record.accountId}</span>
       ),
     },
     {
@@ -43,13 +40,31 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       key: "amount",
       align: "center",
       sorter: true,
-      render: (value) => (
+      render: (value: number) => (
         <span className="text-[#2563eb] font-medium">
           {value?.toLocaleString("vi-VN")}
         </span>
       ),
     },
   ];
+
+  // Fix type sorter bằng TableProps
+  const handleChange: TableProps<SalesByStaffResponse>["onChange"] = (
+    _pagination,
+    _filters,
+    sorter
+  ) => {
+    const singleSorter = Array.isArray(sorter) ? sorter[0] : sorter;
+    if (
+      onSortChange &&
+      singleSorter?.field &&
+      typeof singleSorter.field === "string" &&
+      singleSorter.order
+    ) {
+      const order = singleSorter.order === "ascend" ? "asc" : "desc";
+      onSortChange(singleSorter.field as keyof SalesByStaffResponse, order);
+    }
+  };
 
   return (
     <Table
@@ -60,12 +75,7 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       pagination={false}
       bordered={false}
       className="shadow-sm rounded-lg"
-      onChange={(pagination, filters, sorter: any) => {
-        if (onSortChange && sorter.field && sorter.order) {
-          const order = sorter.order === "ascend" ? "asc" : "desc";
-          onSortChange(sorter.field, order);
-        }
-      }}
+      onChange={handleChange}
     />
   );
 };

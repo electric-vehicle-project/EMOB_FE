@@ -1,4 +1,3 @@
-// src/components/organisms/saleOrder/SaleOrderItemTable.tsx
 import { Table, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SaleOrderItemResponse } from "../../../model/SaleOrder";
@@ -7,35 +6,37 @@ import { useVehicleUnitById as fetchVehicleUnitById } from "../../../service/veh
 import { mapVehicleOptions } from "../../../utils/mapToSelectOptions";
 import { useMemo, useState, useEffect } from "react";
 
+interface VehicleUnitResponse {
+  id: string;
+  vehicle: {
+    id: string;
+    brand: string;
+    modelName: string;
+  };
+}
+
 interface Props {
   items: SaleOrderItemResponse[];
 }
 
 export const SaleOrderItemTable = ({ items }: Props) => {
-  // ==============================
-  // 🔍 Lấy danh sách xe điện
-  // ==============================
   const { data: vehicleData, isLoading: loadingVehicles } = useGetVehicles();
   const vehicleOptions = useMemo(
     () => mapVehicleOptions(vehicleData),
     [vehicleData]
   );
 
-  // ==============================
-  // 🧩 Map vehicleUnitIds → vehicleName (fetch song song)
-  // ==============================
   const [unitMap, setUnitMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchUnits = async () => {
       const map: Record<string, string> = {};
-
       const allUnitIds = items.flatMap((i) => i.vehicleUnitIds || []);
       const uniqueUnitIds = Array.from(new Set(allUnitIds));
 
       for (const id of uniqueUnitIds) {
         try {
-          const data = await fetchVehicleUnitById(id); // ✅ Không còn bị hiểu nhầm là Hook
+          const data: VehicleUnitResponse = await fetchVehicleUnitById(id);
           if (data?.vehicle?.id && data?.vehicle?.modelName) {
             map[id] = `${data.vehicle.brand} ${data.vehicle.modelName}`;
           }
@@ -43,17 +44,12 @@ export const SaleOrderItemTable = ({ items }: Props) => {
           map[id] = "Không xác định";
         }
       }
-
-      console.log("✅ VehicleUnit mapping:", map);
       setUnitMap(map);
     };
 
     if (items.some((i) => i.vehicleUnitIds?.length)) fetchUnits();
   }, [items]);
 
-  // ==============================
-  // 🧾 Cấu hình cột
-  // ==============================
   const getVehicleLabel = (vehicleId?: string, fallback?: string) => {
     if (!vehicleId) return fallback ?? "Không xác định";
     const found = vehicleOptions.find((v) => v.value === vehicleId);
@@ -144,9 +140,6 @@ export const SaleOrderItemTable = ({ items }: Props) => {
     [vehicleOptions, unitMap, loadingVehicles]
   );
 
-  // ==============================
-  // 💅 Render Table
-  // ==============================
   return (
     <Table
       columns={columns}

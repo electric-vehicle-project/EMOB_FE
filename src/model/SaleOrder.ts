@@ -1,14 +1,8 @@
-// src/model/SaleOrder.ts
-
-// ==========================
 // ENUMS (theo BE constants)
-// ==========================
 export type OrderStatus = "CREATED" | "COMPLETED" | "CANCELED";
 export type PaymentStatus = "FULL" | "INSTALLMENT";
 
-// ==========================
-// ENTITY (phản ánh theo SaleOrderResponse BE)
-// ==========================
+// ENTITY - ITEM RESPONSE
 export interface SaleOrderItemResponse {
   id: string;
   vehicleId: string;
@@ -23,16 +17,14 @@ export interface SaleOrderItemResponse {
   totalPrice: number;
 }
 
-// ==========================
 // SALE ORDER RESPONSE
-// ==========================
 export interface SaleOrderResponse {
   id: string;
   createdAt: string;
   totalQuantity: number;
   totalPrice: number;
   vatAmount?: number;
-  status: "CREATED" | "COMPLETED" | "CANCELED";
+  status: OrderStatus;
 
   accountId?: string;
   customerId?: string;
@@ -51,18 +43,39 @@ export interface SaleOrderResponse {
   }[];
 }
 
-// ==========================
-// PAGE RESPONSE
-// ==========================
-export interface PageMeta {
-  page: number;
-  size: number;
+// PAGE RESPONSE (theo BE PageResponse)
+export interface PageResponse<T> {
+  data: T[];
+  pageNumber: number;
+  pageSize: number;
   totalElements: number;
   totalPages: number;
   last: boolean;
 }
 
-export interface SaleOrderPage {
-  data: SaleOrderResponse[];
-  metadata: PageMeta;
+// API RESPONSE WRAPPER (theo BE APIResponse)
+export interface APIResponse<T> {
+  code: number;
+  message: string;
+  result: T;
+  timestamp?: string;
+}
+
+// FILTER PARAMS
+export interface SaleOrderFilterParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  statuses?: OrderStatus[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+  dealerId?: string;
+  customerId?: string;
+}
+
+// SUMMARY RESPONSE (Sale-of-staff endpoint)
+export interface SalesByStaffResponse {
+  accountId: string;
+  orderCount: number;
+  amount: number;
 }

@@ -1,7 +1,10 @@
 // ==========================================================
 // Generic mapper
+
+import type { IAccount } from "../model/Account";
+
 // ==========================================================
-export function mapToSelectOptions<T extends Record<string, unknown>>(
+export function mapToSelectOptions<T extends object>(
   data: T[] | undefined,
   labelKey: keyof T,
   valueKey: keyof T
@@ -135,3 +138,9 @@ export const mapPromotionOptions = (
 
   return mapToSelectOptions(promotions, "name", "id");
 };
+
+export const mapDealerOptionsFromAccounts = (accounts: IAccount[]) =>
+  accounts.map((a) => ({
+    label: a.fullName || a.email || "Tên không xác định",
+    value: a.id,
+  }));

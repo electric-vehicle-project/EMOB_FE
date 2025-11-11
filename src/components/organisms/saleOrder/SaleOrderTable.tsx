@@ -1,132 +1,153 @@
-import { Table, Button, Tag } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Table, Tag, Button, Space } from "antd";
+import type {
+  ColumnsType,
+  TableProps,
+  TablePaginationConfig,
+} from "antd/es/table";
 import { EyeOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
 import { useSelector } from "react-redux";
+import dayjs from "dayjs";
 import type { RootState } from "../../../redux/store";
-import type { SaleOrderResponse } from "../../../model/SaleOrder";
+import type { SaleOrderResponse, OrderStatus } from "../../../model/SaleOrder";
 
-interface SaleOrderTableProps {
+interface Props {
   data: SaleOrderResponse[];
   loading?: boolean;
   showDealerColumn?: boolean;
-  onDelete?: (id: string) => void;
-  onComplete?: (id: string) => void;
   onViewDetail?: (id: string) => void;
-  onSortChange?: (field: string, order: "asc" | "desc") => void;
+  onComplete?: (id: string) => void;
+  onDelete?: (id: string) => void;
+
+  // --- Server sort & pagination
+  sortField: string;
+  sortDir: "asc" | "desc";
+  onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
+  pagination?: TablePaginationConfig;
 }
 
-export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
+const headerStyle: React.CSSProperties = {
+  backgroundColor: "#394e31",
+  color: "#fff",
+  ["--ant-table-header-sort-active-bg" as unknown as string]: "#394e31",
+};
+
+export const SaleOrderTable = ({
   data,
-  loading = false,
+  loading,
   showDealerColumn = false,
-  onDelete,
-  onComplete,
   onViewDetail,
-  onSortChange,
-}) => {
-  const role = useSelector((state: RootState) => (state.user as any)?.role);
+  onComplete,
+  onDelete,
+  sortField,
+  sortDir,
+  onChangeSort,
+  pagination,
+}: Props) => {
+  const userRole = useSelector((state: RootState) => state.user?.role);
+  const canComplete = userRole === "EVM_STAFF" || userRole === "DEALER_STAFF";
+  const canDelete = userRole === "EVM_STAFF" || userRole === "DEALER_STAFF";
+  const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
-  // 🔹 Phân quyền
-  const canComplete = role === "EVM_STAFF" || role === "DEALER_STAFF";
-  const canDelete = role === "EVM_STAFF" || role === "DEALER_STAFF";
+  const getStatusTag = (status: OrderStatus) => {
+    const map: Record<OrderStatus, { color: string; text: string }> = {
+      CREATED: { color: "blue", text: "Đã tạo" },
+      COMPLETED: { color: "green", text: "Hoàn tất" },
+      CANCELED: { color: "red", text: "Đã huỷ" },
+    };
+    return <Tag color={map[status]?.color}>{map[status]?.text}</Tag>;
+  };
 
-  // ==========================
-  // Table columns
-  // ==========================
   const columns: ColumnsType<SaleOrderResponse> = [
     {
       title: "Mã đơn hàng",
       dataIndex: "id",
       key: "id",
-      width: 220,
-      ellipsis: true,
-      render: (id) => (
-        <span className="font-medium text-gray-700">{id.slice(0, 30)}...</span>
+      sorter: true,
+      sortOrder: sortField === "id" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (text: string, record) => (
+        <a
+          onClick={() => onViewDetail?.(record.id)}
+          className="text-[#4f6f52] hover:text-[#627254] font-medium cursor-pointer"
+        >
+          {text?.length > 8 ? `${text.slice(0, 8)}...` : text}
+        </a>
       ),
     },
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 180,
       sorter: true,
-      render: (createdAt: string) =>
-        dayjs(createdAt).format("HH:mm DD/MM/YYYY"),
+      sortOrder: sortField === "createdAt" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (val: string) =>
+        val ? dayjs(val).format("HH:mm DD/MM/YYYY") : "—",
     },
     {
       title: "Tổng số lượng",
       dataIndex: "totalQuantity",
       key: "totalQuantity",
-      width: 130,
       sorter: true,
       align: "center",
-      render: (qty) => <span>{qty}</span>,
+      sortOrder: sortField === "totalQuantity" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
     },
     {
       title: "Tổng tiền (VAT)",
       dataIndex: "totalPrice",
       key: "totalPrice",
-      width: 180,
       sorter: true,
       align: "center",
-      render: (price: number) => (
-        <span>{price?.toLocaleString("vi-VN")} ₫</span>
-      ),
+      sortOrder: sortField === "totalPrice" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (price?: number) =>
+        price ? price.toLocaleString("vi-VN") + " ₫" : "—",
     },
+    ...(showDealerColumn
+      ? [
+          {
+            title: "Đại lý",
+            dataIndex: "dealerName",
+            key: "dealerName",
+            sorter: true,
+            sortOrder: sortField === "dealerName" ? order : null,
+            onHeaderCell: () => ({ style: headerStyle }),
+            render: (name?: string) => name || "Không xác định",
+          },
+        ]
+      : []),
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       align: "center",
-      width: 150,
-      filters: [
-        { text: "Đã tạo", value: "CREATED" },
-        { text: "Hoàn tất", value: "COMPLETED" },
-        { text: "Đã huỷ", value: "CANCELED" },
-      ],
-      onFilter: (value, record) => record.status === value,
-      render: (status: string) => {
-        let color = "default";
-        let text = "";
-        switch (status) {
-          case "CREATED":
-            color = "blue";
-            text = "Đã tạo";
-            break;
-          case "COMPLETED":
-            color = "green";
-            text = "Hoàn tất";
-            break;
-          case "CANCELED":
-            color = "red";
-            text = "Đã huỷ";
-            break;
-        }
-        return <Tag color={color}>{text}</Tag>;
-      },
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (status: OrderStatus) => getStatusTag(status),
     },
     {
       title: "Thao tác",
-      key: "action",
-      width: 220,
+      key: "actions",
       align: "center",
+      width: 230,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (_, record) => (
-        <div className="flex justify-center gap-2">
+        <Space size="middle">
           <Button
             type="primary"
             size="small"
             icon={<EyeOutlined />}
             onClick={() => onViewDetail?.(record.id)}
+            className="!bg-[#627254] hover:!bg-[#4f6f52] !border-none"
           >
             Xem
           </Button>
 
           {canComplete && record.status === "CREATED" && (
             <Button
-              type="primary"
               size="small"
               icon={<CheckOutlined />}
+              className="!bg-blue-600 hover:!bg-blue-700 !text-white !border-none"
               onClick={() => onComplete?.(record.id)}
             >
               Hoàn tất
@@ -137,35 +158,41 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
             <Button
               size="small"
               icon={<CloseOutlined />}
-              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none transition-colors duration-200"
+              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none"
               onClick={() => onDelete?.(record.id)}
             >
               Huỷ
             </Button>
           )}
-        </div>
+        </Space>
       ),
     },
   ];
 
-  // ==========================
-  // Table render
-  // ==========================
+  const handleChange: TableProps<SaleOrderResponse>["onChange"] = (
+    _p,
+    _f,
+    sorter
+  ) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field = s?.field as string | undefined;
+    const order = s?.order as "ascend" | "descend" | undefined;
+    onChangeSort?.(field, order);
+  };
+
   return (
     <Table
+      bordered
       rowKey="id"
+      size="middle"
       columns={columns}
       dataSource={data}
       loading={loading}
-      pagination={false}
-      bordered={false}
-      onChange={(pagination, filters, sorter: any) => {
-        if (onSortChange && sorter.field && sorter.order) {
-          const order = sorter.order === "ascend" ? "asc" : "desc";
-          onSortChange(sorter.field, order);
-        }
-      }}
-      className="shadow-sm rounded-lg"
+      onChange={handleChange}
+      pagination={pagination}
+      scroll={{ x: "max-content", y: 560 }}
+      sticky={{ offsetHeader: 0 }}
+      className="bg-white [&_.ant-table-thead>tr>th]:!text-white"
     />
   );
 };
