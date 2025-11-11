@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Card, Select, Space, Input } from "antd";
-import { toast } from "react-toastify";
 import {
-  useContractCancelMutation,
-  useContractSignMutation,
   useContractQueryByDealer,
 } from "../../../service/contractService";
-import { ContractTableCustomers } from "../../molecules/contract/ContractTableCustomers";
+import { ContractTable } from "../../molecules/contract/ContractTable";
+import { useNavigate } from "react-router-dom";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
 
 const { Option } = Select;
 
@@ -19,7 +17,7 @@ export const ContractListAllCustomers = () => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [keyword, setKeyword] = useState("");
 
-  const { data, isLoading, refetch } = useContractQueryByDealer({}, {
+  const { data } = useContractQueryByDealer({}, {
     page,
     size,
     sortField,
@@ -28,38 +26,23 @@ export const ContractListAllCustomers = () => {
     keyword,
   });
 
-  const { mutateAsync: signContract, isPending: signing } = useContractSignMutation();
-  const { mutateAsync: cancelContract, isPending: cancelling } = useContractCancelMutation();
-
   const contracts = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
-
-  const handleSign = async () => {
-    try {
-      await signContract({
-        purchaseDate: new Date().toISOString().split("T")[0],
-        paymentStatus: "FULL",
-      });
-      toast.success("Đã ký hợp đồng thành công!");
-      refetch();
-    } catch {
-      toast.error("Không thể ký hợp đồng.");
-    }
-  };
-
-  const handleCancel = async (record: any) => {
-    try {
-      await cancelContract(record.contractId);
-      toast.success("Đã hủy hợp đồng!");
-      refetch();
-    } catch {
-      toast.error("Không thể hủy hợp đồng.");
-    }
-  };
+  const navigate = useNavigate();
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
 
   return (
     <div>
-      <span>Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng</span>
+      <span className="flex justify-between p-5">
+        <b className="text-[#627254]">Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng</b>
+        <b
+          onClick={() => navigate("/" + role.toLowerCase() + "/contract/with-evm")}
+          className="underline gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
+        >
+          Danh sách hợp đồng bàn giao với Hãng xe
+        </b>
+      </span>
       <Card
         extra={
           <Space className="overflow-x-hidden">
@@ -116,9 +99,8 @@ export const ContractListAllCustomers = () => {
           </Space>
         }
       >
-        <ContractTableCustomers
+        <ContractTable
           data={contracts}
-          loading={isLoading || signing || cancelling}
           pagination={{
             current: page + 1,
             pageSize: size,
@@ -127,8 +109,6 @@ export const ContractListAllCustomers = () => {
             onChange: (newPage) => setPage(newPage - 1),
             showTotal: (t) => `Tổng ${t} hợp đồng`,
           }}
-          onSign={handleSign}
-          onCancel={handleCancel}
         />
       </Card>
     </div>

@@ -18,7 +18,7 @@ export const CardWrapper = ({
   className,
 }: Props) => {
   return (
-    <div className={`p-5 bg-gray-50 min-h-screen`}>
+    <div className={`p-5 bg-transparent min-h-screen`}>
       <Card
         bordered={false}
         className={`shadow-md rounded-xl bg-white ${className ?? ""}`}

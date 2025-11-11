@@ -1,4 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useParams, useNavigate } from "react-router";
 import {
   Card,
   Button,
@@ -8,6 +9,8 @@ import {
   Select,
   InputNumber,
   Form,
+  DatePicker,
+  Table,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -23,19 +26,27 @@ import {
   useContractSignMutation,
 } from "../../../service/contractService";
 import { toast } from "react-toastify";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { DeleteConfirm } from "../DeleteConfirm";
+import { useSaleOrderById } from "../../../service/saleOrderService";
+import { useDealerByIdQuery } from "../../../service/dealerService";
+
 
 export const ContractDetailDealer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data, isLoading, refetch } = useContractDetailQuery(id);
-  const { mutateAsync: signContract, isPending: signing } =
-    useContractSignMutation();
-  const { mutateAsync: cancelContract, isPending: cancelling } =
-    useContractCancelMutation();
 
+  const { mutateAsync: signContract, isPending: signing } = useContractSignMutation();
+  const { mutateAsync: cancelContract } = useContractCancelMutation();
+
+  const user = useCurrentUser();
   const contract = data?.result;
+  const saleOrder = useSaleOrderById(contract?.orderId).data?.result;
+  const dealer = useDealerByIdQuery(saleOrder?.dealerId).data?.result;
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"FULL" | "INSTALLMENT">(
     "FULL"
   );
@@ -127,45 +138,48 @@ export const ContractDetailDealer = () => {
         <Card
           className="bg-white shadow-md print:shadow-none print:border-none"
           title={
-            <div className="text-center">
-              <h2 className="text-xl font-bold mt-6">
-                CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-              </h2>
-              <p className="text-xl font-bold mt-1">
-                Độc lập - Tự do - Hạnh phúc
-              </p>
-              -----------------------------------
-              <h2 className="text-xl font-bold uppercase mt-1">
-                HỢP ĐỒNG BÀN GIAO LÔ XE ĐIỆN
-              </h2>
-              <p className="text-gray-600 mt-1 mb-1">
-                (Số: {contract?.contractNumber})
-              </p>
-            </div>
+            <>
+              <div className="text-center">
+                <h2 className="text-xl font-bold mt-6">
+                  CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+                </h2>
+                <p className="text-xl font-bold mt-1">
+                  Độc lập - Tự do - Hạnh phúc
+                </p>
+                -----------------------------------
+                <h2 className="text-xl font-bold uppercase mt-1">
+                  HỢP ĐỒNG BÀN GIAO LÔ XE ĐIỆN
+                </h2>
+                <p className="text-gray-600 mt-1 mb-1">
+                  (Số: {contract?.contractNumber})
+                </p>
+              </div>
+              <div className="text-end italic">TP.HCM, ngày {dayjs(contract?.createdAt).format("DD")} tháng {dayjs(contract?.createdAt).format("MM")} năm {dayjs(contract?.createdAt).format("YYYY")}
+              </div>
+            </>
+
           }
         >
           {/* ---------- Nội dung hợp đồng ---------- */}
           <div className="text-[15px] leading-7 text-justify space-y-4">
             <p>
               Căn cứ Bộ luật Dân sự và các quy định pháp luật có liên quan, hôm
-              nay, ngày <b>{dayjs(contract?.createdAt).format("DD/MM/YYYY")}</b>
-              , chúng tôi gồm có:
+              nay, chúng tôi gồm có:
             </p>
 
             <p>
               <b>BÊN A (Hãng xe):</b> Công ty TNHH EMOB Electric Vehicle
               <br />
-              Địa chỉ: Tòa nhà F-Town 3, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
+              Địa chỉ: Tòa nhà FPTU, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên hãng
+              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên hãng
               xe
             </p>
 
             <p>
-              <b>BÊN B (Đại lý):</b>{" "}
-              {contract?.dealerName ?? "______________________"}
+              <b>BÊN B (Đại lý):</b>  {dealer?.name ?? "______________________"}
               <br />
-              Địa chỉ: {contract?.dealerAddress ?? "______________________"}
+              Địa chỉ: {dealer?.address ?? "______________________"}
               <br />
               Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên đại
               lý
@@ -219,6 +233,90 @@ export const ContractDetailDealer = () => {
 
             <p>
               <b>Điều 5. Điều khoản chung</b>
+              {/* ---------- Phụ lục hợp đồng ---------- */}
+              <Divider />
+
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-3 text-center uppercase">
+                  Phụ lục hợp đồng
+                </h3>
+                <p className="text-gray-600 mb-3 text-center">
+                  (Chi tiết các dòng xe thuộc hợp đồng)
+                </p>
+
+                <Table
+                  bordered
+                  size="middle"
+                  pagination={false}
+                  dataSource={contract?.items || []}
+                  rowKey="id"
+                  columns={[
+                    {
+                      title: "STT",
+                      render: (_: any, __: any, index: number) => index + 1,
+                      width: 60,
+                      align: "center",
+                    },
+                    {
+                      title: "Mã xe",
+                      dataIndex: "vehicleId",
+                      key: "vehicleId",
+                    },
+                    {
+                      title: "Màu sắc",
+                      dataIndex: "color",
+                      key: "color",
+                    },
+                    {
+                      title: "Trạng thái xe",
+                      dataIndex: "vehicleStatus",
+                      key: "vehicleStatus",
+                      render: (v: string) =>
+                        v === "NORMAL"
+                          ? "Xe tiêu chuẩn"
+                          : v === "TEST_DRIVE"
+                            ? "Xe lái thử"
+                            : v,
+                    },
+                    {
+                      title: "Số lượng",
+                      dataIndex: "quantity",
+                      key: "quantity",
+                      align: "center",
+                    },
+                    {
+                      title: "Đơn giá (₫)",
+                      dataIndex: "unitPrice",
+                      key: "unitPrice",
+                      render: (v: number) => v?.toLocaleString("vi-VN"),
+                      align: "right",
+                    },
+                    {
+                      title: "Giảm giá (₫)",
+                      dataIndex: "discountPrice",
+                      key: "discountPrice",
+                      render: (v: number) => v?.toLocaleString("vi-VN"),
+                      align: "right",
+                    },
+                    {
+                      title: "Thành tiền (₫)",
+                      dataIndex: "totalPrice",
+                      key: "totalPrice",
+                      render: (v: number) => v?.toLocaleString("vi-VN"),
+                      align: "right",
+                    },
+                  ]}
+                />
+
+                <div className="flex justify-end mt-4 text-[15px]">
+                  <p>
+                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
+                    <b>Tổng giá trị:</b>{" "}
+                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫
+                  </p>
+                </div>
+              </div>
+
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
               <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
@@ -234,23 +332,23 @@ export const ContractDetailDealer = () => {
               <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
                 (đã ký)
               </div>
-              <p className="mt-1 text-sm text-gray-500">
-                (Ký và ghi rõ họ tên)
-              </p>
+              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
             </div>
+
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <div className="border h-28 w-40 mx-auto mt-2" />
-              <p className="mt-1 text-sm text-gray-500">
-                (Ký và ghi rõ họ tên)
-              </p>
+              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex text-green-900">
+                {contract?.status === "SIGNED" ? "(đã ký)" : ""}
+              </div>
+              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
             </div>
           </div>
+
 
           <Divider />
 
           <div className="flex justify-end gap-3 mt-6 print:hidden">
-            {contract?.status === "PENDING" && (
+            {contract?.status === "PENDING" && user?.role === "EVM_STAFF" && (
               <>
                 <Button
                   type="primary"
@@ -262,12 +360,12 @@ export const ContractDetailDealer = () => {
                 </Button>
                 <Button
                   danger
-                  onClick={handleCancelContract}
-                  loading={cancelling}
-                  className="rounded-md"
+                  onClick={() => setDeleteModalVisible(true)}
+                  className="!bg-[#f34b4b] hover:!bg-[#ba0000] !text-white rounded-xl h-9"
                 >
                   Hủy hợp đồng
                 </Button>
+
               </>
             )}
             {contract?.status === "SIGNED" && (
@@ -288,15 +386,30 @@ export const ContractDetailDealer = () => {
         okText="Ký"
         cancelText="Hủy"
         confirmLoading={signing}
+        okButtonProps={{
+          disabled:
+            paymentStatus === "INSTALLMENT"
+              ? !form.isFieldsTouched(true) ||
+              form.getFieldsError().some(({ errors }) => errors.length > 0)
+              : false,
+        }}
       >
-        <Form form={form} layout="vertical" className="mt-2">
+        <Form
+          form={form}
+          layout="vertical"
+          className="mt-2"
+          onValuesChange={() => {
+            // Bắt buộc re-render để cập nhật trạng thái nút khi người dùng nhập
+            form.validateFields().catch(() => { });
+          }}
+        >
           <Form.Item label="Trạng thái thanh toán">
             <Select
               value={paymentStatus}
               onChange={(v) => setPaymentStatus(v)}
               options={[
-                { label: "Trả thẳng (FULL)", value: "FULL" },
-                { label: "Trả góp (INSTALLMENT)", value: "INSTALLMENT" },
+                { label: "Trả thẳng", value: "FULL" },
+                { label: "Trả góp", value: "INSTALLMENT" },
               ]}
             />
           </Form.Item>
@@ -307,23 +420,45 @@ export const ContractDetailDealer = () => {
                 name="deposit"
                 label="Tiền đặt cọc (₫)"
                 rules={[
-                  { required: true, message: "Vui lòng nhập tiền đặt cọc" },
+                  {
+                    required: true,
+                    message: "Tiền đặt cọc ít nhất phải đạt 10% giá trị tổng đơn",
+                  },
+                  {
+                    validator: (_, value) => {
+                      const minDeposit = (contract?.totalPrice || 0) * 0.1;
+                      if (value === undefined || value < minDeposit) {
+                        return Promise.reject(
+                          new Error(
+                            `Tiền đặt cọc tối thiểu là ${minDeposit.toLocaleString(
+                              "vi-VN"
+                            )} ₫`
+                          )
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
                 ]}
               >
-                <InputNumber min={0} className="w-full" />
+                <InputNumber min={0} className="!w-full" />
               </Form.Item>
 
               <Form.Item
                 name="downPayment"
-                label="Số tiền trả trước (₫)"
+                label="Ngày bắt đầu kế hoạch trả góp"
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập số tiền trả trước",
+                    message: "Vui lòng chọn ngày bắt đầu kế hoạch trả góp",
                   },
                 ]}
               >
-                <InputNumber min={0} className="w-full" />
+                <DatePicker
+                  format="YYYY-MM-DD"
+                  className="w-full"
+                  placeholder="Chọn ngày bắt đầu"
+                />
               </Form.Item>
 
               <Form.Item
@@ -334,6 +469,9 @@ export const ContractDetailDealer = () => {
                 <Select
                   options={[
                     { label: "12 tháng", value: 12 },
+                    { label: "18 tháng", value: 18 },
+                    { label: "24 tháng", value: 24 },
+                    { label: "30 tháng", value: 30 },
                     { label: "36 tháng", value: 36 },
                   ]}
                 />
@@ -344,12 +482,25 @@ export const ContractDetailDealer = () => {
                 label="Lãi suất (%)"
                 rules={[{ required: true, message: "Vui lòng nhập lãi suất" }]}
               >
-                <InputNumber min={0} max={100} step={0.1} className="w-full" />
+                <InputNumber min={0} max={100} step={0.1} className="!w-full" />
               </Form.Item>
             </>
           )}
         </Form>
       </Modal>
+
+      <DeleteConfirm
+        open={deleteModalVisible}
+        onCancel={() => setDeleteModalVisible(false)}
+        onConfirm={async () => {
+          await handleCancelContract();
+          setDeleteModalVisible(false);
+        }}
+        message="Bạn có chắc chắn muốn hủy hợp đồng này không? Hành động này không thể hoàn tác."
+        okText="Hủy hợp đồng"
+        danger
+        title="Xác nhận hủy hợp đồng"
+      />
     </div>
   );
 };

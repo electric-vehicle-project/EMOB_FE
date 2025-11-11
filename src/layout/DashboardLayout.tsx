@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button, Tooltip } from "antd";
 import { CiLogout } from "react-icons/ci";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router";
 import { getItem, type MenuItem } from "../utils/menuUtils";
 import MenuDashboard from "../components/atoms/MenuDashboard";
 import {
@@ -310,7 +310,7 @@ function DashboardLayout() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 bg-[var(--neutural-color)] transition-all duration-500 ease-smooth p-3 sm:p-6 overflow-x-auto">
+      <div className="flex-1 min-w-0 bg-[var(--natural-color)] transition-all duration-500 ease-smooth p-3 sm:p-6 overflow-x-auto">
         <Outlet />
       </div>
     </section>

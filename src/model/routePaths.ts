@@ -84,9 +84,9 @@ export const ROUTES = {
 
   // CONTRACT
   CONTRACT: "contract",
+  CONTRACT_WITH_EVM: "contract/with-evm",
+  CONTRACT_WITH_EVM_DETAIL: "contract/with-evm/:id",
   CONTRACT_DETAIL: "contract/:id",
-  CONTRACT_CUSTOMER: "contract/customers",
-  CONTRACT_CUSTOMER_DETAIL: "contract/customers/:id",
 
   // OVERVIEW
   OVERVIEW: "overview",
