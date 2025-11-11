@@ -65,12 +65,12 @@ export const ContractDetailCustomer = () => {
         paymentStatus === "FULL"
           ? { contractId: contract.contractId }
           : {
-              contractId: contract.contractId,
-              deposit: formValues.deposit,
-              downPayment: formValues.downPayment,
-              termMonths: formValues.termMonths,
-              interestRate: formValues.interestRate,
-            };
+            contractId: contract.contractId,
+            deposit: formValues.deposit,
+            downPayment: formValues.downPayment,
+            termMonths: formValues.termMonths,
+            interestRate: formValues.interestRate,
+          };
 
       await signContract({ params: baseParams, body });
       toast.success("Đã ký hợp đồng thành công!");
@@ -193,9 +193,17 @@ export const ContractDetailCustomer = () => {
             <p>
               <b>Điều 3. Thanh toán</b>
               <br />- Hình thức thanh toán: Theo thỏa thuận.
-              <br />- Trạng thái thanh toán: <b>{contract?.status}</b>
+              <br />- Trạng thái thanh toán:{" "}
+              <b>
+                {contract?.status === "PENDING"
+                  ? "Chưa thanh toán"
+                  : contract?.status === "SIGNED"
+                    ? "Đã thỏa thuận"
+                    : contract?.status || "Không xác định"}
+              </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
+
 
             <p>
               <b>Điều 4. Quyền và nghĩa vụ của các bên</b>

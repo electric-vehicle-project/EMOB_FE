@@ -198,9 +198,17 @@ export const ContractDetailDealer = () => {
             <p>
               <b>Điều 3. Thanh toán</b>
               <br />- Hình thức thanh toán: Theo thỏa thuận.
-              <br />- Trạng thái thanh toán: <b>{contract?.status}</b>
+              <br />- Trạng thái thanh toán:{" "}
+              <b>
+                {contract?.status === "PENDING"
+                  ? "Chưa thanh toán"
+                  : contract?.status === "SIGNED"
+                    ? "Đã thỏa thuận"
+                    : contract?.status || "Không xác định"}
+              </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
+
 
             <p>
               <b>Điều 4. Quyền và nghĩa vụ của các bên</b>

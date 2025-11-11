@@ -10,7 +10,6 @@ import {
 import { ContractTableCustomers } from "../../molecules/contract/ContractTableCustomers";
 
 const { Option } = Select;
-const { Search } = Input;
 
 export const ContractListAllCustomers = () => {
   const [page, setPage] = useState(0);
@@ -63,14 +62,13 @@ export const ContractListAllCustomers = () => {
       <span>Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng</span>
       <Card
         extra={
-          <Space>
-            <Search
-              placeholder="Tìm kiếm..."
+          <Space className="overflow-x-hidden">
+            <Input
+              placeholder="Tìm kiếm theo mã hợp đồng..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              onSearch={() => refetch()}
               allowClear
-              style={{ width: 200 }}
+              style={{ width: 450 }}
             />
 
             <Select
