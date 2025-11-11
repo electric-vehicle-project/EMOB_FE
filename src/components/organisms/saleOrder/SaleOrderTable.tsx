@@ -1,10 +1,10 @@
 import { Table, Button, Tag } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import type { ColumnsType, TableProps } from "antd/es/table";
 import { EyeOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
-import type { SaleOrderResponse } from "../../../model/SaleOrder";
+import type { SaleOrderResponse, OrderStatus } from "../../../model/SaleOrder";
 
 interface SaleOrderTableProps {
   data: SaleOrderResponse[];
@@ -13,7 +13,13 @@ interface SaleOrderTableProps {
   onDelete?: (id: string) => void;
   onComplete?: (id: string) => void;
   onViewDetail?: (id: string) => void;
-  onSortChange?: (field: string, order: "asc" | "desc") => void;
+  onSortChange?: (
+    field: keyof SaleOrderResponse,
+    order: "asc" | "desc"
+  ) => void;
+  pagination?: TableProps<SaleOrderResponse>["pagination"];
+  sortField?: keyof SaleOrderResponse;
+  sortDir?: "asc" | "desc";
 }
 
 export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
@@ -24,16 +30,22 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   onComplete,
   onViewDetail,
   onSortChange,
+  pagination,
+  sortField,
+  sortDir = "desc",
 }) => {
-  const role = useSelector((state: RootState) => (state.user as any)?.role);
-
-  // 🔹 Phân quyền
+  const role = useSelector((state: RootState) => state.user?.role ?? null);
   const canComplete = role === "EVM_STAFF" || role === "DEALER_STAFF";
   const canDelete = role === "EVM_STAFF" || role === "DEALER_STAFF";
+  const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
-  // ==========================
-  // Table columns
-  // ==========================
+  const headerStyle: React.CSSProperties = {
+    backgroundColor: "#627254",
+    color: "#fff",
+    fontWeight: 600,
+    textAlign: "center",
+  };
+
   const columns: ColumnsType<SaleOrderResponse> = [
     {
       title: "Mã đơn hàng",
@@ -41,16 +53,20 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       key: "id",
       width: 220,
       ellipsis: true,
-      render: (id) => (
-        <span className="font-medium text-gray-700">{id.slice(0, 30)}...</span>
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (id: string) => (
+        <span className="font-medium text-gray-700">
+          {id.length > 8 ? `${id.slice(0, 8)}...` : id}
+        </span>
       ),
     },
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 180,
       sorter: true,
+      sortOrder: sortField === "createdAt" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (createdAt: string) =>
         dayjs(createdAt).format("HH:mm DD/MM/YYYY"),
     },
@@ -58,52 +74,54 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       title: "Tổng số lượng",
       dataIndex: "totalQuantity",
       key: "totalQuantity",
-      width: 130,
       sorter: true,
+      sortOrder: sortField === "totalQuantity" ? order : null,
       align: "center",
-      render: (qty) => <span>{qty}</span>,
+      onHeaderCell: () => ({ style: headerStyle }),
     },
     {
       title: "Tổng tiền (VAT)",
       dataIndex: "totalPrice",
       key: "totalPrice",
-      width: 180,
       sorter: true,
+      sortOrder: sortField === "totalPrice" ? order : null,
       align: "center",
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (price: number) => (
-        <span>{price?.toLocaleString("vi-VN")} ₫</span>
+        <span className="text-gray-800 font-medium">
+          {price?.toLocaleString("vi-VN")} ₫
+        </span>
       ),
     },
+    ...(showDealerColumn
+      ? [
+          {
+            title: "Đại lý",
+            dataIndex: "dealerName",
+            key: "dealerName",
+            align: "left" as const,
+            onHeaderCell: () => ({ style: headerStyle }),
+            render: (name?: string) => (
+              <span className="text-gray-700 font-medium">
+                {name ?? "Không xác định"}
+              </span>
+            ),
+          },
+        ]
+      : []),
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       align: "center",
-      width: 150,
-      filters: [
-        { text: "Đã tạo", value: "CREATED" },
-        { text: "Hoàn tất", value: "COMPLETED" },
-        { text: "Đã huỷ", value: "CANCELED" },
-      ],
-      onFilter: (value, record) => record.status === value,
-      render: (status: string) => {
-        let color = "default";
-        let text = "";
-        switch (status) {
-          case "CREATED":
-            color = "blue";
-            text = "Đã tạo";
-            break;
-          case "COMPLETED":
-            color = "green";
-            text = "Hoàn tất";
-            break;
-          case "CANCELED":
-            color = "red";
-            text = "Đã huỷ";
-            break;
-        }
-        return <Tag color={color}>{text}</Tag>;
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (status: OrderStatus) => {
+        const map: Record<OrderStatus, { color: string; text: string }> = {
+          CREATED: { color: "blue", text: "Đã tạo" },
+          COMPLETED: { color: "green", text: "Hoàn tất" },
+          CANCELED: { color: "red", text: "Đã huỷ" },
+        };
+        return <Tag color={map[status].color}>{map[status].text}</Tag>;
       },
     },
     {
@@ -111,6 +129,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       key: "action",
       width: 220,
       align: "center",
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (_, record) => (
         <div className="flex justify-center gap-2">
           <Button
@@ -118,6 +137,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
             size="small"
             icon={<EyeOutlined />}
             onClick={() => onViewDetail?.(record.id)}
+            className="!bg-[#627254] hover:!bg-[#4f6f52] !border-none"
           >
             Xem
           </Button>
@@ -128,6 +148,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
               size="small"
               icon={<CheckOutlined />}
               onClick={() => onComplete?.(record.id)}
+              className=" !border-none"
             >
               Hoàn tất
             </Button>
@@ -137,7 +158,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
             <Button
               size="small"
               icon={<CloseOutlined />}
-              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none transition-colors duration-200"
+              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none"
               onClick={() => onDelete?.(record.id)}
             >
               Huỷ
@@ -148,24 +169,30 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
     },
   ];
 
-  // ==========================
-  // Table render
-  // ==========================
+  const handleChange: TableProps<SaleOrderResponse>["onChange"] = (
+    _pagination,
+    _filters,
+    sorter
+  ) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    if (onSortChange && s?.field && typeof s.field === "string" && s.order) {
+      const order = s.order === "ascend" ? "asc" : "desc";
+      onSortChange(s.field as keyof SaleOrderResponse, order);
+    }
+  };
+
   return (
     <Table
       rowKey="id"
       columns={columns}
       dataSource={data}
       loading={loading}
-      pagination={false}
-      bordered={false}
-      onChange={(pagination, filters, sorter: any) => {
-        if (onSortChange && sorter.field && sorter.order) {
-          const order = sorter.order === "ascend" ? "asc" : "desc";
-          onSortChange(sorter.field, order);
-        }
-      }}
+      pagination={pagination}
+      bordered
+      onChange={handleChange}
       className="shadow-sm rounded-lg"
+      scroll={{ x: "max-content" }}
+      sticky
     />
   );
 };

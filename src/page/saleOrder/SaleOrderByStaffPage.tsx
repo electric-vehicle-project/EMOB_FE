@@ -1,63 +1,78 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { message, Spin } from "antd";
-import { CardWrapper } from "../../components/template/CardWrapper";
-import { useSalesByStaffSummary } from "../../service/saleOrderService";
-import { useGetAccountsByManager } from "../../service/accountService";
-import { SaleOrderByStaffTable } from "../../components/organisms/saleOrder/SaleOrderByStaffTable";
-import { mapToSelectOptions } from "../../utils/mapToSelectOptions";
+import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp } from "lucide-react";
+import { CardWrapper } from "../../components/template/CardWrapper";
+import { SaleOrderByStaffTable } from "../../components/organisms/saleOrder/SaleOrderByStaffTable";
+import { useSalesByStaff } from "../../service/saleOrderService";
+import { useGetAccountsByManager } from "../../service/accountService";
+import { mapToSelectOptions } from "../../utils/mapToSelectOptions";
+import type { SalesByStaffResponse } from "../../model/SaleOrder";
 
 const SaleOrderByStaffPage: React.FC = () => {
-  const [sortField, setSortField] = useState("createdAt");
+  // ==============================
+  // 🔍 State: Sắp xếp
+  // ==============================
+  const [sortField, setSortField] =
+    useState<keyof SalesByStaffResponse>("amount");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // ========================
-  // Query Params
-  // ========================
+  // ==============================
+  // ⚙️ Query Params
+  // ==============================
   const params = useMemo(
-    () => ({ page: 0, size: 10, sortField, sortDir }),
+    () => ({
+      page: 0,
+      size: 10,
+      sortField,
+      sortDir,
+    }),
     [sortField, sortDir]
   );
 
-  // ========================
-  // API Calls
-  // ========================
+  // ==============================
+  // 📦 API: Doanh số nhân viên
+  // ==============================
   const { data, isLoading, isFetching, refetch, isError } =
-    useSalesByStaffSummary({}, params);
+    useSalesByStaff(params);
+
+  // ==============================
+  // 👤 API: Danh sách nhân viên
+  // ==============================
   const { data: accountsData } = useGetAccountsByManager(0, 50);
   const accountOptions = mapToSelectOptions(accountsData, "fullName", "id");
 
-  // ========================
-  // Effects
-  // ========================
+  // ==============================
+  // 🚨 Xử lý lỗi
+  // ==============================
   useEffect(() => {
     if (isError) message.error("Không thể tải dữ liệu doanh số!");
   }, [isError]);
 
+  // ==============================
+  // 🔄 Refetch khi sort thay đổi
+  // ==============================
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortDir]);
 
-  // ========================
-  // Mapping Data
-  // ========================
-  const staffSales = ((data as any)?.result?.data ?? []).map(
-    (s: any, index: number) => {
+  // ==============================
+  // 🧩 Mapping dữ liệu hiển thị
+  // ==============================
+  const staffSales: SalesByStaffResponse[] = useMemo(() => {
+    const raw = data?.result?.data ?? data?.data ?? [];
+    return raw.map((s: SalesByStaffResponse, index: number) => {
       const matched =
         accountOptions.find((a) => a.value === s.accountId)?.label ??
         `Nhân viên ${index + 1}`;
-      return {
-        ...s,
-        staffName: matched,
-      };
-    }
-  );
+      return { ...s, staffName: matched };
+    });
+  }, [data, accountOptions]);
 
-  // ========================
-  // UI
-  // ========================
+  // ==============================
+  // 🖼️ Render UI (hiệu ứng kết hợp)
+  // ==============================
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -101,7 +116,7 @@ const SaleOrderByStaffPage: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {/* Table content */}
+        {/* Table */}
         <motion.div
           whileHover={{ scale: 1.005 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
@@ -110,6 +125,8 @@ const SaleOrderByStaffPage: React.FC = () => {
           <SaleOrderByStaffTable
             data={staffSales}
             loading={isLoading || isFetching}
+            sortField={sortField}
+            sortDir={sortDir}
             onSortChange={(field, order) => {
               setSortField(field);
               setSortDir(order);

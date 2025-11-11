@@ -1,4 +1,3 @@
-// EMOB-2025 - reportService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -6,17 +5,17 @@ import {
   updateMutationHook,
   deleteMutationHook,
 } from "../hook/useApi";
-import type { IReport } from "../model/report";
+import type { IReport } from "../model/Report";
 
 const BASE_URL = "/report";
 
-/* ===== Query hooks ===== */
+// GET /report/view-all?page=&size=&keyword=&status=&sortField=&sortDir=
 export const useReportList = (
   page = 0,
   size = 10,
   keyword?: string,
   status?: IReport["status"],
-  sortField = "title",
+  sortField = "createdAt",
   sortDir: "asc" | "desc" = "desc"
 ) =>
   createQueryHook("reportList", `${BASE_URL}/view-all`)(
@@ -24,16 +23,25 @@ export const useReportList = (
     { page, size, keyword, status, sortField, sortDir }
   );
 
+// GET /report/{id}
 export const useReportById = createQueryWithPathParamHook(
   "reportDetail",
   BASE_URL
 );
 
-/* ===== CRUD hooks ===== */
+// POST /report
 export const useReportCreate = createMutationHook("reportList", BASE_URL);
+
+// PUT /report/{id}
 export const useReportUpdate = updateMutationHook("reportList", BASE_URL);
+
+// DELETE /report/{id}
 export const useReportDelete = deleteMutationHook("reportList", BASE_URL);
 
-/* ===== Process status hook ===== */
-// PUT /report/process-report/{id}?status=...
-export const useReportProcess = updateMutationHook("reportList", BASE_URL);
+/** PUT /report/process-report/{id}?status=IN_PROGRESS|RESOLVED
+ *  body: { solution?: string }
+ */
+export const useReportProcess = updateMutationHook(
+  "reportList",
+  `${BASE_URL}/process-report`
+);

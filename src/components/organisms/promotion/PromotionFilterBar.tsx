@@ -1,4 +1,4 @@
-import { Segmented } from "antd";
+import { Segmented, Typography, Space } from "antd";
 
 interface Props {
   counts: { all: number; active: number; upcoming: number; expired: number };
@@ -11,24 +11,41 @@ export const PromotionFilterBar = ({
   defaultScope,
   onScopeChange,
 }: Props) => {
-  const localLabel =
-    defaultScope === "LOCAL" ? `Cục bộ (${counts.all})` : "Cục bộ";
-  const globalLabel =
-    defaultScope === "GLOBAL"
-      ? `Toàn hệ thống (${counts.all})`
-      : "Toàn hệ thống";
+  const { Text } = Typography;
+
+  const options = [
+    { label: `Cục bộ (${counts.all})`, value: "LOCAL" },
+    { label: `Toàn hệ thống (${counts.all})`, value: "GLOBAL" },
+  ];
 
   return (
-    <div className="flex flex-wrap items-center gap-3 mb-5">
-      <Segmented
-        options={[
-          { label: localLabel, value: "LOCAL" },
-          { label: globalLabel, value: "GLOBAL" },
-        ]}
-        value={defaultScope}
-        onChange={(val) => onScopeChange(val as "LOCAL" | "GLOBAL")}
-        className="bg-white border rounded-xl px-3 py-1 shadow-sm"
-      />
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        marginBottom: 20,
+        gap: 10,
+      }}
+    >
+      <Text strong style={{ color: "#627254" }}>
+        Phạm vi hiển thị:
+      </Text>
+
+      <Space wrap>
+        <Segmented
+          options={options}
+          value={defaultScope}
+          onChange={(val) => onScopeChange(val as "LOCAL" | "GLOBAL")}
+          style={{
+            background: "#fff",
+            borderRadius: 8,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+            padding: "4px 8px",
+          }}
+        />
+      </Space>
     </div>
   );
 };

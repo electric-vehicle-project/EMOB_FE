@@ -1,31 +1,44 @@
 import { useNavigate } from "react-router-dom";
-import { message, Card } from "antd";
+import { Card } from "antd";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import type { RootState } from "../../redux/store";
 import { CustomerForm } from "../../components/organisms/customer/CustomerForm";
 import { useCustomerCreate } from "../../service/customerService";
 import { CardWrapper } from "../../components/template/CardWrapper";
+
+interface CustomerFormData {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  dateOfBirth?: string | Date;
+  gender?: "MALE" | "FEMALE";
+  loyaltyPoints?: number;
+  note?: string;
+}
 
 export const CustomerCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user);
   const { mutateAsync: createCustomer, isPending } = useCustomerCreate();
 
-  // Chỉ DEALER_STAFF mới được phép tạo khách hàng
-  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
+  // Chỉ DEALER_STAFF được phép tạo khách hàng
+  const role = (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
   const canCreate = role === "DEALER_STAFF";
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: CustomerFormData): Promise<void> => {
     if (!canCreate) {
-      message.warning("Bạn không có quyền tạo khách hàng!");
+      toast.warning("Bạn không có quyền tạo khách hàng!");
       return;
     }
+
     try {
       await createCustomer(values);
-      message.success("Tạo khách hàng thành công!");
+      toast.success("Tạo khách hàng thành công!");
       navigate("/dealer_staff/customers");
     } catch {
-      message.error("Không thể tạo khách hàng, vui lòng thử lại.");
+      toast.error("Không thể tạo khách hàng, vui lòng thử lại!");
     }
   };
 
@@ -36,11 +49,7 @@ export const CustomerCreatePage: React.FC = () => {
       </h2>
 
       <Card bordered>
-        <CustomerForm
-          mode="create"
-          onSubmit={handleSubmit}
-          loading={isPending}
-        />
+        <CustomerForm onSubmit={handleSubmit} loading={isPending} />
       </Card>
     </CardWrapper>
   );

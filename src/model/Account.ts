@@ -2,7 +2,7 @@
 
 export const AccountStatus = {
   ACTIVE: "ACTIVE",
-  INACTIVE: "INACTIVE", // ✅ thêm
+  INACTIVE: "INACTIVE",
   BANNED: "BANNED",
 } as const;
 

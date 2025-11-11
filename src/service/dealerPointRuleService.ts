@@ -1,26 +1,23 @@
 import {
   createQueryHook,
   createQueryWithPathParamHook,
-  createMutationHook,
+  updateMutationHook,
 } from "../hook/useApi";
 
 const BASE_URL = "/dealer-point-rules";
 
-// ===== GET all dealer point rules (EVM Staff) =====
-export const useDealerPointRules = () => {
-  const query = createQueryHook("dealer-point-rules", BASE_URL)();
-  const rules = query.data?.result ?? [];
-  return { ...query, data: rules };
-};
+// ✅ GET /dealer-point-rules (Admin, EVM_STAFF)
+export const useDealerPointRuleList = () =>
+  createQueryHook("dealerPointRuleList", BASE_URL)();
 
-// ===== GET rules by dealerId (Dealer Staff) =====
-export const useDealerPointRuleByDealer = createQueryWithPathParamHook(
-  "dealer-point-rule-by-dealer",
+// ✅ GET /dealer-point-rules/{dealerId} (Manager, DealerStaff)
+export const useDealerPointRuleByDealerId = createQueryWithPathParamHook(
+  "dealerPointRuleByDealerId",
   BASE_URL
 );
 
-// ===== POST create new dealer point rule (EVM Staff) =====
-export const useCreateDealerPointRule = createMutationHook(
-  "create-dealer-point-rule",
+// ✅ PUT /dealer-point-rules (Manager update toàn bộ rule cho đại lý)
+export const useDealerPointRuleUpdate = updateMutationHook(
+  "dealerPointRuleList",
   BASE_URL
 );

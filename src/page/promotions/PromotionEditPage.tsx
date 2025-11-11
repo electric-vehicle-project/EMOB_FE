@@ -32,14 +32,18 @@ import { useDealersQuery } from "../../service/dealerService";
 
 const { RangePicker } = DatePicker;
 
+// Loại vai trò người dùng
 type Role = "ADMIN" | "MANAGER" | "EVM_STAFF" | "DEALER_STAFF";
+
+// Kiểu dữ liệu người dùng đăng nhập
 interface AppUser {
   id: string;
   role: Role;
   dealerId?: string;
 }
 
-type FormValues = {
+// Dữ liệu form chỉnh sửa khuyến mãi
+interface FormValues {
   name: string;
   description?: string;
   type?: "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
@@ -48,7 +52,17 @@ type FormValues = {
   duration?: [dayjs.Dayjs, dayjs.Dayjs];
   dealerIds?: string[];
   electricVehicleIds?: string[];
-};
+}
+
+interface DealerOption {
+  label: string;
+  value: string;
+}
+
+interface VehicleOption {
+  label: string;
+  value: string;
+}
 
 export default function PromotionEditPage() {
   const [form] = Form.useForm<FormValues>();
@@ -57,9 +71,8 @@ export default function PromotionEditPage() {
 
   const missingId = !paramId;
 
-  const user = useSelector<RootState, AppUser | null>(
-    (s) => (s as any).user ?? null
-  );
+  // Lấy thông tin user từ Redux store
+  const user = useSelector((state: RootState) => state.user) as AppUser | null;
   const role: Role = user?.role ?? "ADMIN";
 
   const isEvmStaff = role === "EVM_STAFF";
@@ -67,23 +80,30 @@ export default function PromotionEditPage() {
   const isManager = role === "MANAGER";
   const isAdmin = role === "ADMIN";
 
+  // Quyền chỉnh sửa
   const canEditTargets = isEvmStaff || isDealerStaff;
   const canPickDealers = isEvmStaff;
 
+  // Lấy dữ liệu khuyến mãi theo ID
   const { data, isLoading } = usePromotionById(paramId);
   const { mutateAsync: updateBasic, isPending: updatingBasic } =
     usePromotionUpdate();
   const { mutateAsync: updateValue, isPending: updatingValue } =
     usePromotionUpdateValue();
 
-  const { data: dealersData, isLoading: loadingDealers } = useDealersQuery({
-    enabled: canPickDealers,
-  } as any);
+  // Lấy danh sách đại lý (khi có quyền chọn)
+  const { data: dealersData, isLoading: loadingDealers } = useDealersQuery(
+    {},
+    { enabled: canPickDealers }
+  );
+
+  // Lấy danh sách xe điện (khi có quyền chỉnh sửa)
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
     enabled: canEditTargets,
-  } as any);
+  });
 
-  const p = data?.result as
+  // Chuẩn hóa dữ liệu trả về từ API
+  const promotion = data?.result as
     | {
         id: string;
         name: string;
@@ -98,27 +118,31 @@ export default function PromotionEditPage() {
       }
     | undefined;
 
+  // Lưu lại danh sách đã áp dụng
   const [existingDealerIds, setExistingDealerIds] = useState<string[]>([]);
   const [existingVehicleIds, setExistingVehicleIds] = useState<string[]>([]);
 
-  const dealerOptions = useMemo(
+  // Chuẩn hóa dữ liệu Select
+  const dealerOptions: DealerOption[] = useMemo(
     () => mapDealerOptions(dealersData),
     [dealersData]
   );
-  const vehicleOptions = useMemo(
+  const vehicleOptions: VehicleOption[] = useMemo(
     () => mapVehicleOptions(vehiclesData),
     [vehiclesData]
   );
 
+  // Tìm label cho tag hiển thị
   const findDealerLabel = (id: string) =>
     dealerOptions.find((x) => x.value === id)?.label ?? id;
 
   const findVehicleLabel = (id: string) =>
-    vehicleOptions.find((x) => x.value === id)?.label ?? "Unknown Vehicle";
+    vehicleOptions.find((x) => x.value === id)?.label ?? "Xe không xác định";
 
+  // Tùy chỉnh hiển thị tag
   const tagRender =
     (existingIds: string[], findLabel: (id: string) => string) =>
-    (props: any) => {
+    (props: { value: string; closable: boolean; onClose: () => void }) => {
       const { value, closable, onClose } = props;
       const isOld = existingIds.includes(value);
       return (
@@ -132,36 +156,40 @@ export default function PromotionEditPage() {
       );
     };
 
-  /** ✅ Tự động điền thời gian áp dụng */
+  // Gán dữ liệu ban đầu cho form
   useEffect(() => {
-    if (!p) return;
+    if (!promotion) return;
 
-    const dealers = p.dealerIds ?? [];
-    const vehicles = p.vehicleIds ?? [];
+    const dealers = promotion.dealerIds ?? [];
+    const vehicles = promotion.vehicleIds ?? [];
 
     setExistingDealerIds(dealers);
     setExistingVehicleIds(vehicles);
 
-    const start = p.startDate ? dayjs(p.startDate) : dayjs();
-    const end = p.endDate ? dayjs(p.endDate) : dayjs().add(7, "day");
+    const start = promotion.startDate ? dayjs(promotion.startDate) : dayjs();
+    const end = promotion.endDate
+      ? dayjs(promotion.endDate)
+      : dayjs().add(7, "day");
 
     form.setFieldsValue({
-      name: p.name,
-      description: p.description,
-      value: p.value,
-      minValue: p.minValue,
-      type: p.type ?? "PERCENTAGE",
+      name: promotion.name,
+      description: promotion.description,
+      value: promotion.value,
+      minValue: promotion.minValue,
+      type: promotion.type ?? "PERCENTAGE",
       duration: [start, end],
       dealerIds: dealers,
       electricVehicleIds: vehicles,
     });
-  }, [p, form]);
+  }, [promotion, form]);
 
+  // Xử lý submit form
   const handleSubmit = async (values: FormValues) => {
     if (!paramId) {
       message.error("Thiếu ID khuyến mãi trong URL!");
       return;
     }
+
     try {
       const [start, end] = values.duration || [];
 
@@ -182,6 +210,7 @@ export default function PromotionEditPage() {
       if (canEditTargets) {
         await updateBasic({ id: paramId, data: payloadBase });
       }
+
       if (isManager || isAdmin) {
         await updateValue({
           id: paramId,
@@ -213,7 +242,7 @@ export default function PromotionEditPage() {
   return (
     <div style={{ padding: 24 }}>
       <Button onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
-        ← Quay lại
+        Quay lại
       </Button>
 
       {missingId && (
@@ -326,10 +355,7 @@ export default function PromotionEditPage() {
               <Input.TextArea
                 rows={3}
                 disabled={isManager || isAdmin}
-                style={{
-                  resize: "none",
-                  borderRadius: 8,
-                }}
+                style={{ resize: "none", borderRadius: 8 }}
               />
             </Form.Item>
           </Col>
