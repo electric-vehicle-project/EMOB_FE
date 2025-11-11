@@ -93,7 +93,7 @@ const UnitsSubtable = ({ vehicleId }: Props) => {
           ),
         },
         {
-          title: "Giá nhập",
+          title: "Giá bán lẻ",
           dataIndex: "price",
           render: (p?: number) =>
             typeof p === "number" ? `${p.toLocaleString("vi-VN")}₫` : "—",
