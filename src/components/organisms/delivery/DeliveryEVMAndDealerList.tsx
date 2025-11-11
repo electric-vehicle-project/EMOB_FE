@@ -8,6 +8,7 @@ import {
   Modal,
   Form,
   DatePicker,
+  Pagination,
 } from "antd";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
@@ -19,6 +20,7 @@ import {
 } from "../../../service/deliveryService";
 import { DeliveryTable } from "../../molecules/delivery/DeliveryTable";
 import { useContractQueryByEVM } from "../../../service/contractService";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
 
 const { Option } = Select;
 
@@ -29,6 +31,8 @@ export const DeliveryEVMAndDealerList = () => {
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statuses, setStatuses] = useState<string[]>([]);
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
 
   // Modal control
   const [openModal, setOpenModal] = useState(false);
@@ -91,14 +95,20 @@ export const DeliveryEVMAndDealerList = () => {
       setOpenModal(false);
       form.resetFields();
       refetch();
-    } catch {
-      toast.error("Không thể tạo đơn vận chuyển.");
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Đã xảy ra lỗi không xác định!";
+      toast.error(errorMessage);
     }
   };
 
   return (
     <div>
-      <span>Danh sách đơn vận chuyển từ Hãng về các Đại lý</span>
+      <span className="flex justify-between p-5">
+        <b className="text-[#627254]">Danh sách đơn vận chuyển từ Hãng xe đến Đại lý</b>
+      </span>
       <Card
         extra={
           <Space>
@@ -126,30 +136,23 @@ export const DeliveryEVMAndDealerList = () => {
             <Select
               value={sortDir}
               onChange={(v) => setSortDir(v)}
-              style={{ width: 100 }}
+              style={{ width: '100%' }}
             >
-              <Option value="asc">ASC</Option>
-              <Option value="desc">DESC</Option>
+              <Option value="asc">Tăng dần</Option>
+              <Option value="desc">Giảm dần</Option>
             </Select>
 
-            <Select
-              value={size}
-              onChange={(v) => setSize(v)}
-              style={{ width: 120 }}
-            >
-              <Option value={10}>10 / page</Option>
-              <Option value={20}>20 / page</Option>
-              <Option value={50}>50 / page</Option>
-              <Option value={100}>100 / page</Option>
-            </Select>
-
-            <Button
-              type="primary"
-              className="!bg-[#627254]"
-              onClick={() => setOpenModal(true)}
-            >
-              + Tạo đơn vận chuyển
-            </Button>
+            {role === "EVM_STAFF" && (
+              <>
+                <Button
+                  type="primary"
+                  className="!bg-[#627254]"
+                  onClick={() => setOpenModal(true)}
+                >
+                  + Tạo đơn vận chuyển
+                </Button>
+              </>
+            )}
           </Space>
         }
       >
@@ -163,6 +166,16 @@ export const DeliveryEVMAndDealerList = () => {
           onComplete={handleComplete}
           onDelete={handleDelete}
         />
+        <div className="p-3 flex justify-center">
+          <Pagination
+            current={page + 1}
+            pageSize={size}
+            total={total}
+            showSizeChanger={true}
+            onChange={(v) => setSize(v)}
+            showTotal={(total) => `Tổng ${total} đơn giao hàng`}
+          />
+        </div>
 
         {/* MODAL TẠO ĐƠN */}
         <Modal

@@ -73,10 +73,12 @@ export const ROUTES = {
   VEHICLE_REQUEST: "vehicle-request",
 
   // DELIVERY
-  DELIVERY: "delivery",
+  DELIVERY_CUSTOMERS: "delivery",
+  DELIVERY_CUSTOMERS_DETAIL: "delivery/:id",
+  DELIVERY_DEALERS: "delivery",
+  DELIVERY_DEALERS_DETAIL: "delivery/:id",
   DELIVERY_CURRENT_DEALER: "delivery/current",
-  DELIVERY_DEALER_DETAIL: "delivery/:id",
-  DELIVERY_CUSTOMER_DETAIL: "delivery/customer/:id",
+  DELIVERY_CURRENT_DEALER_DETAIL: "delivery/current/:id",
 
   ACCOUNT: "accounts",
 
@@ -84,10 +86,9 @@ export const ROUTES = {
 
   // CONTRACT
   CONTRACT: "contract",
+  CONTRACT_WITH_EVM: "contract/with-evm",
+  CONTRACT_WITH_EVM_DETAIL: "contract/with-evm/:id",
   CONTRACT_DETAIL: "contract/:id",
-  CONTRACT_CUSTOMER: "contract/customers",
-
-  CONTRACT_CUSTOMER_DETAIL: "contract/customers/:id",
 
   // OVERVIEW
   OVERVIEW: "overview",

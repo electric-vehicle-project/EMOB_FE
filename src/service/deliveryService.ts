@@ -1,4 +1,6 @@
 // src/service/deliveryService.ts
+import api from "../config/api";
+import { useMutation } from "@tanstack/react-query";
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -53,14 +55,9 @@ export const useDeliveryCreateByDealerMutation = createMutationHook(
   "/delivery/customer"
 );
 
-
 // ===============================
 // CUSTOM MUTATION FOR UPDATE DELIVERY
 // ===============================
-
-import api from "../config/api";
-import { useMutation } from "@tanstack/react-query";
-import { message } from "antd";
 
 // Hoàn tất giao hàng
 export const useDeliveryCompleteMutation = () =>
@@ -69,8 +66,6 @@ export const useDeliveryCompleteMutation = () =>
       const { data } = await api.put(`/delivery/${deliveryId}/complete`);
       return data;
     },
-    onSuccess: () => message.success("Đã hoàn tất giao hàng thành công."),
-    onError: () => message.error("Không thể hoàn tất giao hàng."),
   });
 
 // ===============================
@@ -82,11 +77,5 @@ export const useDeliveryDeleteMutation = () =>
     mutationFn: async (deliveryId: string) => {
       const { data } = await api.delete(`/delivery/${deliveryId}`);
       return data;
-    },
-    onSuccess: () => {
-      message.success("Đã xóa đơn vận chuyển thành công!");
-    },
-    onError: () => {
-      message.error("Không thể xóa đơn vận chuyển!");
     },
   });

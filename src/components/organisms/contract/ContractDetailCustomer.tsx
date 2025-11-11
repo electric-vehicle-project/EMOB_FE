@@ -1,4 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useParams, useNavigate } from "react-router";
 import {
   Card,
   Button,
@@ -8,6 +9,7 @@ import {
   Select,
   InputNumber,
   Form,
+  DatePicker,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -19,23 +21,34 @@ import { useReactToPrint } from "react-to-print";
 import dayjs from "dayjs";
 import {
   useContractCancelMutation,
-  useContractQueryByCustomer,
+  useContractDetailQuery,
   useContractSignMutation,
 } from "../../../service/contractService";
 import { toast } from "react-toastify";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { DeleteConfirm } from "../DeleteConfirm";
+import { useSaleOrderById } from "../../../service/saleOrderService";
+import { useCustomerById } from "../../../service/customerService";
+import { useDealerByIdQuery } from "../../../service/dealerService";
 
 export const ContractDetailCustomer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { data, isLoading, refetch } = useContractQueryByCustomer(id);
+  const { data, isLoading, refetch } = useContractDetailQuery(id);
+
   const { mutateAsync: signContract, isPending: signing } =
     useContractSignMutation();
-  const { mutateAsync: cancelContract, isPending: cancelling } =
-    useContractCancelMutation();
+  const { mutateAsync: cancelContract } = useContractCancelMutation();
 
+  const user = useCurrentUser();
   const contract = data?.result;
+  const saleOrder = useSaleOrderById(contract?.orderId).data?.result;
+  const customer = useCustomerById(saleOrder?.customerId).data?.result;
+  const dealer = useDealerByIdQuery(user.dealerId).data?.result;
+   
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"FULL" | "INSTALLMENT">(
     "FULL"
   );
@@ -65,12 +78,12 @@ export const ContractDetailCustomer = () => {
         paymentStatus === "FULL"
           ? { contractId: contract.contractId }
           : {
-              contractId: contract.contractId,
-              deposit: formValues.deposit,
-              downPayment: formValues.downPayment,
-              termMonths: formValues.termMonths,
-              interestRate: formValues.interestRate,
-            };
+            contractId: contract.contractId,
+            deposit: formValues.deposit,
+            downPayment: formValues.downPayment,
+            termMonths: formValues.termMonths,
+            interestRate: formValues.interestRate,
+          };
 
       await signContract({ params: baseParams, body });
       toast.success("Đã ký hợp đồng thành công!");
@@ -124,46 +137,53 @@ export const ContractDetailCustomer = () => {
         <Card
           className="bg-white shadow-md print:shadow-none print:border-none"
           title={
-            <div className="text-center">
-              <h2 className="text-xl font-bold mt-6">
-                CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-              </h2>
-              <p className="text-xl font-bold mt-1">
-                Độc lập - Tự do - Hạnh phúc
-              </p>
-              -----------------------------------
-              <h2 className="text-xl font-bold uppercase mt-1">
-                HỢP ĐỒNG MUA BÁN XE ĐIỆN
-              </h2>
-              <p className="text-gray-600 mt-1 mb-1">
-                (Số: {contract?.contractNumber})
-              </p>
-            </div>
+            <>
+              <div className="text-center">
+                <h2 className="text-xl font-bold mt-6">
+                  CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+                </h2>
+                <p className="text-xl font-bold mt-1">
+                  Độc lập - Tự do - Hạnh phúc
+                </p>
+                -----------------------------------
+                <h2 className="text-xl font-bold uppercase mt-1">
+                  HỢP ĐỒNG MUA BÁN XE ĐIỆN
+                </h2>
+                <p className="text-gray-600 mt-1 mb-1">
+                  (Số: {contract?.contractNumber})
+                </p>
+              </div>
+              <div className="text-end italic">
+                TP.HCM, ngày {dayjs(contract?.createdAt).format("DD")} tháng{" "}
+                {dayjs(contract?.createdAt).format("MM")} năm{" "}
+                {dayjs(contract?.createdAt).format("YYYY")}
+              </div>
+            </>
           }
         >
           {/* ---------- Nội dung hợp đồng ---------- */}
           <div className="text-[15px] leading-7 text-justify space-y-4">
             <p>
               Căn cứ Bộ luật Dân sự và các quy định pháp luật có liên quan, hôm
-              nay, ngày <b>{dayjs(contract?.createdAt).format("DD/MM/YYYY")}</b>
-              , chúng tôi gồm có:
+              nay, chúng tôi gồm có:
             </p>
 
             <p>
-              <b>BÊN A (Đại lý):</b> Công ty TNHH EMOB Electric Vehicle
+              <b>BÊN A (Đại lý):</b>  {dealer?.name ?? "______________________"}
               <br />
-              Địa chỉ: Tòa nhà F-Town 3, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
+              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên đại lý
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên hãng
-              xe
+              Địa chỉ: {dealer?.address ?? "______________________"}
             </p>
 
             <p>
               <b>BÊN B (Khách hàng):</b>
               <br />
-              Địa chỉ: ______________________
+              Đại diện: Ông/Bà <b>{customer?.fullName ?? "______________________"}</b>
               <br />
-              Đại diện: Ông/Bà ______________________
+              Địa chỉ: {customer?.address ?? "______________________"}
+              <br />
+              Số điện thoại: {customer?.phoneNumber ?? "______________________"}
             </p>
 
             <Divider />
@@ -186,14 +206,21 @@ export const ContractDetailCustomer = () => {
               <b>Điều 2. Thời gian và địa điểm bàn giao</b>
               <br />- Thời gian: Trong vòng 15 ngày kể từ ngày ký hợp đồng hoặc
               thời gian khác theo thỏa thuận.
-              <br />- Địa điểm: Kho hàng của Bên A hoặc địa điểm khác theo thỏa
+              <br />- Địa điểm: Cửa hàng của Bên A hoặc địa điểm khác theo thỏa
               thuận.
             </p>
 
             <p>
               <b>Điều 3. Thanh toán</b>
               <br />- Hình thức thanh toán: Theo thỏa thuận.
-              <br />- Trạng thái thanh toán: <b>{contract?.status}</b>
+              <br />- Trạng thái thanh toán:{" "}
+              <b>
+                {contract?.status === "PENDING"
+                  ? "Chưa thanh toán"
+                  : contract?.status === "SIGNED"
+                    ? "Đã thỏa thuận"
+                    : contract?.status || "Không xác định"}
+              </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
 
@@ -201,11 +228,93 @@ export const ContractDetailCustomer = () => {
               <b>Điều 4. Quyền và nghĩa vụ của các bên</b>
               <br />- Bên A đảm bảo xe bàn giao đúng số lượng, chất lượng.
               <br />- Bên B có nghĩa vụ kiểm tra, nhận xe và thực hiện thanh
-              toán.
+              toán đúng hạn.
             </p>
 
             <p>
               <b>Điều 5. Điều khoản chung</b>
+              {/* ---------- Phụ lục hợp đồng ---------- */}
+              <Divider />
+
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-3 text-center uppercase">
+                  Phụ lục hợp đồng
+                </h3>
+                <p className="text-gray-600 mb-3 text-center">
+                  (Chi tiết các dòng xe thuộc hợp đồng)
+                </p>
+
+                <div className="space-y-6">
+                  {(contract?.items || []).map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
+                    >
+                      <h4 className="font-semibold mb-3 text-[#394a2f]">
+                        #{index + 1}. Xe {item.vehicleStatus === "TEST_DRIVE"
+                          ? "lái thử"
+                          : item.vehicleStatus === "SPECIAL"
+                            ? "đặc biệt"
+                            : "tiêu chuẩn"}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
+                        <p>
+                          <b>Mẫu xe :</b> {item.id}
+                        </p>
+                        <p>
+                          <b>Màu sắc:</b> {item.color || "Không xác định"}
+                        </p>
+                        <p>
+                          <b>Số lượng:</b> {item.quantity ?? 0}
+                        </p>
+                        <p>
+                          <b>Đơn giá:</b>{" "}
+                          {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                        </p>
+                        <p>
+                          <b>Giảm giá:</b>{" "}
+                          {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                        </p>
+                        <p>
+                          <b>Thành tiền:</b>{" "}
+                          {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                        </p>
+                        <p>
+                          <b>Mã khuyến mãi :</b>{" "}
+                          {item.promotionId || "Không áp dụng"}
+                        </p>
+                        <div className="col-span-2">
+                          <b>Danh sách mã xe con thuộc mẫu:</b>
+                          {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
+                            <ul className="list-disc ml-6 mt-1 text-[14px]">
+                              {item.vehicleUnitIds.map((uid: string) => (
+                                <li key={uid}>{uid}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-500 ml-2 mt-1">Không có</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end mt-6 text-[15px] font-medium">
+                  <p>
+                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
+                    <b>Tổng giá trị (chưa VAT):</b>{" "}
+                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫ &nbsp;&nbsp;
+                    <b>Thuế VAT:</b>{" "}
+                    {contract?.vatAmount
+                      ? `${contract?.vatAmount.toLocaleString("vi-VN")} ₫`
+                      : "0 ₫"}
+                  </p>
+                </div>
+              </div>
+
+
+
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
               <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
@@ -221,23 +330,22 @@ export const ContractDetailCustomer = () => {
               <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
                 (đã ký)
               </div>
-              <p className="mt-1 text-sm text-gray-500">
-                (Ký và ghi rõ họ tên)
-              </p>
+              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
             </div>
+
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <div className="border h-28 w-40 mx-auto mt-2" />
-              <p className="mt-1 text-sm text-gray-500">
-                (Ký và ghi rõ họ tên)
-              </p>
+              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex text-green-900">
+                {contract?.status === "SIGNED" ? "(đã ký)" : ""}
+              </div>
+              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
             </div>
           </div>
 
           <Divider />
 
           <div className="flex justify-end gap-3 mt-6 print:hidden">
-            {contract?.status === "PENDING" && (
+            {contract?.status === "PENDING" && user?.role === "DEALER_STAFF" && (
               <>
                 <Button
                   type="primary"
@@ -249,9 +357,8 @@ export const ContractDetailCustomer = () => {
                 </Button>
                 <Button
                   danger
-                  onClick={handleCancelContract}
-                  loading={cancelling}
-                  className="rounded-md"
+                  onClick={() => setDeleteModalVisible(true)}
+                  className="!bg-[#f34b4b] hover:!bg-[#ba0000] !text-white rounded-xl h-9"
                 >
                   Hủy hợp đồng
                 </Button>
@@ -275,8 +382,22 @@ export const ContractDetailCustomer = () => {
         okText="Ký"
         cancelText="Hủy"
         confirmLoading={signing}
+        okButtonProps={{
+          disabled:
+            paymentStatus === "INSTALLMENT"
+              ? !form.isFieldsTouched(true) ||
+              form.getFieldsError().some(({ errors }) => errors.length > 0)
+              : false,
+        }}
       >
-        <Form form={form} layout="vertical" className="mt-2">
+        <Form
+          form={form}
+          layout="vertical"
+          className="mt-2"
+          onValuesChange={() => {
+            form.validateFields().catch(() => { });
+          }}
+        >
           <Form.Item label="Trạng thái thanh toán">
             <Select
               value={paymentStatus}
@@ -294,23 +415,46 @@ export const ContractDetailCustomer = () => {
                 name="deposit"
                 label="Tiền đặt cọc (₫)"
                 rules={[
-                  { required: true, message: "Vui lòng nhập tiền đặt cọc" },
+                  {
+                    required: true,
+                    message:
+                      "Tiền đặt cọc ít nhất phải đạt 10% giá trị tổng đơn",
+                  },
+                  {
+                    validator: (_, value) => {
+                      const minDeposit = (contract?.totalPrice || 0) * 0.1;
+                      if (value === undefined || value < minDeposit) {
+                        return Promise.reject(
+                          new Error(
+                            `Tiền đặt cọc tối thiểu là ${minDeposit.toLocaleString(
+                              "vi-VN"
+                            )} ₫`
+                          )
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
                 ]}
               >
-                <InputNumber min={0} className="w-full" />
+                <InputNumber min={0} className="!w-full" />
               </Form.Item>
 
               <Form.Item
                 name="downPayment"
-                label="Số tiền trả trước (₫)"
+                label="Ngày bắt đầu kế hoạch trả góp"
                 rules={[
                   {
                     required: true,
-                    message: "Vui lòng nhập số tiền trả trước",
+                    message: "Vui lòng chọn ngày bắt đầu kế hoạch trả góp",
                   },
                 ]}
               >
-                <InputNumber min={0} className="w-full" />
+                <DatePicker
+                  format="YYYY-MM-DD"
+                  className="w-full"
+                  placeholder="Chọn ngày bắt đầu"
+                />
               </Form.Item>
 
               <Form.Item
@@ -321,6 +465,9 @@ export const ContractDetailCustomer = () => {
                 <Select
                   options={[
                     { label: "12 tháng", value: 12 },
+                    { label: "18 tháng", value: 18 },
+                    { label: "24 tháng", value: 24 },
+                    { label: "30 tháng", value: 30 },
                     { label: "36 tháng", value: 36 },
                   ]}
                 />
@@ -331,12 +478,30 @@ export const ContractDetailCustomer = () => {
                 label="Lãi suất (%)"
                 rules={[{ required: true, message: "Vui lòng nhập lãi suất" }]}
               >
-                <InputNumber min={0} max={100} step={0.1} className="w-full" />
+                <InputNumber
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  className="!w-full"
+                />
               </Form.Item>
             </>
           )}
         </Form>
       </Modal>
+
+      <DeleteConfirm
+        open={deleteModalVisible}
+        onCancel={() => setDeleteModalVisible(false)}
+        onConfirm={async () => {
+          await handleCancelContract();
+          setDeleteModalVisible(false);
+        }}
+        message="Bạn có chắc chắn muốn hủy hợp đồng này không? Hành động này không thể hoàn tác."
+        okText="Hủy hợp đồng"
+        danger
+        title="Xác nhận hủy hợp đồng"
+      />
     </div>
   );
 };

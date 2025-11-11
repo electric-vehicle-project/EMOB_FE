@@ -1,16 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Card, Select, Space, Input } from "antd";
-import { toast } from "react-toastify";
 import {
-  useContractCancelMutation,
-  useContractSignMutation,
   useContractQueryByEVM,
 } from "../../../service/contractService";
 import { ContractTable } from "../../molecules/contract/ContractTable";
 
 const { Option } = Select;
-const { Search } = Input;
 
 export const ContractListAllDealers = () => {
   const [page, setPage] = useState(0);
@@ -20,7 +15,7 @@ export const ContractListAllDealers = () => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [keyword, setKeyword] = useState("");
 
-  const { data, isLoading, refetch } = useContractQueryByEVM({}, {
+  const { data } = useContractQueryByEVM({}, {
     page,
     size,
     sortField,
@@ -28,49 +23,21 @@ export const ContractListAllDealers = () => {
     statuses,
     keyword,
   });
-
-  const { mutateAsync: signContract, isPending: signing } = useContractSignMutation();
-  const { mutateAsync: cancelContract, isPending: cancelling } = useContractCancelMutation();
-
   const contracts = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
-
-  const handleSign = async () => {
-    try {
-      await signContract({
-        purchaseDate: new Date().toISOString().split("T")[0],
-        paymentStatus: "FULL",
-      });
-      toast.success("Đã ký hợp đồng thành công!");
-      refetch();
-    } catch {
-      toast.error("Không thể ký hợp đồng.");
-    }
-  };
-
-  const handleCancel = async (record: any) => {
-    try {
-      await cancelContract(record.contractId);
-      toast.success("Đã hủy hợp đồng!");
-      refetch();
-    } catch {
-      toast.error("Không thể hủy hợp đồng.");
-    }
-  };
 
   return (
     <div>
       <span>Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý</span>
       <Card
         extra={
-          <Space>
-            <Search
-              placeholder="Tìm kiếm..."
+          <Space className="overflow-x-hidden">
+            <Input
+              placeholder="Tìm kiếm theo mã hợp đồng..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              onSearch={() => refetch()}
               allowClear
-              style={{ width: 200 }}
+              style={{ width: 450 }}
             />
 
             <Select
@@ -120,7 +87,6 @@ export const ContractListAllDealers = () => {
       >
         <ContractTable
           data={contracts}
-          loading={isLoading || signing || cancelling}
           pagination={{
             current: page + 1,
             pageSize: size,
@@ -129,8 +95,6 @@ export const ContractListAllDealers = () => {
             onChange: (newPage) => setPage(newPage - 1),
             showTotal: (t) => `Tổng ${t} hợp đồng`,
           }}
-          onSign={handleSign}
-          onCancel={handleCancel}
         />
       </Card>
     </div>

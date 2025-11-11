@@ -23,7 +23,7 @@ interface Props {
     onDelete?: (record: IDelivery) => void;
 }
 
-export const DeliveryTable = ({
+export const DeliveryDealerTable = ({
     data,
 }: Props) => {
 
@@ -36,7 +36,7 @@ export const DeliveryTable = ({
             render: (text, record) => (
                 <Tooltip title={text}>
                     <Link
-                        to={`${record.id}`}
+                        to={"/current/"+`${record.id}`}
                         className="block truncate text-[#627254] font-semibold hover:underline"
                     >
                         {text}

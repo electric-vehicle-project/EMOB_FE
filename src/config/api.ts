@@ -4,8 +4,8 @@ import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
 
 const api = axios.create({
-  // baseURL: "http://103.90.226.19:8080/api/",
-  baseURL: "http://localhost:8080/api",
+  // baseURL: "http://103.200.20.149/:8080/api/",
+  baseURL: import.meta.env.VITE_BASE_URL
 });
 
 api.interceptors.request.use(
@@ -31,7 +31,7 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response, // thành công thì trả response như bình thường
+  (response) => response, 
   async (error: AxiosError<any>) => {
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
@@ -60,11 +60,13 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        const baseURL = import.meta.env.VITE_BASE_URL
+
         const refreshToken = localStorage.getItem("refreshToken");
         if (!refreshToken) throw new Error("No refresh token found");
 
         // gửi request refresh token
-        const res = await axios.post("http://localhost:8080/api/auth/refresh", {
+        const res = await axios.post(baseURL + "/auth/refresh", {
           token: refreshToken,
         });
 

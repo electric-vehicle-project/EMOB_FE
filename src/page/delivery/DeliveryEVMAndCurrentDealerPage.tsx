@@ -1,5 +1,5 @@
-import { DeliveryEVMAndDealerListCurrent } from "../../components/organisms/delivery/DeliveryEVMandDealerListCurrent";
-import CardWrapper from "../../components/template/CardWrapper";
+import { DeliveryEVMAndDealerListCurrent } from "../../components/organisms/delivery/DeliveryEVMAndDealerListCurrent";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 export const DeliveryEVMAndCurrentDealerPage = () => {
   // const user = useCurrentUser();

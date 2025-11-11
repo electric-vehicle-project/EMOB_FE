@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button, Tooltip } from "antd";
 import { CiLogout } from "react-icons/ci";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router";
 import { getItem, type MenuItem } from "../utils/menuUtils";
 import MenuDashboard from "../components/atoms/MenuDashboard";
 import {
@@ -71,7 +71,7 @@ function DashboardLayout() {
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_DEALERS, <SendOutlined />),
           getItem(
             "Danh mục trả góp",
             ROUTES.INSTALLMENT_PLAN,
@@ -107,7 +107,7 @@ function DashboardLayout() {
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_DEALERS, <SendOutlined />),
         ];
 
       // ===================== MANAGER =====================
@@ -121,7 +121,7 @@ function DashboardLayout() {
           getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
           getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
 
           // Sản phẩm & giá
@@ -166,7 +166,7 @@ function DashboardLayout() {
           getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY, <SendOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
           getItem(
             "Danh mục trả góp",
             ROUTES.INSTALLMENT_PLAN,
@@ -310,7 +310,7 @@ function DashboardLayout() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 bg-[var(--neutural-color)] transition-all duration-500 ease-smooth p-3 sm:p-6 overflow-x-auto">
+      <div className="flex-1 min-w-0 bg-[var(--natural-color)] transition-all duration-500 ease-smooth p-3 sm:p-6 overflow-x-auto">
         <Outlet />
       </div>
     </section>
