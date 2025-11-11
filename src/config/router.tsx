@@ -45,13 +45,14 @@ import { ContractAllDealersPage } from "../page/contract/ContractAllDealersPage"
 import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerPage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import { VehicleBulkPage } from "../page/EVM/VehicleBulkPage";
-import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
 import { InstallmentPlanPage } from "../page/IntallmentPlanPage";
 import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDealerPage";
 import ReportDetailPage from "../page/report/ReportDetailPage";
+import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
+import DealerPointRuleAdminPage from "../page/dealer-point-rule/DealerPointRuleAdminPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -101,7 +102,7 @@ export const router = createBrowserRouter([
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <DealerDiscountPolicyPage />,
       },
-      { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
+      { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRuleAdminPage /> },
 
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
