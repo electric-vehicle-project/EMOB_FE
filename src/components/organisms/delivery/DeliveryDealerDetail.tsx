@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* EMOB-2025 - DeliveryDetail */
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Button, Divider, Space, Tag, Spin } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -105,7 +103,6 @@ export const DeliveryDealerDetail = () => {
                 }
             >
                 <div className="text-gray-700 space-y-4">
-                    <Divider className="!my-3" />
                     <div className="grid grid-cols-2 gap-x-10 gap-y-4">
                         <div>
                             <p className="text-sm text-gray-500">Mã giao hàng</p>

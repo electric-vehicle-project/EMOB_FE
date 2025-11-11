@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Button, Divider, Space, Tag, Spin } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined, DeleteOutlined } from "@ant-design/icons";
