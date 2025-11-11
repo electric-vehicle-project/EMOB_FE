@@ -1,4 +1,3 @@
-// src/pages/vehicle/VehicleEditPage.tsx
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, message, Spin, Form, Button, Space, Modal } from "antd";
 import {
@@ -14,6 +13,7 @@ import { ROUTES } from "../../model/routePaths";
 import { getRoleBasePath } from "../../utils/roleGuard";
 import type { UploadFile } from "antd/es/upload";
 import { uploadFiles } from "../../utils/uploadFile";
+import { EditOutlined } from "@ant-design/icons";
 
 export const VehicleEditPage = () => {
   const { id } = useParams();
@@ -80,7 +80,6 @@ export const VehicleEditPage = () => {
       await updateVehicle.mutateAsync({ id: id!, data: payload });
       message.success("✅ Đã lưu thay đổi xe thành công!");
 
-      // ✅ Ghi đè entry hiện tại (Edit) bằng trang Detail
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
         state: { from: "edit" },
@@ -134,19 +133,31 @@ export const VehicleEditPage = () => {
     );
 
   return (
-    <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
+    <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10 px-4">
       <Card
-        title="Chỉnh sửa thông tin xe"
-        className="w-full max-w-3xl shadow-md rounded-2xl"
+        title={
+          <div className="flex items-center gap-2">
+            <EditOutlined className="text-[#627254]" />
+            <span className="text-lg font-semibold">
+              Chỉnh sửa thông tin xe
+            </span>
+          </div>
+        }
+        className="w-full max-w-4xl shadow-md rounded-2xl"
+        styles={{ header: { borderBottom: "1px solid #f0f0f0" } }}
       >
         <VehicleForm form={form} onFinish={handleSave} canEditPrices={false} />
+
         <div className="flex justify-end gap-3 mt-6">
           <Space>
-            <Button onClick={handleCancel}>Hủy</Button>
+            <Button onClick={handleCancel} className="rounded-md">
+              Hủy
+            </Button>
             <Button
               type="primary"
               onClick={() => form.submit()}
               loading={updateVehicle.isPending}
+              className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md"
             >
               Lưu thay đổi
             </Button>

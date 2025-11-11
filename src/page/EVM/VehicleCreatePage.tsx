@@ -1,4 +1,3 @@
-// src/pages/vehicle/VehicleCreatePage.tsx
 import { Card, message, Button, Space, Form } from "antd";
 import { useNavigate } from "react-router-dom";
 import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
@@ -11,12 +10,12 @@ import { ROUTES } from "../../model/routePaths";
 import { getRoleBasePath } from "../../utils/roleGuard";
 import type { UploadFile } from "antd/es/upload";
 import { uploadFiles } from "../../utils/uploadFile";
+import { CarOutlined } from "@ant-design/icons";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const createVehicle = useCreateVehicle();
 
   const user = useCurrentUser();
@@ -32,7 +31,6 @@ export const VehicleCreatePage = () => {
 
   const handleCreate = async (values: IVehicle) => {
     try {
-      // Lấy danh sách file ảnh mới (nếu có)
       const fileList =
         (values.images as unknown as UploadFile[] | undefined) ?? [];
       const rawFiles =
@@ -42,12 +40,10 @@ export const VehicleCreatePage = () => {
           )
           .filter(Boolean) ?? [];
 
-      // Upload lên Supabase → public URLs
       const uploadedUrls = await uploadFiles(rawFiles as File[]);
 
       const payload: IVehicle = {
         ...values,
-        // Nếu không có ảnh thì dùng placeholder
         images:
           uploadedUrls.length > 0
             ? uploadedUrls
@@ -68,23 +64,35 @@ export const VehicleCreatePage = () => {
   const handleCancel = () => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
 
   return (
-    <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10">
+    <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10 px-4">
       <Card
-        title="Thêm xe mới"
-        className="w-full max-w-3xl shadow-md rounded-2xl"
+        title={
+          <div className="flex items-center gap-2">
+            <CarOutlined className="text-[#627254]" />
+            <span className="text-lg font-semibold">Thêm xe điện mới</span>
+          </div>
+        }
+        className="w-full max-w-4xl shadow-md rounded-2xl"
+        styles={{
+          header: { borderBottom: "1px solid #f0f0f0" },
+        }}
       >
         <VehicleForm
           form={form}
           onFinish={handleCreate}
           canEditPrices={false}
         />
+
         <div className="flex justify-end gap-3 mt-6">
           <Space>
-            <Button onClick={handleCancel}>Hủy</Button>
+            <Button onClick={handleCancel} className="rounded-md">
+              Hủy
+            </Button>
             <Button
               type="primary"
               onClick={() => form.submit()}
               loading={createVehicle.isPending}
+              className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md"
             >
               Tạo xe
             </Button>
