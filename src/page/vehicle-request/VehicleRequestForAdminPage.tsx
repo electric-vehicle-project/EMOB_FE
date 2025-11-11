@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Table, Button, Tag, Input, Space, Spin, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -7,6 +7,7 @@ import {
   useGetVehicleRequestsForAdmin,
   useApproveVehicleRequest,
 } from "../../service/vehicleRequestService";
+import { useDealersQuery } from "../../service/dealerService"; // ✅ thêm import
 import ViewVehicleRequestModal from "./ViewVehicleRequestModal";
 import type { IVehicleRequest } from "../../model/VehicleRequest";
 
@@ -17,13 +18,33 @@ const AdminVehicleRequestPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // Gọi API for-admin
+  // Fetch yêu cầu xe dành cho admin
   const { data, isLoading, refetch } = useGetVehicleRequestsForAdmin({
     keyword: searchTerm,
     page: page - 1,
     size: pageSize,
   });
 
+  // fetch danh sách đại lý (để hiển thị tên)
+  const { data: dealerData, isLoading: dealerLoading } = useDealersQuery({
+    page: 0,
+    size: 200,
+    keyword: "",
+    country: "",
+    sortField: "name",
+    sortDir: "ASC",
+  });
+
+  // tạo map từ dealerId -> dealerName
+  const dealerMap = useMemo(() => {
+    const map = new Map<string, string>();
+    dealerData?.result?.data?.forEach((dealer: any) => {
+      map.set(dealer.id, dealer.name || "Không rõ đại lý");
+    });
+    return map;
+  }, [dealerData]);
+
+  // Mutation: duyệt yêu cầu
   const { mutateAsync: approveVehicleRequest, isPending } =
     useApproveVehicleRequest();
 
@@ -36,25 +57,31 @@ const AdminVehicleRequestPage: React.FC = () => {
       message.error("Không thể duyệt yêu cầu này!");
     }
   };
+  // search
+  function useDebounce<T>(value: T, delay = 400): T {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+      const handler = setTimeout(() => setDebouncedValue(value), delay);
+      return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
+  }
 
-  // Đọc đúng cấu trúc dữ liệu từ backend
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const vehicleRequests: IVehicleRequest[] = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
 
   const columns: ColumnsType<IVehicleRequest> = [
     {
-      title: "Mã yêu cầu",
-      dataIndex: "id",
-      key: "id",
-      render: (id) => (
-        <span className="font-mono text-gray-700">{id.slice(0, 8)}...</span>
-      ),
-    },
-    {
       title: "Đại lý",
       dataIndex: "dealerId",
       key: "dealerId",
-      render: (text) => text || "-",
+      render: (dealerId: string) =>
+        dealerLoading ? (
+          <Spin size="small" />
+        ) : (
+          <span>{dealerMap.get(dealerId) || dealerId || "-"}</span>
+        ),
     },
     {
       title: "Số lượng",
@@ -134,15 +161,16 @@ const AdminVehicleRequestPage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <SectionTitle text="Quản lý yêu cầu xe" />
-        <Input.Search
-          placeholder="Tìm kiếm theo mã hoặc đại lý..."
+        <Input
+          placeholder="Tìm kiếm theo số lượng..."
+          prefix={<SearchOutlined />}
           allowClear
-          enterButton={<SearchOutlined />}
-          onSearch={(value) => {
-            setSearchTerm(value);
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
             setPage(1);
           }}
-          style={{ width: 300 }}
+          style={{ width: 300, marginLeft: 40 }}
         />
       </div>
 
@@ -155,7 +183,7 @@ const AdminVehicleRequestPage: React.FC = () => {
         <Table
           columns={columns}
           dataSource={vehicleRequests}
-          loading={isLoading}
+          loading={isLoading || dealerLoading}
           rowKey="id"
           pagination={{
             current: page,

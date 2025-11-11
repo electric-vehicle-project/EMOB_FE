@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Button, message, Popconfirm, Tag, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import SectionTitle from "../../components/atoms/SectionTitle";
@@ -11,6 +11,15 @@ import UpdateVehicleRequestModal from "./UpdateVehicleRequestModal"; // ✅ Thê
 import type { IVehicleRequest } from "../../model/VehicleRequest";
 import CreateVehicleRequestModal from "./CreateVehicleRequestModal ";
 import { SearchOutlined } from "@ant-design/icons";
+import { useDealerByIdQuery } from "../../service/dealerService";
+import { useCurrentUser } from "../../utils/getCurrentUser";
+
+const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
+  const { data, isLoading } = useDealerByIdQuery(dealerId);
+
+  if (isLoading) return <span>...</span>;
+  return <span>{data?.result?.name || "-"}</span>;
+};
 
 const VehicleRequestPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -21,7 +30,9 @@ const VehicleRequestPage: React.FC = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
+  // bắt role
+  const currentUser = useCurrentUser();
+  const role = currentUser?.role;
   // Fetch data
   const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, refetch } = useGetVehicleRequests(
@@ -29,7 +40,17 @@ const VehicleRequestPage: React.FC = () => {
     pageSize,
     searchTerm
   );
+  // dùng để search realtime
+  function useDebounce<T>(value: T, delay = 400): T {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+      const handler = setTimeout(() => setDebouncedValue(value), delay);
+      return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
+  }
 
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const vehicleRequests: IVehicleRequest[] = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
 
@@ -49,18 +70,11 @@ const VehicleRequestPage: React.FC = () => {
   // Columns
   const columns: ColumnsType<IVehicleRequest> = [
     {
-      title: "Mã yêu cầu",
-      dataIndex: "id",
-      key: "id",
-      render: (id) => (
-        <span className="font-mono text-gray-700">{id.slice(0, 8)}...</span>
-      ),
-    },
-    {
       title: "Đại lý",
       dataIndex: "dealerId",
       key: "dealerId",
-      render: (text) => text || "-",
+      render: (dealerId?: string) =>
+        dealerId ? <DealerName dealerId={dealerId} /> : "-",
     },
     {
       title: "Số lượng",
@@ -113,16 +127,18 @@ const VehicleRequestPage: React.FC = () => {
       align: "center",
       render: (_, record) => (
         <div className="flex justify-center gap-2">
-          <Button
-            size="small"
-            type="primary"
-            onClick={() => {
-              setSelectedId(record.id);
-              setIsUpdateModalOpen(true);
-            }}
-          >
-            Sửa
-          </Button>
+          {role === "MANAGER" && (
+            <Button
+              size="small"
+              type="primary"
+              onClick={() => {
+                setSelectedId(record.id);
+                setIsUpdateModalOpen(true);
+              }}
+            >
+              Sửa
+            </Button>
+          )}
           <Button
             size="small"
             onClick={() => {
@@ -132,14 +148,20 @@ const VehicleRequestPage: React.FC = () => {
           >
             Xem
           </Button>
-          <Popconfirm
-            title="Bạn có chắc muốn xóa yêu cầu này?"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button size="small" danger>
-              Xóa
-            </Button>
-          </Popconfirm>
+          {role === "MANAGER" && (
+            <Popconfirm
+              title="Bạn có chắc muốn xóa yêu cầu này?"
+              onConfirm={() => handleDelete(record.id)}
+            >
+              <Button
+                size="small"
+                danger
+                disabled={record.status === "APPROVED"}
+              >
+                Xóa
+              </Button>
+            </Popconfirm>
+          )}
         </div>
       ),
     },
@@ -150,23 +172,26 @@ const VehicleRequestPage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <SectionTitle text="Quản lý yêu cầu xe" />
-        <Input.Search
-          placeholder="Tìm kiếm theo mã hoặc đại lý..."
+        <Input
+          placeholder="Tìm kiếm theo số lượng..."
+          prefix={<SearchOutlined />}
           allowClear
-          enterButton={<SearchOutlined />}
-          onSearch={(value) => {
-            setSearchTerm(value);
-            setPage(1); // quay lại trang đầu
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1);
           }}
           style={{ width: 300, marginLeft: 40 }}
         />
-        <Button
-          type="primary"
-          className="bg-green-700"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          + Tạo yêu cầu mới
-        </Button>
+        {role === "MANAGER" && (
+          <Button
+            type="primary"
+            className="bg-green-700"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            + Tạo yêu cầu mới
+          </Button>
+        )}
       </div>
 
       {/* Table */}

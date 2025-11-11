@@ -53,6 +53,7 @@ import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDeale
 import ReportDetailPage from "../page/report/ReportDetailPage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import DealerPointRuleAdminPage from "../page/dealer-point-rule/DealerPointRuleAdminPage";
+import DealerEmployeeChart from "../page/overview/DealerEmployeeChart";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -220,7 +221,6 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
-      { path: ROUTES.OVERVIEW, element: <OverviewRevenueDealer /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {

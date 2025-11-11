@@ -47,8 +47,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
   const vehicleOptions = useMemo(() => {
     const vehicles = vehiclesData?.result?.data || [];
     return vehicles.map((vehicle: any) => ({
-      // label: `${vehicle.model} (${vehicle.type})`,
-      label: vehicle.id,
+      label: vehicle.model,
       value: vehicle.id,
     }));
   }, [vehiclesData]);
@@ -116,7 +115,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
         onFinish={handleSubmit}
         className="max-w-2xl"
       >
-        {/* 🔹 Chọn khách hàng */}
+        {/* Chọn khách hàng */}
         <SelectInput
           label="Khách hàng"
           name="customerId"
@@ -130,7 +129,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
           rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
         />
 
-        {/* 🔹 Chọn xe */}
+        {/* Chọn xe */}
         <SelectInput
           label="Xe"
           name="vehicleId"

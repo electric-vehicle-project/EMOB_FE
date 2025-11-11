@@ -27,13 +27,13 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
 }) => {
   const [form] = Form.useForm();
 
-  // 🔹 1. Lấy thông tin chi tiết chính sách
+  // Lấy thông tin chi tiết chính sách
   const { data: policyData, isLoading: loadingPolicy } =
     useGetDiscountPolicyById(policyId, {
       enabled: !!policyId && open,
     });
 
-  // 🔹 2. Lấy danh sách Dealers & Vehicles
+  // Lấy danh sách Dealers & Vehicles
   const { data: dealersData, isLoading: loadingDealers } = useGetAllDealers(
     0,
     100
@@ -43,10 +43,10 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
     100
   );
 
-  // 🔹 3. Hook cập nhật
+  //  Hook cập nhật
   const { mutateAsync: updatePolicy, isPending } = useUpdateDiscountPolicy();
 
-  // 🔹 4. Chuyển dữ liệu thành Select options
+  // Chuyển dữ liệu thành Select options
   const dealerOptions = useMemo(() => {
     const dealers = dealersData?.result?.data || [];
     return dealers.map((d: any) => ({
@@ -63,7 +63,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
     }));
   }, [vehiclesData]);
 
-  // 🔹 5. Khi có dữ liệu chính sách, fill form
+  // Khi có dữ liệu chính sách, fill form
   useEffect(() => {
     if (policyData?.result) {
       const policy = policyData.result;
@@ -77,7 +77,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
     }
   }, [policyData, form]);
 
-  // 🔹 6. Submit cập nhật
+  // Submit cập nhật
   const handleSubmit = async (values: any) => {
     const payload = {
       customMultiplier: values.customMultiplier,
@@ -118,9 +118,9 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
         </div>
       ) : (
         <Form layout="vertical" form={form} onFinish={handleSubmit}>
-          {/* 🔹 Dealer */}
+          {/* Dealer */}
           <SelectInput
-            label="Đại lý (Dealer)"
+            label="Đại lý"
             name="dealerId"
             placeholder="Chọn đại lý"
             options={dealerOptions}
@@ -128,9 +128,9 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
             rules={[{ required: true, message: "Vui lòng chọn đại lý" }]}
           />
 
-          {/* 🔹 Vehicle */}
+          {/* Vehicle */}
           <SelectInput
-            label="Xe (Vehicle)"
+            label="Xe"
             name="vehicleId"
             placeholder="Chọn xe"
             options={vehicleOptions}
@@ -138,7 +138,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
             rules={[{ required: true, message: "Vui lòng chọn xe" }]}
           />
 
-          {/* 🔹 Custom Multiplier */}
+          {/*  Custom Multiplier */}
           <Form.Item
             label="Hệ số chiết khấu"
             name="customMultiplier"
@@ -152,7 +152,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
             />
           </Form.Item>
 
-          {/* 🔹 Final Price */}
+          {/*  Final Price */}
           <Form.Item
             label="Giá cuối cùng (VND)"
             name="finalPrice"
@@ -169,7 +169,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
             />
           </Form.Item>
 
-          {/* 🔹 Date Range */}
+          {/* Date Range */}
           <Form.Item
             label="Thời gian hiệu lực"
             name="dateRange"

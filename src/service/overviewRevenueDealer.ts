@@ -1,18 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { createQueryHook, createQueryWithPathParamHook } from "../hook/useApi";
 import type { DealerApiResponse } from "../model/Overview";
+import type { ICustomer } from "../model/Customer";
 
-const BASE_URL = "/dealer/dealer-revenue";
-const API_URL = "/dealer/customer-revenue";
+const DEALER_URL = "/revenue/dealers-revenue";
+const CUSTOMER_URL = "/revenue/current-dealer-revenue";
+
 export const useDealerReportQuery = createQueryHook(
   "dealer-report",
-  BASE_URL
+  DEALER_URL
 ) as (
   options?: Record<string, unknown>,
   params?: {
-    month?: number;
+    year?: number;
     region?: string;
-    dealerId?: string;
+    country?: string;
   }
 ) => {
   data?: DealerApiResponse;
@@ -23,19 +25,21 @@ export const useDealerReportQuery = createQueryHook(
 
 export const useDealerCustomerReportQuery = createQueryHook(
   "dealer-customer-report",
-  API_URL
+  CUSTOMER_URL
 );
 
-interface Customer {
-  id: string;
-  name: string;
-}
-
 export function useCustomersByIds(ids: string[]) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["customersByIds", ids.slice().sort().join(",")],
-    queryFn: async (): Promise<Customer[]> => {
-      if (!ids || ids.length === 0) return [];
+  const isEnabled = Array.isArray(ids) && ids.length > 0;
+
+  const { data, isLoading, isError } = useQuery<ICustomer[]>({
+    queryKey: ["customersByIds", ids.slice().sort()],
+    queryFn: async () => {
+      const fallback = (id: string): ICustomer => ({
+        id,
+        fullName: `Khách hàng #${id.slice(-6)}`,
+      });
+
+      if (!isEnabled) return [];
 
       const results = await Promise.all(
         ids.map(async (id) => {
@@ -44,7 +48,7 @@ export function useCustomersByIds(ids: string[]) {
               headers: { Accept: "application/json" },
             });
 
-            if (!res.ok) return { id, name: `Khách hàng #${id.slice(-6)}` };
+            if (!res.ok) return fallback(id);
 
             const json = await res.json();
             const name =
@@ -58,20 +62,20 @@ export function useCustomersByIds(ids: string[]) {
 
             return {
               id,
-              name: name?.trim() || `Khách hàng #${id.slice(-6)}`,
+              name: (name && name.trim()) || fallback(id).fullName,
             };
-          } catch (err) {
-            console.error(`⚠️ Error fetching customer ${id}:`, err);
-            return { id, name: `Khách hàng #${id.slice(-6)}` };
+          } catch (error) {
+            console.error(`Lỗi lấy dữ liệu khách hàng ${id}:`, error);
+            return fallback(id);
           }
         })
       );
 
       return results;
     },
-    enabled: ids.length > 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    enabled: isEnabled,
+    staleTime: 5 * 60 * 1000, // 5 phút
+    gcTime: 10 * 60 * 1000, // 10 phút
   });
 
   return {
