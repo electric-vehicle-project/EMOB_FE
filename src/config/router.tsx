@@ -35,17 +35,9 @@ import { ResetPasswordCard } from "../components/organisms/auth/ResetPasswordCar
 import GoogleCallback from "../page/GoogleCallback";
 import OverviewRevenueDealer from "../page/overview/OverviewRevenueDealer";
 import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
-import VehiclePriceRulePage from "../page/evm/VehiclePriceRulePage";
-import VehicleDetailPage from "../page/evm/VehicleDetailPage";
-import VehicleCreatePage from "../page/evm/VehicleCreatePage";
-import VehicleEditPage from "../page/evm/VehicleEditPage";
-import VehicleListPage from "../page/evm/VehicleListPage";
 import { ContractDetailDealerPage } from "../page/contract/ContractDetailDealerPage";
 import { ContractAllDealersPage } from "../page/contract/ContractAllDealersPage";
 import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerPage";
-import { VehiclePriceUpdatePage } from "../page/evm/VehiclePriceUpdatePage";
-import { VehicleBulkPage } from "../page/evm/VehicleBulkPage";
-import { DealerPointRulePage } from "../page/customer/DealerPointRulePage";
 import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
@@ -57,6 +49,15 @@ import { DeliveryDealerAndCustomerPage } from "../page/delivery/DeliveryDealerAn
 import { DeliveryCustomerDetailPage } from "../page/delivery/DeliveryCustomerDetailPage";
 import { ContractAllCustomersPage } from "../page/contract/ContractAllCustomersPage";
 import { ContractDetailCustomerPage } from "../page/contract/ContractDetailCustomerPage";
+import DealerPointRuleAdminPage from "../page/dealer-point-rule/DealerPointRuleAdminPage";
+import VehicleListPage from "../page/EVM/VehicleListPage";
+import VehicleBulkPage from "../page/EVM/VehicleBulkPage";
+import VehicleDetailPage from "../page/EVM/VehicleDetailPage";
+import VehicleCreatePage from "../page/EVM/VehicleCreatePage";
+import VehicleEditPage from "../page/EVM/VehicleEditPage";
+import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
+import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
+import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -106,7 +107,7 @@ export const router = createBrowserRouter([
         path: ROUTES.DEALER_DISCOUNT_POLICY,
         element: <DealerDiscountPolicyPage />,
       },
-      { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRulePage /> },
+      { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRuleAdminPage /> },
 
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
@@ -231,7 +232,6 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
-      { path: ROUTES.OVERVIEW, element: <OverviewRevenueDealer /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {

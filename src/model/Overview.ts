@@ -42,7 +42,7 @@ export interface CustomerRevenue {
   year?: number;
   month?: number;
   customerId: string;
-  totalVehiclesPurchased: number;
+  totalVehiclesSold: number;
   totalRevenue: number;
   totalContracts: number;
 }

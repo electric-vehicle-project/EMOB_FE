@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { sumBy } from "lodash";
 import { getMonthNameVI } from "../../utils/convertMonth";
@@ -16,71 +16,134 @@ import type {
   CustomerRevenue,
 } from "../../model/Overview";
 import DealerKPI from "../../components/molecules/overview/KpiCard";
-import DealerContractPie from "../../components/organisms/Overview/DealerContractPie";
-import DealerCustomerChartWrapper from "../../components/organisms/Overview/DealerCustomerChartWrapper";
-import RevenueLineChart from "../../components/organisms/Overview/DealerLineChart";
+import DealerContractPie from "../../components/organisms/overview/overviewDealers/DealerContractPie";
 import { useDealerCustomerReportQuery } from "../../service/overviewRevenueDealer";
 import { formatMoney } from "../../utils/formatMoney";
+import RevenueLineChart from "../../components/organisms/overview/overviewDealers/DealerLineChart";
+import DealerCustomerChart from "../../components/organisms/overview/overviewCustomers/DealerCustomerChart";
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 /* -------------------------------------------------------------------------- */
-/*  Component chính: Trang Dashboard của đại lý                            */
+/*                     Dashboard: Thống kê khách hàng theo NĂM               */
 /* -------------------------------------------------------------------------- */
 export default function DealerDashboardPage() {
-  const [selectedMonth, setSelectedMonth] = useState<number>(11);
+  const [selectedYear, setSelectedYear] = useState<number>(CURRENT_YEAR);
+  const [customers, setCustomers] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
 
-  // Gọi API doanh thu / hợp đồng / xe mua
+  // Gọi API doanh thu theo năm
   const queryResult = useDealerCustomerReportQuery(
     {},
-    { month: selectedMonth, page: 0, size: 50 }
+    { year: selectedYear }
   ) as UseQueryResult<CustomerRevenueResponse, unknown>;
+
   const { data, isLoading, isError, isFetching } = queryResult;
 
-  // Chuẩn hóa dữ liệu - hỗ trợ nhiều format API response
+  // Gọi thêm năm trước để tính tăng trưởng
+  const { data: lastYearData } = useDealerCustomerReportQuery(
+    {},
+    { year: selectedYear - 1 }
+  );
+
+  // Chuẩn hóa dữ liệu doanh thu
   const rows = useMemo(() => {
-    const list = data?.data ?? [];
+    const list = data?.result ?? [];
     return list.map(
-      (r: CustomerRevenue & { customerID?: string; customer?: string }) => ({
-        customerId: r.customerId || r.customerID || r.customer || "",
-        totalVehiclesPurchased: r.totalVehiclesPurchased || 0,
+      (r: CustomerRevenue & { month?: number; customerId?: string }) => ({
+        customerId: r.customerId ?? "",
+        month: r.month ?? 0,
         totalRevenue: r.totalRevenue || 0,
         totalContracts: r.totalContracts || 0,
-        month: r.month || selectedMonth,
+        totalVehiclesSold: r.totalVehiclesSold || 0,
       })
     );
-  }, [data, selectedMonth]);
+  }, [data]);
 
-  //KPI tổng
+  // Lấy danh sách customerIds duy nhất
+  const customerIds = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.customerId).filter(Boolean))),
+    [rows]
+  );
+
+  // Fetch danh sách khách hàng trực tiếp
+  useEffect(() => {
+    async function fetchCustomers() {
+      if (customerIds.length === 0) return;
+
+      setLoadingCustomers(true);
+
+      const results = await Promise.all(
+        customerIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/customers/${id}`, {
+              headers: { Accept: "application/json" },
+            });
+
+            if (!res.ok) return { id, name: `Khách hàng #${id.slice(-6)}` };
+
+            const json = await res.json();
+            const name =
+              json?.result?.fullName ||
+              json?.result?.data?.fullName ||
+              json?.data?.fullName ||
+              json?.fullName ||
+              json?.result?.name ||
+              json?.data?.name ||
+              json?.name;
+
+            return {
+              id,
+              name: (name && name.trim()) || `Khách hàng #${id.slice(-6)}`,
+            };
+          } catch (err) {
+            console.error(`lỗi lấy dữ liệu khách hàng ${id}:`, err);
+            return { id, name: `Khách hàng #${id.slice(-6)}` };
+          }
+        })
+      );
+
+      setCustomers(results);
+      setLoadingCustomers(false);
+    }
+
+    fetchCustomers();
+  }, [customerIds]);
+
+  // Dữ liệu năm trước
+  const lastYearRows = useMemo(
+    () => lastYearData?.result ?? [],
+    [lastYearData]
+  );
+
+  // KPI tổng hợp
   const totalRevenue = sumBy(rows, "totalRevenue");
   const totalContracts = sumBy(rows, "totalContracts");
-  const totalVehicles = sumBy(rows, "totalVehiclesPurchased");
+  const totalVehicles = sumBy(rows, "totalVehiclesSold");
+  const lastYearRevenue = sumBy(lastYearRows, "totalRevenue");
 
-  // tính tăng trưởng so với tháng trước
-  const prevMonth = selectedMonth > 1 ? selectedMonth - 1 : 1;
-  const revenueNow = sumBy(
-    rows.filter((r) => r.month === selectedMonth),
-    "totalRevenue"
-  );
-  const revenuePrev = sumBy(
-    rows.filter((r) => r.month === prevMonth),
-    "totalRevenue"
-  );
+  // Tăng trưởng so với năm trước
   const growth =
-    revenuePrev > 0 ? ((revenueNow - revenuePrev) / revenuePrev) * 100 : 0;
+    lastYearRevenue > 0
+      ? ((totalRevenue - lastYearRevenue) / lastYearRevenue) * 100
+      : 0;
 
-  // KPI cards với màu chủ đạo và icons
+  // KPI cards
   const kpi = [
     {
       title: "Doanh thu",
       value: `${formatMoney(totalRevenue)}`,
-      sub: `Tháng ${getMonthNameVI(selectedMonth)}`,
+      sub: `Năm ${selectedYear}`,
       icon: DollarSign,
       gradient: "from-[#627254] to-[#76885b]",
       bgGradient: "from-[#627254]/10 to-[#76885b]/10",
     },
     {
-      title: "Xe đã bán",
+      title: "Xe đã mua",
       value: `${totalVehicles.toLocaleString("vi-VN")} xe`,
-      sub: `Tháng ${getMonthNameVI(selectedMonth)}`,
+      sub: `Năm ${selectedYear}`,
       icon: Car,
       gradient: "from-[#525e46] to-[#627254]",
       bgGradient: "from-[#525e46]/10 to-[#627254]/10",
@@ -96,7 +159,10 @@ export default function DealerDashboardPage() {
     {
       title: "Tăng trưởng",
       value: `${growth.toFixed(1)}%`,
-      sub: `So với ${getMonthNameVI(prevMonth)}`,
+      sub:
+        lastYearRevenue > 0
+          ? `So với năm ${selectedYear - 1}`
+          : "Không có dữ liệu năm trước",
       icon: TrendingUp,
       gradient:
         growth >= 0
@@ -109,18 +175,15 @@ export default function DealerDashboardPage() {
     },
   ];
 
-  // Chuẩn bị dữ liệu cho các biểu đồ
+  // lấy dữ liệu cho biểu đồ
   const charts = useMemo(() => {
-    if (!rows.length) return { line: [], pie: [] };
-
     const sorted = [...rows].sort((a, b) => a.month - b.month);
-
     return {
       line: [
         {
-          id: "Doanh thu theo tháng",
+          id: `Doanh thu ${selectedYear}`,
           data: sorted.map((r) => ({
-            x: getMonthNameVI(r.month),
+            x: getMonthNameVI(r.month + 1),
             y: r.totalRevenue,
           })),
         },
@@ -140,9 +203,20 @@ export default function DealerDashboardPage() {
         },
       ],
     };
-  }, [rows, totalContracts]);
+  }, [rows, totalContracts, selectedYear]);
 
-  /* ------------------------------ Loading / Error ------------------------------ */
+  // theo tháng
+  const enrichedCustomerData = useMemo(() => {
+    if (!Array.isArray(rows)) return [];
+
+    return rows.map((r) => ({
+      customer: getMonthNameVI(r.month),
+      totalRevenue: r.totalRevenue ?? 0,
+      totalVehiclesPurchased: r.totalVehiclesSold ?? 0,
+    }));
+  }, [rows]);
+
+  // Error UI
   if (isError && !data) {
     return (
       <div className="p-8 text-red-500 text-center bg-white">
@@ -151,7 +225,7 @@ export default function DealerDashboardPage() {
     );
   }
 
-  /* ------------------------------ Giao diện chính ------------------------------ */
+  /* ------------------------------ UI chính ------------------------------ */
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 text-gray-800 p-6 md:p-10 space-y-6">
       {/* Header Section */}
@@ -162,14 +236,14 @@ export default function DealerDashboardPage() {
         className="mb-6"
       >
         <h1 className="text-3xl font-bold text-[#627254] mb-2">
-          Thống kê Khách hàng Đại lý
+          Tổng quan Khách hàng Đại lý
         </h1>
         <p className="text-gray-600">
-          Tổng quan doanh thu và hoạt động mua hàng của khách hàng
+          Theo dõi và phân tích doanh thu, hợp đồng, xe mua theo năm
         </p>
       </motion.div>
 
-      {/* Bộ lọc - Block riêng */}
+      {/* Bộ lọc */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -180,92 +254,116 @@ export default function DealerDashboardPage() {
           <Filter className="w-5 h-5 text-[#627254]" />
           <h2 className="text-lg font-semibold text-gray-800">Bộ lọc</h2>
         </div>
+
         <div className="flex flex-wrap items-center gap-4">
-          {/* MONTH */}
+          {/* YEAR */}
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tháng
+              Năm
             </label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#627254]" />
               <select
                 className="w-full rounded-xl border-2 border-gray-200 bg-white pl-10 pr-4 py-2.5 shadow-sm hover:border-[#627254] focus:outline-none focus:border-[#627254] focus:ring-2 focus:ring-[#627254]/20 transition-all"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
-                  <option key={num} value={num}>
-                    {getMonthNameVI(num)}
-                  </option>
-                ))}
+                {Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i).map(
+                  (year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  )
+                )}
               </select>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* KPI + Biểu đồ */}
-      {
-        // Trạng thái tải - chỉ hiển thị loading toàn trang khi chưa có data lần đầu
-        isLoading && !data ? (
-          <div className="flex items-center justify-center h-screen bg-white">
-            <motion.div className="w-10 h-10 border-4 border-[#627254] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div className="space-y-6 relative">
-            {/* Loading overlay - chỉ hiển thị khi đang fetch, không block UI */}
-            {isFetching && data && (
-              <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="w-12 h-12 border-4 border-[#627254] border-t-transparent rounded-full animate-spin"
-                />
-              </div>
-            )}
-
-            {/* KPI Cards - Block riêng */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {kpi.map((item, i) => (
-                <DealerKPI key={i} {...item} />
-              ))}
-            </div>
-
-            {/* Biểu đồ - Mỗi biểu đồ là 1 block riêng */}
-            <AnimatePresence mode="wait">
+      {/* KPI + Charts */}
+      {isLoading && !data ? (
+        <div className="flex items-center justify-center h-screen bg-white">
+          <motion.div className="w-10 h-10 border-4 border-[#627254] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-6 relative">
+          {isFetching && data && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
               <motion.div
-                key={selectedMonth}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-12 h-12 border-4 border-[#627254] border-t-transparent rounded-full animate-spin"
+              />
+            </div>
+          )}
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {kpi.map((item, i) => (
+              <motion.div
+                key={i}
+                whileHover={{
+                  scale: 1.03,
+                  boxShadow: "0 8px 24px rgba(98,114,84,0.2)",
+                }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="rounded-2xl"
               >
-                {/* Line Chart - Doanh thu theo tháng */}
-                <div className="lg:col-span-2">
-                  <RevenueLineChart data={charts.line} region="" dealer="" />
-                </div>
+                <DealerKPI {...item} />
+              </motion.div>
+            ))}
+          </div>
 
-                {/* Customer Chart - CHÍNH LÀ NƠI CONVERT ID → NAME */}
-                <DealerCustomerChartWrapper data={rows} metric="totalRevenue" />
+          {/* Charts */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedYear}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            >
+              {/* Line chart */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 250, damping: 20 }}
+                className="lg:col-span-2"
+              >
+                <RevenueLineChart data={charts.line} region="" />
+              </motion.div>
 
-                {/* Pie Chart - Tỷ lệ hợp đồng */}
+              {/* Customer chart */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 250, damping: 20 }}
+              >
+                <DealerCustomerChart
+                  data={enrichedCustomerData.map((d) => ({
+                    customer: d.customer,
+                    value: d.totalRevenue,
+                  }))}
+                  metric="totalRevenue"
+                  title={
+                    loadingCustomers
+                      ? "Đang tải tên khách hàng..."
+                      : "Doanh thu khách hàng theo tháng"
+                  }
+                />
+              </motion.div>
+
+              {/* Pie chart */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 250, damping: 20 }}
+              >
                 <DealerContractPie data={charts.pie} />
               </motion.div>
-            </AnimatePresence>
-          </div>
-        )
-      }
-
-      {/* Footer */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="text-xs text-gray-500 mt-8 text-center"
-      >
-        © {new Date().getFullYear()} Hệ thống báo cáo khách hàng đại lý
-      </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

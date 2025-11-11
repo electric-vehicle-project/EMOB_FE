@@ -1,20 +1,23 @@
 import { ResponsiveLine } from "@nivo/line";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "../../atoms/Card";
+import { Card, CardContent } from "../../../atoms/Card";
 
 interface Props {
   data: any[];
-  region: string;
-  dealer?: string;
+  region?: string;
+  country?: string;
 }
 
-export default function RevenueLineChart({ data, region, dealer }: Props) {
-  const title =
-    dealer && dealer !== "Tất cả đại lý"
-      ? `Doanh thu đại lý ${dealer}`
-      : region && region !== "Tất cả khu vực"
-      ? `Doanh thu khu vực ${region}`
-      : "Tổng doanh thu";
+export default function RevenueLineChart({ data, region, country }: Props) {
+  const title = (() => {
+    if (country && country !== "Tất cả thành phố") {
+      return `Doanh thu đại lý ${country}`;
+    }
+    if (region && region !== "Tất cả khu vực") {
+      return `Doanh thu khu vực ${region}`;
+    }
+    return "Tổng doanh thu";
+  })();
 
   return (
     <motion.div
@@ -23,8 +26,7 @@ export default function RevenueLineChart({ data, region, dealer }: Props) {
       transition={{ duration: 0.4 }}
       className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 relative overflow-hidden"
     >
-      {/* Decorative gradient background */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#627254]/5 to-transparent rounded-full blur-3xl -z-0" />
+      <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-[#627254]/10 to-transparent rounded-full blur-3xl -z-0" />
 
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-4">
@@ -39,15 +41,18 @@ export default function RevenueLineChart({ data, region, dealer }: Props) {
               xScale={{ type: "point" }}
               yScale={{ type: "linear", min: 0, max: "auto" }}
               axisBottom={{
-                legend: "Tháng",
+                legend: "Năm",
                 legendOffset: 36,
                 legendPosition: "middle",
               }}
               axisLeft={{
-                legend: "Doanh thu (USD)",
+                legend: "Doanh thu (VND)",
                 legendOffset: -52,
                 legendPosition: "middle",
               }}
+              animate
+              motionConfig="gentle"
+              curve="monotoneX"
               colors={["#627254"]}
               pointSize={10}
               pointColor="#627254"

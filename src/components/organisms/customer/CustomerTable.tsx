@@ -1,5 +1,6 @@
 import { Table, Tag, Button, Space } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import type { ColumnsType, TableProps } from "antd/es/table";
+import type { TablePaginationConfig } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
@@ -13,7 +14,21 @@ interface Props {
   canDelete?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+
+  // --- Server sort
+  sortField: string;
+  sortDir: "asc" | "desc";
+  onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
+
+  // --- Server pagination (pass through)
+  pagination?: TablePaginationConfig;
 }
+
+const headerStyle: React.CSSProperties = {
+  backgroundColor: "#394e31",
+  color: "#fff",
+  ["--ant-table-header-sort-active-bg" as unknown as string]: "#394e31",
+};
 
 export const CustomerTable = ({
   data,
@@ -22,9 +37,13 @@ export const CustomerTable = ({
   canDelete,
   onEdit,
   onDelete,
+  sortField,
+  sortDir,
+  onChangeSort,
+  pagination,
 }: Props) => {
-  const user = useSelector((state: RootState) => state.user);
-  const role = (user as any)?.role;
+  const user = useSelector((s: RootState) => s.user);
+  const role = (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
   const rolePrefix = role === "MANAGER" ? "/manager" : "/dealer_staff";
 
   const getStatusColor = (status: ICustomer["status"]) => {
@@ -44,13 +63,17 @@ export const CustomerTable = ({
     }
   };
 
+  const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
+
   const columns: ColumnsType<ICustomer> = [
     {
       title: "Họ và tên",
       dataIndex: "fullName",
       key: "fullName",
-      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
-      render: (text, record) => (
+      sorter: true,
+      sortOrder: sortField === "fullName" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (text: string, record: ICustomer) => (
         <a
           onClick={() =>
             window.open(`${rolePrefix}/customers/${record.id}`, "_self")
@@ -65,57 +88,51 @@ export const CustomerTable = ({
       title: "Email",
       dataIndex: "email",
       key: "email",
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      sorter: true,
+      sortOrder: sortField === "email" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
     },
     {
       title: "Số điện thoại",
       dataIndex: "phoneNumber",
       key: "phoneNumber",
-      sorter: (a, b) => a.phoneNumber.localeCompare(b.phoneNumber),
+      sorter: true,
+      sortOrder: sortField === "phoneNumber" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
     },
     {
       title: "Cấp độ",
       dataIndex: "memberShipLevel",
       key: "memberShipLevel",
       align: "center",
-      filters: [
-        { text: "NORMAL", value: "NORMAL" },
-        { text: "BRONZE", value: "BRONZE" },
-        { text: "SILVER", value: "SILVER" },
-        { text: "GOLD", value: "GOLD" },
-        { text: "PLATINUM", value: "PLATINUM" },
-      ],
-      onFilter: (value, record) => record.memberShipLevel === value,
-      render: (level) => <Tag color="geekblue">{level}</Tag>,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (level: string) => <Tag color="geekblue">{level}</Tag>,
     },
     {
       title: "Ngày sinh",
       dataIndex: "dateOfBirth",
       key: "dateOfBirth",
       align: "center",
-      sorter: (a, b) =>
-        dayjs(a.dateOfBirth).unix() - dayjs(b.dateOfBirth).unix(),
-      render: (val) => (val ? dayjs(val).format("DD/MM/YYYY") : "—"),
+      sorter: true,
+      sortOrder: sortField === "dateOfBirth" ? order : null,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (val?: string) => (val ? dayjs(val).format("DD/MM/YYYY") : "—"),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       align: "center",
-      filters: [
-        { text: "LEAD", value: "LEAD" },
-        { text: "ACTIVE", value: "ACTIVE" },
-        { text: "INACTIVE", value: "INACTIVE" },
-        { text: "BLOCKED", value: "BLOCKED" },
-        { text: "DELETED", value: "DELETED" },
-      ],
-      onFilter: (value, record) => record.status === value,
-      render: (status) => <Tag color={getStatusColor(status)}>{status}</Tag>,
+      onHeaderCell: () => ({ style: headerStyle }),
+      render: (status: ICustomer["status"]) => (
+        <Tag color={getStatusColor(status)}>{status}</Tag>
+      ),
     },
     {
       title: "Thao tác",
       key: "actions",
       align: "center",
+      onHeaderCell: () => ({ style: headerStyle }),
       render: (_, record) => (
         <Space size="middle">
           <Button
@@ -149,6 +166,13 @@ export const CustomerTable = ({
     },
   ];
 
+  const handleChange: TableProps<ICustomer>["onChange"] = (_p, _f, sorter) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field = s?.field as string | undefined;
+    const order = s?.order as "ascend" | "descend" | undefined;
+    onChangeSort?.(field, order);
+  };
+
   return (
     <Table
       bordered
@@ -157,17 +181,12 @@ export const CustomerTable = ({
       columns={columns}
       dataSource={data}
       loading={loading}
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: false,
-        position: ["bottomCenter"],
-        showTotal: (total) => `Tổng cộng ${total} khách hàng`,
-      }}
+      onChange={handleChange}
+      pagination={pagination}
       scroll={{ x: "max-content", y: 560 }}
       sticky={{ offsetHeader: 0 }}
       className="
         bg-white
-        [&_.ant-table-thead>tr>th]:!bg-[#627254]
         [&_.ant-table-thead>tr>th]:!text-white
       "
     />

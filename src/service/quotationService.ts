@@ -50,25 +50,69 @@ export const useQuotationsList = (page = 0, size = 10, search = "") => {
   );
 };
 
+interface ApproveQuotationPayload {
+  id: string;
+  data: {
+    itemsId: string;
+    vehicleId: string;
+    promotionId?: string | null;
+    quantity: number;
+  }[];
+  paymentStatus?: "FULL" | "INSTALLMENT";
+}
+
+interface ApproveQuotationResponse {
+  success?: boolean;
+  message: string;
+  result?: any;
+}
+
 export const useApproveQuotation = () => {
   const queryClient = useQueryClient();
 
   return useMutation<
-    any, // response type
-    AxiosError<{ message: string }>, // error type
-    { id: string; data: any; paymentStatus: string } // variables type
+    ApproveQuotationResponse,
+    AxiosError<{ message: string }>,
+    ApproveQuotationPayload
   >({
     mutationFn: async ({ id, data, paymentStatus }) => {
-      // ✅ Đúng định dạng backend yêu cầu
-      return (
-        await api.put(`/quotation/${id}/approved`, data, {
-          params: { paymentStatus },
-        })
-      ).data;
+      console.log("Payload gửi đi:", data);
+
+      const response = await api.put(`/quotation/${id}/approved`, data, {
+        params: paymentStatus ? { paymentStatus } : undefined,
+      });
+
+      return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["quotationDetail"] });
+
+    onSuccess: (data, variables) => {
+      console.log("Approve success:", data);
+
+      // Làm mới cache
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["quotationDetail", variables.id],
+      });
+    },
+
+    onError: (error) => {
+      const msg =
+        error?.response?.data?.message ||
+        "Không thể duyệt báo giá — vui lòng thử lại.";
+      console.error("Approve failed:", msg);
+    },
+  });
+};
+
+export const useRejectQuotation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, AxiosError<{ message: string }>, string>({
+    mutationFn: async (id: string) =>
+      (await api.put(`/quotation/${id}/reject`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["quotationDetail"] });
     },
   });
 };

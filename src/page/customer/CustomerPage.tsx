@@ -1,74 +1,75 @@
 import { useState, useMemo } from "react";
-import { Button, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Button, Input, Select, Space } from "antd";
+import { toast } from "react-toastify";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-
 import type { RootState } from "../../redux/store";
 import type { ICustomer } from "../../model/Customer";
-
 import {
   useCustomerList,
   useCustomerDelete,
 } from "../../service/customerService";
-
 import { CustomerTable } from "../../components/organisms/customer/CustomerTable";
-import { CustomerFilterBar } from "../../components/molecules/customer/CustomerFilterBar";
 import { CustomerDeleteConfirm } from "../../components/organisms/customer/CustomerDeleteConfirm";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { useDebounce } from "../../hook/useDebounce";
 
+const STATUS_OPTIONS = [
+  { label: "LEAD", value: "LEAD" },
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "INACTIVE", value: "INACTIVE" },
+  { label: "BLOCKED", value: "BLOCKED" },
+  { label: "DELETED", value: "DELETED" },
+];
+
 export const CustomerPage: React.FC = () => {
   const navigate = useNavigate();
-  const user = useSelector((state: RootState) => state.user);
+  const user = useSelector((s: RootState) => s.user);
+  const role: "MANAGER" | "DEALER_STAFF" =
+    (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
 
-  // ========================
-  // STATE
-  // ========================
   const [keyword, setKeyword] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
-    null
-  );
-
+  const [status, setStatus] = useState<string[] | undefined>(undefined);
   const debouncedKeyword = useDebounce(keyword, 400);
 
-  // ========================
-  // DATA
-  // ========================
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [sortField, setSortField] = useState("fullName");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
   const { data, isLoading, isFetching, refetch } = useCustomerList({
-    page: 0,
-    size: 50,
+    page,
+    size,
+    keyword: debouncedKeyword,
+    status,
+    sortField,
+    sortDir,
   });
 
-  const customers: ICustomer[] = data?.result?.data ?? [];
-
-  // ========================
-  // ROLE-BASED PERMISSION
-  // ========================
-  const role = (user as any)?.role as "MANAGER" | "DEALER_STAFF";
+  const customers: ICustomer[] = useMemo(
+    () => data?.result?.data ?? [],
+    [data]
+  );
+  const totalElements = useMemo(
+    () => data?.result?.metadata?.totalElements ?? 0,
+    [data]
+  );
 
   const canCreate = role === "DEALER_STAFF";
   const canEdit = role === "DEALER_STAFF";
   const canDelete = role === "DEALER_STAFF";
 
-  // ========================
-  // LOCAL SEARCH FILTER
-  // ========================
-  const filteredCustomers = useMemo(() => {
-    if (!debouncedKeyword) return customers;
-    const query = debouncedKeyword.toLowerCase();
-    return customers.filter(
-      (c) =>
-        c.fullName.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query) ||
-        c.phoneNumber.toLowerCase().includes(query)
-    );
-  }, [debouncedKeyword, customers]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
+    null
+  );
+  const { mutateAsync: deleteCustomer, isPending } = useCustomerDelete();
 
-  // ========================
-  // HANDLERS
-  // ========================
   const handleCreate = () => {
     if (!canCreate) return;
     navigate(`/dealer_staff/customers/create`);
@@ -78,8 +79,6 @@ export const CustomerPage: React.FC = () => {
     if (!canEdit) return;
     navigate(`/dealer_staff/customers/edit/${id}`);
   };
-
-  const { mutateAsync: deleteCustomer, isPending } = useCustomerDelete();
 
   const handleDeleteClick = (id: string) => {
     if (!canDelete) return;
@@ -93,21 +92,26 @@ export const CustomerPage: React.FC = () => {
     if (!selectedCustomer) return;
     try {
       await deleteCustomer(selectedCustomer.id);
-      message.success("Đã xoá khách hàng thành công!");
+      toast.success("Đã xoá khách hàng thành công!");
       refetch();
     } catch {
-      message.error("Không thể xoá khách hàng này!");
+      toast.error("Không thể xoá khách hàng này!");
     } finally {
       setConfirmOpen(false);
     }
   };
 
-  // ========================
-  // RENDER
-  // ========================
+  const resetFilters = () => {
+    setKeyword("");
+    setStatus(undefined);
+    setSortField("fullName");
+    setSortDir("desc");
+    setPage(0);
+    setSize(10);
+  };
+
   return (
     <CardWrapper>
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khách hàng của đại lý
@@ -127,20 +131,66 @@ export const CustomerPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Search bar */}
-      <CustomerFilterBar keyword={keyword} onKeywordChange={setKeyword} />
+      <div className="mb-4">
+        <Space wrap size="middle">
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm theo tên, email hoặc SĐT..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ width: 320 }}
+          />
+          <Select
+            allowClear
+            mode="multiple"
+            style={{ width: 320 }}
+            placeholder="Trạng thái (có thể chọn nhiều)"
+            value={status}
+            options={STATUS_OPTIONS}
+            onChange={(vals) => {
+              setStatus(vals.length ? vals : undefined);
+              setPage(0);
+            }}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={resetFilters}
+            type="primary"
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
 
-      {/* Table */}
       <CustomerTable
-        data={filteredCustomers}
+        data={customers}
         loading={isLoading || isFetching}
         canEdit={canEdit}
         canDelete={canDelete}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        sortField={sortField}
+        sortDir={sortDir}
+        onChangeSort={(field, order) => {
+          setSortField(field || "fullName");
+          setSortDir(order === "ascend" ? "asc" : "desc");
+          setPage(0);
+        }}
+        pagination={{
+          current: page + 1,
+          pageSize: size,
+          total: totalElements,
+          showSizeChanger: true,
+          onChange: (p: number, s?: number) => {
+            setPage(p - 1);
+            setSize(s ?? 10);
+          },
+          position: ["bottomCenter"],
+          showTotal: (t) => `Tổng cộng ${t} khách hàng`,
+        }}
       />
 
-      {/* Delete confirm */}
       <CustomerDeleteConfirm
         open={confirmOpen}
         customerName={selectedCustomer?.fullName}

@@ -43,14 +43,11 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
     );
   }
 
-  // Tính toán tickValues động
+  // Tính toán tickValues động số xe hiển thị theo từng đơn vị
   const maxValue = Math.max(...data.map((d) => d.value));
   const tickValues =
     metric === "totalVehiclesPurchased"
-      ? Array.from(
-          { length: Math.min(Math.ceil(maxValue) + 1, 20) },
-          (_, i) => i
-        )
+      ? Array.from({ length: Math.ceil(maxValue) + 1 }, (_, i) => i)
       : undefined;
 
   // Tính toán tổng / trung bình
@@ -61,22 +58,23 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
   const chartTitle =
     title ||
     (metric === "totalRevenue"
-      ? "Doanh thu khách hàng (Đại lý của bạn)"
-      : "Số xe khách hàng đã mua (Đại lý của bạn)");
-
+      ? "Doanh thu theo tháng"
+      : "Số xe đã mua theo tháng");
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.005 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-6"
+      whileHover={{
+        scale: 1.02,
+        boxShadow: "0 8px 24px rgba(98, 114, 84, 0.25)",
+      }}
+      transition={{ type: "spring", stiffness: 200, damping: 18 }}
+      className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 relative overflow-hidden"
     >
-      {/* 🏷️ Title */}
-      <h2 className="text-xl font-semibold text-gray-800 mb-5 text-center">
-        {chartTitle}
-      </h2>
-
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-1 h-8 bg-gradient-to-b from-[#627254] to-[#76885b] rounded-full" />
+        <h2 className="text-xl font-bold text-gray-800">{chartTitle}</h2>
+      </div>
       {/* Biểu đồ */}
       <div className="bg-[#0f172a] rounded-2xl border-[14px] border-[#0f172a] p-3 shadow-inner">
         <div className="bg-white rounded-xl p-3">
@@ -90,14 +88,6 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
               colors={["#10b981"]}
               borderRadius={6}
               enableLabel={false}
-              axisBottom={{
-                tickSize: 5,
-                tickPadding: 8,
-                tickRotation: data.length > 8 ? -45 : 0,
-                legend: "Khách hàng",
-                legendPosition: "middle",
-                legendOffset: 50,
-              }}
               axisLeft={{
                 tickSize: 5,
                 tickPadding: 8,
@@ -156,40 +146,6 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
               ariaLabel="Biểu đồ khách hàng"
             />
           </div>
-        </div>
-      </div>
-
-      {/* thống kê */}
-      <div className="mt-4 flex gap-4 justify-center">
-        <div className="text-center">
-          <p className="text-xs text-gray-500">Tổng khách hàng</p>
-          <p className="text-lg font-bold text-gray-800">{data.length}</p>
-        </div>
-
-        <div className="w-px bg-gray-200" />
-
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            {metric === "totalRevenue" ? "Tổng doanh thu" : "Tổng xe bán"}
-          </p>
-          <p className="text-lg font-bold text-emerald-600">
-            {metric === "totalRevenue"
-              ? `${total.toLocaleString("vi-VN")} VNĐ`
-              : `${total} xe`}
-          </p>
-        </div>
-
-        <div className="w-px bg-gray-200" />
-
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            {metric === "totalRevenue" ? "TB/khách" : "TB xe/khách"}
-          </p>
-          <p className="text-lg font-bold text-gray-800">
-            {metric === "totalRevenue"
-              ? `${Math.round(average).toLocaleString("vi-VN")} VNĐ`
-              : `${average.toFixed(1)} xe`}
-          </p>
         </div>
       </div>
     </motion.div>

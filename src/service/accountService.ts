@@ -87,14 +87,21 @@ export const useChangePassword = createMutationHook(
   `${BASE_URL}/reset-password`
 );
 
-// ✅ Dùng PUT đúng theo Swagger để update profile
+export type ProfileUpdatePayload = {
+  fullName: string;
+  gender: "MALE" | "FEMALE" | "UNKNOWN";
+  address: string;
+  dateOfBirth?: string; // YYYY-MM-DD
+  phone: string;
+};
+
 export const useUpdateAccountProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<IAccount>) =>
+    mutationFn: (payload: ProfileUpdatePayload) =>
       api.put(`${BASE_URL}/profile`, payload),
     onSuccess: () => {
-      // Nếu sau này bạn bật GET /auth/profile thì invalidate là sẵn:
+      // Nếu sau này có GET /auth/profile thì invalidate sẵn
       queryClient.invalidateQueries({ queryKey: ["account-profile"] });
     },
   });

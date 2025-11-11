@@ -2,23 +2,33 @@ import { Form, Input, InputNumber, DatePicker, Select, Button } from "antd";
 import dayjs from "dayjs";
 import type { ICustomer } from "../../../model/Customer";
 
+// --- Kiểu dữ liệu cho form khách hàng
+interface CustomerFormData {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  dateOfBirth?: string | Date;
+  gender?: "MALE" | "FEMALE";
+  loyaltyPoints?: number;
+  note?: string;
+}
+
+// --- Props cho CustomerForm
 interface Props {
-  mode: "create" | "edit";
-  initialValues?: Partial<ICustomer>;
-  onSubmit: (data: any) => void;
+  initialValues?: Partial<
+    Omit<ICustomer, "dateOfBirth"> & { dateOfBirth?: string | dayjs.Dayjs }
+  >;
+  onSubmit: (data: CustomerFormData) => void;
   loading?: boolean;
 }
 
-export const CustomerForm = ({
-  mode,
-  initialValues,
-  onSubmit,
-  loading,
-}: Props) => {
-  const [form] = Form.useForm();
+export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
+  const [form] = Form.useForm<CustomerFormData>();
 
-  const handleFinish = (values: any) => {
-    const payload = {
+  // Xử lý khi submit form
+  const handleFinish = (values: CustomerFormData) => {
+    const payload: CustomerFormData = {
       ...values,
       dateOfBirth: values.dateOfBirth
         ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
@@ -36,24 +46,39 @@ export const CustomerForm = ({
       disabled={loading}
       style={{ maxWidth: 800, margin: "0 auto" }}
     >
-      <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true }]}>
+      <Form.Item
+        name="fullName"
+        label="Họ và tên"
+        rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+      >
         <Input placeholder="Nguyễn Văn A" />
       </Form.Item>
 
       <Form.Item
         name="email"
         label="Email"
-        rules={[{ required: true, type: "email" }]}
+        rules={[
+          { required: true, message: "Vui lòng nhập email" },
+          { type: "email", message: "Địa chỉ email không hợp lệ" },
+        ]}
       >
-        <Input />
+        <Input placeholder="example@gmail.com" />
       </Form.Item>
 
-      <Form.Item name="phoneNumber" label="SĐT" rules={[{ required: true }]}>
-        <Input />
+      <Form.Item
+        name="phoneNumber"
+        label="Số điện thoại"
+        rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
+      >
+        <Input placeholder="0123456789" />
       </Form.Item>
 
-      <Form.Item name="address" label="Địa chỉ" rules={[{ required: true }]}>
-        <Input />
+      <Form.Item
+        name="address"
+        label="Địa chỉ"
+        rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
+      >
+        <Input placeholder="123 Đường A, Quận B, TP. HCM" />
       </Form.Item>
 
       <Form.Item name="dateOfBirth" label="Ngày sinh">
@@ -62,6 +87,7 @@ export const CustomerForm = ({
 
       <Form.Item name="gender" label="Giới tính">
         <Select
+          placeholder="Chọn giới tính"
           options={[
             { label: "Nam", value: "MALE" },
             { label: "Nữ", value: "FEMALE" },
@@ -83,7 +109,7 @@ export const CustomerForm = ({
           rows={3}
           style={{
             borderRadius: 8,
-            resize: "none", // 🚫 không cho resize
+            resize: "none",
           }}
         />
       </Form.Item>
@@ -95,7 +121,7 @@ export const CustomerForm = ({
           loading={loading}
           style={{ borderRadius: 8 }}
         >
-          {mode === "create" ? "Tạo khách hàng" : "Cập nhật"}
+          Lưu thông tin
         </Button>
       </div>
     </Form>

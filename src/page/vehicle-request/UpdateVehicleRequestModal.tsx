@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Form, Button, Modal, message } from "antd";
 import TextInput from "../../components/atoms/TextInput";
 import NumberInput from "../../components/atoms/NumberInput";
@@ -7,6 +7,8 @@ import {
   useGetVehicleRequestById,
   useUpdateVehicleRequest,
 } from "../../service/vehicleRequestService";
+import { useGetVehicles } from "../../service/vehicleService";
+import type { IVehicle } from "../../model/Vehicle";
 
 interface UpdateVehicleRequestModalProps {
   open: boolean;
@@ -23,6 +25,17 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const { data, isLoading } = useGetVehicleRequestById(requestId);
+  const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
+    0,
+    100
+  );
+  const vehicleOptions = useMemo(() => {
+    const vehicles = vehiclesData?.result?.data || [];
+    return vehicles.map((v: IVehicle) => ({
+      label: `${v.model} (${v.type})`,
+      value: v.id,
+    }));
+  }, [vehiclesData]);
   const { mutateAsync: updateVehicleRequest, isPending } =
     useUpdateVehicleRequest();
 
@@ -79,32 +92,34 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
         onFinish={handleSubmit}
         className="space-y-3"
       >
-        <TextInput
-          label="Vehicle ID"
+        <SelectInput
+          label="Xe"
           name="vehicleId"
-          placeholder="Nhập ID xe"
-          rules={[{ required: true, message: "Vehicle ID is required" }]}
+          placeholder="Chọn xe"
+          options={vehicleOptions}
+          loading={loadingVehicles}
+          rules={[{ required: true, message: "Vui lòng chọn xe" }]}
         />
 
         <SelectInput
-          label="Vehicle Status"
+          label="Trạng thái xe"
           name="vehicleStatus"
           placeholder="Chọn trạng thái xe"
           options={[
-            { label: "NORMAL", value: "NORMAL" },
-            { label: "SPECIAL", value: "SPECIAL" },
-            { label: "OLD_STOCK", value: "OLD_STOCK" },
-            { label: "RESERVED", value: "RESERVED" },
-            { label: "TEST_DRIVE", value: "TEST_DRIVE" },
+            { label: "Bình thường", value: "NORMAL" },
+            { label: "Đặc biệt", value: "SPECIAL" },
+            { label: "Hàng tồn cũ", value: "OLD_STOCK" },
+            { label: "Đã đặt trước", value: "RESERVED" },
+            { label: "Xe lái thử", value: "TEST_DRIVE" },
           ]}
-          rules={[{ required: true, message: "Chọn trạng thái xe" }]}
+          rules={[{ required: true, message: "Vui lòng chọn trạng thái xe" }]}
         />
 
         <TextInput
           label="Màu xe"
           name="color"
           placeholder="Nhập màu xe"
-          rules={[{ required: true, message: "Color is required" }]}
+          rules={[{ required: true, message: "Vui lòng nhập màu xe" }]}
         />
 
         <NumberInput
@@ -112,7 +127,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
           name="quantity"
           min={1}
           placeholder="Nhập số lượng"
-          rules={[{ required: true, message: "Quantity is required" }]}
+          rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
         />
 
         <div className="flex justify-end gap-3 mt-4">

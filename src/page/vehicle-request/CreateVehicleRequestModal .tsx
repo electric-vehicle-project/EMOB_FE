@@ -18,9 +18,8 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
   const vehicleOptions = useMemo(() => {
     const vehicles = vehiclesData?.result?.data || [];
     return vehicles.map((v: any) => ({
-      // label: `${v.model} (${v.type})}`,
-      label: v.id,
-      value: v.id, // vẫn giữ id để submit payload
+      label: v.model,
+      value: v.id,
     }));
   }, [vehiclesData]);
 

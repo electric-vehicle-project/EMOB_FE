@@ -16,18 +16,14 @@ export const SaleOrderDetailPage = () => {
   const navigate = useNavigate();
   const role = useSelector((state: RootState) => state.user?.role ?? null);
 
-  // ==============================
-  // 🔍 API
-  // ==============================
+  // API
   const { data: orderData, isLoading, refetch } = useSaleOrderById(id ?? "");
   const { mutate: completeOrder, isPending: completing } =
     useSaleOrderComplete();
   const { mutate: cancelOrder, isPending: canceling } = useSaleOrderDelete();
   const order = orderData?.result ?? orderData?.data ?? null;
 
-  // ==============================
-  // ⚙️ Action
-  // ==============================
+  // Action handlers
   const handleComplete = () => {
     if (!id) return;
     completeOrder(id, {
@@ -50,9 +46,7 @@ export const SaleOrderDetailPage = () => {
     });
   };
 
-  // ==============================
-  // ⏳ Loading
-  // ==============================
+  // Loading
   if (isLoading || !order) {
     return (
       <div className="flex justify-center items-center h-[70vh]">
@@ -61,25 +55,18 @@ export const SaleOrderDetailPage = () => {
     );
   }
 
-  // ==============================
-  // 👥 Role logic
-  // ==============================
+  // Role logic
   const isDealerStaff = role === "DEALER_STAFF";
   const isEvmStaff = role === "EVM_STAFF";
-  const isManager = role === "MANAGER";
 
-  // ==============================
-  // 🏷️ Status color
-  // ==============================
+  // Status color
   const statusColor: Record<string, string> = {
     CREATED: "processing",
     COMPLETED: "success",
     CANCELED: "error",
   };
 
-  // ==============================
-  // 🖼️ UI
-  // ==============================
+  // Render
   return (
     <div className="p-6 space-y-6">
       <Card
@@ -107,12 +94,10 @@ export const SaleOrderDetailPage = () => {
           </div>
         }
       >
-        {/* ===== Thông tin đơn hàng ===== */}
         <SaleOrderDetailInfo order={order} role={role} />
 
         <Divider />
 
-        {/* ===== Danh sách sản phẩm ===== */}
         <h3 className="text-lg font-medium mb-2 text-[#3f4a3c]">
           Danh sách sản phẩm
         </h3>
@@ -120,7 +105,6 @@ export const SaleOrderDetailPage = () => {
 
         <Divider />
 
-        {/* ===== Action Buttons ===== */}
         {(isDealerStaff || isEvmStaff) && order.status === "CREATED" && (
           <div className="flex justify-end gap-3 mt-4">
             <Button

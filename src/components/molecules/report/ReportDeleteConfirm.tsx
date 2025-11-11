@@ -1,4 +1,3 @@
-// EMOB-2025 - ReportDeleteConfirm
 import { Modal } from "antd";
 import { ExclamationCircleFilled } from "@ant-design/icons";
 
