@@ -12,6 +12,7 @@ import {
 import { DeleteConfirm } from "../../organisms/DeleteConfirm";
 import { TestDriveEditModal } from "./TestDriveEditModal";
 import { toast } from "react-toastify";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
 
 const { Title } = Typography;
 
@@ -37,6 +38,9 @@ export const TestDriveDetailModal = ({
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
 
   const handleDelete = async () => {
     try {
@@ -73,10 +77,10 @@ export const TestDriveDetailModal = ({
                 status === "CANCELED"
                   ? "red"
                   : status === "COMPLETED"
-                  ? "green"
-                  : status === "CONFIRMED"
-                  ? "blue"
-                  : "gold"
+                    ? "green"
+                    : status === "CONFIRMED"
+                      ? "blue"
+                      : "gold"
               }
             >
               {status || "—"}
@@ -122,24 +126,26 @@ export const TestDriveDetailModal = ({
           </p>
         )}
 
-        <div className="flex justify-end mt-5 gap-2">
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            disabled={isCompletedOrCanceled} 
-            onClick={() => setConfirmOpen(true)}
-          >
-            Xóa
-          </Button>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            disabled={isCompletedOrCanceled || isConfirmed} // ❌ Không sửa nếu COMPLETED/CANCELED/CONFIRMED
-            onClick={() => setEditOpen(true)}
-          >
-            Chỉnh sửa
-          </Button>
-        </div>
+        {role === "DEALER_STAFF" && (
+          <div className="flex justify-end mt-5 gap-2">
+            <Button
+              icon={<DeleteOutlined />}
+              danger
+              disabled={isCompletedOrCanceled}
+              onClick={() => setConfirmOpen(true)}
+            >
+              Xóa
+            </Button>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              disabled={isCompletedOrCanceled || isConfirmed} // ❌ Không sửa nếu COMPLETED/CANCELED/CONFIRMED
+              onClick={() => setEditOpen(true)}
+            >
+              Chỉnh sửa
+            </Button>
+          </div>
+        )}
       </Modal>
 
       <DeleteConfirm
