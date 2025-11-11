@@ -1,5 +1,5 @@
 /* EMOB-2025 - VehicleDetailPage */
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, Tag, Space, Tooltip, message, Popconfirm } from "antd";
 import {
   useLocation,
@@ -99,32 +99,64 @@ export const VehicleDetailPage = () => {
 
   const [compareOpen, setCompareOpen] = useState(false);
 
-  // Modal Units theo query
-  const [searchParams, setSearchParams] = useSearchParams();
+  // =========================
+  // Xem lô xe bằng query param
+  // =========================
+  const [searchParams] = useSearchParams();
   const [unitsOpen, setUnitsOpen] = useState(false);
   useEffect(() => {
     setUnitsOpen(searchParams.get("openUnits") === "1");
   }, [searchParams]);
 
+  // ⚠️ Cache nguồn điều hướng (list/edit) để không bị mất khi đổi query
+  const fromRef = useRef<"list" | "edit" | null>(null);
+  useEffect(() => {
+    const from =
+      typeof location.state === "object" &&
+      (location.state as Record<string, unknown>)?.from;
+    if (from === "list" || from === "edit") fromRef.current = from;
+  }, [location.state]);
+
+  // Mở modal: thêm openUnits=1 nhưng GIỮ state hiện tại
+  const handleOpenUnits = useCallback(() => {
+    const next = new URLSearchParams(location.search);
+    next.set("openUnits", "1");
+    setUnitsOpen(true);
+    navigate(
+      { search: `?${next.toString()}` },
+      { replace: true, state: location.state }
+    );
+  }, [location.search, navigate, location.state]);
+
+  // Đóng modal: xóa openUnits và GIỮ state
+  const handleCloseUnits = useCallback(() => {
+    const next = new URLSearchParams(location.search);
+    next.delete("openUnits");
+    setUnitsOpen(false);
+    navigate(
+      { search: next.toString() ? `?${next.toString()}` : "" },
+      { replace: true, state: location.state }
+    );
+  }, [location.search, navigate, location.state]);
+
   const priced = hasVehiclePriced(vehicle);
 
-  // Back button logic:
-  // - Nếu đi từ trang Bulk (location.state?.from === 'bulk'), back sẽ giữ nguyên ở Detail
-  //   để tránh quay về Bulk theo mong muốn của bạn.
+  // Back button logic (ổn định dù đã mở/đóng modal)
   const handleBack = useCallback(() => {
-    const fromState =
-      typeof location.state === "object"
-        ? (location.state as Record<string, unknown>).from
-        : null;
-
-    // Nếu vừa quay lại từ Edit thì về luôn List
+    // Ưu tiên quay về list nếu biết chắc đến từ list/edit
+    const fromState = fromRef.current;
     if (fromState === "edit" || fromState === "list") {
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
       return;
     }
 
-    navigate(-1);
-  }, [location.state, navigate, basePath]);
+    // Nếu history đủ sâu thì lùi 1 bước, ngược lại về list cho chắc
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
+    }
+  }, [navigate, basePath]);
 
   const actions = useMemo(() => {
     const arr: ReactElement[] = [];
@@ -236,10 +268,7 @@ export const VehicleDetailPage = () => {
         <Button
           key="view-units"
           icon={<AppstoreOutlined />}
-          onClick={() => {
-            setSearchParams({ openUnits: "1" }, { replace: true });
-            setUnitsOpen(true);
-          }}
+          onClick={handleOpenUnits}
           className="rounded-md"
         >
           Xem lô xe
@@ -270,8 +299,8 @@ export const VehicleDetailPage = () => {
     priced,
     deleting,
     deleteVehicle,
-    setSearchParams,
     handleBack,
+    handleOpenUnits,
   ]);
 
   const name = `${vehicle?.brand ?? ""} ${vehicle?.model ?? ""}`.trim();
@@ -429,11 +458,7 @@ export const VehicleDetailPage = () => {
       {id && (
         <VehicleUnitListModal
           open={unitsOpen}
-          onClose={() => {
-            setUnitsOpen(false);
-            searchParams.delete("openUnits");
-            setSearchParams(searchParams, { replace: true });
-          }}
+          onClose={handleCloseUnits}
           vehicleId={id}
         />
       )}
