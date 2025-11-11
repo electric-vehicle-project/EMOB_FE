@@ -74,10 +74,6 @@ const ViewDiscountPolicyModal: React.FC<ViewDealerDiscountPolicyModalProps> = ({
           size="middle"
           labelStyle={{ width: 200, fontWeight: 600 }}
         >
-          <Descriptions.Item label="Mã chính sách">
-            <span className="font-mono">{policy.id}</span>
-          </Descriptions.Item>
-
           <Descriptions.Item label="Đại lý (Dealer)">
             {dealerMap.get(policy.dealerId) || policy.dealerId}
           </Descriptions.Item>
@@ -108,16 +104,16 @@ const ViewDiscountPolicyModal: React.FC<ViewDealerDiscountPolicyModalProps> = ({
           </Descriptions.Item>
 
           <Descriptions.Item label="Ngày tạo">
-            {policy.createdAt
-              ? dayjs(policy.createdAt).format("DD/MM/YYYY HH:mm")
+            {policy.createAt
+              ? dayjs(policy.createAt).format("DD/MM/YYYY HH:mm")
               : "—"}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Ngày cập nhật gần nhất">
+          {/* <Descriptions.Item label="Ngày cập nhật gần nhất">
             {policy.updatedAt
               ? dayjs(policy.updatedAt).format("DD/MM/YYYY HH:mm")
               : "—"}
-          </Descriptions.Item>
+          </Descriptions.Item> */}
         </Descriptions>
       ) : (
         <p className="text-center text-gray-500 py-6">

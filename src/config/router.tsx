@@ -50,6 +50,7 @@ import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
 import { InstallmentPlanPage } from "../page/IntallmentPlanPage";
+import DealerEmployeeChart from "../page/overview/DealerEmployeeChart";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -216,7 +217,6 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
-      { path: ROUTES.OVERVIEW, element: <OverviewRevenueDealer /> },
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {

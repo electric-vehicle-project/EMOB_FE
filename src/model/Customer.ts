@@ -31,14 +31,14 @@ export type CustomerStatus =
 
 export interface ICustomer {
   id: string;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  address: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
   note?: string;
-  dateOfBirth: string; // dạng "YYYY-MM-DD"
-  gender: Gender;
-  loyaltyPoints: number;
-  memberShipLevel: MembershipLevel;
-  status: CustomerStatus;
+  dateOfBirth?: string; // dạng "YYYY-MM-DD"
+  gender?: Gender;
+  loyaltyPoints?: number;
+  memberShipLevel?: MembershipLevel;
+  status?: CustomerStatus;
 }
