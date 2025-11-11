@@ -108,6 +108,7 @@ export const deleteMutationHook =
     });
   };
 
+// ==========UPLOAD===============  
 export const createMutationUploadFilesHook =
   (queryKey: string, url: string) =>
   (
@@ -128,6 +129,7 @@ export const createMutationUploadFilesHook =
     });
   };
 
+// ==========UPDATE UPLOADS===============
 export const updateMutationUploadFilesHook =
   (queryKeys: string[], url: string) =>
   (

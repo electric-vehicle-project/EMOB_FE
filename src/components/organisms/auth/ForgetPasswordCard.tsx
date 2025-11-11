@@ -1,7 +1,7 @@
 import { ForgetPasswordForm } from "../../molecules/auth/ForgetPasswordForm";
 
 export const ForgetPasswordCard = () => (
-  <div className="bg-[#DDDDDD]">
+  <div>
     <h2 className="!pb-2 font-bold text-4xl  tracking-[.20em] font-[Rhodium_Libre]">
       Welcome back to
     </h2>
