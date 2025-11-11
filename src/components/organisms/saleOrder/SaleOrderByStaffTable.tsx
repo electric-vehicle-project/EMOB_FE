@@ -5,6 +5,11 @@ import type { SalesByStaffResponse } from "../../../model/SaleOrder";
 interface Props {
   data: SalesByStaffResponse[];
   loading?: boolean;
+
+  // ✅ Thêm để đồng bộ hiển thị mũi tên sort và xử lý sort backend
+  sortField?: keyof SalesByStaffResponse;
+  sortDir?: "asc" | "desc";
+
   onSortChange?: (
     field: keyof SalesByStaffResponse,
     order: "asc" | "desc"
@@ -14,17 +19,22 @@ interface Props {
 export const SaleOrderByStaffTable: React.FC<Props> = ({
   data,
   loading = false,
+  sortField,
+  sortDir = "desc",
   onSortChange,
 }) => {
+  // ✅ Map Ant Design sort direction
+  const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
+
   const columns: ColumnsType<SalesByStaffResponse> = [
     {
       title: "Nhân viên",
-      dataIndex: "accountId",
-      key: "accountId",
+      dataIndex: "staffName",
+      key: "staffName",
       width: 300,
       ellipsis: true,
-      render: (_, record) => (
-        <span className="font-medium text-gray-700">{record.accountId}</span>
+      render: (text: string) => (
+        <span className="font-medium text-gray-700">{text}</span>
       ),
     },
     {
@@ -33,6 +43,7 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       key: "orderCount",
       align: "center",
       sorter: true,
+      sortOrder: sortField === "orderCount" ? order : null,
     },
     {
       title: "Tổng doanh thu (₫)",
@@ -40,6 +51,7 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
       key: "amount",
       align: "center",
       sorter: true,
+      sortOrder: sortField === "amount" ? order : null,
       render: (value: number) => (
         <span className="text-[#2563eb] font-medium">
           {value?.toLocaleString("vi-VN")}
@@ -48,21 +60,16 @@ export const SaleOrderByStaffTable: React.FC<Props> = ({
     },
   ];
 
-  // Fix type sorter bằng TableProps
+  // ✅ Đồng bộ backend sort handler
   const handleChange: TableProps<SalesByStaffResponse>["onChange"] = (
     _pagination,
     _filters,
     sorter
   ) => {
-    const singleSorter = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (
-      onSortChange &&
-      singleSorter?.field &&
-      typeof singleSorter.field === "string" &&
-      singleSorter.order
-    ) {
-      const order = singleSorter.order === "ascend" ? "asc" : "desc";
-      onSortChange(singleSorter.field as keyof SalesByStaffResponse, order);
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    if (onSortChange && s?.field && typeof s.field === "string" && s.order) {
+      const order = s.order === "ascend" ? "asc" : "desc";
+      onSortChange(s.field as keyof SalesByStaffResponse, order);
     }
   };
 

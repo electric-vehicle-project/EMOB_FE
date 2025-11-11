@@ -1,87 +1,62 @@
-import { useState, useMemo, useEffect } from "react";
-import { Select, message } from "antd";
+import { useMemo, useState } from "react";
+import { Select, Input, Space, Button, message } from "antd";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
-
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 import {
   useSaleOrderListDealers,
   useSaleOrderComplete,
 } from "../../service/saleOrderService";
-import { useGetAccountsByManager } from "../../service/accountService";
-import { mapDealerOptionsFromAccounts } from "../../utils/mapToSelectOptions";
-
 import { CardWrapper } from "../../components/template/CardWrapper";
-import { SaleOrderFilterBar } from "../../components/organisms/saleOrder/SaleOrderFilterBar";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
+import { useDebounce } from "../../hook/useDebounce";
+import type { SelectProps } from "antd";
 
-// Kiểu role dành cho nhân viên EVM
+const STATUS_OPTIONS: SelectProps<OrderStatus[]>["options"] = [
+  { label: "CREATED", value: "CREATED" as OrderStatus },
+  { label: "COMPLETED", value: "COMPLETED" as OrderStatus },
+  { label: "CANCELED", value: "CANCELED" as OrderStatus },
+];
+
 type EvmRole = "EVM_STAFF" | "ADMIN";
 
 const SaleOrderEvmPage: React.FC = () => {
   const navigate = useNavigate();
-  const user = useSelector((state: RootState) => state.user);
-  const role = (user?.role as EvmRole) ?? "EVM_STAFF";
+  const role =
+    (useSelector((s: RootState) => s.user?.role) as EvmRole) ?? "EVM_STAFF";
 
-  // Trạng thái filter và sort
-  const [dealerId, setDealerId] = useState<string>();
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL");
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 400);
+  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>(
+    undefined
+  );
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Danh sách đại lý (account)
-  const { data: accountData } = useGetAccountsByManager(0, 50, {
-    enabled: true,
+  const { data, isLoading, isFetching, refetch } = useSaleOrderListDealers({
+    page,
+    size,
+    keyword: debouncedKeyword,
+    statuses,
+    sortField,
+    sortDir,
   });
-  const dealerOptions = mapDealerOptionsFromAccounts(accountData ?? []);
 
-  // Tham số truy vấn API
-  const params = useMemo(() => {
-    const statuses = statusFilter === "ALL" ? undefined : [statusFilter];
-    return { page: 0, size: 10, keyword: "", statuses, sortField, sortDir };
-  }, [statusFilter, sortField, sortDir]);
-
-  // Lấy dữ liệu đơn hàng
-  const { data, isLoading, isFetching, refetch, error } =
-    useSaleOrderListDealers(params);
-
-  const allOrders = useMemo<SaleOrderResponse[]>(() => {
-    return data?.result?.data ?? data?.data ?? [];
-  }, [data]);
-
-  // Lọc theo đại lý được chọn
-  const orders = useMemo(() => {
-    if (!dealerId) return allOrders;
-    return allOrders.filter((o) => o.dealerId === dealerId);
-  }, [allOrders, dealerId]);
-
-  useEffect(() => {
-    refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dealerId, statusFilter, sortField, sortDir]);
-
-  // Đếm trạng thái đơn hàng
-  const statusCounts = useMemo(() => {
-    const counts = { all: 0, created: 0, completed: 0, canceled: 0 };
-    for (const o of orders) {
-      counts.all++;
-      if (o.status === "CREATED") counts.created++;
-      else if (o.status === "COMPLETED") counts.completed++;
-      else if (o.status === "CANCELED") counts.canceled++;
-    }
-    return counts;
-  }, [orders]);
-
-  // Hoàn tất đơn hàng
+  const orders = useMemo<SaleOrderResponse[]>(
+    () => data?.result?.data ?? data?.data ?? [],
+    [data]
+  );
+  const totalElements = data?.result?.metadata?.totalElements ?? 0;
   const { mutateAsync: completeOrder, isPending: completing } =
     useSaleOrderComplete();
 
-  const handleViewDetail = (id: string) => {
-    const base = `/${role.toLowerCase()}`;
-    navigate(`${base}/sale-order/${id}`);
-  };
+  const handleViewDetail = (id: string) =>
+    navigate(`/${role.toLowerCase()}/sale-order/${id}`);
 
   const handleCompleteClick = async (id: string) => {
     try {
@@ -93,7 +68,14 @@ const SaleOrderEvmPage: React.FC = () => {
     }
   };
 
-  if (error) message.error("Không thể tải dữ liệu đơn hàng của đại lý!");
+  const resetFilters = () => {
+    setKeyword("");
+    setStatuses(undefined);
+    setSortField("createdAt");
+    setSortDir("desc");
+    setPage(0);
+    setSize(10);
+  };
 
   return (
     <CardWrapper>
@@ -101,31 +83,65 @@ const SaleOrderEvmPage: React.FC = () => {
         <h2 className="text-xl font-semibold text-[#627254]">
           Quản lý đơn hàng của các đại lý
         </h2>
-        <Select
-          placeholder="Chọn đại lý"
-          style={{ width: 250 }}
-          allowClear
-          options={dealerOptions}
-          onChange={(value) => setDealerId(value || undefined)}
-        />
       </div>
 
-      <SaleOrderFilterBar
-        counts={statusCounts}
-        defaultStatus={statusFilter}
-        onStatusChange={setStatusFilter}
-      />
+      <div className="mb-4">
+        <Space wrap size="middle">
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm theo mã đơn / đại lý…"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ width: 320 }}
+          />
+          <Select<OrderStatus[]>
+            allowClear
+            mode="multiple"
+            style={{ width: 320 }}
+            placeholder="Trạng thái (chọn nhiều)"
+            value={statuses}
+            options={STATUS_OPTIONS}
+            onChange={(vals) => {
+              const v = (vals as OrderStatus[]) || [];
+              setStatuses(v.length ? v : undefined);
+              setPage(0);
+            }}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={resetFilters}
+            type="primary"
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
 
       <SaleOrderTable
-        key={`orders-${dealerId}-${statusFilter}-${sortField}-${sortDir}`}
         data={orders}
         loading={isLoading || isFetching || completing}
         showDealerColumn
         onViewDetail={handleViewDetail}
         onComplete={handleCompleteClick}
-        onSortChange={(field, order) => {
-          setSortField(field);
-          setSortDir(order);
+        sortField={sortField}
+        sortDir={sortDir}
+        onSortChange={(f, o) => {
+          setSortField(f);
+          setSortDir(o);
+          setPage(0);
+        }}
+        pagination={{
+          current: page + 1,
+          pageSize: size,
+          total: totalElements,
+          showSizeChanger: true,
+          onChange: (p, s) => {
+            setPage(p - 1);
+            setSize(s ?? 10);
+          },
+          position: ["bottomCenter"],
+          showTotal: (t) => `Tổng cộng ${t} đơn hàng`,
         }}
       />
     </CardWrapper>

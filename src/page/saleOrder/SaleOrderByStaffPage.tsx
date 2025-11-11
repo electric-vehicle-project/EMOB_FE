@@ -9,15 +9,19 @@ import { mapToSelectOptions } from "../../utils/mapToSelectOptions";
 import type { SalesByStaffResponse } from "../../model/SaleOrder";
 
 // ==============================
-// Trang thống kê doanh số theo nhân viên
+// 📊 Trang thống kê doanh số theo nhân viên
 // ==============================
 const SaleOrderByStaffPage: React.FC = () => {
-  // Bộ lọc sắp xếp
+  // ==============================
+  // 🔍 State: Sắp xếp
+  // ==============================
   const [sortField, setSortField] =
     useState<keyof SalesByStaffResponse>("amount");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Tham số truy vấn
+  // ==============================
+  // ⚙️ Query Params
+  // ==============================
   const params = useMemo(
     () => ({
       page: 0,
@@ -28,26 +32,36 @@ const SaleOrderByStaffPage: React.FC = () => {
     [sortField, sortDir]
   );
 
-  // API doanh số nhân viên
+  // ==============================
+  // 📦 API: Doanh số nhân viên
+  // ==============================
   const { data, isLoading, isFetching, refetch, isError } =
     useSalesByStaff(params);
 
-  // Lấy danh sách nhân viên
+  // ==============================
+  // 👤 API: Danh sách nhân viên
+  // ==============================
   const { data: accountsData } = useGetAccountsByManager(0, 50);
   const accountOptions = mapToSelectOptions(accountsData, "fullName", "id");
 
-  // Thông báo lỗi
+  // ==============================
+  // 🚨 Xử lý lỗi
+  // ==============================
   useEffect(() => {
     if (isError) message.error("Không thể tải dữ liệu doanh số!");
   }, [isError]);
 
-  // Tự động refetch khi sắp xếp thay đổi
+  // ==============================
+  // 🔄 Refetch khi sắp xếp thay đổi
+  // ==============================
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortDir]);
 
-  // Ánh xạ dữ liệu hiển thị
+  // ==============================
+  // 🧩 Ánh xạ dữ liệu hiển thị
+  // ==============================
   const staffSales: SalesByStaffResponse[] = useMemo(() => {
     const raw = data?.result?.data ?? data?.data ?? [];
     return raw.map((s: SalesByStaffResponse, index: number) => {
@@ -58,7 +72,9 @@ const SaleOrderByStaffPage: React.FC = () => {
     });
   }, [data, accountOptions]);
 
-  // Render
+  // ==============================
+  // 🖼️ Render UI
+  // ==============================
   return (
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">
@@ -70,6 +86,9 @@ const SaleOrderByStaffPage: React.FC = () => {
       <SaleOrderByStaffTable
         data={staffSales}
         loading={isLoading || isFetching}
+        sortField={sortField}
+        sortDir={sortDir}
+        // ✅ Đồng bộ prop onSortChange với table (chuẩn)
         onSortChange={(field, order) => {
           setSortField(field);
           setSortDir(order);
