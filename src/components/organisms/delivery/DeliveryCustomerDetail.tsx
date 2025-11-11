@@ -24,9 +24,9 @@ export const DeliveryCustomerDetail = () => {
     const user = useCurrentUser();
     const role = (user as { role?: string } | null)?.role || "";
 
-    const handleComplete = async (record: any) => {
+    const handleComplete = async () => {
         try {
-            await completeDelivery(record.id);
+            await completeDelivery(delivery.id);
             toast.success("Đã đánh dấu hoàn tất giao hàng!");
             refetch();
         } catch {
@@ -34,9 +34,9 @@ export const DeliveryCustomerDetail = () => {
         }
     };
 
-    const handleDelete = async (record: any) => {
+    const handleDelete = async () => {
         try {
-            await deleteDelivery(record.id);
+            await deleteDelivery(delivery.id);
             toast.success("Xóa giao hàng thành công!");
             refetch();
         } catch {
