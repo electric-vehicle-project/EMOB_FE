@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Modal, Form, Button, InputNumber, Select, message } from "antd";
+import { Modal, Form, Button, InputNumber, Select, Switch } from "antd";
 import { useApproveQuotation } from "../../service/quotationService";
 import { toast } from "react-toastify";
 
@@ -7,7 +7,7 @@ interface ApproveQuotationModalProps {
   open: boolean;
   onClose: () => void;
   quotationId: string;
-  items: any[]; // danh sách item trong báo giá
+  items: any[];
   onSuccess?: () => void;
 }
 
@@ -21,21 +21,28 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
   const [form] = Form.useForm();
   const { mutateAsync: approveQuotation, isPending } = useApproveQuotation();
 
-  // fill  item hiện có vào form
   useEffect(() => {
-    if (items && items.length > 0) {
+    if (items?.length) {
       form.setFieldsValue({
         items: items.map((item: any) => ({
           itemsId: item.id,
           promotionId: item.promotionId || null,
           quantity: item.quantity || 1,
+          approved: true,
         })),
       });
     }
   }, [items, form]);
 
   const handleSubmit = async (values: any) => {
-    const payload = values.items.map((item: any) => ({
+    const approvedItems = values.items.filter((i: any) => i.approved);
+
+    if (approvedItems.length === 0) {
+      toast.warning("Chưa chọn item nào để duyệt!");
+      return;
+    }
+
+    const payload = approvedItems.map((item: any) => ({
       itemsId: item.itemsId,
       promotionId: item.promotionId || null,
       quantity: item.quantity || 1,
@@ -65,25 +72,30 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
       destroyOnClose
       width={700}
     >
-      <Form
-        layout="vertical"
-        form={form}
-        onFinish={handleSubmit}
-        className="space-y-4"
-      >
+      <Form layout="vertical" form={form} onFinish={handleSubmit}>
         <Form.List name="items">
           {(fields) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
                 <div
                   key={key}
-                  className="grid grid-cols-3 gap-4 p-3 border rounded-md mb-3 bg-gray-50"
+                  className="grid grid-cols-4 gap-4 p-3 border rounded-md mb-3 bg-gray-50" // ⚙️ Đổi từ 3 → 4 cột
                 >
+                  {/* Cột bật/tắt duyệt */}
+                  <Form.Item
+                    {...restField}
+                    name={[name, "approved"]}
+                    label="Duyệt"
+                    valuePropName="checked"
+                    className="flex items-center"
+                  >
+                    <Switch />
+                  </Form.Item>
+
                   <Form.Item
                     {...restField}
                     name={[name, "itemsId"]}
                     label="Item ID"
-                    rules={[{ required: true }]}
                   >
                     <InputNumber style={{ width: "100%" }} disabled />
                   </Form.Item>
