@@ -1,17 +1,17 @@
 // src/pages/InstallmentPlanPage.tsx
-import { InstallmentPlanList } from "../components/organisms/installmentPlan/InstallmentPlanList";
-import { CardWrapper } from "../components/template/CardWrapper";
-import { useCurrentUser } from "../utils/getCurrentUser";
+import { InstallmentPlanCustomerList } from "../../components/organisms/installmentPlan/InstallmentPlanCustomerList";
+import { CardWrapper } from "../../components/template/CardWrapper";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
-export const InstallmentPlanPage = () => {
+export const InstallmentPlanCustomersPage = () => {
   const user = useCurrentUser();
-  const canAccess = ["ADMIN", "EVM_STAFF", "DEALER_STAFF", "MANAGER"].includes(
+  const canAccess = ["DEALER_STAFF", "MANAGER"].includes(
     (user as { role?: string } | null)?.role || ""
   );
 
   return (
     <CardWrapper
-      title="Quản lý kế hoạch trả góp"
+      title="Quản lý kế hoạch trả góp khách hàng"
       subtitle={
         canAccess
           ? "Theo dõi và quản lý thông tin các kế hoạch trả góp trong hệ thống"
@@ -20,7 +20,7 @@ export const InstallmentPlanPage = () => {
       variant="dashboard"
     >
       {canAccess ? (
-        <InstallmentPlanList />
+        <InstallmentPlanCustomerList />
       ) : (
         <p className="text-center text-red-500 py-10 font-medium">
           Access Denied

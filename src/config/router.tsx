@@ -41,7 +41,7 @@ import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerP
 import QuotationPage from "../page/quotation/QuotationPage";
 import AdminVehicleRequestPage from "../page/vehicle-request/VehicleRequestForAdminPage";
 import DealerDashboardPage from "../page/overview/OverviewRevenueCustomer";
-import { InstallmentPlanPage } from "../page/IntallmentPlanPage";
+import { InstallmentPlanPage } from "../page/installmentPlan/IntallmentPlanPage";
 import { ContractCurrentDealerPage } from "../page/contract/ContractCurrentDealerPage";
 import { DeliveryDealerDetailPage } from "../page/delivery/DeliveryDealerDetailPage";
 import { DeliveryEVMAndCurrentDealerPage } from "../page/delivery/DeliveryEVMAndCurrentDealerPage";
@@ -59,7 +59,7 @@ import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import { InstallmentPlanCustomerList } from "../components/organisms/installmentPlan/InstallmentPlanCustomerList";
-import { InstallmentPlanCustomersPage } from "../page/InstallmentPlanCustomerPage";
+import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
