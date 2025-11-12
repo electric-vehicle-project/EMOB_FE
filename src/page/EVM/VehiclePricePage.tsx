@@ -4,7 +4,6 @@ import {
   Input,
   InputNumber,
   Button,
-  message,
   Upload,
   Tag,
   Result,
