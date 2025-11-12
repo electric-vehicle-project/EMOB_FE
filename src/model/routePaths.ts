@@ -102,4 +102,5 @@ export const ROUTES = {
 
   //InstallmentPlan
   INSTALLMENT_PLAN: "installment-plan",
+  INSTALLMENT_PLAN_CUSTOMERS: "installment-plan-customers",
 };

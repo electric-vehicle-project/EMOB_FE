@@ -15,3 +15,8 @@ export const useCurrentDealerInstallmentPlansQuery = createQueryHook(
   "currentDealerInstallmentPlans",
   "/installment/current-dealer"
 );
+
+export const useInstallmetnPlanByCustomersQuery = createQueryHook(
+  "currentDealerInstallmentPlans",
+  "/installment/by-customer"
+);
