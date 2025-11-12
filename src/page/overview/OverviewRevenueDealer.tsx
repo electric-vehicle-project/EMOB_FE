@@ -12,7 +12,12 @@ import DealerSalesChart from "../../components/organisms/overview/overviewDealer
 import { formatMoney } from "../../utils/formatMoney";
 import RevenueLineChart from "../../components/organisms/overview/overviewDealers/DealerLineChart";
 
-const REGIONS = ["NORTH", "CENTRAL", "SOUTH"];
+const REGION_MAP = [
+  { vi: "Miền Bắc", en: "NORTH" },
+  { vi: "Miền Trung", en: "CENTRAL" },
+  { vi: "Miền Nam", en: "SOUTH" },
+];
+
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function CarBrandDealerDashboard() {
@@ -25,7 +30,10 @@ export default function CarBrandDealerDashboard() {
     {},
     {
       year: selectedYear,
-      region: selectedRegion === "Tất cả khu vực" ? undefined : selectedRegion,
+      region:
+        selectedRegion === "Tất cả khu vực"
+          ? undefined
+          : REGION_MAP.find((r) => r.vi === selectedRegion)?.en,
       country:
         selectedCountry === "Tất cả thành phố" ? undefined : selectedCountry,
     }
@@ -176,8 +184,8 @@ export default function CarBrandDealerDashboard() {
               }}
             >
               <option>Tất cả khu vực</option>
-              {REGIONS.map((r) => (
-                <option key={r}>{r}</option>
+              {REGION_MAP.map((r) => (
+                <option key={r.en}>{r.vi}</option>
               ))}
             </select>
           </div>
