@@ -190,3 +190,51 @@ export const useDeleteVehicleUnitsBulk = () => {
     },
   });
 };
+
+// ========== AI DEMAND FORECAST ==========
+export type DemandForecastRecord = Record<string, unknown>;
+
+/** Lấy dự báo nhu cầu từ AI (GET /vehicle/demandForecastFromAI) */
+export const useDemandForecastFromAI = (
+  options?: unknown,
+  params?: unknown
+) => {
+  const hook = createQueryHook(
+    "vehicle-demand-forecast-ai",
+    `${BASE_URL}/demandForecastFromAI`
+  );
+  const query = hook(options, params);
+
+  // Chuẩn hoá để nơi gọi luôn đọc qua .forecast
+  const forecast =
+    (query.data?.result as DemandForecastRecord | DemandForecastRecord[]) ??
+    (query.data as DemandForecastRecord | DemandForecastRecord[]);
+
+  return { ...query, forecast };
+};
+
+/**
+ * Trigger tạo mới/bổ sung dự báo (GET /vehicle/createDemandForecasts).
+ * Dùng .refetch() để chạy khi bấm nút "Tạo dự báo mới".
+ */
+export const useCreateDemandForecasts = (
+  options?: { enabled?: boolean } & Record<string, unknown>,
+  params?: unknown
+) => {
+  // Mặc định không tự chạy; có thể override bằng options.enabled
+  const mergedOptions = { enabled: false, ...(options ?? {}) };
+  const hook = createQueryHook(
+    "vehicle-create-demand-forecasts",
+    `${BASE_URL}/createDemandForecasts`
+  );
+  const query = hook(mergedOptions, params);
+
+  // Trả về mảng kết quả nếu BE trả về array, nếu không thì []
+  const result = Array.isArray(query.data?.result)
+    ? (query.data?.result as unknown[])
+    : Array.isArray(query.data)
+    ? (query.data as unknown[])
+    : [];
+
+  return { ...query, result };
+};
