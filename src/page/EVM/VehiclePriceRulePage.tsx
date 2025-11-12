@@ -7,7 +7,6 @@ import {
   InputNumber,
   Input,
   Tag,
-  message,
   Typography,
   Skeleton,
   Form,

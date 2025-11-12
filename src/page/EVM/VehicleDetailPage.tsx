@@ -1,6 +1,6 @@
 /* EMOB-2025 - VehicleDetailPage */
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { Card, Tag, Space, Tooltip, message, Popconfirm, Image } from "antd";
+import { Card, Tag, Space, Tooltip, Popconfirm, Image } from "antd";
 import {
   useLocation,
   useNavigate,
