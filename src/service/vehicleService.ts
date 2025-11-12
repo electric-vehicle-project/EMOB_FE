@@ -191,50 +191,38 @@ export const useDeleteVehicleUnitsBulk = () => {
   });
 };
 
-// ========== AI DEMAND FORECAST ==========
-export type DemandForecastRecord = Record<string, unknown>;
-
-/** Lấy dự báo nhu cầu từ AI (GET /vehicle/demandForecastFromAI) */
-export const useDemandForecastFromAI = (
-  options?: unknown,
-  params?: unknown
-) => {
+// ========= AI Demand Forecast (Brand-side) =========
+// GET /api/vehicle/demandForecastFromAI
+export const useGetAIDemandForecast = (options?: unknown) => {
   const hook = createQueryHook(
-    "vehicle-demand-forecast-ai",
-    `${BASE_URL}/demandForecastFromAI`
+    "ai-demand-forecast",
+    "/vehicle/demandForecastFromAI"
   );
-  const query = hook(options, params);
+  // API này không có params
+  const query = hook(options);
 
-  // Chuẩn hoá để nơi gọi luôn đọc qua .forecast
-  const forecast =
-    (query.data?.result as DemandForecastRecord | DemandForecastRecord[]) ??
-    (query.data as DemandForecastRecord | DemandForecastRecord[]);
+  // Chuẩn hoá: đảm bảo trả về mảng object
+  const raw = (query.data?.result ?? query.data) as unknown;
+  const forecasts = Array.isArray(raw)
+    ? (raw as unknown[])
+    : Array.isArray((raw as { data?: unknown[] })?.data)
+    ? ((raw as { data?: unknown[] }).data as unknown[])
+    : []; // nếu BE trả {}, vẫn an toàn
 
-  return { ...query, forecast };
+  return { ...query, forecasts };
 };
 
-/**
- * Trigger tạo mới/bổ sung dự báo (GET /vehicle/createDemandForecasts).
- * Dùng .refetch() để chạy khi bấm nút "Tạo dự báo mới".
- */
-export const useCreateDemandForecasts = (
-  options?: { enabled?: boolean } & Record<string, unknown>,
-  params?: unknown
-) => {
-  // Mặc định không tự chạy; có thể override bằng options.enabled
-  const mergedOptions = { enabled: false, ...(options ?? {}) };
-  const hook = createQueryHook(
-    "vehicle-create-demand-forecasts",
-    `${BASE_URL}/createDemandForecasts`
-  );
-  const query = hook(mergedOptions, params);
-
-  // Trả về mảng kết quả nếu BE trả về array, nếu không thì []
-  const result = Array.isArray(query.data?.result)
-    ? (query.data?.result as unknown[])
-    : Array.isArray(query.data)
-    ? (query.data as unknown[])
-    : [];
-
-  return { ...query, result };
+// GET /api/vehicle/createDemandForecasts  (trigger tạo/refresh phía AI)
+export const useCreateAIDemandForecasts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Swagger ghi GET nên mình giữ đúng GET
+      const res = await api.get("/vehicle/createDemandForecasts");
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-demand-forecast"] });
+    },
+  });
 };

@@ -102,8 +102,4 @@ export const ROUTES = {
 
   //InstallmentPlan
   INSTALLMENT_PLAN: "installment-plan",
-
-  
-
-  AI_DEMAND_FORECAST: "/vehicle/ai-demand-forecast",
 };
