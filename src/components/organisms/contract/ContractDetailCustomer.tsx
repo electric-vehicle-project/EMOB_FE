@@ -30,6 +30,7 @@ import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useCustomerById } from "../../../service/customerService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
+import { ROUTES } from "../../../model/routePaths";
 
 export const ContractDetailCustomer = () => {
   const navigate = useNavigate();
@@ -116,7 +117,7 @@ export const ContractDetailCustomer = () => {
       {/* Thanh điều hướng + nút in */}
       <div className="flex justify-between items-center mb-3">
         <div
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/"+ user.role.toLowerCase() + "/" + ROUTES.CONTRACT)}
           className="flex items-center gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
         >
           <ArrowLeftOutlined />
@@ -125,7 +126,7 @@ export const ContractDetailCustomer = () => {
 
         <Button
           icon={<PrinterOutlined />}
-          type="default"
+          type="default"  
           onClick={handlePrint}
           className="border-[#627254] text-[#627254] hover:!bg-[#627254] hover:!text-white"
         >

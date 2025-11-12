@@ -1,10 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useCurrentUser } from "../utils/getCurrentUser";
+import { toast } from "react-toastify";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useCurrentUser();
+
+
+  useEffect(() => {
+    if (user) {
+      toast.success("Đăng nhập thành công!")
+      navigate("/" + user.role.toLowerCase());
+    }
+  }, [user, navigate]);
 
   return (
     <div
