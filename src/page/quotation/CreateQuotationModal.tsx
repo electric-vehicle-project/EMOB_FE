@@ -65,7 +65,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
     ];
   }, [promotionsData]);
 
-  // 🔹 Submit form
+  // Submit form
   const handleSubmit = async (values: any) => {
     try {
       const payload: CreateQuotationPayload = {
@@ -77,13 +77,11 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
           quantity: item.quantity,
         })),
         customerId: values.customerId,
-        validUntil: values.validUntil
-          ? new Date().getTime() + values.validUntil * 24 * 60 * 60 * 1000
-          : 0,
+        validUntil: values.validUntil,
       };
 
       await createQuotation(payload);
-      toast.success("✅ Tạo báo giá thành công!");
+      toast.success("Tạo báo giá thành công!");
       form.resetFields();
       onSuccess?.();
       onClose?.();
@@ -91,7 +89,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
       console.error("Create quotation error:", error);
       toast.error(
         error?.response?.data?.message ||
-          "❌ Tạo báo giá thất bại, vui lòng thử lại."
+          "Tạo báo giá thất bại, vui lòng thử lại."
       );
     }
   };
