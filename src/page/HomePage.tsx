@@ -9,11 +9,13 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useCurrentUser();
 
-
   useEffect(() => {
     if (user) {
-      toast.success("Đăng nhập thành công!")
-      navigate("/" + user.role.toLowerCase());
+      toast.success("Đã đăng nhập, đang chuyển hướng...")
+      const timer = setTimeout(() => {
+        navigate("/" + user.role.toLowerCase());
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [user, navigate]);
 
