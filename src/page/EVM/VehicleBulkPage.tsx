@@ -257,7 +257,13 @@ export const VehicleBulkPage = () => {
 
       navigate(
         `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", vehicleId),
-        { replace: true, state: { from: "bulk" } }
+        {
+          replace: true,
+          state: {
+            from: "bulk",
+            backTo: `${basePath}/${ROUTES.EVM_VEHICLE}`, // hoặc ROUTES.EVM_VEHICLE_LIST nếu bạn dùng tên này
+          },
+        }
       );
     } catch (err: unknown) {
       const maybeAxios = err as {
