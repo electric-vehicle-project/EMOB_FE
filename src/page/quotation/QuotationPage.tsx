@@ -1,14 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {
-  Table,
-  Button,
-  message,
-  Popconfirm,
-  Tag,
-  Input,
-  Tooltip,
-  Modal,
-} from "antd";
+import React, { useState } from "react";
+import { Table, Button, Popconfirm, Tag, Input, Tooltip, Modal } from "antd";
 import SectionTitle from "../../components/atoms/SectionTitle";
 import type { ColumnsType } from "antd/es/table";
 import type { IQuotation } from "../../model/Quotation";
@@ -29,6 +20,7 @@ import { SearchOutlined } from "@ant-design/icons";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useDebounce } from "../../hook/useDebounce";
 import { toast } from "react-toastify";
+import ApproveQuotationModal from "./ApproveQuotationModal";
 
 const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
   const { data, isLoading } = useCustomerById(customerId);
@@ -56,36 +48,14 @@ const QuotationPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   // duyệt
-  const approveQuotation = useApproveQuotation();
-  const handleApproveQuotation = async (record: IQuotation) => {
-    Modal.confirm({
-      title: "Xác nhận duyệt báo giá",
-      content: "Bạn có chắc muốn duyệt báo giá này không?",
-      okText: "Duyệt",
-      cancelText: "Hủy",
-      onOk: async () => {
-        try {
-          const payload = record.items?.map((i: any) => ({
-            itemsId: i.id,
-            vehicleId: i.vehicleId,
-            promotionId: i.promotionId || null,
-            quantity: i.quantity || 1,
-          }));
-
-          await approveQuotation.mutateAsync({ id: record.id, data: payload });
-
-          toast.success("Duyệt báo giá thành công!");
-          refetch();
-        } catch (err: any) {
-          toast.error(
-            err?.response?.data?.message || "Không thể duyệt báo giá!"
-          );
-        }
-      },
-    });
+  const handleOpenApproveModal = (record: IQuotation) => {
+    setSelectedRecord(record);
+    setSelectedQuotationId(record.id);
+    setIsApproveModalOpen(true);
   };
 
   // từ chối
@@ -255,9 +225,8 @@ const QuotationPage: React.FC = () => {
                     color: "white",
                     border: "none",
                   }}
-                  onClick={() => handleApproveQuotation(record)}
+                  onClick={() => handleOpenApproveModal(record)}
                   disabled={record.status !== "PENDING"}
-                  loading={approveQuotation.isPending}
                 >
                   Duyệt
                 </Button>
@@ -388,6 +357,17 @@ const QuotationPage: React.FC = () => {
           open={isViewModalOpen}
           quotationId={selectedQuotationId}
           onClose={() => setIsViewModalOpen(false)}
+        />
+      )}
+
+      {/*  duyệt */}
+      {isApproveModalOpen && selectedQuotationId && selectedRecord && (
+        <ApproveQuotationModal
+          open={isApproveModalOpen}
+          onClose={() => setIsApproveModalOpen(false)}
+          quotationId={selectedQuotationId}
+          items={selectedRecord.items || []}
+          onSuccess={refetch}
         />
       )}
     </div>
