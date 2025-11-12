@@ -11,6 +11,7 @@ import { useDealersQuery } from "../../service/dealerService"; // ✅ thêm impo
 import ViewVehicleRequestModal from "./ViewVehicleRequestModal";
 import type { IVehicleRequest } from "../../model/VehicleRequest";
 import { toast } from "react-toastify";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 const AdminVehicleRequestPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -19,6 +20,9 @@ const AdminVehicleRequestPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
+  // bắt role
+  const currentUser = useCurrentUser();
+  const role = currentUser?.role;
   // Fetch yêu cầu xe dành cho admin
   const { data, isLoading, refetch } = useGetVehicleRequestsForAdmin({
     keyword: searchTerm,
@@ -143,15 +147,17 @@ const AdminVehicleRequestPage: React.FC = () => {
           >
             Xem
           </Button>
-          <Button
-            size="small"
-            type="primary"
-            disabled={record.status === "APPROVED"}
-            loading={isPending}
-            onClick={() => handleApprove(record.id)}
-          >
-            Duyệt
-          </Button>
+          {role === "ADMIN" && (
+            <Button
+              size="small"
+              type="primary"
+              disabled={record.status === "APPROVED"}
+              loading={isPending}
+              onClick={() => handleApprove(record.id)}
+            >
+              Duyệt
+            </Button>
+          )}
         </Space>
       ),
     },
