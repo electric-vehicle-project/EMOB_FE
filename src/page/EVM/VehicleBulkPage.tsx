@@ -1,3 +1,4 @@
+// src/page/vehicle/VehicleBulkPage.tsx
 import { useEffect, useState, useMemo } from "react";
 import {
   Card,
@@ -6,39 +7,37 @@ import {
   Input,
   DatePicker,
   Select,
-  Button,
   Skeleton,
   Image,
   Space,
   Alert,
   Modal,
   Table,
-  Tag,
-  Tooltip,
   Empty,
-  Spin,
+  Tag,
 } from "antd";
-import {
-  ExperimentOutlined,
-  ReloadOutlined,
-  CheckOutlined,
-} from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
 import dayjs, { type Dayjs } from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   useGetVehicleById,
   useCreateVehicleUnitsBulk,
-  // ✅ 2 hook AI mới (đã thêm trong service/vehicleService.ts)
-  useGetAIDemandForecast,
-  useCreateAIDemandForecasts,
 } from "../../service/vehicleService";
 import { ROUTES } from "../../model/routePaths";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import api from "../../config/api";
 import { toast } from "react-toastify";
+import {
+  ReloadOutlined,
+  ExperimentOutlined,
+  CheckOutlined,
+} from "@ant-design/icons";
+// ⭐ Button wrapper của dự án
+import { Button } from "../../components/atoms/Button";
 
 const { Option } = Select;
 
+// ================== Form types ==================
 type FormValues = {
   quantity: number;
   color: string;
@@ -52,111 +51,44 @@ type FormValues = {
     | "SOLD";
 };
 
-// ====== Kiểu dự báo chuẩn hoá, chỉ include field có thể áp vào form ======
-type NormalizedForecast = {
-  vehicleId?: string;
-  modelId?: string;
-  quantity?: number;
-  color?: string;
-  productionYear?: number;
-  status?: FormValues["status"];
-  confidence?: number; // 0..1
-  note?: string;
-  raw: Record<string, unknown>;
+// ================== API types ==================
+type ApiColorForecast = {
+  color: string;
+  predictedColorDemand: number;
 };
 
-// ====== Chuẩn hoá 1 item bất kỳ từ BE thành NormalizedForecast ======
-function normalizeForecastItem(
-  item: Record<string, unknown>
-): NormalizedForecast {
-  const getNum = (keys: string[]): number | undefined => {
-    for (const k of keys) {
-      const v = item[k];
-      if (typeof v === "number" && !Number.isNaN(v)) return v;
-      if (
-        typeof v === "string" &&
-        v.trim() !== "" &&
-        !Number.isNaN(Number(v))
-      ) {
-        return Number(v);
-      }
-    }
-    return undefined;
-  };
+type ApiSupplyPlan = {
+  modelName: string;
+  predictedDealerDemand?: number;
+  recommendedProduction?: number;
+  colorForecast?: ApiColorForecast[];
+};
 
-  const getStr = (keys: string[]): string | undefined => {
-    for (const k of keys) {
-      const v = item[k];
-      if (typeof v === "string" && v.trim() !== "") return v.trim();
-    }
-    return undefined;
-  };
+type ApiForecastRoot = {
+  country?: string;
+  region?: string;
+  supplyPlan?: ApiSupplyPlan[];
+};
 
-  const vehicleId = getStr(["vehicleId", "modelId", "id", "evModelId"]);
-  const modelId = getStr(["modelId", "vehicleModelId"]);
+// ================== Utils ==================
+const normalize = (s?: string) =>
+  (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
-  const quantity = getNum([
-    "recommendedQty",
-    "quantity",
-    "qty",
-    "suggestedQuantity",
-  ]);
-  const color = getStr(["color", "colour", "suggestedColor"]);
-  const productionYear = getNum(["productionYear", "year", "suggestedYear"]);
+const fmt = (n?: number) =>
+  typeof n === "number" && Number.isFinite(n) ? n.toLocaleString("vi-VN") : "—";
 
-  const statusRaw = getStr(["status", "vehicleStatus", "suggestedStatus"]);
-  const status = ((): FormValues["status"] | undefined => {
-    const s = (statusRaw ?? "").toUpperCase();
-    const allowed = [
-      "NORMAL",
-      "SPECIAL",
-      "OLD_STOCK",
-      "TEST_DRIVE",
-      "RESERVED",
-      "SOLD",
-    ];
-    return allowed.includes(s) ? (s as FormValues["status"]) : undefined;
-  })();
+const topColorOf = (colors?: ApiColorForecast[]) => {
+  if (!Array.isArray(colors) || colors.length === 0) return undefined;
+  return [...colors].sort(
+    (a, b) => (b.predictedColorDemand ?? 0) - (a.predictedColorDemand ?? 0)
+  )[0];
+};
 
-  let confidence = getNum(["confidence", "score", "probability"]);
-  if (confidence && confidence > 1) confidence = confidence / 100;
+const BASE_URL = "/vehicle";
 
-  const note = getStr(["reason", "note", "explanation", "why"]);
-
-  return {
-    vehicleId,
-    modelId,
-    quantity,
-    color,
-    productionYear,
-    status,
-    confidence,
-    note,
-    raw: item,
-  };
-}
-
-function forecastMatchesModel(
-  f: NormalizedForecast,
-  vehicleId: string,
-  vehicleName: string
-): boolean {
-  if (f.vehicleId === vehicleId || f.modelId === vehicleId) return true;
-
-  const brand =
-    typeof f.raw["brand"] === "string" ? (f.raw["brand"] as string) : "";
-  const model =
-    typeof f.raw["model"] === "string" ? (f.raw["model"] as string) : "";
-  const name = `${brand} ${model}`.trim().toLowerCase();
-
-  if (brand || model) {
-    return name.length > 0 && vehicleName.toLowerCase().includes(name);
-  }
-  return false;
-}
-
+// =================================================
 export const VehicleBulkPage = () => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<FormValues>();
   const navigate = useNavigate();
   const location = useLocation();
   const vehicleId = new URLSearchParams(location.search).get("vehicleId");
@@ -194,6 +126,12 @@ export const VehicleBulkPage = () => {
     [baseRetail, multiplier]
   );
 
+  // ========== Dự báo AI ==========
+  const [forecastOpen, setForecastOpen] = useState<boolean>(false);
+  const [triggering, setTriggering] = useState<boolean>(false);
+  const [loadingForecast, setLoadingForecast] = useState<boolean>(false);
+  const [forecastRaw, setForecastRaw] = useState<ApiForecastRoot[]>([]);
+
   const fetchMultiplier = async (status: FormValues["status"]) => {
     try {
       const res = await api.get(`/vehicle-price-rules/${status}`);
@@ -209,6 +147,94 @@ export const VehicleBulkPage = () => {
     fetchMultiplier(status);
   };
 
+  // Gọi API kích hoạt và lấy kết quả dự báo
+  const triggerForecast = async () => {
+    try {
+      setTriggering(true);
+      await api.get(`${BASE_URL}/demandForecastFromAI`);
+    } catch {
+      // Backend có thể chạy async — vẫn tiếp tục fetch danh sách
+    } finally {
+      setTriggering(false);
+    }
+  };
+
+  const loadForecasts = async () => {
+    setLoadingForecast(true);
+    try {
+      const res = await api.get(`${BASE_URL}/createDemandForecasts`);
+      const data = res?.data;
+      const list: ApiForecastRoot[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.result)
+        ? data.result
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
+      setForecastRaw(list);
+    } catch {
+      toast.error("Không thể tải dự báo AI.");
+      setForecastRaw([]);
+    } finally {
+      setLoadingForecast(false);
+    }
+  };
+
+  const openForecast = async () => {
+    setForecastOpen(true);
+    await triggerForecast();
+    await loadForecasts();
+  };
+
+  const handleRefresh = async () => {
+    await triggerForecast();
+    await loadForecasts();
+  };
+
+  // Lọc đúng model hiện tại từ supplyPlan của từng (country, region)
+  type Row = {
+    key: string;
+    country?: string;
+    region?: string;
+    modelName: string;
+    predictedDealerDemand?: number;
+    recommendedProduction?: number;
+    topColor?: string;
+    topColorDemand?: number;
+    allColors?: ApiColorForecast[];
+  };
+
+  const modelRows: Row[] = useMemo(() => {
+    const currentModel = normalize(
+      (vehicleInfo?.model as string | undefined) ||
+        (vehicleInfo?.name as string | undefined)
+    );
+
+    if (!currentModel) return [];
+
+    const rows: Row[] = [];
+    for (const bucket of forecastRaw || []) {
+      const plans = Array.isArray(bucket?.supplyPlan) ? bucket.supplyPlan : [];
+      for (const p of plans) {
+        if (normalize(p?.modelName) !== currentModel) continue;
+        const top = topColorOf(p.colorForecast);
+        rows.push({
+          key: `${bucket.region || bucket.country || "x"}-${p.modelName}`,
+          country: bucket.country,
+          region: bucket.region,
+          modelName: p.modelName,
+          predictedDealerDemand: p.predictedDealerDemand,
+          recommendedProduction: p.recommendedProduction,
+          topColor: top?.color,
+          topColorDemand: top?.predictedColorDemand,
+          allColors: p.colorForecast || [],
+        });
+      }
+    }
+    return rows;
+  }, [forecastRaw, vehicleInfo]);
+
+  // ========== SUBMIT ==========
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
       toast.error("Thiếu vehicleId. Vui lòng quay lại.");
@@ -264,64 +290,132 @@ export const VehicleBulkPage = () => {
     fetchMultiplier("NORMAL");
   }, []);
 
-  // ================== DỰ BÁO AI ==================
-  const [forecastOpen, setForecastOpen] = useState(false);
-  const [autoOpened, setAutoOpened] = useState(false);
-
-  // Hook lấy dự báo (disable auto; mình refetch khi cần)
-  const {
-    forecasts,
-    isLoading: loadingForecast,
-    refetch,
-  } = useGetAIDemandForecast({
-    enabled: false,
-    keepPreviousData: false,
-  });
-
-  // Hook trigger tạo/refresh dự báo phía AI
-  const { mutateAsync: triggerCreate, isPending: triggering } =
-    useCreateAIDemandForecasts();
-
-  const vehicleName =
-    `${vehicleInfo?.brand ?? ""} ${vehicleInfo?.model ?? ""}`.trim() ||
-    String(vehicleId ?? "");
-
-  const normalized = useMemo(() => {
-    const raw = Array.isArray(forecasts) ? forecasts : [];
-    return raw
-      .filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
-      .map((x) => normalizeForecastItem(x));
-  }, [forecasts]);
-
-  const filteredForThisModel = useMemo(
-    () =>
-      normalized.filter(
-        (f) => vehicleId && forecastMatchesModel(f, vehicleId, vehicleName)
+  // ===== Bảng dự báo (chỉ hiện trong Modal) =====
+  const colorColumns: ColumnsType<ApiColorForecast> = [
+    {
+      title: "Màu",
+      dataIndex: "color",
+      key: "color",
+      render: (v) => v || "—",
+    },
+    {
+      title: "Nhu cầu dự báo",
+      dataIndex: "predictedColorDemand",
+      key: "predictedColorDemand",
+      align: "right",
+      render: (v: number) => fmt(v),
+    },
+    {
+      title: "Thao tác",
+      key: "pick",
+      align: "center",
+      render: (_: unknown, c) => (
+        <Button
+          size="small"
+          onClick={() => {
+            if (c?.color) {
+              form.setFieldValue("color", c.color);
+              toast.success(`Đã chọn màu ${c.color} vào form.`);
+            }
+          }}
+        >
+          Chọn màu này
+        </Button>
       ),
-    [normalized, vehicleId, vehicleName]
-  );
+    },
+  ];
 
-  const openForecast = async () => {
-    try {
-      // 1) trigger tạo/refresh (theo swagger là GET)
-      await triggerCreate();
-    } catch {
-      // cho phép tiếp tục dù trigger lỗi (trường hợp BE đã có cache)
-    }
-    // 2) lấy danh sách dự báo
-    await refetch();
-    // 3) mở modal
-    setForecastOpen(true);
-  };
+  const columns: ColumnsType<Row> = [
+    {
+      title: "Khu vực",
+      key: "region",
+      width: 200,
+      render: (_, r) => (
+        <div className="flex flex-col">
+          <span className="font-medium">{r.region || "—"}</span>
+          <span className="text-xs text-gray-500">
+            {r.country ? `Quốc gia: ${r.country}` : ""}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Model",
+      dataIndex: "modelName",
+      key: "modelName",
+    },
+    {
+      title: "Demand (Dealer)",
+      dataIndex: "predictedDealerDemand",
+      key: "predictedDealerDemand",
+      align: "right",
+      render: (v: number) =>
+        typeof v === "number" ? <Tag color="blue">{fmt(v)}</Tag> : "—",
+    },
+    {
+      title: "Recommended Production",
+      dataIndex: "recommendedProduction",
+      key: "recommendedProduction",
+      align: "right",
+      render: (v: number) =>
+        typeof v === "number" ? <Tag color="green">{fmt(v)}</Tag> : "—",
+    },
+    {
+      title: "Top Color",
+      key: "topColor",
+      align: "center",
+      render: (_, r) =>
+        r.topColor ? (
+          <div className="flex flex-col items-center">
+            <Tag color="purple">{r.topColor}</Tag>
+            <span className="text-xs text-gray-500">
+              Nhu cầu: {fmt(r.topColorDemand)}
+            </span>
+          </div>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      align: "center",
+      render: (_: unknown, r) => (
+        <Button
+          type="primary"
+          icon={<CheckOutlined />}
+          className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md"
+          onClick={() => {
+            const q =
+              typeof r.recommendedProduction === "number" &&
+              r.recommendedProduction > 0
+                ? r.recommendedProduction
+                : typeof r.predictedDealerDemand === "number" &&
+                  r.predictedDealerDemand > 0
+                ? r.predictedDealerDemand
+                : undefined;
 
-  // ✅ Auto mở modal Dự báo AI khi vừa vào trang (chỉ 1 lần, chỉ cho EVM_STAFF)
-  useEffect(() => {
-    if (!autoOpened && role === "EVM_STAFF" && vehicleId && !vehicleLoading) {
-      setAutoOpened(true);
-      void openForecast();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoOpened, role, vehicleId, vehicleLoading]);
+            const patch: Partial<FormValues> = {};
+            if (typeof q === "number") patch.quantity = q;
+            if (r.topColor) patch.color = r.topColor;
+
+            if (Object.keys(patch).length === 0) {
+              toast.info(
+                "Dự báo không có trường phù hợp (quantity/color) để áp dụng."
+              );
+              return;
+            }
+
+            form.setFieldsValue(patch as FormValues);
+            toast.success("Đã áp dụng dự báo vào form thêm lô.");
+            setForecastOpen(false);
+          }}
+        >
+          Áp dụng vào form
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="flex justify-center min-h-[90vh] bg-gray-50 py-10 px-4">
@@ -338,6 +432,7 @@ export const VehicleBulkPage = () => {
                   loading={triggering || loadingForecast}
                   className="rounded-lg border-gray-300"
                   icon={<ExperimentOutlined />}
+                  type="default"
                 >
                   Dự báo AI
                 </Button>
@@ -345,6 +440,7 @@ export const VehicleBulkPage = () => {
               <Button
                 onClick={() => navigate(-1)}
                 className="rounded-lg border-gray-300"
+                type="default"
               >
                 Quay lại
               </Button>
@@ -390,14 +486,14 @@ export const VehicleBulkPage = () => {
                   className="mt-3"
                   type="info"
                   showIcon
-                  message="Giá đơn vị sẽ do hệ thống tính: retail_price_model × multiplier(status)"
+                  message="Giá đơn vị sẽ do hệ thống tính: Giá bán lẻ * hệ số (loại mẫu xe)"
                 />
               </div>
             </div>
 
             {/* FORM NHẬP LÔ */}
             <div className="flex-1">
-              <Form
+              <Form<FormValues>
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
@@ -419,7 +515,7 @@ export const VehicleBulkPage = () => {
                   </Form.Item>
 
                   <Form.Item
-                    label="Giá dự kiến (Retail × Multiplier)"
+                    label="Giá dự kiến (giá bán lẻ x hệ số)"
                     className="flex-1"
                   >
                     <InputNumber
@@ -430,9 +526,6 @@ export const VehicleBulkPage = () => {
                         `${Number(value || 0).toLocaleString()}`
                       }
                     />
-                    <div className="text-xs text-gray-500 mt-1 text-right">
-                      {baseRetail.toLocaleString()}₫ × {multiplier}
-                    </div>
                   </Form.Item>
                 </Space>
 
@@ -465,7 +558,6 @@ export const VehicleBulkPage = () => {
                     </Option>
                     <Option value="TEST_DRIVE">Xe lái thử</Option>
                     <Option value="RESERVED">Xe được đặt giữ chỗ</Option>
-                    <Option value="SOLD">Xe đã bán</Option>
                   </Select>
                 </Form.Item>
 
@@ -488,119 +580,63 @@ export const VehicleBulkPage = () => {
         )}
       </Card>
 
-      {/* ======= Modal Dự báo AI ======= */}
+      {/* ===== Modal Dự báo AI ===== */}
       <Modal
         open={forecastOpen}
         onCancel={() => setForecastOpen(false)}
         footer={null}
-        width={880}
+        width={920}
+        destroyOnClose
         title={
-          <div className="flex items-center justify-between pr-2">
+          <div className="flex items-center gap-3 pr-16">
             <span>🔮 Dự báo nhu cầu (AI)</span>
             <Button
               size="small"
               icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={loadingForecast}
+              onClick={handleRefresh}
+              loading={loadingForecast || triggering}
               className="rounded-md"
+              type="default"
             >
               Làm mới
             </Button>
           </div>
         }
-        destroyOnClose
       >
         {loadingForecast ? (
-          <div className="flex justify-center py-10">
-            <Spin />
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : modelRows.length === 0 ? (
+          <div className="py-10">
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Chưa có dự báo phù hợp cho model này."
+            />
           </div>
-        ) : filteredForThisModel.length === 0 ? (
-          <Empty description="Chưa có dự báo phù hợp cho mẫu xe này." />
         ) : (
-          <Table<NormalizedForecast>
-            rowKey={(r, i) => r.vehicleId || r.modelId || String(i)}
-            dataSource={filteredForThisModel}
-            pagination={{ pageSize: 5 }}
-            size="middle"
-            columns={[
-              {
-                title: "Số lượng",
-                dataIndex: "quantity",
-                align: "center",
-                render: (v?: number) => (typeof v === "number" ? v : "—"),
-              },
-              {
-                title: "Màu",
-                dataIndex: "color",
-                align: "center",
-                render: (v?: string) => v ?? "—",
-              },
-              {
-                title: "Năm SX",
-                dataIndex: "productionYear",
-                align: "center",
-                render: (v?: number) => (v ? v : "—"),
-              },
-              {
-                title: "Trạng thái",
-                dataIndex: "status",
-                align: "center",
-                render: (s?: string) => (s ? <Tag>{s}</Tag> : "—"),
-              },
-              {
-                title: "Độ tin cậy",
-                dataIndex: "confidence",
-                align: "center",
-                render: (c?: number) =>
-                  typeof c === "number" ? `${Math.round(c * 100)}%` : "—",
-              },
-              {
-                title: "Ghi chú",
-                dataIndex: "note",
-                ellipsis: true,
-                render: (v?: string) =>
-                  v ? <Tooltip title={v}>{v}</Tooltip> : "—",
-              },
-              {
-                title: "Thao tác",
-                key: "action",
-                align: "center",
-                render: (_: unknown, r) => (
-                  <Button
-                    type="primary"
-                    icon={<CheckOutlined />}
-                    className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md"
-                    onClick={() => {
-                      const patch: Record<string, unknown> = {};
-                      if (typeof r.quantity === "number" && r.quantity > 0)
-                        patch.quantity = r.quantity;
-                      if (typeof r.color === "string") patch.color = r.color;
-                      if (
-                        typeof r.productionYear === "number" &&
-                        r.productionYear > 1900
-                      ) {
-                        patch.productionYear = dayjs(
-                          `${r.productionYear}-01-01`
-                        );
-                      }
-                      if (r.status) patch.status = r.status;
-
-                      if (Object.keys(patch).length === 0) {
-                        toast.info(
-                          "Dự báo không có trường phù hợp để áp dụng vào form."
-                        );
-                        return;
-                      }
-                      form.setFieldsValue(patch);
-                      toast.success("Đã áp dụng dự báo vào form.");
-                      setForecastOpen(false);
-                    }}
-                  >
-                    Áp dụng vào form
-                  </Button>
+          <Table<Row>
+            rowKey="key"
+            dataSource={modelRows}
+            columns={columns}
+            pagination={false}
+            expandable={{
+              expandedRowRender: (r) =>
+                Array.isArray(r.allColors) && r.allColors.length > 0 ? (
+                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                    <div className="font-medium mb-2">Phân rã theo màu</div>
+                    <Table<ApiColorForecast>
+                      size="small"
+                      rowKey={(c) => `${r.key}-${c.color}`}
+                      dataSource={r.allColors}
+                      columns={colorColumns}
+                      pagination={false}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-gray-400 px-4 py-2">
+                    Không có dữ liệu màu.
+                  </div>
                 ),
-              },
-            ]}
+            }}
           />
         )}
       </Modal>
