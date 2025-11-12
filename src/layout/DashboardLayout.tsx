@@ -84,7 +84,6 @@ function DashboardLayout() {
       // ===================== EVM_STAFF =====================
       case "EVM_STAFF":
         return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
 
           // Sản phẩm & giá
@@ -103,6 +102,7 @@ function DashboardLayout() {
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
+
           // Sales & vận hành
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
@@ -144,6 +144,12 @@ function DashboardLayout() {
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
+          // danh sách trả góp của khách hàng
+          getItem(
+            "Danh mục trả góp khách hàng",
+            ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
+            <FileTextOutlined />
+          ),
           // Yêu cầu & quản trị
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
@@ -157,7 +163,7 @@ function DashboardLayout() {
       // ===================== DEALER_STAFF =====================
       case "DEALER_STAFF":
         return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
+          // getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
 
           // Sales & khách hàng
@@ -172,7 +178,12 @@ function DashboardLayout() {
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
-
+          // danh sách trả góp của khách hàng
+          getItem(
+            "Danh mục trả góp khách hàng",
+            ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
+            <FileTextOutlined />
+          ),
           // Sản phẩm & giá
           getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
           getItem(

@@ -1,7 +1,7 @@
 // src/pages/InstallmentPlanPage.tsx
-import { InstallmentPlanList } from "../components/organisms/installmentPlan/InstallmentPlanList";
-import { CardWrapper } from "../components/template/CardWrapper";
-import { useCurrentUser } from "../utils/getCurrentUser";
+import { InstallmentPlanList } from "../../components/organisms/installmentPlan/InstallmentPlanList";
+import { CardWrapper } from "../../components/template/CardWrapper";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 export const InstallmentPlanPage = () => {
   const user = useCurrentUser();

@@ -4,15 +4,11 @@ import type { IInstallmentPlan } from "../../../model/InstallmentPlan";
 import { SearchBar } from "../../molecules/SearchBar";
 import { useDebounce } from "../../../hook/useDebounce";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
-import {
-  useCurrentDealerInstallmentPlansQuery,
-  useInstallmentPlansQuery,
-  useInstallmetnPlanByCustomersQuery,
-} from "../../../service/installmentPlanService";
+import { useInstallmetnPlanByCustomersQuery } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
 import type { InstallmentPlanApiModel } from "../../../model/InstallmentPlan";
 
-export const InstallmentPlanList = () => {
+export const InstallmentPlanCustomerList = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [current, setCurrent] = useState(1);
@@ -20,11 +16,7 @@ export const InstallmentPlanList = () => {
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
-  const canView =
-    role === "ADMIN" ||
-    role === "EVM_STAFF" ||
-    role === "DEALER_STAFF" ||
-    role === "MANAGER";
+  const canView = role === "DEALER_STAFF" || role === "MANAGER";
 
   // Reset về trang 1 khi search thay đổi
   useEffect(() => {
@@ -45,27 +37,21 @@ export const InstallmentPlanList = () => {
   // Logic: DEALER_STAFF và MANAGER xem kế hoạch của dealer hiện tại
   // ADMIN và EVM_STAFF xem tất cả kế hoạch
   const isDealerRole = role === "DEALER_STAFF" || role === "MANAGER";
-  const isAdminRole = role === "ADMIN" || role === "EVM_STAFF";
-  // const customerPlansQuery = useInstallmetnPlanByCustomersQuery(
-  //   { enabled: canView && isDealerRole },
-  //   params
-  // );
-
-  // Gọi cả 2 hooks nhưng chỉ enable một trong hai dựa trên role
-  const allPlansQuery = useInstallmentPlansQuery(
-    { enabled: canView && isAdminRole },
-    params
-  );
-
-  const currentDealerPlansQuery = useCurrentDealerInstallmentPlansQuery(
+  const customerPlansQuery = useInstallmetnPlanByCustomersQuery(
     { enabled: canView && isDealerRole },
     params
   );
 
   // Chọn query result dựa trên role
   const { data, refetch, isLoading, isError, error } = isDealerRole
-    ? currentDealerPlansQuery
-    : allPlansQuery;
+    ? customerPlansQuery
+    : {
+        data: [],
+        refetch: () => {},
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
 
   const installmentPlans: IInstallmentPlan[] = useMemo(() => {
     const raw: InstallmentPlanApiModel[] = data?.result?.data ?? [];
