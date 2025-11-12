@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { Form, Button, message, Modal, Input } from "antd";
+import { Form, Button, Modal, Input, Space, Divider } from "antd";
+import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import type { IQuotationItem } from "../../model/Quotation";
 import SelectInput from "../../components/atoms/SelectInput";
 import NumberInput from "../../components/atoms/NumberInput";
@@ -64,38 +65,33 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
     ];
   }, [promotionsData]);
 
+  // 🔹 Submit form
   const handleSubmit = async (values: any) => {
     try {
       const payload: CreateQuotationPayload = {
-        items: [
-          {
-            vehicleId: values.vehicleId,
-            promotionId: values.promotionId || null,
-            vehicleStatus: values.vehicleStatus,
-            color: values.color,
-            quantity: values.quantity,
-          },
-        ],
+        items: (values.items || []).map((item: any) => ({
+          vehicleId: item.vehicleId,
+          promotionId: item.promotionId || null,
+          vehicleStatus: item.vehicleStatus,
+          color: item.color,
+          quantity: item.quantity,
+        })),
         customerId: values.customerId,
         validUntil: values.validUntil
-          ? new Date(values.validUntil).getTime()
+          ? new Date().getTime() + values.validUntil * 24 * 60 * 60 * 1000
           : 0,
       };
 
       await createQuotation(payload);
-
-      toast.success("Tạo báo giá thành công!");
+      toast.success("✅ Tạo báo giá thành công!");
       form.resetFields();
-
-      if (onSuccess) {
-        await onSuccess();
-      }
+      onSuccess?.();
       onClose?.();
     } catch (error: any) {
       console.error("Create quotation error:", error);
       toast.error(
         error?.response?.data?.message ||
-          "Tạo báo giá thất bại, vui lòng thử lại."
+          "❌ Tạo báo giá thất bại, vui lòng thử lại."
       );
     }
   };
@@ -107,16 +103,11 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
       footer={null}
       destroyOnClose
       centered
-      width={600}
+      width={700}
       title={<span className="text-lg font-semibold">Tạo báo giá mới</span>}
     >
-      <Form
-        layout="vertical"
-        form={form}
-        onFinish={handleSubmit}
-        className="max-w-2xl"
-      >
-        {/* Chọn khách hàng */}
+      <Form layout="vertical" form={form} onFinish={handleSubmit}>
+        {/* 🔹 Khách hàng */}
         <SelectInput
           label="Khách hàng"
           name="customerId"
@@ -130,73 +121,110 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
           rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
         />
 
-        {/* Chọn xe */}
-        <SelectInput
-          label="Xe"
-          name="vehicleId"
-          placeholder="Chọn xe"
-          options={vehicleOptions}
-          loading={loadingVehicles}
-          showSearch
-          filterOption={(input, option) =>
-            (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-          }
-          rules={[{ required: true, message: "Vui lòng chọn xe" }]}
-        />
+        {/* 🔹 Danh sách xe */}
+        <Divider orientation="left">Danh sách xe báo giá</Divider>
 
-        {/* 🔹 Chọn khuyến mãi */}
-        <SelectInput
-          label="Khuyến mãi"
-          name="promotionId"
-          placeholder="Chọn khuyến mãi (nếu có)"
-          options={promotionOptions}
-          loading={loadingPromotions}
-          showSearch
-        />
+        <Form.List name="items" initialValue={[{}]}>
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...restField }) => (
+                <div
+                  key={key}
+                  className="border p-4 rounded-lg mb-4 bg-gray-50 relative"
+                >
+                  <Space
+                    direction="vertical"
+                    size="middle"
+                    className="w-full"
+                    key={name}
+                  >
+                    <SelectInput
+                      label="Xe"
+                      name={[name, "vehicleId"]}
+                      placeholder="Chọn xe"
+                      options={vehicleOptions}
+                      loading={loadingVehicles}
+                      showSearch
+                      rules={[{ required: true, message: "Chọn xe" }]}
+                    />
 
-        {/* 🔹 Trạng thái xe */}
-        <SelectInput
-          label="Trạng thái xe"
-          name="vehicleStatus"
-          placeholder="Chọn trạng thái xe"
-          options={[
-            { label: "Bình thường", value: "NORMAL" },
-            { label: "Đặc biệt", value: "SPECIAL" },
-            { label: "Xe lái thử", value: "TEST_DRIVE" },
-            { label: "Đã đặt trước", value: "RESERVED" },
-            { label: "Tồn kho cũ", value: "OLD_STOCK" },
-            { label: "Đã bán", value: "SOLD" },
-          ]}
-          rules={[{ required: true, message: "Hãy chọn trạng thái xe" }]}
-        />
+                    <SelectInput
+                      label="Khuyến mãi"
+                      name={[name, "promotionId"]}
+                      placeholder="Chọn khuyến mãi (nếu có)"
+                      options={promotionOptions}
+                      loading={loadingPromotions}
+                    />
 
-        {/* 🔹 Màu sắc */}
-        <Form.Item
-          label="Màu sắc"
-          name="color"
-          rules={[{ required: true, message: "Vui lòng nhập màu xe" }]}
-        >
-          <Input placeholder="Nhập màu xe (ví dụ: Đen, Trắng, Xanh rêu...)" />
-        </Form.Item>
+                    <SelectInput
+                      label="Trạng thái xe"
+                      name={[name, "vehicleStatus"]}
+                      options={[
+                        { label: "Bình thường", value: "NORMAL" },
+                        { label: "Đặc biệt", value: "SPECIAL" },
+                        { label: "Xe lái thử", value: "TEST_DRIVE" },
+                        { label: "Đã đặt trước", value: "RESERVED" },
+                        { label: "Tồn kho cũ", value: "OLD_STOCK" },
+                        { label: "Đã bán", value: "SOLD" },
+                      ]}
+                      rules={[
+                        { required: true, message: "Chọn trạng thái xe" },
+                      ]}
+                    />
 
-        {/* 🔹 Số lượng */}
-        <NumberInput
-          label="Số lượng"
-          name="quantity"
-          min={1}
-          placeholder="Nhập số lượng xe"
-          rules={[{ required: true, message: "Số lượng là bắt buộc" }]}
-        />
+                    <Form.Item
+                      {...restField}
+                      label="Màu sắc"
+                      name={[name, "color"]}
+                      rules={[{ required: true, message: "Nhập màu xe" }]}
+                    >
+                      <Input placeholder="Ví dụ: Đen, Trắng, Xanh rêu..." />
+                    </Form.Item>
 
-        {/* 🔹 Thời hạn hiệu lực */}
+                    <NumberInput
+                      label="Số lượng"
+                      name={[name, "quantity"]}
+                      min={1}
+                      placeholder="Nhập số lượng"
+                      rules={[{ required: true, message: "Nhập số lượng" }]}
+                    />
+
+                    <Button
+                      type="text"
+                      icon={<MinusCircleOutlined />}
+                      danger
+                      onClick={() => remove(name)}
+                    >
+                      Xóa xe này
+                    </Button>
+                  </Space>
+                </div>
+              ))}
+
+              <Form.Item>
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  icon={<PlusOutlined />}
+                  block
+                >
+                  Thêm xe khác
+                </Button>
+              </Form.Item>
+            </>
+          )}
+        </Form.List>
+
+        {/* Thời hạn hiệu lực */}
         <NumberInput
           label="Thời hạn hiệu lực (ngày)"
           name="validUntil"
-          min={0}
+          min={1}
           placeholder="Nhập số ngày hiệu lực"
           rules={[{ required: true, message: "Thời hạn hiệu lực là bắt buộc" }]}
         />
 
+        {/* 🔹 Nút hành động */}
         <div className="flex justify-end gap-3 mt-4">
           <Button onClick={onClose}>Hủy</Button>
           <Button type="primary" htmlType="submit" loading={isPending}>
