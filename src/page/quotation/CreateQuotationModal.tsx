@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Form, Button, message, Modal } from "antd";
+import { Form, Button, message, Modal, Input } from "antd";
 import type { IQuotationItem } from "../../model/Quotation";
 import SelectInput from "../../components/atoms/SelectInput";
 import NumberInput from "../../components/atoms/NumberInput";
@@ -171,20 +171,13 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
         />
 
         {/* 🔹 Màu sắc */}
-        <SelectInput
+        <Form.Item
           label="Màu sắc"
           name="color"
-          placeholder="Chọn màu xe"
-          options={[
-            { label: "Đen", value: "BLACK" },
-            { label: "Trắng", value: "WHITE" },
-            { label: "Đỏ", value: "RED" },
-            { label: "Xanh", value: "BLUE" },
-            { label: "Bạc", value: "SILVER" },
-            { label: "Xám", value: "GRAY" },
-          ]}
-          rules={[{ required: true, message: "Vui lòng chọn màu xe" }]}
-        />
+          rules={[{ required: true, message: "Vui lòng nhập màu xe" }]}
+        >
+          <Input placeholder="Nhập màu xe (ví dụ: Đen, Trắng, Xanh rêu...)" />
+        </Form.Item>
 
         {/* 🔹 Số lượng */}
         <NumberInput
