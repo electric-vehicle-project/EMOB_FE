@@ -7,6 +7,7 @@ import { useCreateQuotation } from "../../service/quotationService";
 import { useCustomerList } from "../../service/customerService";
 import { usePromotionList } from "../../service/promotionService";
 import { useGetVehicles } from "../../service/vehicleService";
+import { toast } from "react-toastify";
 
 export interface CreateQuotationPayload {
   items: IQuotationItem[];
@@ -83,7 +84,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
 
       await createQuotation(payload);
 
-      message.success("Tạo báo giá thành công!");
+      toast.success("Tạo báo giá thành công!");
       form.resetFields();
 
       if (onSuccess) {
@@ -92,7 +93,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
       onClose?.();
     } catch (error: any) {
       console.error("Create quotation error:", error);
-      message.error(
+      toast.error(
         error?.response?.data?.message ||
           "Tạo báo giá thất bại, vui lòng thử lại."
       );

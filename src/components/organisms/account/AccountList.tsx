@@ -162,14 +162,14 @@ export const AccountList = () => {
         readable = "Không tìm thấy đại lý tương ứng!";
       else if (msg.includes("Invalid role")) readable = "Vai trò không hợp lệ!";
       else if (msg) readable = msg;
-      message.error(readable);
+      toast.error(readable);
     }
   };
 
   /* ======================== STATUS & BAN ======================== */
   const doChangeStatus = async (id: string, next: "ACTIVE" | "INACTIVE") => {
     await changeStatus.mutateAsync({ id, data: { status: next } });
-    message.success(
+    toast.success(
       next === "ACTIVE" ? "Đã mở lại tài khoản" : "Đã tạm ngưng tài khoản"
     );
     await refetch();
@@ -177,7 +177,7 @@ export const AccountList = () => {
 
   const doBan = async (id: string) => {
     await banAccount.mutateAsync(id);
-    message.success("Đã cấm vĩnh viễn tài khoản!");
+    toast.success("Đã cấm vĩnh viễn tài khoản!");
     await refetch();
   };
 

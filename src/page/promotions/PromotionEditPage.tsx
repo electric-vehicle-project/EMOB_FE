@@ -186,7 +186,7 @@ export default function PromotionEditPage() {
   // Xử lý submit form
   const handleSubmit = async (values: FormValues) => {
     if (!paramId) {
-      message.error("Thiếu ID khuyến mãi trong URL!");
+      toast.error("Thiếu ID khuyến mãi trong URL!");
       return;
     }
 
@@ -224,10 +224,10 @@ export default function PromotionEditPage() {
         });
       }
 
-      message.success("Cập nhật khuyến mãi thành công!");
+      toast.success("Cập nhật khuyến mãi thành công!");
       navigate(-1);
     } catch {
-      message.error("Cập nhật khuyến mãi thất bại!");
+      toast.error("Cập nhật khuyến mãi thất bại!");
     }
   };
 

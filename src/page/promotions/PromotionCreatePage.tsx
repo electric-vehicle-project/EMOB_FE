@@ -23,6 +23,7 @@ import {
   mapVehicleOptions,
 } from "../../utils/mapToSelectOptions";
 import { useDealersQuery } from "../../service/dealerService";
+import { toast } from "react-toastify";
 
 const { Title } = Typography;
 
@@ -102,7 +103,7 @@ export default function PromotionCreatePage() {
       console.log("📦 Payload gửi BE:", payload);
 
       await createPromotion(payload);
-      antdMessage.success("Tạo khuyến mãi thành công!");
+      toast.success("Tạo khuyến mãi thành công!");
       navigate(-1);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -110,7 +111,7 @@ export default function PromotionCreatePage() {
       } else {
         console.error("❌ Lỗi tạo khuyến mãi:", err);
       }
-      antdMessage.error("Tạo khuyến mãi thất bại!");
+      toast.error("Tạo khuyến mãi thất bại!");
     }
   };
 
@@ -125,7 +126,7 @@ export default function PromotionCreatePage() {
 
   // ===== KIỂM TRA QUYỀN TRUY CẬP =====
   if (!isDealerStaff && !isEvmStaff && !isAdmin) {
-    antdMessage.warning("Bạn không có quyền truy cập trang này!");
+    toast.warning("Bạn không có quyền truy cập trang này!");
     navigate(-1);
     return null;
   }

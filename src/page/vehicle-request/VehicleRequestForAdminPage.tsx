@@ -10,6 +10,7 @@ import {
 import { useDealersQuery } from "../../service/dealerService"; // ✅ thêm import
 import ViewVehicleRequestModal from "./ViewVehicleRequestModal";
 import type { IVehicleRequest } from "../../model/VehicleRequest";
+import { toast } from "react-toastify";
 
 const AdminVehicleRequestPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -51,10 +52,10 @@ const AdminVehicleRequestPage: React.FC = () => {
   const handleApprove = async (id: string) => {
     try {
       await approveVehicleRequest({ id, paymentStatus: "APPROVED" });
-      message.success("Duyệt yêu cầu thành công!");
+      toast.success("Duyệt yêu cầu thành công!");
       refetch();
     } catch {
-      message.error("Không thể duyệt yêu cầu này!");
+      toast.error("Không thể duyệt yêu cầu này!");
     }
   };
   // search

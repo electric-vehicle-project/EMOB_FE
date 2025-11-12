@@ -13,6 +13,7 @@ import CreateVehicleRequestModal from "./CreateVehicleRequestModal ";
 import { SearchOutlined } from "@ant-design/icons";
 import { useDealerByIdQuery } from "../../service/dealerService";
 import { useCurrentUser } from "../../utils/getCurrentUser";
+import { toast } from "react-toastify";
 
 const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
   const { data, isLoading } = useDealerByIdQuery(dealerId);
@@ -60,10 +61,10 @@ const VehicleRequestPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteVehicleRequest(id);
-      message.success("Xóa yêu cầu thành công");
+      toast.success("Xóa yêu cầu thành công");
       refetch();
     } catch {
-      message.error("Xóa thất bại");
+      toast.error("Xóa thất bại");
     }
   };
 

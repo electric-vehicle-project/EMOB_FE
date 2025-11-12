@@ -9,6 +9,7 @@ import {
 import axios from "axios";
 import { message } from "antd";
 import api from "../config/api";
+import { toast } from "react-toastify";
 
 const BASE_URL = "/dealer-discount-policy";
 const BASE_DEALER_URL = "/dealer";
@@ -25,8 +26,19 @@ export const useGetAllDealerDiscountPolicies = (
   search = ""
 ) => {
   return createQueryHook(
-    ["dealerDiscountPolicies", page, size, search], // ✅ Dynamic queryKey
+    "dealerDiscountPolicies", // ✅ Dynamic queryKey
     BASE_URL
+  )({}, { page, size, search });
+};
+
+export const useGetAllDealerDiscountPoliciesByDealer = (
+  page = 0,
+  size = 20,
+  search = ""
+) => {
+  return createQueryHook(
+    "dealerDiscountPoliciesByDealer", // ✅ Dynamic queryKey
+    `${BASE_URL}/by-dealer`
   )({}, { page, size, search });
 };
 
@@ -78,9 +90,9 @@ export const useBulkUpdateDiscountPolicies = () => {
       );
       return data;
     },
-    onSuccess: () => message.success("✅ Cập nhật hàng loạt thành công!"),
+    onSuccess: () => toast.success("✅ Cập nhật hàng loạt thành công!"),
     onError: (err: any) =>
-      message.error(err?.response?.data?.message || " Cập nhật thất bại!"),
+      toast.error(err?.response?.data?.message || " Cập nhật thất bại!"),
   });
 };
 

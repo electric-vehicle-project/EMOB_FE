@@ -20,6 +20,7 @@ import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/Sal
 import { SaleOrderCompleteConfirm } from "../../components/organisms/saleOrder/SaleOrderCompleteConfirm";
 import { useDebounce } from "../../hook/useDebounce";
 import type { SelectProps } from "antd";
+import { toast } from "react-toastify";
 
 const STATUS_OPTIONS: SelectProps<OrderStatus[]>["options"] = [
   { label: "CREATED", value: "CREATED" as OrderStatus },
@@ -76,10 +77,10 @@ const SaleOrderStaffPage: React.FC = () => {
     if (!selectedId) return;
     try {
       await cancelOrder(selectedId);
-      message.success("Đã hủy đơn hàng thành công!");
+      toast.success("Đã hủy đơn hàng thành công!");
       refetch();
     } catch {
-      message.error("Không thể hủy đơn hàng!");
+      toast.error("Không thể hủy đơn hàng!");
     } finally {
       setCancelOpen(false);
     }
@@ -89,10 +90,10 @@ const SaleOrderStaffPage: React.FC = () => {
     if (!selectedId) return;
     try {
       await completeOrder(selectedId);
-      message.success("Đã hoàn tất đơn hàng!");
+      toast.success("Đã hoàn tất đơn hàng!");
       refetch();
     } catch {
-      message.error("Không thể hoàn tất đơn hàng!");
+      toast.error("Không thể hoàn tất đơn hàng!");
     } finally {
       setCompleteOpen(false);
     }

@@ -4,6 +4,7 @@ import { Tag, Descriptions, Button, Typography, Skeleton, message } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useReportById } from "../../service/reportService";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { toast } from "react-toastify";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -58,7 +59,7 @@ export default function ReportDetailPage() {
   }
 
   if (isError || !report) {
-    message.error("Không tải được chi tiết báo cáo");
+    toast.error("Không tải được chi tiết báo cáo");
     return (
       <CardWrapper>
         <Button

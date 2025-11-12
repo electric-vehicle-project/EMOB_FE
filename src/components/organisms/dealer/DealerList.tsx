@@ -18,6 +18,7 @@ import {
   normalizeDealerValues,
 } from "../../molecules/dealer/dealerUtils";
 import type { DealerApiModel } from "../../../model/Dealer";
+import { toast } from "react-toastify";
 
 export const DealerList = () => {
   const [search, setSearch] = useState("");
@@ -73,10 +74,10 @@ export const DealerList = () => {
 
     if (editDealer?.id) {
       await updateDealer.mutateAsync({ id: editDealer.id, data: payload });
-      message.success("Cập nhật đại lý thành công");
+      toast.success("Cập nhật đại lý thành công");
     } else {
       await createDealer.mutateAsync(payload);
-      message.success("Tạo đại lý thành công");
+      toast.success("Tạo đại lý thành công");
     }
     setModalOpen(false);
     setEditDealer(undefined);
@@ -86,7 +87,7 @@ export const DealerList = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
     await deleteDealer.mutateAsync(deleteId);
-    message.success("Đã xóa đại lý");
+    toast.success("Đã xóa đại lý");
     setDeleteId(null);
     refetch();
   };

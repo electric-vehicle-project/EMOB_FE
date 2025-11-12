@@ -6,7 +6,6 @@ interface Props {
   sub?: string;
   icon?: any;
   gradient: string; // ví dụ: "from-[#627254] to-[#76885b]"
-  bgGradient?: string;
 }
 
 export default function DealerKPI({
@@ -15,7 +14,6 @@ export default function DealerKPI({
   sub,
   icon: Icon,
   gradient,
-  bgGradient,
 }: Props) {
   return (
     <motion.div

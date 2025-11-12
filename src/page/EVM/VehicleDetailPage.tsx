@@ -42,6 +42,7 @@ import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import VehicleUnitListModal from "../../components/organisms/vehicle/VehicleUnitListModal";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { toast } from "react-toastify";
 
 type Sel = { auth?: { user?: { role?: Role | null } } };
 
@@ -92,7 +93,7 @@ export const VehicleDetailPage = () => {
       typeof error === "object" &&
       (error as { response?: { status?: number } })?.response?.status === 401;
     if (http401)
-      message.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+      toast.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
   }, [error]);
 
   const { mutateAsync: deleteVehicle, isPending: deleting } =
@@ -194,10 +195,10 @@ export const VehicleDetailPage = () => {
           onConfirm={async () => {
             try {
               await deleteVehicle(id);
-              message.success("Đã xóa mẫu xe.");
+              toast.success("Đã xóa mẫu xe.");
               navigate(-1);
             } catch {
-              message.error("Xóa không thành công.");
+              toast.error("Xóa không thành công.");
             }
           }}
         >

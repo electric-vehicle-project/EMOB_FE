@@ -43,6 +43,7 @@ import { login as loginAction } from "../../redux/features/userSlice";
 import { Button } from "../../components/atoms/Button";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import api from "../../config/api";
+import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 
@@ -163,7 +164,7 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
     const confirm = clean(v.confirmPassword);
 
     if (next !== confirm) {
-      message.error("Xác nhận mật khẩu không khớp");
+      toast.error("Xác nhận mật khẩu không khớp");
       return;
     }
     if (current === next) {
@@ -178,11 +179,11 @@ const ChangePasswordTab: React.FC<{ email: string }> = ({ email }) => {
     try {
       await api.post("/auth/login", { email, password: current });
       await changePassword.mutateAsync({ newPassword: next });
-      message.success("Đổi mật khẩu thành công");
+      toast.success("Đổi mật khẩu thành công");
       form.resetFields();
     } catch (e: unknown) {
       const msg = getApiErrorMessage(e) || "Đổi mật khẩu thất bại";
-      message.error(msg);
+      toast.error(msg);
     }
   };
 
@@ -345,7 +346,7 @@ export default function ProfilePage() {
         const updated: IAccount | undefined =
           resp?.data?.result ?? resp?.data ?? undefined;
 
-        message.success("Cập nhật thông tin thành công");
+        toast.success("Cập nhật thông tin thành công");
         if (updated) {
           dispatch(loginAction(updated));
           baselineRef.current = normalize({
@@ -360,7 +361,7 @@ export default function ProfilePage() {
         if (!isValidationError) {
           const errorMessage =
             getApiErrorMessage(err) || "Cập nhật thất bại, vui lòng thử lại";
-          message.error(errorMessage);
+          toast.error(errorMessage);
         }
       }
     };

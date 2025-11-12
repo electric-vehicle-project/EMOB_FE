@@ -4,4 +4,5 @@ export interface IContract {
   totalPrice: number;
   totalQuantity: number;
   status?: string;
+  contractId?: string;
 }

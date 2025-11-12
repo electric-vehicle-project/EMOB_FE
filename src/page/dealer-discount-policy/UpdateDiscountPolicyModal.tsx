@@ -9,6 +9,7 @@ import {
 import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IVehicle } from "../../model/Vehicle";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
@@ -90,12 +91,12 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
 
     try {
       await updatePolicy({ id: policyId, data: payload });
-      message.success("✅ Cập nhật chính sách chiết khấu thành công!");
+      toast.success(" Cập nhật chính sách chiết khấu thành công!");
       onSuccess?.();
       onClose();
     } catch (error: any) {
-      message.error(
-        error?.response?.data?.message || "❌ Cập nhật chính sách thất bại!"
+      toast.error(
+        error?.response?.data?.message || " Cập nhật chính sách thất bại!"
       );
     }
   };

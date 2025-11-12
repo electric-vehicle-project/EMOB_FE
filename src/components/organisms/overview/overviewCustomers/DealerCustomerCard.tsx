@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import DealerCustomerToolbar from "./DealerCustomerToolbar";
 import { ResponsiveBar } from "@nivo/bar";
-import { useCustomersByIds } from "../../../service/overviewRevenueDealer";
+import { useCustomersByIds } from "../../../../service/overviewRevenueDealer";
 
 interface CustomerData {
   customerId: string;
@@ -34,7 +34,7 @@ export default function DealerCustomerCard({ data, dealer }: Props) {
     const map: Record<string, string> = {};
 
     // Một số API trả về dạng { data: [...] } hoặc { customers: [...] }
-    const list = Array.isArray(customers)
+    const list: any[] = Array.isArray(customers)
       ? customers
       : customers?.data || customers?.customers || [];
 

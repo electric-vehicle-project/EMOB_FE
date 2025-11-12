@@ -22,6 +22,7 @@ import {
 import { ROUTES } from "../../model/routePaths";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import api from "../../config/api";
+import { toast } from "react-toastify";
 
 const { Option } = Select;
 
@@ -84,7 +85,7 @@ export const VehicleBulkPage = () => {
       setMultiplier(typeof newMultiplier === "number" ? newMultiplier : 1);
     } catch {
       setMultiplier(1);
-      message.error("Không thể lấy multiplier của price rule!");
+      toast.error("Không thể lấy multiplier của price rule!");
     }
   };
 
@@ -94,7 +95,7 @@ export const VehicleBulkPage = () => {
 
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
-      message.error("Thiếu vehicleId. Vui lòng quay lại.");
+      toast.error("Thiếu vehicleId. Vui lòng quay lại.");
       return;
     }
     try {
@@ -106,8 +107,8 @@ export const VehicleBulkPage = () => {
         status: values.status,
       });
 
-      message.success(
-        `✅ Nhập ${values.quantity} xe (${
+      toast.success(
+        ` Nhập ${values.quantity} xe (${
           values.status
         }) thành công — Giá/xe ước tính: ${previewPrice.toLocaleString()}₫`
       );
@@ -126,7 +127,7 @@ export const VehicleBulkPage = () => {
         maybeAxios?.response?.data?.message ||
         maybeAxios?.message ||
         "❌ Không thể nhập đơn vị xe. Vui lòng thử lại!";
-      message.error(msg);
+      toast.error(msg);
     }
   };
 
@@ -138,7 +139,7 @@ export const VehicleBulkPage = () => {
 
   useEffect(() => {
     if (!vehicleId) {
-      message.error("Thiếu vehicleId");
+      toast.error("Thiếu vehicleId");
       navigate(-1);
     }
   }, [vehicleId, navigate]);

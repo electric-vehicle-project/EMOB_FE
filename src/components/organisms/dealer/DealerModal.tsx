@@ -10,6 +10,7 @@ import {
   buildDealerPayloadFromForm,
 } from "../../molecules/dealer/dealerUtils";
 import { useDealersQuery } from "../../../service/dealerService";
+import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
@@ -74,7 +75,7 @@ export const DealerModal = ({
       const base =
         baselineRef.current ?? normalizeDealerValues(form.getFieldsValue());
       if (isSameDealerValues(current, base)) {
-        message.info("Bạn chưa thay đổi gì.");
+        toast.info("Bạn chưa thay đổi gì.");
         return;
       }
     }
@@ -92,7 +93,7 @@ export const DealerModal = ({
         e?.response?.data?.message ||
         e?.message ||
         "Không thể lưu. Vui lòng thử lại.";
-      message.error(msg);
+      toast.error(msg);
     }
   };
 

@@ -1,18 +1,17 @@
 import { useMemo, useState } from "react";
-import { Select, Input, Space, Button, message } from "antd";
+import { Select, Input, Space, Button } from "antd";
 import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
-import {
-  useSaleOrderListDealers,
-  useSaleOrderComplete,
-} from "../../service/saleOrderService";
+import { useSaleOrderListDealers } from "../../service/saleOrderService";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 import { useDebounce } from "../../hook/useDebounce";
 import type { SelectProps } from "antd";
+import { toast } from "react-toastify";
+import api from "../../config/api";
 
 const STATUS_OPTIONS: SelectProps<OrderStatus[]>["options"] = [
   { label: "CREATED", value: "CREATED" as OrderStatus },
@@ -52,22 +51,25 @@ const SaleOrderEvmPage: React.FC = () => {
     [data]
   );
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
-  const { mutateAsync: completeOrder, isPending: completing } =
-    useSaleOrderComplete();
 
   const handleViewDetail = (id: string) =>
     navigate(`/${role.toLowerCase()}/sale-order/${id}`);
 
   const handleCompleteClick = async (id: string) => {
     try {
-      await completeOrder(id);
-      message.success("Đã hoàn tất đơn hàng!");
-      refetch();
+      // gọi mutation (gửi body là id hoặc rỗng, tùy backend)
+      if (!id) return;
+      const response = await api.post(`/sale-order/${id}/completed`);
+      if (response.status === 200) {
+        toast.success("Đơn hàng đã được hoàn tất");
+        refetch();
+      } else {
+        toast.error("Không thể hoàn tất đơn hàng");
+      }
     } catch {
-      message.error("Không thể hoàn tất đơn hàng!");
+      toast.error("Không thể hoàn tất đơn hàng!");
     }
   };
-
   const resetFilters = () => {
     setKeyword("");
     setStatuses(undefined);
@@ -120,7 +122,7 @@ const SaleOrderEvmPage: React.FC = () => {
 
       <SaleOrderTable
         data={orders}
-        loading={isLoading || isFetching || completing}
+        loading={isLoading || isFetching || false}
         showDealerColumn
         onViewDetail={handleViewDetail}
         onComplete={handleCompleteClick}
