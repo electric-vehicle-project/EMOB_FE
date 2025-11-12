@@ -58,7 +58,6 @@ import VehicleEditPage from "../page/EVM/VehicleEditPage";
 import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
-import { InstallmentPlanCustomerList } from "../components/organisms/installmentPlan/InstallmentPlanCustomerList";
 import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([

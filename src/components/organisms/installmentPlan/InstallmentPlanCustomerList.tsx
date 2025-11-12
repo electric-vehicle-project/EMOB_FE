@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Result, Button, Empty } from "antd";
+import { Result, Button, Empty, Input } from "antd";
 import type { IInstallmentPlan } from "../../../model/InstallmentPlan";
 import { SearchBar } from "../../molecules/SearchBar";
 import { useDebounce } from "../../../hook/useDebounce";
@@ -71,7 +71,6 @@ export const InstallmentPlanCustomerList = () => {
   const total = data?.result?.metadata?.totalElements ?? 0;
 
   const handleMarkAsPaid = (id: string) => {
-    // TODO: Implement API call to mark installment plan as paid
     console.log("Mark as paid:", id);
     // Sau khi implement API, gọi refetch() để cập nhật dữ liệu
     // refetch();
@@ -109,14 +108,14 @@ export const InstallmentPlanCustomerList = () => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-3">
-        <div className="w-full max-w-xs sm:max-w-sm">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm kiếm kế hoạch trả góp..."
-          />
-        </div>
+      <div className="flex justify-start mb-3">
+        <Input
+          placeholder="Nhập từ khóa để tìm kế hoạch trả góp..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          allowClear
+          style={{ width: 320 }}
+        />
       </div>
 
       {installmentPlans.length > 0 ? (
