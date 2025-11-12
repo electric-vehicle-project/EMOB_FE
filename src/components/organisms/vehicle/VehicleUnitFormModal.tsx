@@ -1,13 +1,5 @@
 // src/components/organisms/EVM/VehicleUnitFormModal.tsx
-import {
-  Modal,
-  Form,
-  InputNumber,
-  Input,
-  DatePicker,
-  Select,
-  message,
-} from "antd";
+import { Modal, Form, InputNumber, Input, DatePicker, Select } from "antd";
 import { useBulkCreateVehicleUnits } from "../../../service/vehicleService";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";

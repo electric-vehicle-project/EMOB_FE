@@ -7,7 +7,6 @@ import {
   DatePicker,
   Select,
   Button,
-  message,
   Skeleton,
   Image,
   Space,

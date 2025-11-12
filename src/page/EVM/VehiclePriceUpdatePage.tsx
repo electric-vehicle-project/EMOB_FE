@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Form, InputNumber, Button, message, Spin } from "antd";
+import { Card, Form, InputNumber, Button, Spin } from "antd";
 import {
   useUpdateVehiclePrices,
   useGetVehicleById,

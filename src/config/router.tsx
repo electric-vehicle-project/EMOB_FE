@@ -193,7 +193,12 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
       { path: ROUTES.ACCOUNT, element: <AccountPage /> },
       { path: ROUTES.OVERVIEW, element: <DealerDashboardPage /> },
+
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
+      { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
+
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
@@ -261,7 +266,11 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to={ROUTES.PROFILE} replace /> },
       { path: ROUTES.PROFILE, element: <ProfilePage /> },
+
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
+      { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
+      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {
         path: ROUTES.DEALER_DISCOUNT_POLICY,
