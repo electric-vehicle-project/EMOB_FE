@@ -14,6 +14,7 @@ import { getRoleBasePath } from "../../utils/roleGuard";
 import type { UploadFile } from "antd/es/upload";
 import { uploadFiles } from "../../utils/uploadFile";
 import { EditOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
 
 export const VehicleEditPage = () => {
   const { id } = useParams();
@@ -29,7 +30,7 @@ export const VehicleEditPage = () => {
 
   useEffect(() => {
     if (role !== "EVM_STAFF") {
-      message.warning("Tài khoản của bạn không có quyền chỉnh sửa xe!");
+      toast.warning("Tài khoản của bạn không có quyền chỉnh sửa xe!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
       });
@@ -56,7 +57,7 @@ export const VehicleEditPage = () => {
 
   const handleSave = async (values: IVehicle) => {
     if (!isFormChanged()) {
-      message.warning("Không có thay đổi nào để lưu.");
+      toast.warning("Không có thay đổi nào để lưu.");
       return;
     }
     try {
@@ -78,14 +79,14 @@ export const VehicleEditPage = () => {
       };
 
       await updateVehicle.mutateAsync({ id: id!, data: payload });
-      message.success("✅ Đã lưu thay đổi xe thành công!");
+      toast.success("✅ Đã lưu thay đổi xe thành công!");
 
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
         state: { from: "edit" },
       });
     } catch {
-      message.error("❌ Không thể cập nhật xe!");
+      toast.error("❌ Không thể cập nhật xe!");
     }
   };
 

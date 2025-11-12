@@ -10,6 +10,7 @@ import {
 import { usePromotionList } from "../../service/promotionService";
 import { useCustomerList } from "../../service/customerService";
 import { useGetVehicles } from "../../service/vehicleService";
+import { toast } from "react-toastify";
 
 export interface UpdateQuotationPayload {
   items: IQuotationItem[];
@@ -121,13 +122,13 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
 
     try {
       await updateQuotation({ id: quotationId, data: payload });
-      message.success("Cập nhật báo giá thành công!");
+      toast.success("Cập nhật báo giá thành công!");
       form.resetFields();
       onSuccess?.();
       onClose?.();
     } catch (error: any) {
       console.error("Update quotation error:", error);
-      message.error(
+      toast.error(
         error?.response?.data?.message || "Cập nhật báo giá thất bại."
       );
     }

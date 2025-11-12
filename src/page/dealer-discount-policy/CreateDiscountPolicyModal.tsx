@@ -14,6 +14,7 @@ import {
 } from "../../service/dealerDiscountPolicyService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IDealer } from "../../model/Dealer";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
@@ -58,13 +59,13 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
 
       createMutation.mutate(payload, {
         onSuccess: () => {
-          message.success("Tạo chính sách chiết khấu thành công!");
+          toast.success("Tạo chính sách chiết khấu thành công!");
           form.resetFields();
           onClose();
           onSuccess();
         },
         onError: (error: any) => {
-          message.error(
+          toast.error(
             error?.response?.data?.message || "Tạo chính sách thất bại"
           );
         },

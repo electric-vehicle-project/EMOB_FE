@@ -28,6 +28,7 @@ import { useDealerByIdQuery } from "../../service/dealerService";
 import { SearchOutlined } from "@ant-design/icons";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useDebounce } from "../../hook/useDebounce";
+import { toast } from "react-toastify";
 
 const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
   const { data, isLoading } = useCustomerById(customerId);
@@ -76,10 +77,10 @@ const QuotationPage: React.FC = () => {
 
           await approveQuotation.mutateAsync({ id: record.id, data: payload });
 
-          message.success("Duyệt báo giá thành công!");
+          toast.success("Duyệt báo giá thành công!");
           refetch();
         } catch (err: any) {
-          message.error(
+          toast.error(
             err?.response?.data?.message || "Không thể duyệt báo giá!"
           );
         }
@@ -99,10 +100,10 @@ const QuotationPage: React.FC = () => {
       onOk: async () => {
         try {
           await rejectQuotation.mutateAsync(record.id);
-          message.success("Đã từ chối báo giá!");
+          toast.success("Đã từ chối báo giá!");
           refetch();
         } catch (err: any) {
-          message.error(
+          toast.error(
             err?.response?.data?.message || "Không thể từ chối báo giá!"
           );
         }
@@ -120,12 +121,12 @@ const QuotationPage: React.FC = () => {
   const handleDelete = (id: string) => {
     deleteQuotation.mutate(id, {
       onSuccess: async () => {
-        message.success("Xóa báo giá thành công");
+        toast.success("Xóa báo giá thành công");
         await queryClient.invalidateQueries({ queryKey: ["quotations"] });
         refetch();
       },
       onError: () => {
-        message.error("Xóa báo giá thất bại");
+        toast.error("Xóa báo giá thất bại");
       },
     });
   };

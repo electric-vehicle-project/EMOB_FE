@@ -36,12 +36,12 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
     };
     try {
       await createVehicleRequest(payload);
-      message.success("Tạo yêu cầu thành công!");
+      toast.success("Tạo yêu cầu thành công!");
       onSuccess?.();
       onClose?.();
       form.resetFields();
     } catch (err: any) {
-      message.error("Không thể tạo yêu cầu");
+      toast.error("Không thể tạo yêu cầu");
     }
   };
   return (

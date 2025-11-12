@@ -136,7 +136,7 @@ export const useSaleOrderById = createQueryWithPathParamHook(
 // (Hoàn tất đơn hàng)
 export const useSaleOrderComplete = createMutationHook(
   "saleOrderListCurrentDealer",
-  BASE_URL
+  `${BASE_URL}/completed`
 );
 
 //  DELETE /sale-order/{id}

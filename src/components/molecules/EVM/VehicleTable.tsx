@@ -9,7 +9,6 @@ import {
 } from "@ant-design/icons";
 import type { IVehicle } from "../../../model/Vehicle";
 import dayjs from "dayjs";
-import UnitsSubtable from "./_UnitsSubtable";
 
 const { Text } = Typography;
 
@@ -186,7 +185,7 @@ export const VehicleTable: React.FC<Props> = ({
         "text-center transition-colors duration-200 hover:bg-[#f7f9f4]"
       }
       expandable={{
-        expandedRowRender: (record) => <UnitsSubtable vehicleId={record.id!} />,
+        // expandedRowRender: (record) => <UnitsSubtable vehicleId={record.id!} />,
         rowExpandable: (record) => !!record.id,
       }}
       scroll={{ x: true }}

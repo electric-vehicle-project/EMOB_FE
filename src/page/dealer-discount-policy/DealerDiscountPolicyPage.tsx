@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useDeleteDiscountPolicy,
   useGetAllDealerDiscountPolicies,
+  useGetAllDealerDiscountPoliciesByDealer,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
 import { useGetVehicles } from "../../service/vehicleService";
@@ -23,6 +24,7 @@ import ViewDiscountPolicyModal from "./ViewDiscountPolicyModal";
 import BulkUpdateDiscountPolicyModal from "./BulkUpdateDiscountPolicyModal";
 import BulkDeleteDiscountPolicyModal from "./BulkDeleteDiscountPolicyModal";
 import { useCurrentUser } from "../../utils/getCurrentUser";
+import { toast } from "react-toastify";
 
 const DealerDiscountPolicyPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -50,8 +52,12 @@ const DealerDiscountPolicyPage: React.FC = () => {
   }
   const debouncedSearch = useDebounce(searchTerm, 500);
 
-  // Query: danh sách chính sách chiết khấu
-  const { data, isLoading, refetch } = useGetAllDealerDiscountPolicies(
+  let hookToUse =
+    role === "ADMIN" || role === "EVM_STAFF"
+      ? useGetAllDealerDiscountPolicies
+      : useGetAllDealerDiscountPoliciesByDealer;
+
+  const { data, isLoading, refetch } = hookToUse(
     page - 1,
     pageSize,
     debouncedSearch
@@ -83,12 +89,12 @@ const DealerDiscountPolicyPage: React.FC = () => {
   // Xóa chính sách (chỉ Admin mới được)
   const handleDelete = (id: string) => {
     if (role !== "ADMIN") {
-      message.warning("Bạn không có quyền xóa chính sách!");
+      toast.warning("Bạn không có quyền xóa chính sách!");
       return;
     }
     deletePolicy.mutate(id, {
       onSuccess: async () => {
-        message.success("Xóa chính sách thành công!");
+        toast.success("Xóa chính sách thành công!");
         queryClient.setQueryData(
           ["dealerDiscountPolicies", page - 1, pageSize, searchTerm],
           (oldData: any) => {
@@ -108,7 +114,7 @@ const DealerDiscountPolicyPage: React.FC = () => {
         await refetch();
       },
       onError: (error: any) => {
-        message.error(error?.response?.data?.message || "Xóa thất bại!");
+        toast.error(error?.response?.data?.message || "Xóa thất bại!");
       },
     });
   };

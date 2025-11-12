@@ -4,6 +4,7 @@ import { useForm } from "antd/es/form/Form";
 import { AccountForm } from "../../molecules/Account/AccountForm";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 import { Role } from "../../../model/Account";
+import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
@@ -39,7 +40,7 @@ export const AccountModal = ({
         response?: { data?: { message?: string } };
         message?: string;
       };
-      message.error(
+      toast.error(
         e?.response?.data?.message ||
           e?.message ||
           "Không thể lưu. Vui lòng thử lại."

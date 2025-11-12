@@ -36,6 +36,8 @@ export const InstallmentPlanTable = ({
     OVERDUE: "red",
     CANCELLED: "default",
   };
+  
+
 
   const statusMap: Record<string, string> = {
     PAID: "Đã thanh toán",

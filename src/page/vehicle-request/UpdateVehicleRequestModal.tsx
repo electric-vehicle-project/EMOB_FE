@@ -9,6 +9,7 @@ import {
 } from "../../service/vehicleRequestService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IVehicle } from "../../model/Vehicle";
+import { toast } from "react-toastify";
 
 interface UpdateVehicleRequestModalProps {
   open: boolean;
@@ -68,11 +69,11 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
 
     try {
       await updateVehicleRequest({ id: requestId, data: payload });
-      message.success("Vehicle request updated successfully!");
+      toast.success("Vehicle request updated successfully!");
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      message.error("Failed to update vehicle request.");
+      toast.error("Failed to update vehicle request.");
     }
   };
 

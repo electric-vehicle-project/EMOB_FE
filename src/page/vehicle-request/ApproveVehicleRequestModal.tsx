@@ -2,6 +2,7 @@ import React from "react";
 import { Modal, Form, Button, message } from "antd";
 import SelectInput from "../../components/atoms/SelectInput";
 import { useApproveVehicleRequest } from "../../service/vehicleRequestService";
+import { toast } from "react-toastify";
 
 const ApproveVehicleRequestModal = ({
   open,
@@ -19,11 +20,11 @@ const ApproveVehicleRequestModal = ({
         id: record.id,
         paymentStatus: values.paymentStatus,
       });
-      message.success("Vehicle request approved successfully!");
+      toast.success("Vehicle request approved successfully!");
       onSuccess?.();
       onClose?.();
     } catch (error: any) {
-      message.error(
+      toast.error(
         error?.response?.data?.message || "Failed to approve request"
       );
     }

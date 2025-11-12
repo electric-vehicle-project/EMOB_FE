@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button, Card, Divider, message, Spin, Tag } from "antd";
 import {
   useSaleOrderById,
-  useSaleOrderComplete,
   useSaleOrderDelete,
 } from "../../service/saleOrderService";
 import { SaleOrderDetailInfo } from "../../components/organisms/saleOrder/SaleOrderDetailInfo";
@@ -10,6 +9,8 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { SaleOrderItemTable } from "../../components/organisms/saleOrder/SaleOrderItemTable";
+import { toast } from "react-toastify";
+import api from "../../config/api";
 
 export const SaleOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,31 +19,35 @@ export const SaleOrderDetailPage = () => {
 
   // API
   const { data: orderData, isLoading, refetch } = useSaleOrderById(id ?? "");
-  const { mutate: completeOrder, isPending: completing } =
-    useSaleOrderComplete();
+
   const { mutate: cancelOrder, isPending: canceling } = useSaleOrderDelete();
   const order = orderData?.result ?? orderData?.data ?? null;
 
   // Action handlers
-  const handleComplete = () => {
-    if (!id) return;
-    completeOrder(id, {
-      onSuccess: () => {
-        message.success("Hoàn tất đơn hàng thành công");
+  const handleComplete = async () => {
+    try {
+      // gọi mutation (gửi body là id hoặc rỗng, tùy backend)
+      if (!id) return;
+      const response = await api.post(`/sale-order/${id}/completed`);
+      if (response.status === 200) {
+        toast.success("Đơn hàng đã được hoàn tất");
         refetch();
-      },
-      onError: () => message.error("Không thể hoàn tất đơn hàng"),
-    });
+      } else {
+        toast.error("Không thể hoàn tất đơn hàng");
+      }
+    } catch {
+      toast.error("Không thể hoàn tất đơn hàng!");
+    }
   };
 
   const handleCancel = () => {
     if (!id) return;
     cancelOrder(id, {
       onSuccess: () => {
-        message.success("Đã hủy đơn hàng");
+        toast.success("Đã hủy đơn hàng");
         refetch();
       },
-      onError: () => message.error("Không thể hủy đơn hàng"),
+      onError: () => toast.error("Không thể hủy đơn hàng"),
     });
   };
 
@@ -117,7 +122,7 @@ export const SaleOrderDetailPage = () => {
             </Button>
             <Button
               type="primary"
-              loading={completing}
+              loading={false}
               onClick={handleComplete}
               className="bg-[#3f4a3c] border-none hover:!bg-[#2f382e] px-6 rounded-lg"
             >

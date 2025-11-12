@@ -19,6 +19,7 @@ import {
 } from "../../../service/vehicleService";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { Button } from "../../atoms/Button"; // ✅ dùng Button tuỳ biến
+import { toast } from "react-toastify";
 
 type Props = {
   open: boolean;
@@ -121,9 +122,9 @@ export default function VehicleUnitListModal({
 
       await deleteUnits(selectedIds);
       setSelectedKeys([]);
-      message.success(`Đã xoá ${selectedIds.length} đơn vị xe.`);
+      toast.success(`Đã xoá ${selectedIds.length} đơn vị xe.`);
     } catch {
-      message.error("Không thể xoá các đơn vị xe đã chọn.");
+      toast.error("Không thể xoá các đơn vị xe đã chọn.");
     }
   };
 

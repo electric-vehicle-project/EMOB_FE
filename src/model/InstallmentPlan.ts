@@ -1,7 +1,7 @@
 // src/model/InstallmentPlan.ts
 export type InstallmentPlanStatus =
   | "PAID"
-  | "PENDING"
+  | "NOT_PAID"
   | "OVERDUE"
   | "CANCELLED";
 

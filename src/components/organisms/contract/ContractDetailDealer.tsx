@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useParams, useNavigate } from "react-router";
 import {
   Card,
@@ -10,7 +9,6 @@ import {
   InputNumber,
   Form,
   DatePicker,
-  Table,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -31,13 +29,13 @@ import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
 
-
 export const ContractDetailDealer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data, isLoading, refetch } = useContractDetailQuery(id);
 
-  const { mutateAsync: signContract, isPending: signing } = useContractSignMutation();
+  const { mutateAsync: signContract, isPending: signing } =
+    useContractSignMutation();
   const { mutateAsync: cancelContract } = useContractCancelMutation();
 
   const user = useCurrentUser();
@@ -76,16 +74,16 @@ export const ContractDetailDealer = () => {
         paymentStatus === "FULL"
           ? { contractId: contract.contractId }
           : {
-            contractId: contract.contractId,
-            deposit: formValues.deposit,
-            downPayment: formValues.downPayment,
-            termMonths: formValues.termMonths,
-            interestRate: formValues.interestRate,
-          };
+              contractId: contract.contractId,
+              deposit: formValues.deposit,
+              downPayment: formValues.downPayment,
+              termMonths: formValues.termMonths,
+              interestRate: formValues.interestRate,
+            };
 
       await signContract({
         params: baseParams,
-        body
+        body,
       });
       toast.success("Đã ký hợp đồng thành công!");
       refetch();
@@ -154,10 +152,12 @@ export const ContractDetailDealer = () => {
                   (Số: {contract?.contractNumber})
                 </p>
               </div>
-              <div className="text-end italic">TP.HCM, ngày {dayjs(contract?.createdAt).format("DD")} tháng {dayjs(contract?.createdAt).format("MM")} năm {dayjs(contract?.createdAt).format("YYYY")}
+              <div className="text-end italic">
+                TP.HCM, ngày {dayjs(contract?.createdAt).format("DD")} tháng{" "}
+                {dayjs(contract?.createdAt).format("MM")} năm{" "}
+                {dayjs(contract?.createdAt).format("YYYY")}
               </div>
             </>
-
           }
         >
           {/* ---------- Nội dung hợp đồng ---------- */}
@@ -170,14 +170,15 @@ export const ContractDetailDealer = () => {
             <p>
               <b>BÊN A (Hãng xe):</b> Công ty TNHH EMOB Electric Vehicle
               <br />
-              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên hãng
-              xe
+              Đại diện: Ông/Bà{" "}
+              <b>{user?.fullName ?? "______________________"}</b> - Chức vụ:
+              Nhân viên hãng xe
               <br />
               Địa chỉ: Tòa nhà FPTU, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
             </p>
 
             <p>
-              <b>BÊN B (Đại lý):</b>  {dealer?.name ?? "______________________"}
+              <b>BÊN B (Đại lý):</b> {dealer?.name ?? "______________________"}
               <br />
               Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên đại
               lý
@@ -217,12 +218,11 @@ export const ContractDetailDealer = () => {
                 {contract?.status === "PENDING"
                   ? "Chưa thanh toán"
                   : contract?.status === "SIGNED"
-                    ? "Đã thỏa thuận"
-                    : contract?.status || "Không xác định"}
+                  ? "Đã thỏa thuận"
+                  : contract?.status || "Không xác định"}
               </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
-
 
             <p>
               <b>Điều 4. Quyền và nghĩa vụ của các bên</b>
@@ -235,7 +235,6 @@ export const ContractDetailDealer = () => {
               <b>Điều 5. Điều khoản chung</b>
               {/* ---------- Phụ lục hợp đồng ---------- */}
               <Divider />
-
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-3 text-center uppercase">
                   Phụ lục hợp đồng
@@ -245,7 +244,7 @@ export const ContractDetailDealer = () => {
                 </p>
 
                 <div className="space-y-6">
-                  {(contract?.items || []).map((item, index) => (
+                  {(contract?.items || []).map((item: any, index: number) => (
                     <div
                       key={item.id}
                       className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
@@ -255,8 +254,8 @@ export const ContractDetailDealer = () => {
                         {item.vehicleStatus === "TEST_DRIVE"
                           ? "lái thử"
                           : item.vehicleStatus === "SPECIAL"
-                            ? "đặc biệt"
-                            : "tiêu chuẩn"}
+                          ? "đặc biệt"
+                          : "tiêu chuẩn"}
                       </h4>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
@@ -286,15 +285,16 @@ export const ContractDetailDealer = () => {
                           {item.vehicleStatus === "NORMAL"
                             ? "Xe tiêu chuẩn"
                             : item.vehicleStatus === "TEST_DRIVE"
-                              ? "Xe lái thử"
-                              : item.vehicleStatus === "SPECIAL"
-                                ? "Xe đặc biệt"
-                                : "Khác"}
+                            ? "Xe lái thử"
+                            : item.vehicleStatus === "SPECIAL"
+                            ? "Xe đặc biệt"
+                            : "Khác"}
                         </p>
 
                         <div className="col-span-2">
                           <b>Danh sách mã xe con (Vehicle Unit IDs):</b>
-                          {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
+                          {item.vehicleUnitIds &&
+                          item.vehicleUnitIds.length > 0 ? (
                             <ul className="list-disc ml-6 mt-1 text-[14px]">
                               {item.vehicleUnitIds.map((uid: string) => (
                                 <li key={uid}>{uid}</li>
@@ -311,14 +311,13 @@ export const ContractDetailDealer = () => {
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
-                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
+                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0}{" "}
+                    &nbsp;&nbsp;
                     <b>Tổng giá trị:</b>{" "}
                     {contract?.totalPrice?.toLocaleString("vi-VN")} ₫
                   </p>
                 </div>
               </div>
-
-
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
               <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
@@ -334,7 +333,9 @@ export const ContractDetailDealer = () => {
               <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
                 (đã ký)
               </div>
-              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
             </div>
 
             <div className="text-center">
@@ -342,10 +343,11 @@ export const ContractDetailDealer = () => {
               <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex text-green-900">
                 {contract?.status === "SIGNED" ? "(đã ký)" : ""}
               </div>
-              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
             </div>
           </div>
-
 
           <Divider />
 
@@ -367,7 +369,6 @@ export const ContractDetailDealer = () => {
                 >
                   Hủy hợp đồng
                 </Button>
-
               </>
             )}
             {contract?.status === "SIGNED" && (
@@ -392,7 +393,7 @@ export const ContractDetailDealer = () => {
           disabled:
             paymentStatus === "INSTALLMENT"
               ? !form.isFieldsTouched(true) ||
-              form.getFieldsError().some(({ errors }) => errors.length > 0)
+                form.getFieldsError().some(({ errors }) => errors.length > 0)
               : false,
         }}
       >
@@ -402,7 +403,7 @@ export const ContractDetailDealer = () => {
           className="mt-2"
           onValuesChange={() => {
             // Bắt buộc re-render để cập nhật trạng thái nút khi người dùng nhập
-            form.validateFields().catch(() => { });
+            form.validateFields().catch(() => {});
           }}
         >
           <Form.Item label="Trạng thái thanh toán">
@@ -424,7 +425,8 @@ export const ContractDetailDealer = () => {
                 rules={[
                   {
                     required: true,
-                    message: "Tiền đặt cọc ít nhất phải đạt 10% giá trị tổng đơn",
+                    message:
+                      "Tiền đặt cọc ít nhất phải đạt 10% giá trị tổng đơn",
                   },
                   {
                     validator: (_, value) => {

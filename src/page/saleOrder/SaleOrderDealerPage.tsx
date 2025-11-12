@@ -14,6 +14,7 @@ import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTa
 import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
 import { useDebounce } from "../../hook/useDebounce";
 import type { SelectProps } from "antd";
+import { toast } from "react-toastify";
 
 const STATUS_OPTIONS: SelectProps<OrderStatus[]>["options"] = [
   { label: "CREATED", value: "CREATED" as OrderStatus },
@@ -66,10 +67,10 @@ const SaleOrderDealerPage: React.FC = () => {
     if (!selectedId) return;
     try {
       await cancelOrder(selectedId);
-      message.success("Đã hủy đơn hàng thành công!");
+      toast.success("Đã hủy đơn hàng thành công!");
       refetch();
     } catch {
-      message.error("Không thể hủy đơn hàng này!");
+      toast.error("Không thể hủy đơn hàng này!");
     } finally {
       setConfirmOpen(false);
     }
