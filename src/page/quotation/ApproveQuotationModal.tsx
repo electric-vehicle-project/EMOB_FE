@@ -1,15 +1,30 @@
-import React, { useEffect } from "react";
-import { Modal, Form, Button, InputNumber, Select, Switch } from "antd";
-import { useApproveQuotation } from "../../service/quotationService";
+import React, { useEffect, useMemo } from "react";
+import { Modal, Form, Button, InputNumber, Select, Switch, Input } from "antd";
+import {
+  useApproveQuotation,
+  useGetQuotationById,
+} from "../../service/quotationService";
 import { toast } from "react-toastify";
+import { useGetVehicleById } from "../../service/vehicleService";
 
 interface ApproveQuotationModalProps {
   open: boolean;
   onClose: () => void;
   quotationId: string;
-  items: any[];
+  items: any[]; // fallback nếu cần
   onSuccess?: () => void;
 }
+
+/* ---------- TÊN XE ---------- */
+
+// component convert VehicleId thành vehicleName
+const VehicleModelName: React.FC<{ vehicleId: string }> = ({ vehicleId }) => {
+  const { data, isLoading } = useGetVehicleById(vehicleId);
+  if (isLoading) return <span>...</span>;
+  return <span>{data?.result?.model || "-"}</span>;
+};
+
+/* ---------- MODAL ---------- */
 
 const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
   open,
@@ -21,32 +36,49 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
   const [form] = Form.useForm();
   const { mutateAsync: approveQuotation, isPending } = useApproveQuotation();
 
+  // Nếu hook của bạn nhận param khác, ví dụ: useGetQuotationById({ id: quotationId })
+  // thì sửa lại dòng dưới cho đúng:
+  const { data: quotationDetail } = useGetQuotationById(quotationId);
+
+  // Ưu tiên dùng items từ API chi tiết, fallback sang props.items nếu cần
+  const detailItems = useMemo(
+    () => quotationDetail?.result?.items || items || [],
+    [quotationDetail, items]
+  );
+
   useEffect(() => {
-    if (items?.length) {
+    if (detailItems?.length) {
       form.setFieldsValue({
-        items: items.map((item: any) => ({
+        items: detailItems.map((item: any) => ({
           itemsId: item.id,
-          promotionId: item.promotionId || null,
-          quantity: item.quantity || 1,
+          promotionId: item.promotionId ?? "",
+          quantity: item.quantity ?? 1,
           approved: true,
         })),
       });
+    } else {
+      form.resetFields(["items"]);
     }
-  }, [items, form]);
+  }, [detailItems, form]);
 
   const handleSubmit = async (values: any) => {
-    const approvedItems = values.items.filter((i: any) => i.approved);
+    const approvedItems = (values.items || []).filter((i: any) => i.approved);
 
     if (approvedItems.length === 0) {
       toast.warning("Chưa chọn item nào để duyệt!");
       return;
     }
 
+    const normalizePromotionId = (id: string | null | undefined) =>
+      !id ? null : id;
+
     const payload = approvedItems.map((item: any) => ({
       itemsId: item.itemsId,
-      promotionId: item.promotionId || null,
-      quantity: item.quantity || 1,
+      promotionId: normalizePromotionId(item.promotionId),
+      quantity: item.quantity ?? 1,
     }));
+
+    console.log("DEBUG approve payload =", payload);
 
     try {
       await approveQuotation({ id: quotationId, data: payload });
@@ -62,6 +94,16 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
     }
   };
 
+  const promotionOptions = [
+    { label: "Không áp dụng", value: "" },
+    ...(detailItems || [])
+      .filter((i: any) => i.promotionId)
+      .map((i: any) => ({
+        label: i.promotionName || i.promotionId,
+        value: i.promotionId,
+      })),
+  ];
+
   return (
     <Modal
       open={open}
@@ -76,60 +118,72 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
         <Form.List name="items">
           {(fields) => (
             <>
-              {fields.map(({ key, name, ...restField }) => (
-                <div
-                  key={key}
-                  className="grid grid-cols-4 gap-4 p-3 border rounded-md mb-3 bg-gray-50" // ⚙️ Đổi từ 3 → 4 cột
-                >
-                  {/* Cột bật/tắt duyệt */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "approved"]}
-                    label="Duyệt"
-                    valuePropName="checked"
-                    className="flex items-center"
-                  >
-                    <Switch />
-                  </Form.Item>
+              {fields.map(({ key, name, ...restField }) => {
+                // vehicleId lấy từ detailItems
+                const originalItem = detailItems[name];
+                const vehicleId = originalItem?.vehicleId;
 
-                  <Form.Item
-                    {...restField}
-                    name={[name, "itemsId"]}
-                    label="Item ID"
-                  >
-                    <InputNumber style={{ width: "100%" }} disabled />
-                  </Form.Item>
+                const rowValues = form.getFieldValue(["items", name]) || {};
+                const itemsId = rowValues.itemsId;
 
-                  <Form.Item
-                    {...restField}
-                    name={[name, "promotionId"]}
-                    label="Khuyến mãi ID"
+                return (
+                  <div
+                    key={key}
+                    className="border rounded-md mb-3 bg-gray-50 p-4"
                   >
-                    <Select
-                      placeholder="Chọn khuyến mãi (nếu có)"
-                      allowClear
-                      options={[
-                        { label: "Không áp dụng", value: null },
-                        ...(items || [])
-                          .filter((i) => i.promotionId)
-                          .map((i) => ({
-                            label: i.promotionName || i.promotionId,
-                            value: i.promotionId,
-                          })),
-                      ]}
-                    />
-                  </Form.Item>
+                    {/* HÀNG 1: Duyệt - Mã báo giá - Tên xe - Khuyến mãi */}
+                    <div className="grid grid-cols-12 gap-4 items-end">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "approved"]}
+                        label="Duyệt"
+                        valuePropName="checked"
+                        className="col-span-2 flex items-center"
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Switch />
+                      </Form.Item>
 
-                  <Form.Item
-                    {...restField}
-                    name={[name, "quantity"]}
-                    label="Số lượng"
-                    rules={[{ required: true, message: "Nhập số lượng" }]}
-                  >
-                    <InputNumber min={1} style={{ width: "100%" }} />
-                  </Form.Item>
-                </div>
-              ))}
+                      <div className="col-span-3">
+                        <Form.Item label="Tên xe" style={{ marginBottom: 0 }}>
+                          {vehicleId ? (
+                            <VehicleModelName vehicleId={vehicleId} />
+                          ) : (
+                            "-"
+                          )}
+                        </Form.Item>
+                      </div>
+
+                      <div className="col-span-3">
+                        <Form.Item
+                          {...restField}
+                          name={[name, "promotionId"]}
+                          label="Khuyến mãi"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <Select
+                            placeholder="Chọn khuyến mãi"
+                            allowClear
+                            options={promotionOptions}
+                          />
+                        </Form.Item>
+                      </div>
+                      {/* HÀNG 2: Số lượng */}
+                      <div className="col-span-3">
+                        <Form.Item
+                          {...restField}
+                          name={[name, "quantity"]}
+                          label="Số lượng"
+                          rules={[{ required: true, message: "Nhập số lượng" }]}
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber min={1} style={{ width: "100%" }} />
+                        </Form.Item>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </>
           )}
         </Form.List>

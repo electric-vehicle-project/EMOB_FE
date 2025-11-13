@@ -8,7 +8,6 @@ import CreateQuotationModal from "./CreateQuotationModal";
 import UpdateQuotationModal from "./UpdateQuotationModal";
 import ViewQuotationDetailModal from "./ViewQuotationDetailModal";
 import {
-  useApproveQuotation,
   useDeleteQuotation,
   useQuotationsList,
   useRejectQuotation,
@@ -177,106 +176,107 @@ const QuotationPage: React.FC = () => {
       title: "Thao tác",
       key: "actions",
       align: "center",
-      render: (_, record) => (
-        <div className="flex justify-center gap-2">
-          {/* Xem chi tiết */}
-          <Tooltip title="Xem chi tiết">
-            <Button
-              size="small"
-              onClick={() => {
-                setSelectedQuotationId(record.id);
-                setIsViewModalOpen(true);
-              }}
-            >
-              Chi tiết
-            </Button>
-          </Tooltip>
+      render: (_, record) => {
+        const isDealerStaff = role === "DEALER_STAFF";
+        const isFinalStatus =
+          record.status === "APPROVED" || record.status === "REJECTED";
 
-          {/* Sửa */}
-          {role === "DEALER_STAFF" && (
-            <Tooltip title="Sửa báo giá">
+        return (
+          <div className="flex justify-center gap-2">
+            {/* Xem chi tiết - luôn hiển thị */}
+            <Tooltip title="Xem chi tiết">
               <Button
                 size="small"
-                style={{
-                  backgroundColor: "#627254",
-                  color: "white",
-                  border: "none",
-                }}
-                className="bg-green-600 hover:bg-green-700 border-green-600"
                 onClick={() => {
                   setSelectedQuotationId(record.id);
-                  setIsUpdateModalOpen(true);
+                  setIsViewModalOpen(true);
                 }}
-                disabled={record.status === "APPROVED"}
               >
-                Sửa
+                Chi tiết
               </Button>
             </Tooltip>
-          )}
 
-          {role === "DEALER_STAFF" && (
-            <>
-              {/* Nút Duyệt */}
-              <Tooltip title="Duyệt báo giá">
-                <Button
-                  size="small"
-                  style={{
-                    backgroundColor: "#16a34a",
-                    color: "white",
-                    border: "none",
-                  }}
-                  onClick={() => handleOpenApproveModal(record)}
-                  disabled={record.status !== "PENDING"}
-                >
-                  Duyệt
-                </Button>
-              </Tooltip>
+            {/* Các nút chỉ xuất hiện khi CHƯA approved & CHƯA rejected (tức là PENDING) */}
+            {isDealerStaff && !isFinalStatus && (
+              <>
+                {/* Sửa */}
+                <Tooltip title="Sửa báo giá">
+                  <Button
+                    size="small"
+                    style={{
+                      backgroundColor: "#627254",
+                      color: "white",
+                      border: "none",
+                    }}
+                    className="bg-green-600 hover:bg-green-700 border-green-600"
+                    onClick={() => {
+                      setSelectedQuotationId(record.id);
+                      setIsUpdateModalOpen(true);
+                    }}
+                  >
+                    Sửa
+                  </Button>
+                </Tooltip>
 
-              {/* Nút Từ chối */}
-              <Tooltip title="Từ chối báo giá">
-                <Button
-                  size="small"
-                  style={{
-                    backgroundColor: "#9ca3af",
-                    color: "white",
-                    border: "none",
-                  }}
-                  onClick={() => handleRejectQuotation(record)}
-                  disabled={record.status !== "PENDING"}
-                  loading={rejectQuotation.isPending}
-                >
-                  Từ chối
-                </Button>
-              </Tooltip>
-            </>
-          )}
+                {/* Duyệt */}
+                <Tooltip title="Duyệt báo giá">
+                  <Button
+                    size="small"
+                    style={{
+                      backgroundColor: "#16a34a",
+                      color: "white",
+                      border: "none",
+                    }}
+                    onClick={() => handleOpenApproveModal(record)}
+                    disabled={record.status !== "PENDING"}
+                  >
+                    Duyệt
+                  </Button>
+                </Tooltip>
 
-          {/* Xóa */}
-          {role === "DEALER_STAFF" && (
-            <Popconfirm
-              title="Bạn có chắc muốn xóa báo giá này?"
-              description="Hành động này không thể hoàn tác."
-              onConfirm={() => handleDelete(record.id)}
-              okText="Xóa"
-              cancelText="Hủy"
-            >
-              <Tooltip title="Xóa báo giá">
-                <Button
-                  size="small"
-                  style={{
-                    backgroundColor: "#ef4444",
-                    color: "white",
-                    border: "none",
-                  }}
-                  disabled={record.status === "APPROVED"}
+                {/* Từ chối */}
+                <Tooltip title="Từ chối báo giá">
+                  <Button
+                    size="small"
+                    style={{
+                      backgroundColor: "#9ca3af",
+                      color: "white",
+                      border: "none",
+                    }}
+                    onClick={() => handleRejectQuotation(record)}
+                    disabled={record.status !== "PENDING"}
+                    loading={rejectQuotation.isPending}
+                  >
+                    Từ chối
+                  </Button>
+                </Tooltip>
+
+                {/* Xóa */}
+                <Popconfirm
+                  title="Bạn có chắc muốn xóa báo giá này?"
+                  description="Hành động này không thể hoàn tác."
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="Xóa"
+                  cancelText="Hủy"
                 >
-                  Xóa{" "}
-                </Button>
-              </Tooltip>
-            </Popconfirm>
-          )}
-        </div>
-      ),
+                  <Tooltip title="Xóa báo giá">
+                    <Button
+                      size="small"
+                      style={{
+                        backgroundColor: "#ef4444",
+                        color: "white",
+                        border: "none",
+                      }}
+                    >
+                      Xóa
+                    </Button>
+                  </Tooltip>
+                </Popconfirm>
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

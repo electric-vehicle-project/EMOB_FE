@@ -126,45 +126,50 @@ const VehicleRequestPage: React.FC = () => {
       title: "Hành động",
       key: "actions",
       align: "center",
-      render: (_, record) => (
-        <div className="flex justify-center gap-2">
-          {role === "MANAGER" && (
-            <Button
-              size="small"
-              type="primary"
-              onClick={() => {
-                setSelectedId(record.id);
-                setIsUpdateModalOpen(true);
-              }}
-            >
-              Sửa
-            </Button>
-          )}
-          <Button
-            size="small"
-            onClick={() => {
-              setSelectedId(record.id);
-              setIsViewModalOpen(true);
-            }}
-          >
-            Xem
-          </Button>
-          {role === "MANAGER" && (
-            <Popconfirm
-              title="Bạn có chắc muốn xóa yêu cầu này?"
-              onConfirm={() => handleDelete(record.id)}
-            >
+      render: (_, record) => {
+        const isApproved = record.status === "APPROVED";
+
+        return (
+          <div className="flex justify-center gap-2">
+            {/* MANAGER + chưa APPROVED mới được sửa */}
+            {role === "MANAGER" && !isApproved && (
               <Button
                 size="small"
-                danger
-                disabled={record.status === "APPROVED"}
+                type="primary"
+                onClick={() => {
+                  setSelectedId(record.id);
+                  setIsUpdateModalOpen(true);
+                }}
               >
-                Xóa
+                Sửa
               </Button>
-            </Popconfirm>
-          )}
-        </div>
-      ),
+            )}
+
+            {/* Xem luôn hiển thị */}
+            <Button
+              size="small"
+              onClick={() => {
+                setSelectedId(record.id);
+                setIsViewModalOpen(true);
+              }}
+            >
+              Xem
+            </Button>
+
+            {/* MANAGER + chưa APPROVED mới được xóa */}
+            {role === "MANAGER" && !isApproved && (
+              <Popconfirm
+                title="Bạn có chắc muốn xóa yêu cầu này?"
+                onConfirm={() => handleDelete(record.id)}
+              >
+                <Button size="small" danger>
+                  Xóa
+                </Button>
+              </Popconfirm>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

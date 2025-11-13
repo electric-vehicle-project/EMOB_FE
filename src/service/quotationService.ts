@@ -24,20 +24,6 @@ export const useDeleteQuotation = deleteMutationHook(
   BASE_URL
 );
 
-// Hook mới - dùng cho query param
-// export const createQueryWithQueryParamHook =
-//   (queryKey: string, url: string) => (id?: string, options?: any) => {
-//     return useQuery({
-//       queryKey: id ? [queryKey, id] : [queryKey],
-//       queryFn: async () => {
-//         if (!id) throw new Error("ID is required");
-//         return (await api.get(url, { params: { id } })).data; // Query param
-//       },
-//       enabled: !!id,
-//       ...options,
-//     });
-//   };
-
 export const useGetQuotationById = createQueryWithPathParamHook(
   "quotationDetail",
   BASE_URL
@@ -67,6 +53,7 @@ interface ApproveQuotationResponse {
   result?: any;
 }
 
+// PUT: approve quotation
 export const useApproveQuotation = () => {
   const queryClient = useQueryClient();
 
