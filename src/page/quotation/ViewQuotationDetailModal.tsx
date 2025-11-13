@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Modal, Descriptions, Spin, Alert, Tag, Divider, Tooltip } from "antd";
+import { Modal, Descriptions, Spin, Alert, Tag, Divider } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircleOutlined,
@@ -8,14 +8,12 @@ import {
 } from "@ant-design/icons";
 import type { IQuotationItem } from "../../model/Quotation";
 import { useGetQuotationById } from "../../service/quotationService";
-import {
-  useCustomerById,
-  useCustomerList,
-} from "../../service/customerService";
+import { useCustomerList } from "../../service/customerService";
 import { useGetVehicles } from "../../service/vehicleService";
 import { usePromotionList } from "../../service/promotionService";
 import { useDealerByIdQuery } from "../../service/dealerService";
 import { useGetAccountById } from "../../service/accountService";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 interface ViewQuotationModalProps {
   open?: boolean;
@@ -43,7 +41,7 @@ const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
   );
 };
 
-/* 🌿 Component chính */
+/* Component chính */
 const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   open,
   quotationId,
@@ -54,6 +52,9 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
     retry: false,
   });
 
+  // bắt role
+  const account = useCurrentUser();
+  const role = account?.role;
   const quotation = data?.result;
   const is401Error = error?.response?.status === 401;
 
@@ -189,10 +190,11 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                 <DealerName dealerId={quotation.dealerId} />
               </Descriptions.Item>
 
-              <Descriptions.Item label="Người tạo">
-                <AccountName accountId={quotation.accountId} />
-                {/* {quotation.accountId} */}
-              </Descriptions.Item>
+              {role == "MANAGER" && (
+                <Descriptions.Item label="Người tạo">
+                  <AccountName accountId={quotation.accountId} />
+                </Descriptions.Item>
+              )}
 
               <Descriptions.Item label="Số lượng">
                 <span className="font-semibold text-[#627254]">
