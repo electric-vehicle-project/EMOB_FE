@@ -42,7 +42,7 @@ export const TestDriveEditModal = ({ open, testDriveId, onClose, onSuccess }: Pr
   const detail = detailData?.result;
 
   const { data: vehicles } = useVehicleQuery({}, { size: 100 });
-  const { data: freeVehicles, refetch } = useFreeVehiclesQuery({}, queryParams || {}, { enabled: false });
+  const { data: freeVehicles, refetch } = useFreeVehiclesQuery({}, queryParams );
 
   const { mutateAsync: updateTestDrive, isPending } = useUpdateTestDriveMutation();
 

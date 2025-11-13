@@ -1,98 +1,234 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/test-drive/TestDrivePage.tsx
 import { useState } from "react";
-import { Card, Button, Checkbox, Calendar, Space } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Button,
+  Calendar,
+  Dropdown,
+  Select,
+  Input,
+  Pagination,
+  Space,
+} from "antd";
+import { SlidersOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTestDriveQuery } from "../../../service/testDriveService";
 import { TestDriveCalendar } from "../../molecules/test-drive/TestDriveCalendar";
 import { TestDriveCreateModal } from "../../molecules/test-drive/TestDriveCreateModal";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
+import dayjs from "dayjs";
+
+const { Option } = Select;
 
 export const TestDrive = () => {
-  const [openModal, setOpenModal] = useState(false);
+
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(50);
+
+  // Filter state
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [keyword, setKeyword] = useState("");
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
 
-  const { data, refetch } = useTestDriveQuery({}, {});
+  // API Call
+  const { data, isLoading, refetch } = useTestDriveQuery(
+    {},
+    {
+      page,
+      size,
+      keyword,
+      status: selectedStatuses,
+      sortField,
+      sortDir,
+    }
+  );
 
   const testDrives = data?.result?.data ?? [];
+  const total = data?.result?.metadata?.totalElements ?? 0;
 
-  const handleStatusChange = (checked: boolean, value: string) => {
-    setSelectedStatuses((prev) =>
-      checked ? [...prev, value] : prev.filter((s) => s !== value)
-    );
-  };
+  // Lấy danh sách ngày có lịch
+  const scheduledDates = new Set(
+    testDrives.map((t: any) => dayjs(t.scheduledAt).format("YYYY-MM-DD"))
+  );
+
+  // =====================
+  // Dropdown Filters
+  // =====================
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      {/* STATUS */}
+      <div>
+        <b className="text-gray-700">Trạng thái</b>
+        <Select
+          mode="multiple"
+          allowClear
+          value={selectedStatuses}
+          onChange={(v) => {
+            setSelectedStatuses(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="PENDING">Chờ xác nhận</Option>
+          <Option value="CONFIRMED">Đã xác nhận</Option>
+          <Option value="COMPLETED">Hoàn thành</Option>
+          <Option value="CANCELLED">Đã hủy</Option>
+        </Select>
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="createdAt">Ngày tạo</Option>
+          <Option value="scheduledAt">Ngày hẹn lái thử</Option>
+        </Select>
+      </div>
+
+      {/* SORT DIR */}
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="asc">Xa nhất</Option>
+          <Option value="desc">Gần nhất</Option>
+        </Select>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex gap-6">
-      {/* Sidebar */}
-      <div className="flex flex-col gap-4 w-[320px]">
+      {/* SIDEBAR */}
+      <div className="flex flex-col gap-4 w-[320px] pt-10">
+        <span className="text-xl">Lịch theo tuần</span>
+
         <Card>
-          <Calendar fullscreen={false} onChange={(d) => setSelectedDate(d.toDate())} />
+          <Calendar
+            fullscreen={false}
+            onChange={(d) => setSelectedDate(d.toDate())}
+            dateFullCellRender={(date) => {
+              const formatted = date.format("YYYY-MM-DD");
+              const isScheduled = scheduledDates.has(formatted);
+              const isToday = date.isSame(dayjs(), "day");
+
+              return (
+                <div
+                  className="flex items-center justify-center rounded-md"
+                  style={{
+                    height: "28px",
+                    width: "28px",
+                    margin: "0 auto",
+                    border: isToday ? "2px solid #627254" : undefined,
+                    backgroundColor: isScheduled ? "#627254" : undefined,
+                    color: isScheduled ? "white" : undefined,
+                    fontWeight: isToday ? 600 : 400,
+                  }}
+                >
+                  {date.date()}
+                </div>
+              );
+            }}
+          />
         </Card>
 
-        <Card >
-          <Space direction="vertical">
-            <Checkbox
-              checked={selectedStatuses.length === 0}
-              onChange={() => setSelectedStatuses([])}
-            >
-              Tất cả
-            </Checkbox>
-            <Checkbox
-              onChange={(e) => handleStatusChange(e.target.checked, "PENDING")}
-            >
-              Chờ xác nhận
-            </Checkbox>
-            <Checkbox
-              onChange={(e) => handleStatusChange(e.target.checked, "CONFIRMED")}
-            >
-              Đã xác nhận
-            </Checkbox>
-            <Checkbox
-              onChange={(e) => handleStatusChange(e.target.checked, "COMPLETED")}
-            >
-              Hoàn thành
-            </Checkbox>
-            <Checkbox
-              onChange={(e) => handleStatusChange(e.target.checked, "CANCELLED")}
-            >
-              Đã hủy
-            </Checkbox>
-          </Space>
-        </Card>
+        {/* Pagination */}
+        <div className="p-3 flex justify-center">
+          <Pagination
+            className="flex"
+            current={page + 1}
+            pageSize={size}
+            total={total}
+            showSizeChanger
+            onChange={(p, s) => {
+              setPage(p - 1);
+              setSize(s);
+            }}
+          />
+        </div>
       </div>
 
-      {/* Main Calendar */}
+      {/* MAIN CONTENT */}
       <div className="flex-1">
-        <Card
-          title={"Lịch theo tuần"}
-          extra={
+        <Card>
+          {/* Toolbar */}
+          <div className="flex justify-between pb-5">
             <Space>
-              {role === "DEALER_STAFF" && (
+              <Input
+                placeholder="Tìm kiếm theo tên khách hàng, địa điểm..."
+                value={keyword}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setPage(0);
+                }}
+                allowClear
+                style={{ width: 360 }}
+              />
+
+              <Dropdown
+                trigger={["click"]}
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                dropdownRender={() => <FilterContent />}
+              >
                 <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  className="!bg-[#627254] hover:!bg-[#556948]"
-                  onClick={() => setOpenModal(true)}
-                >
-                  Tạo lịch mới
-                </Button>
-              )}
-            </Space>}
-        >
+                  type="text"
+                  icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+                  className="text-gray-600 hover:text-black"
+                />
+              </Dropdown>
+            </Space>
+
+            {role === "DEALER_STAFF" && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                className="!bg-[#627254] hover:!bg-[#556948]"
+                onClick={() => setOpenModal(true)}
+              >
+                Tạo lịch mới
+              </Button>
+            )}
+          </div>
+
+          {/* WEEK CALENDAR */}
           <TestDriveCalendar
             testDrives={testDrives}
-            loading={false}
+            loading={isLoading}
             selectedStatuses={selectedStatuses}
             selectedDate={selectedDate}
+            onRefetch={refetch}
           />
         </Card>
       </div>
 
-      {/* Modal tạo lịch */}
+      {/* CREATE MODAL */}
       <TestDriveCreateModal
         open={openModal}
         onClose={() => setOpenModal(false)}
@@ -101,6 +237,6 @@ export const TestDrive = () => {
           refetch();
         }}
       />
-    </div >
+    </div>
   );
 };

@@ -92,7 +92,7 @@ export const DeliveryCustomerDetail = () => {
                                     icon={<DeleteOutlined />}
                                     loading={deleting}
                                     onClick={handleDelete}
-                                    className="!bg-red-700 hover:!bg-red-600 !border-none text-white"
+                                    className="!bg-black hover:!bg-gray-600 !border-none text-white"
                                 >
                                     Xóa đơn giao hàng
                                 </Button>
