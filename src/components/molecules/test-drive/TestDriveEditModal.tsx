@@ -9,6 +9,7 @@ import {
   Col,
   Empty,
   Typography,
+  Divider,
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -42,7 +43,7 @@ export const TestDriveEditModal = ({ open, testDriveId, onClose, onSuccess }: Pr
   const detail = detailData?.result;
 
   const { data: vehicles } = useVehicleQuery({}, { size: 100 });
-  const { data: freeVehicles, refetch } = useFreeVehiclesQuery({}, queryParams );
+  const { data: freeVehicles, refetch } = useFreeVehiclesQuery({}, queryParams);
 
   const { mutateAsync: updateTestDrive, isPending } = useUpdateTestDriveMutation();
 
@@ -190,73 +191,66 @@ export const TestDriveEditModal = ({ open, testDriveId, onClose, onSuccess }: Pr
             </Form.Item>
           </Col>
 
-          <Col span={12}>
-            <Row gutter={8} align="middle">
-              <Col span={16}>
-                <Form.Item
-                  label="Model xe"
-                  name="model"
-                  rules={[{ required: true, message: "Chọn model xe để tìm xe trống" }]}
-                >
-                  <Select
-                    placeholder="Chọn model xe"
-                    options={modelOptions}
-                    showSearch
-                    filterOption={(i, o) =>
-                      (o?.label as string).toLowerCase().includes(i.toLowerCase())
-                    }
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Button
-                  icon={<SearchOutlined />}
-                  type="primary"
-                  block
-                  disabled={!canSearch}
-                  onClick={handleFindFreeVehicles}
-                  style={{
-                    height: 40,
-                    backgroundColor: canSearch ? "#627254" : "#a0a0a0",
-                    border: "none",
-                    fontWeight: 500,
-                    marginTop: 30,
-                  }}
-                >
-                  Tìm xe trống
-                </Button>
-              </Col>
-            </Row>
+          <Col span={12} style={{ display: "flex", flexDirection: "column", minHeight: 480 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <Row gutter={8} align="middle">
+                <Col span={16}>
+                  <Form.Item label="Model xe" name="model"
+                    rules={[{ required: true, message: "Vui lòng chọn model xe" }]}>
+                    <Select placeholder="Chọn model xe" options={modelOptions} showSearch />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Button
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    onClick={handleFindFreeVehicles}
+                    disabled={!canSearch}
+                    block
+                    style={{
+                      height: 40,
+                      backgroundColor: canSearch ? "#627254" : "#a0a0a0",
+                      border: "none",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Tìm xe trống lịch
+                  </Button>
+                </Col>
+              </Row>
 
-            <div
-              className="grid grid-cols-2 gap-3 overflow-y-auto pr-1"
-              style={{ maxHeight: 360, minHeight: 360 }}
-            >
-              {freeVehicles?.result && freeVehicles.result.length > 0 ? (
-                freeVehicles.result.map((v: any) => (
-                  <div
-                    key={v.vehicleUnitId}
-                    onClick={() => setSelectedVehicleId(v.vehicleUnitId)}
-                    className={`border rounded-xl p-3 cursor-pointer transition-all hover:shadow-md ${selectedVehicleId === v.vehicleUnitId
+              <Divider className="my-3" />
+
+              <div
+                className="grid grid-cols-2 gap-3 overflow-y-auto pr-1"
+                style={{ maxHeight: 360, minHeight: 360 }}
+              >
+                {freeVehicles?.result && freeVehicles.result.length > 0 ? (
+                  freeVehicles.result.map((v: any) => (
+                    <div
+                      key={v.vehicleUnitId}
+                      onClick={() => setSelectedVehicleId(v.vehicleUnitId)}
+                      className={`border rounded-xl p-3 cursor-pointer transition-all hover:shadow-md ${selectedVehicleId === v.vehicleUnitId
                         ? "border-[#627254] bg-[#f6ffed]"
                         : "border-gray-200 bg-white"
-                      }`}
-                  >
-                    <div className="font-semibold text-[#627254]">{v.vinNumber}</div>
-                    <div className="text-sm text-gray-600">{v.color}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      Trạng thái: {v.status}
+                        }`}
+                    >
+                      <div className="font-semibold text-[#627254]">{v.vinNumber}</div>
+                      <div className="text-sm text-gray-600">{v.color}</div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Trạng thái: {v.status}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 flex items-center justify-center">
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description="Chưa có xe khả dụng"
+                    />
                   </div>
-                ))
-              ) : (
-                <div className="col-span-2 flex items-center justify-center">
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="Chưa có xe khả dụng"
-                  />
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </Col>
         </Row>

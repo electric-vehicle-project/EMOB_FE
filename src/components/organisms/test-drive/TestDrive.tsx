@@ -181,7 +181,7 @@ export const TestDrive = () => {
           <div className="flex justify-between pb-5">
             <Space>
               <Input
-                placeholder="Tìm kiếm theo tên khách hàng, địa điểm..."
+                placeholder="Tìm kiếm..."
                 value={keyword}
                 onChange={(e) => {
                   setKeyword(e.target.value);
