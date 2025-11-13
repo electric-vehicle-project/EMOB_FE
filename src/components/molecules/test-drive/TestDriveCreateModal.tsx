@@ -99,6 +99,38 @@ export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
     }
   };
 
+
+  const timeOptions = [
+    "08:00",
+    "10:00",
+    "12:00",
+    "14:00",
+    "16:00",
+  ].map((t) => {
+    // Nếu chưa chọn ngày → tất cả enabled
+    if (!date) return { label: t, value: t };
+
+    const now = dayjs();
+    const selectedDate = dayjs(date);
+
+    // Nếu ngày lớn hơn hôm nay → enable hết
+    if (selectedDate.isAfter(now, "day")) {
+      return { label: t, value: t };
+    }
+
+    // Nếu ngày hôm nay → disable những giờ đã trôi qua
+    if (selectedDate.isSame(now, "day")) {
+      const hour = dayjs(`${selectedDate.format("YYYY-MM-DD")} ${t}`);
+      return {
+        label: t,
+        value: t,
+        disabled: hour.isBefore(now),
+      };
+    }
+
+    // Nếu ngày trong quá khứ → disable toàn bộ (optional)
+    return { label: t, value: t, disabled: true };
+  });
   // Chuẩn bị list xe (API trả về result là ARRAY)
   const freeList: any[] = Array.isArray(freeVehicles?.result) ? freeVehicles!.result : [];
 
@@ -169,15 +201,36 @@ export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item label="Giờ bắt đầu" name="time"
-                    rules={[{ required: true, message: "Chọn giờ bắt đầu" }]}>
-                    <Select placeholder="Chọn giờ" options={[
-                      { label: "08:00", value: "08:00" },
-                      { label: "10:00", value: "10:00" },
-                      { label: "12:00", value: "12:00" },
-                      { label: "14:00", value: "14:00" },
-                      { label: "16:00", value: "16:00" },
-                    ]} />
+                  <Form.Item
+                    label="Giờ bắt đầu"
+                    name="time"
+                    rules={[
+                      { required: true, message: "Chọn giờ bắt đầu" },
+                      // VALIDATOR: cấm thời điểm quá khứ
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value) return Promise.resolve();
+
+                          const selectedDate = getFieldValue("date");
+                          if (!selectedDate) return Promise.resolve();
+
+                          const now = dayjs();
+                          const scheduled = dayjs(
+                            `${selectedDate.format("YYYY-MM-DD")} ${value}`,
+                            "YYYY-MM-DD HH:mm"
+                          );
+
+                          if (scheduled.isBefore(now)) {
+                            return Promise.reject(
+                              new Error("Không thể đặt lịch trước thời điểm hiện tại")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      }),
+                    ]}
+                  >
+                    <Select placeholder="Chọn giờ" options={timeOptions} />
                   </Form.Item>
                 </Col>
               </Row>
