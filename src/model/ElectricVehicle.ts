@@ -4,11 +4,11 @@ export interface ElectricVehicle {
   name: string;
   brand?: string;
   imageUrl?: string;
-  basePrice?: number;          // ưu tiên retail
-  batteryCapacity?: number;    // kWh
-  rangePerCharge?: number;     // km
-  power?: number;              // kW
-  torque?: number;             // Nm
+  basePrice?: number; // ưu tiên retail
+  batteryCapacity?: number; // kWh
+  rangePerCharge?: number; // km
+  power?: number; // kW
+  torque?: number; // Nm
   seats?: number;
   type?: string;
 }

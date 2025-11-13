@@ -105,7 +105,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
       title={<span className="text-lg font-semibold">Tạo báo giá mới</span>}
     >
       <Form layout="vertical" form={form} onFinish={handleSubmit}>
-        {/* 🔹 Khách hàng */}
+        {/* Khách hàng */}
         <SelectInput
           label="Khách hàng"
           name="customerId"
@@ -119,7 +119,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
           rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
         />
 
-        {/* 🔹 Danh sách xe */}
+        {/* Danh sách xe */}
         <Divider orientation="left">Danh sách xe báo giá</Divider>
 
         <Form.List name="items" initialValue={[{}]}>
@@ -186,7 +186,6 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
                       placeholder="Nhập số lượng"
                       rules={[{ required: true, message: "Nhập số lượng" }]}
                     />
-
                     <Button
                       type="text"
                       icon={<MinusCircleOutlined />}
@@ -222,7 +221,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
           rules={[{ required: true, message: "Thời hạn hiệu lực là bắt buộc" }]}
         />
 
-        {/* 🔹 Nút hành động */}
+        {/* Nút hành động */}
         <div className="flex justify-end gap-3 mt-4">
           <Button onClick={onClose}>Hủy</Button>
           <Button type="primary" htmlType="submit" loading={isPending}>

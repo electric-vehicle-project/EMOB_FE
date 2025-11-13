@@ -201,65 +201,67 @@ const DealerDiscountPolicyPage: React.FC = () => {
       width: 220,
       align: "center",
       fixed: "right",
-      render: (_, record) => (
-        <Space size="small">
-          {/* Luôn hiển thị nút xem chi tiết */}
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedPolicyId(record.id);
-              setIsViewModalOpen(true);
-            }}
-          >
-            Chi tiết
-          </Button>
+      render: (_, record) => {
+        const isInactive = record.status === "INACTIVE";
 
-          {/* Chỉ Admin mới có quyền sửa */}
-          {role === "ADMIN" && (
+        return (
+          <Space size="small">
+            {/* Luôn hiển thị nút xem chi tiết */}
             <Button
               size="small"
-              icon={<EditOutlined />}
-              style={{
-                backgroundColor: "#627254",
-                color: "white",
-                border: "none",
-              }}
+              icon={<EyeOutlined />}
               onClick={() => {
                 setSelectedPolicyId(record.id);
-                setIsUpdateModalOpen(true);
+                setIsViewModalOpen(true);
               }}
-              disabled={record.status === "INACTIVE"}
             >
-              Sửa
+              Chi tiết
             </Button>
-          )}
 
-          {/* Chỉ Admin mới có quyền xóa */}
-          {role === "ADMIN" && (
-            <Popconfirm
-              title="Bạn có chắc muốn xóa chính sách này?"
-              description="Hành động này không thể hoàn tác."
-              onConfirm={() => handleDelete(record.id)}
-              okText="Xóa"
-              cancelText="Hủy"
-            >
+            {/* Chỉ Admin + KHÔNG INACTIVE mới được sửa */}
+            {role === "ADMIN" && !isInactive && (
               <Button
                 size="small"
-                icon={<DeleteOutlined />}
+                icon={<EditOutlined />}
                 style={{
-                  backgroundColor: "red",
+                  backgroundColor: "#627254",
                   color: "white",
                   border: "none",
                 }}
-                disabled={record.status === "INACTIVE"}
+                onClick={() => {
+                  setSelectedPolicyId(record.id);
+                  setIsUpdateModalOpen(true);
+                }}
               >
-                Xóa
+                Sửa
               </Button>
-            </Popconfirm>
-          )}
-        </Space>
-      ),
+            )}
+
+            {/* Chỉ Admin + KHÔNG INACTIVE mới được xóa */}
+            {role === "ADMIN" && !isInactive && (
+              <Popconfirm
+                title="Bạn có chắc muốn xóa chính sách này?"
+                description="Hành động này không thể hoàn tác."
+                onConfirm={() => handleDelete(record.id)}
+                okText="Xóa"
+                cancelText="Hủy"
+              >
+                <Button
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  style={{
+                    backgroundColor: "red",
+                    color: "white",
+                    border: "none",
+                  }}
+                >
+                  Xóa
+                </Button>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
