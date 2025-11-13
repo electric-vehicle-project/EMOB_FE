@@ -21,12 +21,22 @@ interface ViewQuotationModalProps {
   onClose?: () => void;
 }
 
-/* Hiển thị tên người tạo */
+/* Hiển thị tên người tạo  - sdt*/
 const AccountName: React.FC<{ accountId: string }> = ({ accountId }) => {
   const { data, isLoading } = useGetAccountById(accountId);
+
   if (isLoading)
     return <span className="text-gray-400 italic">Đang tải...</span>;
-  return <span>{data?.result?.fullName || "-"}</span>;
+
+  const user = data?.result;
+  const name = user?.fullName || "-";
+  const phone = user?.phone || "Không có SĐT";
+
+  return (
+    <span>
+      {name} - {phone}
+    </span>
+  );
 };
 
 /* Hiển thị tên đại lý */
@@ -199,6 +209,14 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
               <Descriptions.Item label="Số lượng">
                 <span className="font-semibold text-[#627254]">
                   {quotation.totalQuantity ?? 0}
+                </span>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Tổng thuế">
+                <span className="font-semibold text-[#627254]">
+                  {quotation.vatAmount != null
+                    ? `${quotation.vatAmount.toLocaleString("vi-VN")} ₫`
+                    : "-"}
                 </span>
               </Descriptions.Item>
 
