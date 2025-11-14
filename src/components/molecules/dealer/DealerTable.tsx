@@ -18,14 +18,13 @@ interface Props {
   onEdit: (dealer: IDealer) => void;
   onDelete: (id: string) => void;
 
-  /** sort hiện tại */
-  sortField: string;
-  sortDir: "asc" | "desc";
-  onSortChange: (field: string, dir: "asc" | "desc") => void;
+  sortField: string | null;
+  sortDir: "asc" | "desc" | null;
+  onSortChange: (field: string | null, dir: "asc" | "desc" | null) => void;
 
-  /** filter quốc gia */
   countryOptions: string[];
   activeCountry?: string;
+
   onFilterCountry: (country: string | undefined) => void;
 
   canModify?: boolean;
@@ -40,11 +39,9 @@ export const DealerTable = ({
   canModify = false,
   pagination,
   isLoading,
-
   sortField,
   sortDir,
   onSortChange,
-
   countryOptions,
   activeCountry,
   onFilterCountry,
@@ -55,24 +52,38 @@ export const DealerTable = ({
     SOUTH: "volcano",
   };
 
+  // FIX: toggle đúng hành vi AntD
+  const toggleSort = (field: string) => {
+    if (sortField !== field) {
+      onSortChange(field, "asc");
+      return;
+    }
+    if (sortDir === "asc") {
+      onSortChange(field, "desc");
+      return;
+    }
+    if (sortDir === "desc") {
+      onSortChange(null, null); // back to default
+      return;
+    }
+    onSortChange(field, "asc");
+  };
+
   const columns: ColumnsType<IDealer> = [
     {
       title: "Tên đại lý",
       dataIndex: "name",
       key: "name",
-      sorter: true,
+      align: "center",
+      sorter: { multiple: 1 }, // ⭐ bắt buộc
       sortOrder:
         sortField === "name"
           ? sortDir === "asc"
             ? "ascend"
             : "descend"
-          : null,
+          : undefined,
       onHeaderCell: () => ({
-        onClick: () =>
-          onSortChange(
-            "name",
-            sortField === "name" && sortDir === "asc" ? "desc" : "asc"
-          ),
+        onClick: () => toggleSort("name"),
       }),
     },
 
@@ -80,23 +91,26 @@ export const DealerTable = ({
       title: "Email",
       dataIndex: "emailContact",
       key: "emailContact",
+      align: "center",
     },
 
     {
       title: "Điện thoại",
       dataIndex: "phoneContact",
       key: "phoneContact",
+      align: "center",
     },
 
     {
       title: "Quốc gia",
       dataIndex: "country",
       key: "country",
+      align: "center",
       filters: countryOptions.map((c) => ({ text: c, value: c })),
+      filterMultiple: false,
       filteredValue: activeCountry ? [activeCountry] : null,
-      onFilter: () => true, // BẮT BUỘC để antd hiện UI, filter thực tế do backend xử lý
+      onFilter: () => true,
       onHeaderCell: () => ({
-        // disable click sort khi filter
         onClick: (e: React.MouseEvent) => e.stopPropagation(),
       }),
     },
@@ -105,6 +119,7 @@ export const DealerTable = ({
       title: "Khu vực",
       dataIndex: "region",
       key: "region",
+      align: "center",
       render: (r?: string) => {
         const regionMap: Record<string, string> = {
           NORTH: "Miền Bắc",
@@ -123,25 +138,23 @@ export const DealerTable = ({
       title: "Địa chỉ",
       dataIndex: "address",
       key: "address",
+      align: "center",
     },
 
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
-      sorter: true,
+      align: "center",
+      sorter: { multiple: 1 }, // ⭐ bắt buộc
       sortOrder:
         sortField === "createdAt"
           ? sortDir === "asc"
             ? "ascend"
             : "descend"
-          : null,
+          : undefined,
       onHeaderCell: () => ({
-        onClick: () =>
-          onSortChange(
-            "createdAt",
-            sortField === "createdAt" && sortDir === "asc" ? "desc" : "asc"
-          ),
+        onClick: () => toggleSort("createdAt"),
       }),
       render: (val: string) => (val ? formatDateTimeVietnam(val) : "-"),
     },
@@ -187,6 +200,7 @@ export const DealerTable = ({
         loading={isLoading}
         pagination={false}
         onChange={handleChange}
+        sortDirections={["ascend", "descend"]} // ⭐ bắt buộc, KHÔNG dùng null
       />
 
       {pagination && (

@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { Result, Button, Empty } from "antd";
 import type { IDealer } from "../../../model/Dealer";
 import { SearchBar } from "../../molecules/SearchBar";
-import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useDebounce } from "../../../hook/useDebounce";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
@@ -19,6 +18,7 @@ import {
 } from "../../molecules/dealer/dealerUtils";
 import type { DealerApiModel } from "../../../model/Dealer";
 import { toast } from "react-toastify";
+import { DealerModal } from "./DealerModal";
 
 export const DealerList = () => {
   const [search, setSearch] = useState("");
@@ -202,8 +202,8 @@ export const DealerList = () => {
           sortField={sortField}
           sortDir={sortDir}
           onSortChange={(f, d) => {
-            setSortField(f);
-            setSortDir(d);
+            setSortField(f ?? "createdAt");
+            setSortDir(d ?? "desc");
             setCurrent(1);
           }}
           countryOptions={countryOptions}

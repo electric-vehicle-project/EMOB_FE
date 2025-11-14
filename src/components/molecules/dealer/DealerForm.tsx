@@ -1,9 +1,8 @@
 import { Form, Input, Select } from "antd";
 import type { FormInstance } from "antd/es/form";
-import { useEffect, useCallback } from "react";
 import type { IDealer } from "../../../model/Dealer";
 import type { DealerFormValues, Region } from "./dealerUtils";
-import { normalizeDealerValues, isSameDealerValues } from "./dealerUtils";
+import { normalizeDealerValues } from "./dealerUtils";
 
 interface Props {
   open: boolean;
@@ -12,7 +11,7 @@ interface Props {
   currentId?: string;
   existingDealers: IDealer[];
   onFinish: (values: DealerFormValues) => void;
-  onCanSubmitChange?: (can: boolean) => void;
+  onCanSubmitChange?: (can: boolean) => void; // giữ để không lỗi chỗ khác, không dùng
   baseline: DealerFormValues | null;
 }
 
@@ -23,37 +22,12 @@ const REGION_OPTIONS: { label: string; value: Region }[] = [
 ];
 
 export const DealerForm: React.FC<Props> = ({
-  open,
   form,
   isEdit,
   currentId,
   existingDealers,
   onFinish,
-  onCanSubmitChange,
-  baseline,
 }) => {
-  const recomputeSubmitState = useCallback(
-    (allFields?: { errors: string[] }[]) => {
-      const hasErrors = (allFields ?? form.getFieldsError()).some(
-        (f) => f.errors.length > 0
-      );
-      const current = normalizeDealerValues(form.getFieldsValue());
-      const dirty = isEdit
-        ? baseline
-          ? !isSameDealerValues(current, baseline)
-          : true
-        : form.isFieldsTouched(true);
-      onCanSubmitChange?.(!hasErrors && dirty);
-    },
-    [form, isEdit, baseline, onCanSubmitChange]
-  );
-
-  useEffect(() => {
-    if (!open) return;
-    const id = setTimeout(() => recomputeSubmitState(), 0);
-    return () => clearTimeout(id);
-  }, [open, baseline, existingDealers, currentId, recomputeSubmitState]);
-
   return (
     <Form<DealerFormValues>
       layout="vertical"
@@ -61,10 +35,7 @@ export const DealerForm: React.FC<Props> = ({
       autoComplete="off"
       requiredMark="optional"
       className="space-y-2"
-      validateTrigger={["onChange", "onBlur"]}
-      onFieldsChange={(_, allFields) =>
-        recomputeSubmitState(allFields as { errors: string[] }[])
-      }
+      validateTrigger="onSubmit" // ✅ chỉ validate khi submit
       onFinish={(values) => onFinish(normalizeDealerValues(values))}
     >
       <Form.Item
@@ -85,6 +56,29 @@ export const DealerForm: React.FC<Props> = ({
         rules={[
           { type: "email", message: "Email không hợp lệ" },
           { required: true, message: "Vui lòng nhập email liên hệ" },
+          {
+            // ✅ rule kiểm tra trùng email
+            validator: (_, value) => {
+              if (!value) return Promise.resolve();
+              const normalized = String(value).trim().toLowerCase();
+
+              const duplicated = existingDealers.some((d) => {
+                const dealerEmail = (d.emailContact || "").trim().toLowerCase();
+                if (!dealerEmail) return false;
+                // khi edit thì bỏ qua chính bản thân nó
+                if (isEdit && currentId && d.id === currentId) return false;
+                return dealerEmail === normalized;
+              });
+
+              if (duplicated) {
+                return Promise.reject(
+                  new Error("Email này đã tồn tại trong hệ thống")
+                );
+              }
+
+              return Promise.resolve();
+            },
+          },
         ]}
       >
         <Input placeholder="VD: vinfast@company.com" allowClear />
