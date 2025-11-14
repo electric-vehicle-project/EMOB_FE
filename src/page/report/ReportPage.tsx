@@ -38,6 +38,22 @@ const STATUS_OPTIONS = [
   { label: "Đã xóa", value: "DELETED" },
 ];
 
+interface ReportFormValues {
+  title: string;
+  description: string;
+  type: IReport["type"];
+  status?: IReport["status"];
+  customerId: string;
+  vinNumber?: string;
+}
+
+const STATUS_OPTIONS = [
+  { label: "Đang chờ", value: "PENDING" },
+  { label: "Đang xử lý", value: "IN_PROGRESS" },
+  { label: "Đã giải quyết", value: "RESOLVED" },
+  { label: "Đã xóa", value: "DELETED" },
+];
+
 export const ReportPage = () => {
   const getParam = useGetParams();
 
