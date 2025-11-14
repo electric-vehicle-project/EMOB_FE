@@ -209,17 +209,23 @@ export const AccountForm: React.FC<Props> = ({
           label="Ngày sinh"
           rules={[
             { required: true, message: "Vui lòng chọn ngày sinh" },
+
+            /* ✅ Sửa: tuổi tối thiểu 18 */
             {
               validator(_, value: Dayjs) {
                 if (!value) return Promise.resolve();
+
                 const today = dayjs();
+                const age = today.diff(value, "year");
+
                 if (value.isAfter(today))
                   return Promise.reject(
                     new Error("Ngày sinh không thể là tương lai")
                   );
-                const age = today.diff(value, "year");
-                if (age < 14)
-                  return Promise.reject(new Error("Tối thiểu 14 tuổi"));
+
+                if (age < 18)
+                  return Promise.reject(new Error("Tuổi phải từ 18 trở lên"));
+
                 return Promise.resolve();
               },
             },
