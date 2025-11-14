@@ -1,5 +1,6 @@
+// src/components/organisms/account/AccountList.tsx
 import { useState, useMemo } from "react";
-import { App, Result, Empty, Button } from "antd";
+import { Result, Empty, Button } from "antd";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
@@ -20,9 +21,9 @@ import {
 import { useDealersQuery } from "../../../service/dealerService";
 import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
+import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
 
 export const AccountList = () => {
-  const { message } = App.useApp();
   const user = useSelector((state: RootState) => state.user);
   const currentRole = user?.role as Role;
 
@@ -38,6 +39,8 @@ export const AccountList = () => {
     id: string;
     next: "ACTIVE" | "INACTIVE";
   } | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
 
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
@@ -53,10 +56,9 @@ export const AccountList = () => {
   });
 
   // ====== Dealers (for Admin) ======
-  // Nếu service có hỗ trợ enabled, bạn có thể truyền { enabled: isAdmin } vào đây.
   const { data: dealersData } = useDealersQuery({}, { size: 1000 });
 
-  // Map dealerId -> dealerName (đang dùng cho cột bảng)
+  // Map dealerId -> dealerName
   const dealerMap = useMemo(() => {
     const dealers = dealersData?.result?.data ?? [];
     const map: Record<string, string> = {};
@@ -66,7 +68,7 @@ export const AccountList = () => {
     return map;
   }, [dealersData]);
 
-  // Tạo options cho Select "Đại lý quản lý" trong form (Admin tạo Manager)
+  // Options cho Select "Đại lý quản lý" trong form (Admin tạo Manager)
   const dealerOptions = useMemo(() => {
     const list = dealersData?.result?.data ?? dealersData?.data ?? [];
     return (list as { id: string; name: string }[]).map((d) => ({
@@ -117,7 +119,6 @@ export const AccountList = () => {
   const handleCreate = async (values: AccountCreatePayload) => {
     try {
       if (isManager) {
-        // Manager tạo Dealer Staff: gọi trực tiếp bằng fetch (bỏ qua Axios interceptor)
         const token = localStorage.getItem("token");
         const response = await fetch(
           "http://localhost:8080/api/auth/register-by-manager",
@@ -141,7 +142,6 @@ export const AccountList = () => {
         setCreatingRole(null);
         await refetch();
       } else {
-        // Admin tạo Manager hoặc EVM Staff (vẫn dùng hook bình thường)
         await registerByAdmin.mutateAsync(values);
         toast.success("✅ Tạo tài khoản thành công!");
         setAccountModalOpen(false);
@@ -193,6 +193,16 @@ export const AccountList = () => {
     showTotal: (total: number) => `Tổng cộng ${total} tài khoản`,
   };
 
+  const handleViewDetails = (account: IAccount) => {
+    setSelectedAccount(account);
+    setDetailModalOpen(true);
+  };
+
+  const selectedDealerName =
+    selectedAccount?.dealerId && dealerMap[selectedAccount.dealerId]
+      ? dealerMap[selectedAccount.dealerId]
+      : undefined;
+
   /* ======================== RENDER ======================== */
   return (
     <div className="space-y-4">
@@ -228,7 +238,7 @@ export const AccountList = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-2xl shadow-sm bg-white border border-gray-100">
+      <div className="rounded-2xl shadow-sm bg-white border border-gray-100">
         {filteredAccounts.length > 0 ? (
           <AccountTable
             data={filteredAccounts}
@@ -239,6 +249,7 @@ export const AccountList = () => {
             currentUserRole={currentRole}
             onChangeStatus={(id, next) => setConfirmStatus({ id, next })}
             onBan={(id) => setConfirmBanId(id)}
+            onViewDetails={handleViewDetails}
           />
         ) : (
           <Empty
@@ -271,7 +282,6 @@ export const AccountList = () => {
         creatingRole={creatingRole}
         onSubmit={handleCreate}
         loading={false}
-        // ⬇️ Quan trọng: truyền options vào khi Admin đang tạo Manager
         dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 
@@ -304,6 +314,17 @@ export const AccountList = () => {
         okText="Cấm vĩnh viễn"
         danger
         message="Bạn có chắc chắn muốn cấm vĩnh viễn tài khoản này?"
+      />
+
+      {/* Modal xem chi tiết */}
+      <AccountDetailModal
+        open={detailModalOpen}
+        account={selectedAccount}
+        dealerName={selectedDealerName}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedAccount(null);
+        }}
       />
     </div>
   );

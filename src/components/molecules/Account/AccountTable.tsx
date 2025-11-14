@@ -1,10 +1,9 @@
-// src/components/molecules/Account/AccountTable.tsx
 import { Table, Tag, Tooltip, Typography, Pagination, Button } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { IAccount } from "../../../model/Account";
 import { AccountStatus, Role } from "../../../model/Account";
 
-const { Paragraph } = Typography;
+const { Link, Paragraph } = Typography;
 
 interface Props {
   data: IAccount[];
@@ -22,31 +21,36 @@ interface Props {
   };
   dealerMap?: Record<string, string>;
   currentUserRole?: Role;
+  onViewDetails?: (account: IAccount) => void;
 }
 
-const colW = {
-  name: 200,
-  email: 240,
-  phone: 150,
-  address: 280,
-  gender: 120,
-  dob: 140,
-  role: 260,
-  status: 160,
-  actions: 260,
+const ROLE_LABEL: Record<Role, string> = {
+  ADMIN: "Quản trị viên",
+  MANAGER: "Quản lý đại lý",
+  DEALER_STAFF: "Nhân viên đại lý",
+  EVM_STAFF: "Nhân viên EVM",
 };
 
-const getRoleLabel = (role: Role) =>
-  role === "ADMIN"
-    ? "Quản trị viên"
-    : role === "MANAGER"
-    ? "Quản lý đại lý"
-    : role === "DEALER_STAFF"
-    ? "Nhân viên đại lý"
-    : "Nhân viên EVM";
+const ROLE_COLOR: Record<Role, string> = {
+  ADMIN: "blue",
+  MANAGER: "purple",
+  DEALER_STAFF: "cyan",
+  EVM_STAFF: "blue",
+};
 
-const getRoleColor = (role: Role) =>
-  role === "MANAGER" ? "purple" : role === "DEALER_STAFF" ? "cyan" : "blue";
+const STATUS_LABEL: Record<AccountStatus, string> = {
+  ACTIVE: "Hoạt động",
+  INACTIVE: "Ngừng hoạt động",
+  BANNED: "Đã cấm",
+};
+
+const STATUS_COLOR: Record<AccountStatus, string> = {
+  ACTIVE: "green",
+  INACTIVE: "orange",
+  BANNED: "red",
+};
+
+const TABLE_SCROLL_Y = 560;
 
 export const AccountTable: React.FC<Props> = ({
   data,
@@ -57,25 +61,25 @@ export const AccountTable: React.FC<Props> = ({
   pagination,
   dealerMap = {},
   currentUserRole,
+  onViewDetails,
 }) => {
   const isAdminTable = currentUserRole === Role.ADMIN;
 
+  // Các cột thông tin chính, không sort, không width cố định
   const baseColumns: ColumnsType<IAccount> = [
     {
       title: "Họ và tên",
       dataIndex: "fullName",
       align: "center",
-      width: colW.name,
-      fixed: "left",
       ellipsis: { showTitle: false },
-      sorter: (a, b) =>
-        (a.fullName || "").localeCompare(b.fullName || "", "vi", {
-          sensitivity: "base",
-        }),
-      sortDirections: ["ascend", "descend"],
-      render: (text: string) => (
+      render: (text: string, record) => (
         <Tooltip title={text}>
-          <span className="block truncate">{text}</span>
+          <Link
+            onClick={() => onViewDetails && onViewDetails(record)}
+            className="block truncate font-medium"
+          >
+            {text}
+          </Link>
         </Tooltip>
       ),
     },
@@ -83,7 +87,6 @@ export const AccountTable: React.FC<Props> = ({
       title: "Email",
       dataIndex: "email",
       align: "center",
-      width: colW.email,
       ellipsis: { showTitle: false },
       render: (email: string) => (
         <Tooltip title={email}>
@@ -95,62 +98,8 @@ export const AccountTable: React.FC<Props> = ({
       title: "Số điện thoại",
       dataIndex: "phone",
       align: "center",
-      width: colW.phone,
       ellipsis: true,
       responsive: ["sm"],
-    },
-    {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      align: "center",
-      width: colW.address,
-      render: (addr: string) => (
-        <Tooltip title={addr}>
-          <Paragraph ellipsis={{ rows: 2 }} style={{ marginBottom: 0 }}>
-            {addr}
-          </Paragraph>
-        </Tooltip>
-      ),
-      responsive: ["md"],
-    },
-    {
-      title: "Giới tính",
-      dataIndex: "gender",
-      align: "center",
-      width: colW.gender,
-      filters: [
-        { text: "Nam", value: "MALE" },
-        { text: "Nữ", value: "FEMALE" },
-        { text: "Khác", value: "UNKNOWN" },
-      ],
-      onFilter: (value, record) => record.gender === value,
-      render: (gender: string) => {
-        const color =
-          gender === "MALE"
-            ? "blue"
-            : gender === "FEMALE"
-            ? "magenta"
-            : "volcano";
-        const label =
-          gender === "MALE" ? "Nam" : gender === "FEMALE" ? "Nữ" : "Khác";
-        return <Tag color={color}>{label}</Tag>;
-      },
-      responsive: ["md"],
-    },
-    {
-      title: "Ngày sinh",
-      dataIndex: "dateOfBirth",
-      align: "center",
-      width: colW.dob,
-      render: (dob: string) =>
-        dob
-          ? new Date(dob).toLocaleDateString("vi-VN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            })
-          : "—",
-      responsive: ["md"],
     },
   ];
 
@@ -160,41 +109,38 @@ export const AccountTable: React.FC<Props> = ({
       dataIndex: "role",
       key: "roleWithDealer",
       align: "center",
-      width: colW.role,
       filters: isAdminTable
         ? [
-            { text: "Quản lý đại lý", value: Role.MANAGER },
-            { text: "Nhân viên EVM", value: Role.EVM_STAFF },
+            { text: ROLE_LABEL.MANAGER, value: Role.MANAGER },
+            { text: ROLE_LABEL.EVM_STAFF, value: Role.EVM_STAFF },
           ]
         : undefined,
       onFilter: isAdminTable
         ? (value, record) => record.role === value
         : undefined,
       render: (_, record) => {
-        const roleTag = (
-          <Tag color={getRoleColor(record.role)} className="m-0">
-            {getRoleLabel(record.role)}
-          </Tag>
-        );
         const dealerName =
           record.role === Role.MANAGER && record.dealerId
             ? dealerMap[record.dealerId] || ""
             : "";
+
         return (
           <div className="flex flex-wrap items-center justify-center gap-1">
-            {roleTag}
+            <Tag color={ROLE_COLOR[record.role]} className="m-0">
+              {ROLE_LABEL[record.role]}
+            </Tag>
             {dealerName ? (
               <>
                 <span className="text-sm text-[#505f44] font-medium leading-tight">
                   của đại lý:
                 </span>
-                <Tag className="m-0" color="gold" style={{ maxWidth: 160 }}>
-                  <Typography.Paragraph
+                <Tag className="m-0" color="gold">
+                  <Paragraph
                     ellipsis={{ rows: 1 }}
-                    style={{ margin: 0 }}
+                    style={{ margin: 0, maxWidth: 160 }}
                   >
                     {dealerName}
-                  </Typography.Paragraph>
+                  </Paragraph>
                 </Tag>
               </>
             ) : null}
@@ -206,28 +152,15 @@ export const AccountTable: React.FC<Props> = ({
       title: "Trạng thái",
       dataIndex: "status",
       align: "center",
-      width: colW.status,
       filters: [
-        { text: "Hoạt động", value: AccountStatus.ACTIVE },
-        { text: "Ngừng hoạt động", value: AccountStatus.INACTIVE },
-        { text: "Đã cấm", value: AccountStatus.BANNED },
+        { text: STATUS_LABEL.ACTIVE, value: AccountStatus.ACTIVE },
+        { text: STATUS_LABEL.INACTIVE, value: AccountStatus.INACTIVE },
+        { text: STATUS_LABEL.BANNED, value: AccountStatus.BANNED },
       ],
       onFilter: (value, record) => record.status === value,
-      render: (status) => {
-        const color =
-          status === AccountStatus.ACTIVE
-            ? "green"
-            : status === AccountStatus.INACTIVE
-            ? "orange"
-            : "red";
-        const label =
-          status === AccountStatus.ACTIVE
-            ? "Hoạt động"
-            : status === AccountStatus.INACTIVE
-            ? "Ngừng hoạt động"
-            : "Đã cấm";
-        return <Tag color={color}>{label}</Tag>;
-      },
+      render: (status: AccountStatus) => (
+        <Tag color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Tag>
+      ),
     },
   ];
 
@@ -236,8 +169,6 @@ export const AccountTable: React.FC<Props> = ({
         {
           title: "Thao tác",
           align: "center",
-          width: colW.actions,
-          fixed: "right",
           onCell: () => ({ style: { paddingTop: 8, paddingBottom: 8 } }),
           render: (_, record) => {
             if (record.status === AccountStatus.BANNED) {
@@ -249,13 +180,15 @@ export const AccountTable: React.FC<Props> = ({
                 </div>
               );
             }
+
             const isInactive = record.status === AccountStatus.INACTIVE;
             const nextStatus: "ACTIVE" | "INACTIVE" = isInactive
               ? "ACTIVE"
               : "INACTIVE";
             const mainLabel = isInactive ? "Mở lại" : "Tạm ngưng";
+
             return (
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <Button
                   size="small"
                   type={isInactive ? "primary" : "default"}
@@ -289,12 +222,11 @@ export const AccountTable: React.FC<Props> = ({
         <Table<IAccount>
           className="
             bg-white
+            [&_.ant-table-container]:!overflow-x-hidden
+            [&_.ant-table-body]:!overflow-x-hidden
+            [&_.ant-table-content]:!overflow-x-hidden
             [&_.ant-table-tbody>tr:hover>td]:!bg-white
             [&_.ant-table-row]:!transition-none
-            [&_.ant-table-thead_th.ant-table-column-sort]:!bg-[#627254]
-            [&_.ant-table-thead_th.ant-table-column-sort]:!text-white
-            [&_.ant-table-thead_th.ant-table-column-sort_.ant-table-column-sorter]:!text-white
-            [&_.ant-table-thead_th.ant-table-column-sort_.ant-table-filter-trigger]:!text-white
           "
           rowClassName={() => "bg-white"}
           rowKey={(r) => r.id || `${r.email}-${r.phone}`}
@@ -303,8 +235,8 @@ export const AccountTable: React.FC<Props> = ({
           loading={loading}
           bordered
           pagination={false}
-          tableLayout="fixed"
-          scroll={{ x: "max-content", y: 560 }}
+          // chỉ scroll dọc, ẩn hoàn toàn scroll ngang bằng CSS ở trên
+          scroll={{ y: TABLE_SCROLL_Y }}
           sticky={{ offsetHeader: 0 }}
         />
       </div>

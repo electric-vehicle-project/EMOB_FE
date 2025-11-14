@@ -1,4 +1,4 @@
-import { Modal, message } from "antd";
+import { Modal } from "antd";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
 import { AccountForm } from "../../molecules/Account/AccountForm";

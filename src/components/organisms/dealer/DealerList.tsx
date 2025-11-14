@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Result, Button, Empty, message } from "antd";
+import { Result, Button, Empty } from "antd";
 import type { IDealer } from "../../../model/Dealer";
 import { SearchBar } from "../../molecules/SearchBar";
 import { DealerModal } from "./DealerModal";
