@@ -13,7 +13,6 @@ import { useDebounce } from "../../../hook/useDebounce";
 import {
   useGetAccountsByAdmin,
   useGetAccountsByManager,
-  useRegisterByAdmin,
   useChangeAccountStatus,
   useBanAccount,
 } from "../../../service/accountService";
@@ -21,6 +20,67 @@ import { useDealersQuery } from "../../../service/dealerService";
 import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
+import api from "../../../config/api";
+
+/* ===== Helper: xây URL đăng ký đúng theo baseURL từ api config, không hard-code host ===== */
+const getApiBaseUrl = () => api.defaults.baseURL ?? "";
+
+const getRegisterPathByRole = (creatorRole: Role) =>
+  creatorRole === Role.MANAGER
+    ? "/auth/register-by-manager"
+    : "/auth/register-by-admin";
+
+const registerAccount = async (
+  creatorRole: Role,
+  payload: AccountCreatePayload
+) => {
+  const baseUrl = getApiBaseUrl();
+  const path = getRegisterPathByRole(creatorRole);
+  const url = `${baseUrl}${path}`;
+
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  let data: unknown;
+
+  if (contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    data = text;
+  }
+
+  if (!response.ok) {
+    interface ApiError extends Error {
+      status: number;
+      data: unknown;
+    }
+    const errorMessage =
+      typeof data === "string"
+        ? data || "Tạo tài khoản thất bại"
+        : typeof data === "object" &&
+          data !== null &&
+          "message" in data &&
+          typeof (data as { message: unknown }).message === "string"
+        ? (data as { message: string }).message
+        : "Tạo tài khoản thất bại";
+    const err = new Error(errorMessage) as ApiError;
+    err.status = response.status;
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+};
 
 export const AccountList = () => {
   const user = useSelector((state: RootState) => state.user);
@@ -44,6 +104,7 @@ export const AccountList = () => {
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
+  // ====== Queries ======
   const adminQuery = useGetAccountsByAdmin(page, pageSize, {
     enabled: isAdmin,
     queryKey: ["accounts-by-admin", page, pageSize],
@@ -72,7 +133,6 @@ export const AccountList = () => {
     }));
   }, [dealersData]);
 
-  const registerByAdmin = useRegisterByAdmin();
   const changeStatus = useChangeAccountStatus();
   const banAccount = useBanAccount();
 
@@ -110,35 +170,16 @@ export const AccountList = () => {
     );
   }
 
+  /* ======================== CREATE ACCOUNT ======================== */
   const handleCreate = async (values: AccountCreatePayload) => {
-    if (isManager) {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        "http://localhost:8080/api/auth/register-by-manager",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify(values),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Tạo tài khoản thất bại!");
-      }
-    } else {
-      await registerByAdmin.mutateAsync(values);
-    }
-
+    await registerAccount(currentRole, values);
     toast.success("✅ Tạo tài khoản thành công!");
     setAccountModalOpen(false);
     setCreatingRole(null);
     await refetch();
   };
 
+  /* ======================== STATUS & BAN ======================== */
   const doChangeStatus = async (id: string, next: "ACTIVE" | "INACTIVE") => {
     await changeStatus.mutateAsync({ id, data: { status: next } });
     toast.success(
@@ -177,6 +218,7 @@ export const AccountList = () => {
 
   return (
     <div className="space-y-4">
+      {/* Search & Add */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <SearchBar
           value={search}
@@ -207,6 +249,7 @@ export const AccountList = () => {
         )}
       </div>
 
+      {/* Table (đồng bộ UI với DealerTable, không scroll ngang/dọc) */}
       {filteredAccounts.length > 0 ? (
         <AccountTable
           data={filteredAccounts}
@@ -228,6 +271,7 @@ export const AccountList = () => {
         </div>
       )}
 
+      {/* Role select (Admin) */}
       {isAdmin && (
         <AccountRoleSelectModal
           open={roleModalOpen}
@@ -240,6 +284,7 @@ export const AccountList = () => {
         />
       )}
 
+      {/* Create modal */}
       <AccountModal
         open={accountModalOpen}
         onClose={() => {
@@ -253,6 +298,7 @@ export const AccountList = () => {
         dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 
+      {/* Confirm đổi trạng thái */}
       <DeleteConfirm
         open={!!confirmStatus}
         onConfirm={async () => {
@@ -270,6 +316,7 @@ export const AccountList = () => {
         }
       />
 
+      {/* Confirm cấm vĩnh viễn */}
       <DeleteConfirm
         open={!!confirmBanId}
         onConfirm={async () => {
@@ -282,6 +329,7 @@ export const AccountList = () => {
         message="Bạn có chắc chắn muốn cấm vĩnh viễn tài khoản này?"
       />
 
+      {/* Detail modal */}
       <AccountDetailModal
         open={detailModalOpen}
         account={selectedAccount}
