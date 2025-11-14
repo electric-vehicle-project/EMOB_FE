@@ -135,7 +135,7 @@ export const DeliveryEVMAndDealerListCurrent = () => {
     <div>
       {/* HEADER */}
       <span className="flex justify-between p-5">
-        <b className="text-[#627254]">
+        <b className="text-lg text-[#627254]">
           Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
         </b>
 

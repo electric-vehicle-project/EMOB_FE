@@ -9,6 +9,7 @@ import {
   Input,
   Pagination,
   Space,
+  Divider,
 } from "antd";
 import { FilterOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTestDriveQuery } from "../../../service/testDriveService";
@@ -125,8 +126,12 @@ export const TestDrive = () => {
   return (
     <div className="flex gap-6">
       {/* SIDEBAR */}
-      <div className="flex flex-col gap-4 w-[320px] pt-10">
-        <span className="text-xl">Lịch theo tuần</span>
+      <div className="flex flex-col gap-4 w-[320px] pt-5">
+        <span className="flex justify-between">
+          <b className="text-lg text-[#627254]">
+            Lịch theo tuần
+          </b>
+        </span>
 
         <Card>
           <Calendar
@@ -157,8 +162,10 @@ export const TestDrive = () => {
           />
         </Card>
 
+        <Divider/>
+
         {/* Pagination */}
-        <div className="p-3 flex justify-center">
+        <div className="flex justify-center">
           <Pagination
             className="flex"
             current={page + 1}

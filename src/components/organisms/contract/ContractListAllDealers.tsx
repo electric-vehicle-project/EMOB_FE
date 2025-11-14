@@ -103,8 +103,10 @@ export const ContractListAllDealers = () => {
 
   return (
     <div>
-      <span className="flex justify-start p-5 text-[#627254] font-semibold">
-        Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý
+      <span className="flex justify-between p-5">
+        <b className="text-lg text-[#627254]">
+          Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý
+        </b>
       </span>
 
       <Card>

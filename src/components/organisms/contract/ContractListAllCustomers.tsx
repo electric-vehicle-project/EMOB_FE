@@ -124,7 +124,7 @@ export const ContractListAllCustomers = () => {
     <div>
       {/* PAGE HEADER */}
       <span className="flex justify-between p-5">
-        <b className="text-[#627254]">
+        <b className="text-lg text-[#627254]">
           Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng
         </b>
 
