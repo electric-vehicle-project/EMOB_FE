@@ -77,6 +77,12 @@ export const AccountTable: React.FC<Props> = ({
       dataIndex: "fullName",
       key: "fullName",
       align: "center",
+      sorter: (a, b) =>
+        (a.fullName || "").localeCompare(b.fullName || "", "vi", {
+          sensitivity: "base",
+        }),
+      sortDirections: ["ascend", "descend"],
+      showSorterTooltip: true,
       render: (text: string, record) => (
         <Tooltip title={text}>
           <Link
