@@ -1,10 +1,11 @@
 import { Modal } from "antd";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
-import { AccountForm } from "../../molecules/Account/AccountForm";
-import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
+import {
+  AccountForm,
+  type AccountCreatePayload,
+} from "../../molecules/Account/AccountForm";
 import { Role } from "../../../model/Account";
-import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
@@ -32,22 +33,6 @@ export const AccountModal = ({
     if (!open) form.resetFields();
   }, [open, form]);
 
-  const handleFinish = async (values: AccountCreatePayload) => {
-    try {
-      await onSubmit(values);
-    } catch (err: unknown) {
-      const e = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      toast.error(
-        e?.response?.data?.message ||
-          e?.message ||
-          "Không thể lưu. Vui lòng thử lại."
-      );
-    }
-  };
-
   return (
     <Modal
       open={open}
@@ -59,7 +44,7 @@ export const AccountModal = ({
     >
       <AccountForm
         form={form}
-        onSubmit={handleFinish}
+        onSubmit={onSubmit}
         loading={loading}
         role={creatorRole}
         defaultCreatingRole={creatingRole || undefined}
