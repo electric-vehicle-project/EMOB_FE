@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { Modal, Form, Button, InputNumber, Select, Switch, Input } from "antd";
+import { Modal, Form, Button, InputNumber, Select, Switch } from "antd";
 import {
   useApproveQuotation,
   useGetQuotationById,
@@ -122,10 +122,6 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
                 // vehicleId lấy từ detailItems
                 const originalItem = detailItems[name];
                 const vehicleId = originalItem?.vehicleId;
-
-                const rowValues = form.getFieldValue(["items", name]) || {};
-                const itemsId = rowValues.itemsId;
-
                 return (
                   <div
                     key={key}

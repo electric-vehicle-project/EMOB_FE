@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Table, Tag, message, Button, Popconfirm, Input, Space } from "antd";
+import { Table, Tag, Button, Popconfirm, Input, Space } from "antd";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useDeleteDiscountPolicy,
