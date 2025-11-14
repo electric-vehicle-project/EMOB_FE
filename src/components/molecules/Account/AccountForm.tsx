@@ -22,17 +22,17 @@ const toLocalPhone = (s: string) => {
 };
 const vnMobile = /^(0|\+84)(1|2|3|4|5|6|7|8|9)\d{8}$/;
 
-export interface AccountFormValues {
+interface AccountFormValues {
   fullName: string;
   email: string;
   phone: string;
   address: string;
   gender: Gender;
-  role?: Role;
+  role?: Role; // chỉ dùng khi ADMIN chọn loại tài khoản
   dateOfBirth: Dayjs;
   password: string;
   confirmPassword: string;
-  dealerId?: string;
+  dealerId?: string; // chỉ bắt buộc khi ADMIN tạo MANAGER
 }
 
 export type AccountCreatePayload = Omit<
@@ -43,89 +43,14 @@ export type AccountCreatePayload = Omit<
 };
 
 interface Props {
-  onSubmit: (values: AccountCreatePayload) => Promise<void> | void;
+  onSubmit: (values: AccountCreatePayload) => void | Promise<void>;
   loading?: boolean;
   role: Role; // role của người tạo (ADMIN | MANAGER)
-  defaultCreatingRole?: Role | null;
+  defaultCreatingRole?: Role | null; // nếu ADMIN đã chọn trước loại tạo
   form?: FormInstance<AccountFormValues>;
+  /** Chỉ truyền khi ADMIN tạo MANAGER (để user chọn Dealer). Manager không cần prop này. */
   dealerOptions?: { label: string; value: string }[];
 }
-
-type FieldName = keyof AccountFormValues;
-
-/* ===== Chuẩn hoá và map lỗi backend -> lỗi field FE ===== */
-const extractMessageFromError = (error: unknown): string | undefined => {
-  const e = error as {
-    status?: number;
-    data?: unknown;
-    message?: string;
-    response?: { data?: unknown; status?: number };
-  };
-
-  const data = e?.data ?? e?.response?.data;
-
-  if (data && typeof data === "object" && "message" in data) {
-    const m = (data as { message?: unknown }).message;
-    if (typeof m === "string") return m;
-  }
-
-  if (typeof data === "string") return data;
-  if (typeof e?.message === "string") return e.message;
-
-  return undefined;
-};
-
-const mapServerErrorToFieldErrors = (
-  error: unknown
-): {
-  fieldErrors: Partial<Record<FieldName, string>>;
-  formMessage?: string;
-} => {
-  const rawMessage = extractMessageFromError(error);
-  const fieldErrors: Partial<Record<FieldName, string>> = {};
-
-  if (!rawMessage) {
-    return { fieldErrors, formMessage: "Có lỗi xảy ra, vui lòng thử lại." };
-  }
-
-  const msg = rawMessage.trim();
-  const lower = msg.toLowerCase();
-
-  // Một số mapping phổ biến sang tiếng Việt
-  if (lower.includes("empty token")) {
-    return {
-      fieldErrors,
-      formMessage: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-    };
-  }
-
-  if (
-    lower.includes("email") &&
-    (lower.includes("exist") ||
-      lower.includes("duplicate") ||
-      lower.includes("already"))
-  ) {
-    fieldErrors.email = "Email đã tồn tại trong hệ thống.";
-  } else if (
-    (lower.includes("phone") || lower.includes("số điện thoại")) &&
-    (lower.includes("exist") ||
-      lower.includes("duplicate") ||
-      lower.includes("already"))
-  ) {
-    fieldErrors.phone = "Số điện thoại đã tồn tại trong hệ thống.";
-  } else if (lower.includes("dealer") && lower.includes("not found")) {
-    fieldErrors.dealerId = "Không tìm thấy đại lý phù hợp.";
-  } else if (lower.includes("invalid role")) {
-    fieldErrors.role = "Vai trò không hợp lệ.";
-  }
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return { fieldErrors };
-  }
-
-  // Fallback: hiển thị nguyên message backend (có thể là tiếng Anh)
-  return { fieldErrors, formMessage: msg };
-};
 
 export const AccountForm: React.FC<Props> = ({
   onSubmit,
@@ -138,7 +63,7 @@ export const AccountForm: React.FC<Props> = ({
   const [innerForm] = Form.useForm<AccountFormValues>();
   const form = outerForm ?? innerForm;
 
-  const handleFinish = async (values: AccountFormValues) => {
+  const handleFinish = (values: AccountFormValues) => {
     const base: AccountCreatePayload = {
       fullName: trimEdges(values.fullName),
       email: toEmail(values.email),
@@ -149,53 +74,25 @@ export const AccountForm: React.FC<Props> = ({
       gender: values.gender,
     };
 
-    try {
-      if (role === Role.MANAGER) {
-        // Manager tạo Dealer Staff: BE tự gán dealer theo Manager
-        await onSubmit(base);
-      } else {
-        // Admin tạo Manager / EVM Staff
-        const finalRole =
-          defaultCreatingRole ?? (values.role as Role | undefined);
-
-        const payloadForAdmin: AccountCreatePayload = {
-          ...base,
-          ...(finalRole ? ({ role: finalRole } as { role: Role }) : {}),
-          ...(finalRole === Role.MANAGER && values.dealerId
-            ? ({ dealerId: values.dealerId } as { dealerId: string })
-            : {}),
-        };
-
-        await onSubmit(payloadForAdmin);
-      }
-
-      // Chỉ reset khi tạo thành công
+    // Manager tạo Dealer Staff -> không gửi role/dealerId
+    if (role === Role.MANAGER) {
+      onSubmit(base);
       form.resetFields();
-    } catch (err: unknown) {
-      const { fieldErrors, formMessage } = mapServerErrorToFieldErrors(err);
-
-      if (Object.keys(fieldErrors).length > 0) {
-        form.setFields(
-          Object.entries(fieldErrors).map(([name, message]) => ({
-            name: name as FieldName,
-            errors: message ? [message] : [],
-          }))
-        );
-        const firstField = Object.keys(fieldErrors)[0] as FieldName;
-        if (firstField) {
-          form.scrollToField(firstField);
-        }
-      } else if (formMessage) {
-        // Gắn lỗi tổng quát vào field đầu tiên để user nhìn thấy rõ
-        form.setFields([
-          {
-            name: "fullName",
-            errors: [formMessage],
-          },
-        ]);
-        form.scrollToField("fullName");
-      }
+      return;
     }
+
+    // Admin tạo
+    const finalRole = defaultCreatingRole ?? (values.role as Role | undefined);
+    const payloadForAdmin: AccountCreatePayload = {
+      ...base,
+      ...(finalRole ? ({ role: finalRole } as { role: Role }) : {}),
+      ...(finalRole === Role.MANAGER && values.dealerId
+        ? ({ dealerId: values.dealerId } as { dealerId: string })
+        : {}),
+    };
+
+    onSubmit(payloadForAdmin);
+    form.resetFields();
   };
 
   const genderOptions = [
@@ -204,10 +101,10 @@ export const AccountForm: React.FC<Props> = ({
     { label: "Khác", value: Gender.UNKNOWN },
   ];
 
-  // Hiển thị chọn đại lý:
-  // - Manager tạo dealer staff: không hiển thị
-  // - Admin tạo Manager: bắt buộc chọn dealer
-  // - Admin tạo EVM_STAFF: không cần dealer
+  // Quy tắc hiển thị chọn đại lý:
+  // - Manager tạo dealer staff: KHÔNG hiển thị (BE tự gán theo manager)
+  // - Admin tạo Manager: BẮT BUỘC chọn dealer
+  // - Admin tạo EVM_STAFF: KHÔNG cần dealer
   const shouldShowDealerSelect = () => {
     if (role === Role.MANAGER) return false;
     if (role === Role.ADMIN && defaultCreatingRole === Role.MANAGER)
@@ -224,31 +121,30 @@ export const AccountForm: React.FC<Props> = ({
       requiredMark="optional"
       className="space-y-2"
       initialValues={{ gender: Gender.UNKNOWN }}
-      validateTrigger="onSubmit" // chỉ validate khi submit
+      validateTrigger="onSubmit" // chỉ validate khi bấm "Tạo tài khoản"
     >
-      {/* Thông tin cá nhân */}
       <Form.Item
         name="fullName"
         label="Họ và tên"
         rules={[
-          { required: true, message: "Vui lòng nhập họ và tên." },
-          { min: 3, message: "Họ và tên phải có ít nhất 3 ký tự." },
-          { max: 80, message: "Họ và tên quá dài (tối đa 80 ký tự)." },
+          { required: true, message: "Vui lòng nhập họ và tên" },
+          { min: 3, message: "Họ và tên phải có ít nhất 3 ký tự" },
+          { max: 80, message: "Họ và tên quá dài (tối đa 80 ký tự)" },
           {
             pattern: /^[\p{L}\s'.-]+$/u,
-            message: "Họ tên chỉ được chứa chữ cái và khoảng trắng.",
+            message: "Họ tên chỉ được chứa chữ cái và khoảng trắng",
           },
         ]}
       >
         <Input placeholder="VD: Nguyễn Văn A" allowClear />
       </Form.Item>
 
-      {/* Phân quyền */}
+      {/* ADMIN chọn loại tài khoản nếu chưa cố định trước */}
       {role === Role.ADMIN && !defaultCreatingRole && (
         <Form.Item
           name="role"
           label="Vai trò"
-          rules={[{ required: true, message: "Vui lòng chọn vai trò." }]}
+          rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
         >
           <Select
             placeholder="Chọn vai trò"
@@ -260,11 +156,12 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
+      {/* ADMIN tạo Manager -> bắt buộc chọn Dealer */}
       {shouldShowDealerSelect() && (
         <Form.Item
           name="dealerId"
           label="Đại lý quản lý"
-          rules={[{ required: true, message: "Vui lòng chọn đại lý." }]}
+          rules={[{ required: true, message: "Vui lòng chọn đại lý" }]}
         >
           <Select
             showSearch
@@ -275,21 +172,19 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
-      {/* Thông tin liên hệ */}
       <Form.Item
         name="email"
         label="Email"
         rules={[
-          { required: true, message: "Vui lòng nhập email." },
-          { max: 100, message: "Email quá dài (tối đa 100 ký tự)." },
+          { required: true, message: "Vui lòng nhập email" },
+          { max: 100, message: "Email quá dài (tối đa 100 ký tự)" },
           {
             validator: (_, value: string) => {
               const v = toEmail(value || "");
               if (!v) return Promise.resolve();
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-              if (!emailRegex.test(v)) {
-                return Promise.reject(new Error("Email không hợp lệ."));
-              }
+              if (!emailRegex.test(v))
+                return Promise.reject(new Error("Email không hợp lệ"));
               return Promise.resolve();
             },
           },
@@ -302,24 +197,22 @@ export const AccountForm: React.FC<Props> = ({
         name="phone"
         label="Số điện thoại"
         rules={[
-          { required: true, message: "Vui lòng nhập số điện thoại." },
-          { max: 30, message: "Số điện thoại quá dài." },
+          { required: true, message: "Vui lòng nhập số điện thoại" },
+          { max: 30, message: "Số điện thoại quá dài" },
           {
             validator: (_, value: string) => {
               const raw = stripPhone(value || "");
               if (!raw) return Promise.resolve();
-              if (!vnMobile.test(raw)) {
+              if (!vnMobile.test(raw))
                 return Promise.reject(
                   new Error(
-                    "Số điện thoại không hợp lệ (VD: 0901234567 hoặc +84901234567)."
+                    "Số điện thoại không hợp lệ (VD: 0901234567 hoặc +84901234567)"
                   )
                 );
-              }
               const intl = toIntlPhone(raw);
               const local = toLocalPhone(raw);
-              if (!intl || !local) {
-                return Promise.reject(new Error("Số điện thoại không hợp lệ."));
-              }
+              if (!intl || !local)
+                return Promise.reject(new Error("Số điện thoại không hợp lệ"));
               return Promise.resolve();
             },
           },
@@ -332,16 +225,13 @@ export const AccountForm: React.FC<Props> = ({
         name="address"
         label="Địa chỉ"
         rules={[
-          { required: true, message: "Vui lòng nhập địa chỉ." },
-          {
-            min: 10,
-            message: "Địa chỉ quá ngắn, vui lòng nhập chi tiết hơn.",
-          },
-          { max: 255, message: "Địa chỉ quá dài (tối đa 255 ký tự)." },
+          { required: true, message: "Vui lòng nhập địa chỉ" },
+          { min: 10, message: "Địa chỉ quá ngắn, vui lòng nhập chi tiết hơn" },
+          { max: 255, message: "Địa chỉ quá dài (tối đa 255 ký tự)" },
           {
             pattern: /^[\p{L}\d\s,.'-]+$/u,
             message:
-              "Địa chỉ chỉ được chứa chữ, số, dấu phẩy, chấm, hoặc gạch nối.",
+              "Địa chỉ chỉ được chứa chữ, số, dấu phẩy, chấm, hoặc gạch nối",
           },
         ]}
       >
@@ -352,7 +242,7 @@ export const AccountForm: React.FC<Props> = ({
         <Form.Item
           name="gender"
           label="Giới tính"
-          rules={[{ required: true, message: "Vui lòng chọn giới tính." }]}
+          rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}
         >
           <Select placeholder="Chọn giới tính" options={genderOptions} />
         </Form.Item>
@@ -361,27 +251,22 @@ export const AccountForm: React.FC<Props> = ({
           name="dateOfBirth"
           label="Ngày sinh"
           rules={[
-            { required: true, message: "Vui lòng chọn ngày sinh." },
+            { required: true, message: "Vui lòng chọn ngày sinh" },
             {
               validator: (_, value: Dayjs) => {
                 if (!value) return Promise.resolve();
                 const today = dayjs();
-                if (value.isAfter(today)) {
+                if (value.isAfter(today))
                   return Promise.reject(
-                    new Error("Ngày sinh không thể là ngày trong tương lai.")
+                    new Error("Ngày sinh không thể là tương lai")
                   );
-                }
                 const age = today.diff(value, "year");
-                if (age < 14) {
+                if (age < 14)
+                  return Promise.reject(new Error("Tuổi tối thiểu là 14"));
+                if (age > 100)
                   return Promise.reject(
-                    new Error("Tuổi tối thiểu để tạo tài khoản là 14.")
+                    new Error("Tuổi tối đa cho phép là 100")
                   );
-                }
-                if (age > 100) {
-                  return Promise.reject(
-                    new Error("Tuổi tối đa cho phép là 100.")
-                  );
-                }
                 return Promise.resolve();
               },
             },
@@ -398,17 +283,16 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       </div>
 
-      {/* Thông tin đăng nhập */}
       <Form.Item
         name="password"
         label="Mật khẩu"
         rules={[
-          { required: true, message: "Vui lòng nhập mật khẩu." },
+          { required: true, message: "Vui lòng nhập mật khẩu" },
           {
             pattern:
               /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[\w@$!%*?&]{8,}$/,
             message:
-              "Mật khẩu tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
+              "Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
           },
         ]}
       >
@@ -423,13 +307,12 @@ export const AccountForm: React.FC<Props> = ({
         label="Xác nhận mật khẩu"
         dependencies={["password"]}
         rules={[
-          { required: true, message: "Vui lòng xác nhận mật khẩu." },
+          { required: true, message: "Vui lòng xác nhận mật khẩu" },
           ({ getFieldValue }) => ({
             validator(_, value) {
-              if (!value || getFieldValue("password") === value) {
+              if (!value || getFieldValue("password") === value)
                 return Promise.resolve();
-              }
-              return Promise.reject(new Error("Mật khẩu xác nhận không khớp."));
+              return Promise.reject(new Error("Mật khẩu xác nhận không khớp"));
             },
           }),
         ]}
