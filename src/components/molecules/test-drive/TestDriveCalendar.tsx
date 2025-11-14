@@ -36,8 +36,8 @@ export const TestDriveCalendar = ({
   // Màu trạng thái
   const statusColorMap: Record<string, string> = {
     PENDING: "#fca117", // vàng cam
-    CONFIRMED: "#237804", // xanh lá
-    COMPLETED: "#096dd9", // xanh dương
+    CONFIRMED: "#096dd9", // xanh lá
+    COMPLETED: "#237804", // xanh dương
     CANCELLED: "#cf1322", // đỏ
   };
 

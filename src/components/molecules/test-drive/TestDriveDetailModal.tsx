@@ -7,13 +7,12 @@ import {
   Typography,
   Divider,
 } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useState } from "react";
 
 import {
   useTestDriveDetailQuery,
-  useDeleteTestDriveMutation,
+  useUpdateStatusTestDriveMutation,
 } from "../../../service/testDriveService";
 import { DeleteConfirm } from "../../organisms/DeleteConfirm";
 import { TestDriveEditModal } from "./TestDriveEditModal";
@@ -37,14 +36,15 @@ export const TestDriveDetailModal = ({
   onClose,
   onUpdated,
 }: Props) => {
-  const { data, isLoading } = useTestDriveDetailQuery(
-    testDriveId || undefined,
-    { enabled: !!testDriveId && open }
-  );
+ const { data, isLoading, refetch } = useTestDriveDetailQuery(
+  testDriveId || undefined,
+  { enabled: !!testDriveId && open }
+);
 
   const detail = data?.result;
 
-  const { mutateAsync: deleteTestDrive } = useDeleteTestDriveMutation();
+  const { mutateAsync: updateStatusTestDrive, isPending } = useUpdateStatusTestDriveMutation();
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -54,24 +54,24 @@ export const TestDriveDetailModal = ({
   const customer = useCustomerById(detail?.customerId).data?.result;
   const dealerStaff = useGetAccountById(detail?.salePersonId).data?.result.fullName;
 
-  const handleDelete = async () => {
+  const handleCancel = async () => {
     try {
-      await deleteTestDrive(testDriveId!);
-      toast.success("Đã xóa lịch lái thử!");
+      await updateStatusTestDrive({
+        id: detail.testDriveId,
+        status: "CANCELLED",
+      });
+      toast.success("Đã hủy lịch!");
+      await refetch();  
       setConfirmOpen(false);
       onUpdated?.();
       onClose();
     } catch {
-      toast.error("Không thể xóa lịch lái thử!");
+      toast.error("Không thể hủy lịch!");
     }
   };
 
   const status = detail?.status;
-  const isCompletedOrCanceled =
-    status === "COMPLETED" || status === "CANCELLED";
-  const isConfirmed = status === "CONFIRMED";
 
-  // ==== UI Helper row ====
   const RowItem = ({
     label,
     value,
@@ -171,36 +171,81 @@ export const TestDriveDetailModal = ({
           </div>
         )}
 
-        {role === "DEALER_STAFF" && (
-          <div className="flex justify-end mt-6 gap-2">
-            <Button
-              icon={<DeleteOutlined />}
-              danger
-              disabled={isCompletedOrCanceled}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Xóa
-            </Button>
+        {/* {role === "DEALER_STAFF" && role === "ADMIN" &&( */}
+        <div className="flex justify-end mt-6 gap-2">
+
+          {/* === CASE 1: PENDING → hiển thị nút DUYỆT === */}
+          {status === "PENDING" && (
             <Button
               type="primary"
-              icon={<EditOutlined />}
-              disabled={isCompletedOrCanceled || isConfirmed}
-              onClick={() => setEditOpen(true)}
+              loading={isPending}
+              onClick={async () => {
+                try {
+                  await updateStatusTestDrive({
+                    id: detail.testDriveId,
+                    status: "CONFIRMED",
+                  });
+                  toast.success("Đã duyệt lịch lái thử!");
+                  await refetch();  
+                  onUpdated?.();
+                  onClose();
+                } catch {
+                  toast.error("Không thể duyệt lịch!");
+                }
+              }}
             >
-              Chỉnh sửa
+              Duyệt lịch
             </Button>
-          </div>
-        )}
+          )}
+
+          {/* === CASE 2: CONFIRMED → hiển thị hoàn thành + hủy === */}
+          {status === "CONFIRMED" && (
+            <>
+              <Button
+                type="primary"
+                loading={isPending}
+                onClick={async () => {
+                  try {
+                    await updateStatusTestDrive({
+                      id: detail.testDriveId,
+                      status: "COMPLETED",
+                    });
+                    toast.success("Đã đánh dấu hoàn thành!");
+                    await refetch();  
+                    onUpdated?.();
+                    onClose();
+                  } catch {
+                    toast.error("Không thể cập nhật trạng thái!");
+                  }
+                }}
+                className="!bg-[#4b7d3e]"
+              >
+                Hoàn thành
+              </Button>
+
+              <Button
+                danger
+                loading={isPending}
+                onClick={() => setConfirmOpen(true)}
+              >
+                Hủy
+              </Button>
+            </>
+          )}
+
+          {/* === CASE 3: other status → không hiển thị gì (hoàn thành/hủy rồi) === */}
+        </div>
+        {/* )} */}
       </Modal>
 
       <DeleteConfirm
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
-        onConfirm={handleDelete}
-        message="Bạn có chắc chắn muốn xóa lịch lái thử này không?"
-        okText="Xóa"
+        onConfirm={handleCancel}
+        message="Bạn có chắc chắn muốn hủy lịch lái thử này không?"
+        okText="Hủy"
         danger
-        title="Xác nhận xóa lịch lái thử"
+        title="Xác nhận hủy lịch lái thử"
       />
 
       <TestDriveEditModal
