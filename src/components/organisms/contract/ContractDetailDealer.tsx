@@ -29,7 +29,6 @@ import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
-import { VehicleUnitCard } from "../../molecules/contract/VehicleUnitCard";
 
 
 export const ContractDetailDealer = () => {
@@ -168,10 +167,9 @@ export const ContractDetailDealer = () => {
             </p>
 
             <p>
-              <b>BÊN A (Hãng xe):</b> Công ty TNHH EMOB Electric Vehicle
+              <b>BÊN A (Hãng xe):</b> Công ty TNHH Xe Điện EMOB 
               <br />
-              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên hãng
-              xe
+              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên hãng xe
               <br />
               Địa chỉ: Tòa nhà FPTU, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
             </p>
@@ -179,8 +177,7 @@ export const ContractDetailDealer = () => {
             <p>
               <b>BÊN B (Đại lý):</b>  {dealer?.name ?? "______________________"}
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên đại
-              lý
+              Đại diện: Ông/Bà ______________________ - Chức vụ: ______________________
               <br />
               Địa chỉ: {dealer?.address ?? "______________________"}
             </p>
@@ -222,7 +219,6 @@ export const ContractDetailDealer = () => {
               </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
-
 
             <p>
               <b>Điều 4. Quyền và nghĩa vụ của các bên</b>
@@ -286,22 +282,6 @@ export const ContractDetailDealer = () => {
                           </p>
                         </div>
 
-                        <Divider />
-
-                        {/* DANH SÁCH XE CON */}
-                        <div className="mt-4">
-                          <b className="pl-4">Danh sách xe thuộc lô (chi tiết từng xe):</b>
-
-                          {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
-                            <div className="grid grid-cols-3 gap-4 mt-4">
-                              {item.vehicleUnitIds.map((uid: string) => (
-                                <VehicleUnitCard key={uid} vehicleUnitId={uid} />
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 ml-2 mt-1">Không có</p>
-                          )}
-                        </div>
                       </div>
                     );
                   })}
@@ -333,18 +313,14 @@ export const ContractDetailDealer = () => {
           <div className="flex justify-between items-start mt-8 mr-10 ml-10">
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
-                (đã ký)
-              </div>
               <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
 
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex text-green-900">
-                {contract?.status === "SIGNED" ? "(đã ký)" : ""}
-              </div>
               <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
           </div>
 

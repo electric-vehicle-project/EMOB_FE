@@ -9,6 +9,7 @@ import {
 } from "../../../service/deliveryService";
 import { toast } from "react-toastify";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { VehicleUnitCard } from "../../molecules/contract/VehicleUnitCard";
 
 export const DeliveryDealerDetail = () => {
     const navigate = useNavigate();
@@ -150,14 +151,14 @@ export const DeliveryDealerDetail = () => {
                         </div>
 
                         <div className="col-span-2">
-                            <p className="text-sm text-gray-500">Danh sách xe (ID)</p>
+                            <b className="pl-4">Danh sách xe vận chuyển (chi tiết từng xe):</b>
                             <div className="p-3 bg-gray-50 rounded-lg max-h-60 overflow-y-auto border border-gray-200">
                                 {delivery.vehicleIds?.length ? (
-                                    <ul className="list-disc pl-5 text-sm space-y-1">
-                                        {delivery.vehicleIds.map((v: string) => (
-                                            <li key={v}>{v}</li>
+                                    <div className="grid grid-cols-3 gap-4 mt-4">
+                                        {delivery.vehicleIds.map((uid: string) => (
+                                            <VehicleUnitCard key={uid} vehicleUnitId={uid} />
                                         ))}
-                                    </ul>
+                                    </div>
                                 ) : (
                                     <p className="italic text-gray-400">Không có dữ liệu xe</p>
                                 )}

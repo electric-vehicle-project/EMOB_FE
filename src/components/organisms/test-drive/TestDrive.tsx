@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/pages/test-drive/TestDrivePage.tsx
 import { useState } from "react";
 import {
   Card,
@@ -11,7 +10,7 @@ import {
   Pagination,
   Space,
 } from "antd";
-import { SlidersOutlined, PlusOutlined } from "@ant-design/icons";
+import { FilterOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTestDriveQuery } from "../../../service/testDriveService";
 import { TestDriveCalendar } from "../../molecules/test-drive/TestDriveCalendar";
 import { TestDriveCreateModal } from "../../molecules/test-drive/TestDriveCreateModal";
@@ -199,7 +198,7 @@ export const TestDrive = () => {
               >
                 <Button
                   type="text"
-                  icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+                  icon={<FilterOutlined style={{ fontSize: 20 }} />}
                   className="text-gray-600 hover:text-black"
                 />
               </Dropdown>

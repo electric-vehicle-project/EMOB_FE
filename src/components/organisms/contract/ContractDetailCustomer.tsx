@@ -346,18 +346,14 @@ export const ContractDetailCustomer = () => {
           <div className="flex justify-between items-start mt-8 mr-10 ml-10">
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
-                (đã ký)
-              </div>
               <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
 
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex text-green-900">
-                {contract?.status === "SIGNED" ? "(đã ký)" : ""}
-              </div>
               <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
           </div>
 
