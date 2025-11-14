@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   Select,
@@ -32,7 +32,7 @@ export const ContractListCurrentDealer = () => {
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
 
-  const { data } = useContractQueryByCurrentDealer(
+  const { data, refetch } = useContractQueryByCurrentDealer(
     {},
     {
       page,
@@ -43,6 +43,10 @@ export const ContractListCurrentDealer = () => {
       keyword,
     }
   );
+
+  useEffect(() => {
+      refetch();
+    });
 
   const contracts = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;

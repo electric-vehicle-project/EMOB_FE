@@ -9,8 +9,7 @@ import {
   Select,
   InputNumber,
   Form,
-  DatePicker,
-  Table,
+  DatePicker
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -30,7 +29,6 @@ import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
-import { ROUTES } from "../../../model/routePaths";
 
 
 export const ContractDetailDealer = () => {
@@ -118,13 +116,7 @@ export const ContractDetailDealer = () => {
       {/* Thanh điều hướng + nút in */}
       <div className="flex justify-between items-center mb-3">
         <div
-          onClick={() => {
-            if (user.role === "EVM_STAFF" || user.role === "ADMIN")
-              navigate("/" + user.role.toLowerCase() + "/" + ROUTES.CONTRACT);
-            if (user.role === "DEALER_STAFF" || user.role === "MANAGER")
-              navigate("/" + user.role.toLowerCase() + "/" + ROUTES.CONTRACT_WITH_EVM);
-          }
-          }
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
         >
           <ArrowLeftOutlined />
@@ -252,7 +244,7 @@ export const ContractDetailDealer = () => {
                 </p>
 
                 <div className="space-y-6">
-                  {(contract?.items || []).map((item, index) => (
+                  {(contract?.items || []).map((item:any, index:any) => (
                     <div
                       key={item.id}
                       className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"

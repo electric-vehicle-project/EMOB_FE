@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   Select,
@@ -31,7 +31,7 @@ export const ContractListAllCustomers = () => {
   const [filterOpen, setFilterOpen] = useState(false);
 
   // API query
-  const { data } = useContractQueryByDealer(
+  const { data, refetch } = useContractQueryByDealer(
     {},
     {
       page,
@@ -50,10 +50,15 @@ export const ContractListAllCustomers = () => {
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
 
+  useEffect(() => {
+    refetch();
+  });
+
   // ==========================
   // CUSTOM DROPDOWN FILTER PANEL
   // ==========================
   const FilterContent = () => {
+
     return (
       <div
         onClick={(e) => e.stopPropagation()}

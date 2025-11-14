@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   Select,
@@ -26,7 +26,7 @@ export const ContractListAllDealers = () => {
 
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const { data } = useContractQueryByEVM(
+  const { data, refetch } = useContractQueryByEVM(
     {},
     {
       page,
@@ -37,6 +37,10 @@ export const ContractListAllDealers = () => {
       keyword,
     }
   );
+
+  useEffect(() => {
+    refetch();
+  });
 
   const contracts = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;

@@ -30,7 +30,6 @@ import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useCustomerById } from "../../../service/customerService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
-import { ROUTES } from "../../../model/routePaths";
 
 export const ContractDetailCustomer = () => {
   const navigate = useNavigate();
@@ -45,7 +44,7 @@ export const ContractDetailCustomer = () => {
   const contract = data?.result;
   const saleOrder = useSaleOrderById(contract?.orderId).data?.result;
   const customer = useCustomerById(saleOrder?.customerId).data?.result;
-  const dealer = useDealerByIdQuery(user.dealerId).data?.result;
+  const dealer = useDealerByIdQuery(user?.dealerId).data?.result;
    
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -117,7 +116,7 @@ export const ContractDetailCustomer = () => {
       {/* Thanh điều hướng + nút in */}
       <div className="flex justify-between items-center mb-3">
         <div
-          onClick={() => navigate("/"+ user.role.toLowerCase() + "/" + ROUTES.CONTRACT)}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
         >
           <ArrowLeftOutlined />
@@ -246,7 +245,7 @@ export const ContractDetailCustomer = () => {
                 </p>
 
                 <div className="space-y-6">
-                  {(contract?.items || []).map((item, index) => (
+                  {(contract?.items || []).map((item:any, index:any) => (
                     <div
                       key={item.id}
                       className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
