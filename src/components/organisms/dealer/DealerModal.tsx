@@ -1,4 +1,4 @@
-import { Modal, Button, message } from "antd";
+import { Modal, Button } from "antd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "antd/es/form/Form";
 import type { IDealer, Region } from "../../../model/Dealer";
