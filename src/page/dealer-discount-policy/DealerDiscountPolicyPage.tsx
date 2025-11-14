@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useDeleteDiscountPolicy,
   useGetAllDealerDiscountPolicies,
+  useGetAllDealerDiscountPoliciesByDealer,
   useGetAllDealers,
 } from "../../service/dealerDiscountPolicyService";
 import { useGetVehicles } from "../../service/vehicleService";
@@ -22,6 +23,8 @@ import UpdateDiscountPolicyModal from "./UpdateDiscountPolicyModal";
 import ViewDiscountPolicyModal from "./ViewDiscountPolicyModal";
 import BulkUpdateDiscountPolicyModal from "./BulkUpdateDiscountPolicyModal";
 import BulkDeleteDiscountPolicyModal from "./BulkDeleteDiscountPolicyModal";
+import { useCurrentUser } from "../../utils/getCurrentUser";
+import { toast } from "react-toastify";
 
 const DealerDiscountPolicyPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -30,6 +33,8 @@ const DealerDiscountPolicyPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
 
+  const currentUser = useCurrentUser();
+  const role = currentUser?.role;
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -39,22 +44,26 @@ const DealerDiscountPolicyPage: React.FC = () => {
 
   function useDebounce<T>(value: T, delay = 400): T {
     const [debouncedValue, setDebouncedValue] = useState(value);
-
     useEffect(() => {
       const handler = setTimeout(() => setDebouncedValue(value), delay);
       return () => clearTimeout(handler);
     }, [value, delay]);
-
     return debouncedValue;
   }
   const debouncedSearch = useDebounce(searchTerm, 500);
-  // Query: danh sách chính sách chiết khấu
-  const { data, isLoading, refetch } = useGetAllDealerDiscountPolicies(
+
+  let hookToUse =
+    role === "ADMIN" || role === "EVM_STAFF"
+      ? useGetAllDealerDiscountPolicies
+      : useGetAllDealerDiscountPoliciesByDealer;
+
+  const { data, isLoading, refetch } = hookToUse(
     page - 1,
     pageSize,
     debouncedSearch
   );
-  // Fetch danh sách đại lý và xe (prefetch để hiển thị tên)
+
+  // Fetch danh sách đại lý và xe
   const { data: allDealersData } = useGetAllDealers(0, 200);
   const { data: allVehiclesData } = useGetVehicles(0, 200);
 
@@ -77,12 +86,15 @@ const DealerDiscountPolicyPage: React.FC = () => {
     return map;
   }, [allVehiclesData]);
 
-  // delete policy
+  // Xóa chính sách (chỉ Admin mới được)
   const handleDelete = (id: string) => {
+    if (role !== "ADMIN") {
+      toast.warning("Bạn không có quyền xóa chính sách!");
+      return;
+    }
     deletePolicy.mutate(id, {
       onSuccess: async () => {
-        message.success("✅ Xóa chính sách thành công!");
-        // Xóa record khỏi cache
+        toast.success("Xóa chính sách thành công!");
         queryClient.setQueryData(
           ["dealerDiscountPolicies", page - 1, pageSize, searchTerm],
           (oldData: any) => {
@@ -99,25 +111,16 @@ const DealerDiscountPolicyPage: React.FC = () => {
         await queryClient.invalidateQueries({
           predicate: (q) => q.queryKey[0] === "dealerDiscountPolicies",
         });
-        await refetch(); // Refresh UI ngay lập tức
+        await refetch();
       },
       onError: (error: any) => {
-        message.error(error?.response?.data?.message || "❌ Xóa thất bại!");
+        toast.error(error?.response?.data?.message || "Xóa thất bại!");
       },
     });
   };
 
-  // hiển thị trên UI
+  // Cấu hình cột bảng
   const columns: ColumnsType<IDiscountPolicy> = [
-    {
-      title: "Mã chính sách",
-      dataIndex: "id",
-      key: "id",
-      width: 140,
-      render: (id: string) => (
-        <span className="font-mono text-gray-700">{id.slice(0, 8)}...</span>
-      ),
-    },
     {
       title: "Đại lý",
       dataIndex: "dealerId",
@@ -166,9 +169,6 @@ const DealerDiscountPolicyPage: React.FC = () => {
       width: 130,
       render: (date: string) =>
         date ? new Date(date).toLocaleDateString("vi-VN") : "—",
-      sorter: (a, b) =>
-        new Date(a.effectiveDate).getTime() -
-        new Date(b.effectiveDate).getTime(),
     },
     {
       title: "Ngày hết hạn",
@@ -177,8 +177,6 @@ const DealerDiscountPolicyPage: React.FC = () => {
       width: 130,
       render: (date: string) =>
         date ? new Date(date).toLocaleDateString("vi-VN") : "—",
-      sorter: (a, b) =>
-        new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
     },
     {
       title: "Trạng thái",
@@ -196,87 +194,85 @@ const DealerDiscountPolicyPage: React.FC = () => {
         const st = config[status] || { color: "default", text: status };
         return <Tag color={st.color}>{st.text}</Tag>;
       },
-      filters: [
-        { text: "Sắp diễn ra", value: "UPCOMING" },
-        { text: "Đang hoạt động", value: "ACTIVE" },
-        { text: "Hết hạn", value: "EXPIRED" },
-        { text: "Ngừng hiệu lực", value: "INACTIVE" },
-      ],
-      onFilter: (value, record) => record.status === value,
     },
     {
       title: "Thao tác",
       key: "actions",
-      width: 200,
+      width: 220,
       align: "center",
       fixed: "right",
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedPolicyId(record.id);
-              setIsViewModalOpen(true);
-            }}
-          >
-            Chi tiết
-          </Button>
+      render: (_, record) => {
+        const isInactive = record.status === "INACTIVE";
 
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            style={{
-              backgroundColor: "#627254",
-              color: "white",
-              border: "none",
-            }}
-            onClick={() => {
-              setSelectedPolicyId(record.id);
-              setIsUpdateModalOpen(true);
-            }}
-            disabled={record.status === "EXPIRED"}
-          >
-            Sửa
-          </Button>
-
-          <Popconfirm
-            title="Bạn có chắc muốn xóa chính sách này?"
-            description="Hành động này không thể hoàn tác."
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
+        return (
+          <Space size="small">
+            {/* Luôn hiển thị nút xem chi tiết */}
             <Button
               size="small"
-              icon={<DeleteOutlined />}
-              style={{
-                backgroundColor: "red",
-                color: "white",
-                border: "none",
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setSelectedPolicyId(record.id);
+                setIsViewModalOpen(true);
               }}
-              disabled={record.status === "EXPIRED"}
             >
-              Xóa
+              Chi tiết
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+
+            {/* Chỉ Admin + KHÔNG INACTIVE mới được sửa */}
+            {role === "ADMIN" && !isInactive && (
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                style={{
+                  backgroundColor: "#627254",
+                  color: "white",
+                  border: "none",
+                }}
+                onClick={() => {
+                  setSelectedPolicyId(record.id);
+                  setIsUpdateModalOpen(true);
+                }}
+              >
+                Sửa
+              </Button>
+            )}
+
+            {/* Chỉ Admin + KHÔNG INACTIVE mới được xóa */}
+            {role === "ADMIN" && !isInactive && (
+              <Popconfirm
+                title="Bạn có chắc muốn xóa chính sách này?"
+                description="Hành động này không thể hoàn tác."
+                onConfirm={() => handleDelete(record.id)}
+                okText="Xóa"
+                cancelText="Hủy"
+              >
+                <Button
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  style={{
+                    backgroundColor: "red",
+                    color: "white",
+                    border: "none",
+                  }}
+                >
+                  Xóa
+                </Button>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
-  const policyData = (data?.result?.data || []).filter(
-    (p: IDiscountPolicy) => p.status !== "INACTIVE"
-  );
+  const policyData = data?.result?.data || [];
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
       <SectionTitle text="Quản lý chính sách chiết khấu" />
 
       <div className="flex justify-between items-center mb-4">
-        {/* Ô tìm kiếm nằm bên trái */}
         <Input
           placeholder="Tìm kiếm theo mã, dealer, vehicle..."
           allowClear
@@ -287,41 +283,42 @@ const DealerDiscountPolicyPage: React.FC = () => {
           className="rounded-md shadow-sm border-gray-300 focus:border-green-600 focus:ring-green-600"
         />
 
-        {/* Nhóm nút hành động bên phải */}
-        <div className="flex items-center gap-3">
-          <Button
-            type="default"
-            className="bg-blue-600 text-white"
-            onClick={() => setIsBulkModalOpen(true)}
-          >
-            ⚙️ Cập nhật hàng loạt
-          </Button>
+        {/* Các nút hành động: chỉ hiển thị cho Admin */}
+        {role === "ADMIN" && (
+          <div className="flex items-center gap-3">
+            <Button
+              type="default"
+              className="bg-blue-600 text-white"
+              onClick={() => setIsBulkModalOpen(true)}
+            >
+              ⚙️ Cập nhật hàng loạt
+            </Button>
 
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="bg-green-700"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            Tạo chính sách mới
-          </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              className="bg-green-700"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Tạo chính sách mới
+            </Button>
 
-          <Button
-            style={{
-              backgroundColor: "red", // tương đương bg-green-600
-              color: "white",
-              border: "none",
-            }}
-            icon={<DeleteOutlined />}
-            onClick={() => setIsBulkDeleteModalOpen(true)}
-            className="bg-red-600 text-white border-none"
-          >
-            Xóa hàng loạt
-          </Button>
-        </div>
+            <Button
+              style={{
+                backgroundColor: "red",
+                color: "white",
+                border: "none",
+              }}
+              icon={<DeleteOutlined />}
+              onClick={() => setIsBulkDeleteModalOpen(true)}
+              className="bg-red-600 text-white border-none"
+            >
+              Xóa hàng loạt
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Table */}
       <Table
         columns={columns}
         dataSource={policyData}
@@ -340,7 +337,6 @@ const DealerDiscountPolicyPage: React.FC = () => {
           pageSizeOptions: ["10", "20", "50", "100"],
         }}
         bordered
-        // scroll={{ x: 1500 }}
         className="bg-white rounded-lg shadow-sm"
         tableLayout="auto"
       />
@@ -356,7 +352,7 @@ const DealerDiscountPolicyPage: React.FC = () => {
           }}
         />
       )}
-      {/* update modal */}
+
       {isUpdateModalOpen && selectedPolicyId && (
         <UpdateDiscountPolicyModal
           open={isUpdateModalOpen}

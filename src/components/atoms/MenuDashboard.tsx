@@ -21,38 +21,45 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
   };
 
   return (
-    <div className="menu-stagger">
+    <div className="menu-stagger max-h-[65vh] overflow-y-auto">
       {items.map((item, index) => {
         const active = isActive(item);
         const hasChildren = item.children?.length;
 
         const BaseBtn = (
           <div
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer btn-press with-ripple hover-lift smooth-transform
+            className={`flex items-center gap-3 ${
+              collapsed ? "px-3 py-3 justify-center" : "px-4 py-3"
+            } rounded-xl cursor-pointer btn-press with-ripple hover-lift smooth-transform
               transition-all duration-500 ease-smooth
               ${
                 active
                   ? "!bg-[var(--default-color)] text-white shadow-md"
                   : "btn-glass-dark ripple-dark !text-white"
-              }`}
+              } mr-0`}
           >
-            <span className="text-[20px] text-white">{item.icon}</span>
+            <span className="text-[20px] text-white text-center">
+              {item.icon}
+            </span>
 
             {/* Label */}
-            <span
-              className={`menu-label-box text-sm font-medium text-white transform origin-left menu-label-transition
+
+            {!collapsed && (
+              <span
+                className={`menu-label-box text-sm font-medium text-white transform origin-left menu-label-transition
                 ${
                   !collapsed && showLabels
                     ? "opacity-100 scale-x-100"
                     : "opacity-0 scale-x-0"
                 }`}
-              style={{
-                transitionDelay:
-                  !collapsed && showLabels ? `${150 + index * 80}ms` : "0ms",
-              }}
-            >
-              {item.label}
-            </span>
+                style={{
+                  transitionDelay:
+                    !collapsed && showLabels ? `${150 + index * 80}ms` : "0ms",
+                }}
+              >
+                {item.label}
+              </span>
+            )}
           </div>
         );
 
@@ -76,7 +83,7 @@ function MenuDashboard({ items, collapsed, showLabels }: Props) {
         return (
           <div
             key={item.key}
-            className="group relative mb-2"
+            className="group relative mb-[20px]"
             onMouseEnter={() => hasChildren && setActiveKey(item.key || null)}
             onMouseLeave={() => setActiveKey(null)}
           >

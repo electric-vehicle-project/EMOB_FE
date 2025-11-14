@@ -1,166 +1,206 @@
-// src/page/promotions/DealerPromotionsPage.tsx
-import { useEffect, useMemo, useState } from "react";
-import { Button, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router";
+import { useState, useMemo } from "react";
+import { Button, Input, Select, Space } from "antd";
+import { toast } from "react-toastify";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-
 import type { RootState } from "../../redux/store";
 import type { Promotion } from "../../model/Promotion";
 import {
-  usePromotionDelete,
   usePromotionList,
+  usePromotionDelete,
 } from "../../service/promotionService";
-
 import { PromotionTable } from "../../components/organisms/promotion/PromotionTable";
-import { PromotionFilterBar } from "../../components/organisms/promotion/PromotionFilterBar";
 import { PromotionDeleteConfirm } from "../../components/organisms/promotion/PromotionDeleteConfirm";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { useDebounce } from "../../hook/useDebounce";
 
-const DealerPromotionsPage: React.FC = () => {
+const STATUS_OPTIONS = [
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "UPCOMING", value: "UPCOMING" },
+  { label: "EXPIRED", value: "EXPIRED" },
+  { label: "INACTIVE", value: "INACTIVE" },
+];
+
+export const DealerPromotionsPage: React.FC = () => {
   const navigate = useNavigate();
-  const user = useSelector((state: RootState) => state.user);
+  const user = useSelector((s: RootState) => s.user);
+  const role =
+    (user?.role as "MANAGER" | "DEALER_STAFF" | "ADMIN" | "EVM_STAFF") ??
+    "DEALER_STAFF";
 
-  // ========================
-  // State
-  // ========================
-  const [scope, setScope] = useState<"LOCAL" | "GLOBAL">("LOCAL");
+  const [scope, setScope] = useState<string[]>(["LOCAL"]);
+  const [keyword, setKeyword] = useState("");
+  const [status, setStatus] = useState<string | undefined>(undefined);
+  const debouncedKeyword = useDebounce(keyword, 400);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [sortField, setSortField] = useState("createAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const { data, isLoading, isFetching, refetch } = usePromotionList(
+    scope,
+    page,
+    size,
+    debouncedKeyword,
+    status,
+    sortField,
+    sortDir
+  );
+
+  const promotions: Promotion[] = useMemo(
+    () => (data?.result?.data as Promotion[]) ?? [],
+    [data]
+  );
+  const totalElements = useMemo(
+    () => data?.result?.metadata?.totalElements ?? 0,
+    [data]
+  );
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
   );
+  const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
 
-  // ========================
-  // Data
-  // ========================
-  const { data, isLoading, isFetching, refetch } = usePromotionList(
-    scope,
-    0,
-    10
-  );
-  const promotions: Promotion[] =
-    ((data as any)?.result?.data as Promotion[]) ?? [];
-
-  // ✅ Refetch khi đổi scope
-  useEffect(() => {
-    refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope]);
-
-  // ========================
-  // Role-based Permission
-  // ========================
-  const role = (user as any)?.role as
-    | "ADMIN"
-    | "MANAGER"
-    | "DEALER_STAFF"
-    | "EVM_STAFF"
-    | undefined;
-
-  // ✅ Quyền theo scope
-  const isGlobalScope = scope === "GLOBAL";
-
-  const canCreate = !isGlobalScope && role === "DEALER_STAFF"; // chỉ LOCAL + DEALER_STAFF
-  const canEdit =
-    !isGlobalScope && (role === "MANAGER" || role === "DEALER_STAFF");
-  const canDelete = !isGlobalScope && role === "MANAGER";
-
-  // ========================
-  // Summary
-  // ========================
-  const statusCounts = useMemo(() => {
-    const counts = { all: 0, active: 0, upcoming: 0, expired: 0 };
-    promotions.forEach((p) => {
-      counts.all++;
-      if (p.status === "ACTIVE") counts.active++;
-      else if (p.status === "UPCOMING") counts.upcoming++;
-      else if (p.status === "EXPIRED") counts.expired++;
-    });
-    return counts;
-  }, [promotions]);
-
-  // ========================
-  // Handlers
-  // ========================
   const handleCreate = () => {
-    if (!canCreate) return;
-    const base = `/${String(role || "").toLowerCase()}`;
-    navigate(`${base}/promotions/create`, { replace: false });
+    navigate(`/${role.toLowerCase()}/promotions/create`);
   };
 
   const handleEdit = (id: string) => {
-    if (!canEdit) return;
-    const base = `/${String(role || "").toLowerCase()}`;
-    navigate(`${base}/promotions/edit/${id}`, { replace: false });
+    navigate(`/${role.toLowerCase()}/promotions/edit/${id}`);
   };
 
-  const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
-
   const handleDeleteClick = (id: string) => {
-    if (!canDelete) return;
     const target = promotions.find((p) => p.id === id);
     if (!target) return;
     setSelectedPromotion(target);
     setConfirmOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (!selectedPromotion) return;
     try {
       await deletePromotion(selectedPromotion.id);
-      message.success("Đã xoá khuyến mãi thành công!");
+      toast.success("Đã xoá khuyến mãi thành công!");
       refetch();
     } catch {
-      message.error("Không thể xoá khuyến mãi này!");
+      toast.error("Không thể xoá khuyến mãi này!");
     } finally {
       setConfirmOpen(false);
     }
   };
 
-  const listKey = `promotion-${scope}`;
+  const resetFilters = () => {
+    setScope(["LOCAL"]);
+    setKeyword("");
+    setStatus(undefined);
+    setSortField("createAt");
+    setSortDir("desc");
+    setPage(0);
+    setSize(10);
+    refetch();
+  };
 
-  // ========================
-  // Render
-  // ========================
   return (
     <CardWrapper>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi của đại lý
         </h2>
-        {canCreate && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-            className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
-          >
-            Tạo khuyến mãi
-          </Button>
-        )}
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+          className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
+        >
+          Tạo khuyến mãi
+        </Button>
       </div>
 
-      <PromotionFilterBar
-        counts={statusCounts}
-        defaultScope={scope}
-        onScopeChange={(s) => setScope(s)}
-      />
+      {/* --- Filter bar --- */}
+      <div className="mb-4">
+        <Space wrap size="middle">
+          <Select
+            allowClear
+            mode="multiple"
+            style={{ width: 300 }}
+            placeholder="Phạm vi áp dụng"
+            value={scope}
+            options={[
+              { label: "Toàn hệ thống (GLOBAL)", value: "GLOBAL" },
+              { label: "Cục bộ (LOCAL)", value: "LOCAL" },
+            ]}
+            onChange={(vals) => {
+              setScope(vals.length ? vals : ["LOCAL"]);
+              setPage(0);
+            }}
+          />
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm theo tên khuyến mãi..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ width: 300 }}
+          />
+          <Select
+            allowClear
+            style={{ width: 240 }}
+            placeholder="Trạng thái"
+            value={status}
+            options={STATUS_OPTIONS}
+            onChange={(val) => {
+              setStatus(val);
+              setPage(0);
+            }}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={resetFilters}
+            type="primary"
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
 
       <PromotionTable
-        key={listKey}
         data={promotions}
         loading={isLoading || isFetching}
-        canEdit={canEdit}
-        canDelete={canDelete}
+        role={role}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        sortField={sortField}
+        sortDir={sortDir}
+        onChangeSort={(field, order) => {
+          setSortField(field || "createAt");
+          setSortDir(order === "ascend" ? "asc" : "desc");
+          setPage(0);
+        }}
+        pagination={{
+          current: page + 1,
+          pageSize: size,
+          total: totalElements,
+          showSizeChanger: true,
+          onChange: (p, s) => {
+            setPage(p - 1);
+            setSize(s ?? 10);
+          },
+          position: ["bottomCenter"],
+          showTotal: (t) => `Tổng cộng ${t} khuyến mãi`,
+        }}
       />
 
       <PromotionDeleteConfirm
         open={confirmOpen}
         promotionName={selectedPromotion?.name}
         onCancel={() => setConfirmOpen(false)}
-        onConfirm={handleDelete}
+        onConfirm={handleConfirmDelete}
         loading={isPending}
       />
     </CardWrapper>
@@ -168,4 +208,3 @@ const DealerPromotionsPage: React.FC = () => {
 };
 
 export default DealerPromotionsPage;
-export { DealerPromotionsPage };

@@ -1,24 +1,27 @@
-// src/components/organisms/saleOrder/SaleOrderCustomerSection.tsx
-import { useSaleOrdersByCustomerId } from "../../../service/saleOrderService";
+import { Card } from "antd";
+import { useSaleOrderListByCustomer } from "../../../service/saleOrderService";
 import type { SaleOrderResponse } from "../../../model/SaleOrder";
 import { SaleOrderTable } from "./SaleOrderTable";
-import { Card } from "antd";
 
 interface Props {
   customerId: string;
 }
 
-export const SaleOrderCustomerSection = ({ customerId }: Props) => {
-  const { data, isLoading, isFetching } = useSaleOrdersByCustomerId(
+export const SaleOrderCustomerSection: React.FC<Props> = ({ customerId }) => {
+  // Gọi API lấy danh sách đơn hàng theo khách hàng
+  const { data, isLoading, isFetching } = useSaleOrderListByCustomer(
     customerId,
     {
       page: 0,
       size: 10,
+      sortField: "createdAt",
+      sortDir: "desc",
     }
   );
 
+  // Ép kiểu an toàn, tránh eslint lỗi "any"
   const orders: SaleOrderResponse[] =
-    ((data as any)?.result?.data as SaleOrderResponse[]) ?? [];
+    (data?.result?.data as SaleOrderResponse[]) ?? [];
 
   return (
     <Card className="mt-6 shadow-md rounded-xl">
@@ -28,8 +31,6 @@ export const SaleOrderCustomerSection = ({ customerId }: Props) => {
       <SaleOrderTable
         data={orders}
         loading={isLoading || isFetching}
-        canDelete={false}
-        canComplete={false}
         onViewDetail={(id) => console.log("View SaleOrder", id)}
       />
     </Card>

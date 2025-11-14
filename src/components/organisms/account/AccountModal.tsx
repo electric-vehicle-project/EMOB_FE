@@ -1,9 +1,10 @@
-import { Modal, Button, message } from "antd";
+import { Modal, message } from "antd";
 import { useEffect } from "react";
 import { useForm } from "antd/es/form/Form";
 import { AccountForm } from "../../molecules/Account/AccountForm";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 import { Role } from "../../../model/Account";
+import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
@@ -12,6 +13,8 @@ interface Props {
   creatorRole: Role;
   creatingRole: Role | null;
   loading?: boolean;
+  /** Chỉ truyền khi Admin tạo Manager */
+  dealerOptions?: { label: string; value: string }[];
 }
 
 export const AccountModal = ({
@@ -21,6 +24,7 @@ export const AccountModal = ({
   creatorRole,
   creatingRole,
   loading = false,
+  dealerOptions = [],
 }: Props) => {
   const [form] = useForm();
 
@@ -36,7 +40,7 @@ export const AccountModal = ({
         response?: { data?: { message?: string } };
         message?: string;
       };
-      message.error(
+      toast.error(
         e?.response?.data?.message ||
           e?.message ||
           "Không thể lưu. Vui lòng thử lại."
@@ -44,34 +48,22 @@ export const AccountModal = ({
     }
   };
 
-  const footer = (
-    <div className="flex justify-center">
-      <Button
-        type="primary"
-        className="px-6 py-2 rounded-md w-full sm:w-auto bg-evm-green hover:!bg-[#4f6f52]"
-        loading={loading}
-        onClick={() => form.submit()}
-      >
-        Tạo tài khoản
-      </Button>
-    </div>
-  );
-
   return (
     <Modal
       open={open}
       title="Thêm tài khoản mới"
       onCancel={onClose}
-      footer={footer}
-      destroyOnHidden // ✅ thay destroyOnClose
+      destroyOnClose
       centered
+      footer={null}
     >
       <AccountForm
         form={form}
         onSubmit={handleFinish}
         loading={loading}
         role={creatorRole}
-        defaultCreatingRole={creatingRole}
+        defaultCreatingRole={creatingRole || undefined}
+        dealerOptions={dealerOptions}
       />
     </Modal>
   );

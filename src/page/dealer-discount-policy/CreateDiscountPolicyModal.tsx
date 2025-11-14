@@ -14,6 +14,7 @@ import {
 } from "../../service/dealerDiscountPolicyService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IDealer } from "../../model/Dealer";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
@@ -22,7 +23,6 @@ interface CreateDiscountPolicyModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
 const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
   open,
   onClose,
@@ -59,13 +59,13 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
 
       createMutation.mutate(payload, {
         onSuccess: () => {
-          message.success("Tạo chính sách chiết khấu thành công!");
+          toast.success("Tạo chính sách chiết khấu thành công!");
           form.resetFields();
           onClose();
           onSuccess();
         },
         onError: (error: any) => {
-          message.error(
+          toast.error(
             error?.response?.data?.message || "Tạo chính sách thất bại"
           );
         },
@@ -113,7 +113,7 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
                   .includes(input.toLowerCase())
               }
               options={dealers.map((dealer: IDealer) => ({
-                label: `${dealer.id}`,
+                label: `${dealer.name}`,
                 value: dealer.id,
               }))}
             />
@@ -139,7 +139,7 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
                   .includes(input.toLowerCase())
               }
               options={vehicles.map((vehicle: any) => ({
-                label: `${vehicle.id}`,
+                label: `${vehicle.model}`,
                 value: vehicle.id,
               }))}
             />
@@ -161,11 +161,7 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
             />
           </Form.Item>
 
-          <Form.Item
-            name="finalPrice"
-            label="Giá cuối cùng (VND)"
-            rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
-          >
+          <Form.Item name="finalPrice" label="Giá cuối cùng (VND)">
             <InputNumber
               style={{ width: "100%" }}
               min={0}

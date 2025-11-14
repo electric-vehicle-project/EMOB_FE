@@ -1,107 +1,103 @@
-import { Descriptions, Tag, Spin } from "antd";
-import dayjs from "dayjs";
-import { useGetAccountById } from "../../../service/accountService";
+import React from "react";
 import type { SaleOrderResponse } from "../../../model/SaleOrder";
 
 interface Props {
   order: SaleOrderResponse;
+  role?: "MANAGER" | "DEALER_STAFF" | "EVM_STAFF" | "ADMIN" | null;
 }
 
-export const SaleOrderDetailInfo = ({ order }: Props) => {
-  // ==========================
-  // 👤 Lấy thông tin người tạo (accountName)
-  // ==========================
-  const { data: accountData, isLoading: accountLoading } = useGetAccountById(
-    order.accountId ?? "",
-    {
-      enabled: !!order.accountId,
-    }
-  );
+// Tạo type phụ có thể chứa các field linh hoạt
+type PartialSaleOrder = SaleOrderResponse & {
+  totalPrice?: number;
+  totalAmount?: number;
+  grandTotal?: number;
+  customerName?: string;
+  customerFullName?: string;
+  customerEmail?: string;
+  email?: string;
+  createdAt?: string;
+  customerId?: string;
+};
 
-  const accountName =
-    accountData?.result?.fullName ??
-    accountData?.result?.username ??
-    order.accountId;
+export const SaleOrderDetailInfo: React.FC<Props> = ({ order, role }) => {
+  const isDealerStaff = role === "DEALER_STAFF";
+  const isEvmStaff = role === "EVM_STAFF";
+  const isManager = role === "MANAGER";
 
-  // ==========================
-  // 💅 UI Render
-  // ==========================
+  const o = order as PartialSaleOrder;
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Không xác định";
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN");
+  };
+
+  const customerName =
+    o.customerName ||
+    o.customerFullName ||
+    `Khách hàng #${o.customerId ?? "?"}`;
+
+  const customerEmail = o.customerEmail || o.email || "Không có email";
+
+  const total = o.totalPrice || o.totalAmount || o.grandTotal || 0;
+
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
-      <Descriptions
-        title="Thông tin chi tiết đơn hàng"
-        bordered
-        column={2}
-        labelStyle={{ fontWeight: 600, width: "40%" }}
-      >
-        <Descriptions.Item label="Mã đơn hàng">{order.id}</Descriptions.Item>
+    <div className="grid grid-cols-2 gap-y-3 gap-x-8 text-[15px]">
+      {/* ===== Thông tin cơ bản ===== */}
+      <p>
+        <strong>Mã đơn hàng:</strong> {o.id || "Không có"}
+      </p>
 
-        <Descriptions.Item label="Trạng thái">
-          <Tag
-            color={
-              order.status === "CREATED"
-                ? "blue"
-                : order.status === "COMPLETED"
-                ? "green"
-                : "red"
-            }
-          >
-            {order.status === "CREATED"
-              ? "Đã tạo"
-              : order.status === "COMPLETED"
-              ? "Hoàn tất"
-              : "Đã hủy"}
-          </Tag>
-        </Descriptions.Item>
+      <p>
+        <strong>Trạng thái:</strong>{" "}
+        {o.status === "CREATED"
+          ? "Đã tạo"
+          : o.status === "COMPLETED"
+          ? "Hoàn tất"
+          : o.status === "CANCELED"
+          ? "Đã hủy"
+          : "Không xác định"}
+      </p>
 
-        <Descriptions.Item label="Ngày tạo">
-          {dayjs(order.createdAt).format("HH:mm:ss DD/MM/YYYY")}
-        </Descriptions.Item>
+      <p>
+        <strong>Ngày tạo:</strong> {formatDate(o.createdAt)}
+      </p>
 
-        <Descriptions.Item label="Tổng số lượng">
-          {order.totalQuantity}
-        </Descriptions.Item>
+      <p>
+        <strong>Tổng tiền:</strong>{" "}
+        {total ? total.toLocaleString("vi-VN") + " ₫" : "Chưa có"}
+      </p>
 
-        <Descriptions.Item label="Tổng tiền (VNĐ)">
-          {order.totalPrice.toLocaleString("vi-VN")} ₫
-        </Descriptions.Item>
+      {/* ===== Thông tin khách hàng ===== */}
+      <p>
+        <strong>Khách hàng:</strong> {customerName}
+      </p>
 
-        {order.vatAmount && (
-          <Descriptions.Item label="VAT">
-            {order.vatAmount.toLocaleString("vi-VN")} ₫
-          </Descriptions.Item>
-        )}
+      <p>
+        <strong>Email khách hàng:</strong> {customerEmail}
+      </p>
 
-        {order.saleContractId && (
-          <Descriptions.Item label="Hợp đồng">
-            <Tag color="blue">Đã có hợp đồng #{order.saleContractId}</Tag>
-          </Descriptions.Item>
-        )}
+      {/* ===== Hiển thị thêm theo vai trò ===== */}
+      {isDealerStaff && (
+        <p className="col-span-2 text-[#4f6f52]">
+          <strong>Vai trò:</strong> Nhân viên đại lý - được phép hoàn tất hoặc
+          hủy đơn hàng.
+        </p>
+      )}
 
-        {accountLoading ? (
-          <Descriptions.Item label="Người tạo">
-            <Spin size="small" />
-          </Descriptions.Item>
-        ) : (
-          order.accountId && (
-            <Descriptions.Item label="Người tạo">
-              {accountName}
-            </Descriptions.Item>
-          )
-        )}
+      {isEvmStaff && (
+        <p className="col-span-2 text-[#4f6f52]">
+          <strong>Vai trò:</strong> Nhân viên EVM - theo dõi và xác nhận các đơn
+          hàng của đại lý.
+        </p>
+      )}
 
-        {order.customerId && (
-          <Descriptions.Item label="Mã khách hàng">
-            {order.customerId}
-          </Descriptions.Item>
-        )}
-
-        {order.dealerId && (
-          <Descriptions.Item label="Mã đại lý">
-            {order.dealerId}
-          </Descriptions.Item>
-        )}
-      </Descriptions>
+      {isManager && (
+        <p className="col-span-2 text-[#4f6f52]">
+          <strong>Vai trò:</strong> Quản lý đại lý - có thể xem tất cả đơn hàng
+          thuộc quyền quản lý.
+        </p>
+      )}
     </div>
   );
 };

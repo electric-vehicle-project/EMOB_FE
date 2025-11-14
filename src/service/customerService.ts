@@ -1,4 +1,3 @@
-// src/service/customerService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -9,21 +8,38 @@ import {
 
 const BASE_URL = "/customers";
 
-// ======= Lấy danh sách khách hàng (có phân trang) =======
-export const useCustomerList = (page = 0, size = 10) =>
-  createQueryHook("customerList", BASE_URL)({}, { page, size });
+// GET /customers?page=&size=&keyword=&status=&sortField=&sortDir=
+export const useCustomerList = (params?: {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  status?: string[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) =>
+  createQueryHook("customerList", BASE_URL)(
+    {},
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      keyword: params?.keyword ?? "",
+      status: params?.status, // truyền thẳng array
+      sortField: params?.sortField ?? "fullName",
+      sortDir: params?.sortDir ?? "desc",
+    }
+  );
 
-// ======= Lấy chi tiết khách hàng theo ID =======
+// GET /customers/{id}
 export const useCustomerById = createQueryWithPathParamHook(
   "customerDetail",
   BASE_URL
 );
 
-// ======= Tạo mới khách hàng =======
-export const useCustomerCreate = createMutationHook("customerCreate", BASE_URL);
+// POST /customers   (invalidate list)
+export const useCustomerCreate = createMutationHook("customerList", BASE_URL);
 
-// ======= Cập nhật khách hàng =======
-export const useCustomerUpdate = updateMutationHook("customerUpdate", BASE_URL);
+// PUT /customers/{id}   (invalidate list)
+export const useCustomerUpdate = updateMutationHook("customerList", BASE_URL);
 
-// ======= Xoá khách hàng =======
-export const useCustomerDelete = deleteMutationHook("customerDelete", BASE_URL);
+// DELETE /customers/{id}   (invalidate list)
+export const useCustomerDelete = deleteMutationHook("customerList", BASE_URL);

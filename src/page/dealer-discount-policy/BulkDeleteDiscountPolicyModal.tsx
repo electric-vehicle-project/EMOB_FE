@@ -7,6 +7,7 @@ import {
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IDealer } from "../../model/Dealer";
 import type { IVehicle } from "../../model/Vehicle";
+import { toast } from "react-toastify";
 
 const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
   const [form] = Form.useForm();
@@ -18,15 +19,13 @@ const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
 
   const dealerOptions =
     dealersData?.result?.data?.map((d: IDealer) => ({
-      //   label: d.name || d.dealerName || "Không rõ đại lý",
-      label: d.id,
+      label: d.name,
       value: d.id,
     })) || [];
 
   const vehicleOptions =
     vehiclesData?.result?.data?.map((v: IVehicle) => ({
-      //   label: `${v.model} (${v.type})`,
-      label: v.id,
+      label: v.model,
       value: v.id,
     })) || [];
 
@@ -38,12 +37,12 @@ const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
 
     try {
       await bulkDelete(payload);
-      message.success("✅ Đã xóa (set INACTIVE) chính sách hàng loạt!");
+      toast.success("Đã xóa chính sách hàng loạt!");
       onSuccess?.();
       onClose();
       form.resetFields();
     } catch (err: any) {
-      message.error("❌ Xóa hàng loạt thất bại!");
+      toast.error("Xóa hàng loạt thất bại!");
     }
   };
 

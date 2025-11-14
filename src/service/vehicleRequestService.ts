@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMutationHook,
   createQueryHook,
@@ -15,11 +15,26 @@ const BASE_URL = "/vehicle-request";
 // =================== QUERIES ===================
 
 // (GET /vehicle-requests)
-export const useGetVehicleRequests = (page = 0, size = 10, search = "") =>
-  createQueryHook("vehicleRequests", BASE_URL)(
+export const useGetVehicleRequests = (params?: {
+  page?: number;
+  size?: number;
+  search?: string;
+  statuses?: string[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) => {
+  return createQueryHook("vehicleRequests", BASE_URL)(
     {},
-    { page, size, search } // 👈 thêm query param search
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      search: params?.search ?? "",
+      status: params?.statuses?.length ? params.statuses.join(",") : undefined,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
   );
+};
 
 // (GET /vehicle-requests/{id})
 export const useGetVehicleRequestById = createQueryWithPathParamHook(
@@ -31,6 +46,10 @@ export const useGetVehicleRequestById = createQueryWithPathParamHook(
 export const useCreateVehicleRequest = createMutationHook(
   "createVehicleRequest",
   BASE_URL
+);
+export const useCreateVehicleRequestForAdmin = createMutationHook(
+  "viewVehicleRequestForAdmin",
+  `${BASE_URL}/for-admin`
 );
 
 // (PUT /vehicle-requests/{id})
@@ -66,6 +85,37 @@ export const useApproveVehicleRequest = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicleRequestDetail"] });
       queryClient.invalidateQueries({ queryKey: ["vehicleRequests"] });
+    },
+  });
+};
+
+// view all for admin
+export const useGetVehicleRequestsForAdmin = (params?: {
+  keyword?: string;
+  statuses?: string[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+  page?: number;
+  size?: number;
+}) => {
+  const queryParams = {
+    keyword: params?.keyword ?? "",
+    page: params?.page ?? 0,
+    size: params?.size ?? 10,
+
+    status: params?.statuses?.length ? params.statuses.join(",") : undefined,
+
+    sortField: params?.sortField ?? "createdAt",
+    sortDir: params?.sortDir ?? "desc",
+  };
+
+  return useQuery({
+    queryKey: ["vehicleRequestsForAdmin", queryParams],
+    queryFn: async () => {
+      const response = await api.get("/vehicle-request/for-admin", {
+        params: queryParams,
+      });
+      return response.data;
     },
   });
 };

@@ -1,86 +1,113 @@
 import React, { useState } from "react";
-import { Table, Button, message, Popconfirm, Tag, Input } from "antd";
+import { Table, Button, Popconfirm, Tag, Input, Tooltip, Modal } from "antd";
 import SectionTitle from "../../components/atoms/SectionTitle";
 import type { ColumnsType } from "antd/es/table";
-import type { IQuotation, IQuotationItem } from "../../model/Quotation";
+import type { IQuotation } from "../../model/Quotation";
 
 import CreateQuotationModal from "./CreateQuotationModal";
 import UpdateQuotationModal from "./UpdateQuotationModal";
 import ViewQuotationDetailModal from "./ViewQuotationDetailModal";
-import ApproveQuotationModal from "./ApproveQuotationModal";
 import {
   useDeleteQuotation,
   useQuotationsList,
+  useRejectQuotation,
 } from "../../service/quotationService";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerById } from "../../service/customerService";
+import { useDealerByIdQuery } from "../../service/dealerService";
 import { SearchOutlined } from "@ant-design/icons";
-import { useDealerById } from "../../service/dealerService";
+import { useCurrentUser } from "../../utils/getCurrentUser";
+import { useDebounce } from "../../hook/useDebounce";
+import { toast } from "react-toastify";
+import ApproveQuotationModal from "./ApproveQuotationModal";
 
 const CustomerName: React.FC<{ customerId: string }> = ({ customerId }) => {
   const { data, isLoading } = useCustomerById(customerId);
-
-  if (isLoading) return <span>...</span>;
+  if (isLoading) return <span className="text-gray-400">...</span>;
   return <span>{data?.result?.fullName || "-"}</span>;
 };
 
 const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
-  const { data, isLoading } = useDealerById(dealerId);
-
-  if (isLoading) return <span>...</span>;
+  const { data, isLoading } = useDealerByIdQuery(dealerId);
+  if (isLoading) return <span className="text-gray-400">...</span>;
   return <span>{data?.result?.name || "-"}</span>;
 };
 
 const QuotationPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const account = useCurrentUser();
+  const role = account?.role;
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(
     null
   );
   const [selectedRecord, setSelectedRecord] = useState<IQuotation | null>(null);
-
-  // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
-  // search
   const [searchTerm, setSearchTerm] = useState("");
 
-  /** Query: danh sách báo giá */
+  // duyệt
+  const handleOpenApproveModal = (record: IQuotation) => {
+    setSelectedRecord(record);
+    setSelectedQuotationId(record.id);
+    setIsApproveModalOpen(true);
+  };
+
+  // từ chối
+  const rejectQuotation = useRejectQuotation();
+  const handleRejectQuotation = async (record: IQuotation) => {
+    Modal.confirm({
+      title: "Từ chối báo giá",
+      content: "Bạn có chắc chắn muốn từ chối báo giá này không?",
+      okText: "Từ chối",
+      cancelText: "Hủy",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await rejectQuotation.mutateAsync(record.id);
+          toast.success("Đã từ chối báo giá!");
+          refetch();
+        } catch (err: any) {
+          toast.error(
+            err?.response?.data?.message || "Không thể từ chối báo giá!"
+          );
+        }
+      },
+    });
+  };
+
   const { data, isLoading, refetch } = useQuotationsList(
     page - 1,
     pageSize,
     searchTerm
-  ); // backend start = 0
-
-  /** Mutation: xóa báo giá */
+  );
   const deleteQuotation = useDeleteQuotation();
 
   const handleDelete = (id: string) => {
     deleteQuotation.mutate(id, {
       onSuccess: async () => {
-        message.success("Xóa báo giá thành công");
-        // 🔄 Làm mới cache + gọi lại API để hiển thị tức thì
+        toast.success("Xóa báo giá thành công");
         await queryClient.invalidateQueries({ queryKey: ["quotations"] });
         refetch();
       },
       onError: () => {
-        message.error("Xóa báo giá thất bại");
+        toast.error("Xóa báo giá thất bại");
       },
     });
   };
 
-  /** Cấu hình bảng */
+  /** ======================= Cấu hình bảng ======================= */
   const columns: ColumnsType<IQuotation> = [
     {
-      title: "Mã báo giá",
-      dataIndex: "id",
-      key: "id",
-      render: (id: string) => (
-        <span className="font-mono text-gray-700">{id.slice(0, 8)}...</span>
-      ),
+      title: "Đại lý",
+      dataIndex: "dealerId",
+      key: "dealerId",
+      render: (dealerId: string) =>
+        dealerId ? <DealerName dealerId={dealerId} /> : "-",
     },
     {
       title: "Khách hàng",
@@ -88,14 +115,6 @@ const QuotationPage: React.FC = () => {
       key: "customerId",
       render: (customerId: string) =>
         customerId ? <CustomerName customerId={customerId} /> : "-",
-    },
-    {
-      title: "Đại lý",
-      dataIndex: "dealerId",
-      key: "dealerId",
-      render: (dealerId: string) =>
-        // dealerId ? <DealerName dealerId={dealerId} /> : "-",
-        dealerId,
     },
     {
       title: "Số lượng",
@@ -111,7 +130,27 @@ const QuotationPage: React.FC = () => {
       align: "right",
       sorter: (a, b) => (a.totalPrice || 0) - (b.totalPrice || 0),
       render: (price: number) =>
-        price != null ? `${price.toLocaleString("vi-VN")} ₫` : "-",
+        price != null ? (
+          <span className="font-semibold text-[#627254]">
+            {price.toLocaleString("vi-VN")} ₫
+          </span>
+        ) : (
+          "-"
+        ),
+    },
+    {
+      title: "Tổng thuế",
+      dataIndex: "vatAmount",
+      key: "vatAmount",
+      align: "right",
+      render: (price: number) =>
+        price != null ? (
+          <span className="font-semibold text-[#627254]">
+            {price.toLocaleString("vi-VN")} ₫
+          </span>
+        ) : (
+          "-"
+        ),
     },
     {
       title: "Trạng thái",
@@ -129,8 +168,6 @@ const QuotationPage: React.FC = () => {
           case "REJECTED":
             color = "red";
             break;
-          default:
-            color = "blue";
         }
         return <Tag color={color}>{status}</Tag>;
       },
@@ -139,100 +176,140 @@ const QuotationPage: React.FC = () => {
       title: "Thao tác",
       key: "actions",
       align: "center",
-      render: (_, record) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            size="small"
-            onClick={() => {
-              setSelectedQuotationId(record.id);
-              setIsViewModalOpen(true);
-            }}
-          >
-            Chi tiết
-          </Button>
+      render: (_, record) => {
+        const isDealerStaff = role === "DEALER_STAFF";
+        const isFinalStatus =
+          record.status === "APPROVED" || record.status === "REJECTED";
 
-          <Button
-            size="small"
-            style={{
-              backgroundColor: "#627254",
-              color: "white",
-              border: "none",
-            }}
-            className="bg-green-600 hover:bg-green-700 border-green-600"
-            onClick={() => {
-              setSelectedQuotationId(record.id);
-              setIsUpdateModalOpen(true);
-            }}
-            disabled={record.status === "APPROVED"}
-          >
-            Sửa
-          </Button>
+        return (
+          <div className="flex justify-center gap-2">
+            {/* Xem chi tiết - luôn hiển thị */}
+            <Tooltip title="Xem chi tiết">
+              <Button
+                size="small"
+                onClick={() => {
+                  setSelectedQuotationId(record.id);
+                  setIsViewModalOpen(true);
+                }}
+              >
+                Chi tiết
+              </Button>
+            </Tooltip>
 
-          <Button
-            size="small"
-            style={{
-              backgroundColor: "#16a34a",
-              color: "white",
-              border: "none",
-            }}
-            onClick={() => {
-              setSelectedRecord(record);
-              setIsApproveModalOpen(true);
-            }}
-            disabled={record.status === "APPROVED"}
-          >
-            Duyệt
-          </Button>
+            {/* Các nút chỉ xuất hiện khi CHƯA approved & CHƯA rejected (tức là PENDING) */}
+            {isDealerStaff && !isFinalStatus && (
+              <>
+                {/* Sửa */}
+                <Tooltip title="Sửa báo giá">
+                  <Button
+                    size="small"
+                    style={{
+                      backgroundColor: "#627254",
+                      color: "white",
+                      border: "none",
+                    }}
+                    className="bg-green-600 hover:bg-green-700 border-green-600"
+                    onClick={() => {
+                      setSelectedQuotationId(record.id);
+                      setIsUpdateModalOpen(true);
+                    }}
+                  >
+                    Sửa
+                  </Button>
+                </Tooltip>
 
-          <Popconfirm
-            title="Bạn có chắc muốn xóa báo giá này?"
-            description="Hành động này không thể hoàn tác."
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button
-              size="small"
-              style={{
-                backgroundColor: "red", // tương đương bg-green-600
-                color: "white",
-                border: "none",
-              }}
-              disabled={record.status === "APPROVED"}
-            >
-              Xóa
-            </Button>
-          </Popconfirm>
-        </div>
-      ),
+                {/* Duyệt */}
+                <Tooltip title="Duyệt báo giá">
+                  <Button
+                    size="small"
+                    style={{
+                      backgroundColor: "#16a34a",
+                      color: "white",
+                      border: "none",
+                    }}
+                    onClick={() => handleOpenApproveModal(record)}
+                    disabled={record.status !== "PENDING"}
+                  >
+                    Duyệt
+                  </Button>
+                </Tooltip>
+
+                {/* Từ chối */}
+                <Tooltip title="Từ chối báo giá">
+                  <Button
+                    size="small"
+                    style={{
+                      backgroundColor: "#9ca3af",
+                      color: "white",
+                      border: "none",
+                    }}
+                    onClick={() => handleRejectQuotation(record)}
+                    disabled={record.status !== "PENDING"}
+                    loading={rejectQuotation.isPending}
+                  >
+                    Từ chối
+                  </Button>
+                </Tooltip>
+
+                {/* Xóa */}
+                <Popconfirm
+                  title="Bạn có chắc muốn xóa báo giá này?"
+                  description="Hành động này không thể hoàn tác."
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                >
+                  <Tooltip title="Xóa báo giá">
+                    <Button
+                      size="small"
+                      style={{
+                        backgroundColor: "#ef4444",
+                        color: "white",
+                        border: "none",
+                      }}
+                    >
+                      Xóa
+                    </Button>
+                  </Tooltip>
+                </Popconfirm>
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const quotationData = data?.result?.data ?? [];
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
+  /** ======================= Render ======================= */
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <SectionTitle text="Quản lý báo giá" />
-        <Input.Search
-          placeholder="Tìm kiếm theo mã, khách hàng..."
-          allowClear
-          enterButton={<SearchOutlined />}
-          onSearch={(value) => {
-            setSearchTerm(value);
-            setPage(1);
-          }}
-          style={{ width: 300, marginLeft: 200 }}
-        />
-        <Button
-          type="primary"
-          className="bg-green-700"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          + Tạo báo giá mới
-        </Button>
+        <div className="flex items-center gap-3">
+          <Input
+            placeholder="Tìm kiếm số lượng..."
+            allowClear
+            prefix={<SearchOutlined className="text-gray-400" />}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: 320 }}
+            className="rounded-md shadow-sm border-gray-300 focus:border-green-600 focus:ring-green-600"
+          />
+          {role === "DEALER_STAFF" && (
+            <Button
+              type="primary"
+              className="bg-[#627254] hover:bg-[#4e5b45]"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              + Tạo báo giá mới
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -253,7 +330,7 @@ const QuotationPage: React.FC = () => {
           showTotal: (t) => `Tổng ${t} báo giá`,
         }}
         bordered
-        className="bg-white rounded-lg shadow-sm"
+        className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all"
       />
 
       {/* Modals */}
@@ -267,7 +344,6 @@ const QuotationPage: React.FC = () => {
           }}
         />
       )}
-
       {isUpdateModalOpen && selectedQuotationId && (
         <UpdateQuotationModal
           open={isUpdateModalOpen}
@@ -276,7 +352,6 @@ const QuotationPage: React.FC = () => {
           onSuccess={refetch}
         />
       )}
-
       {isViewModalOpen && selectedQuotationId && (
         <ViewQuotationDetailModal
           open={isViewModalOpen}
@@ -285,11 +360,13 @@ const QuotationPage: React.FC = () => {
         />
       )}
 
-      {isApproveModalOpen && selectedRecord && (
+      {/*  duyệt */}
+      {isApproveModalOpen && selectedQuotationId && selectedRecord && (
         <ApproveQuotationModal
           open={isApproveModalOpen}
-          record={selectedRecord}
           onClose={() => setIsApproveModalOpen(false)}
+          quotationId={selectedQuotationId}
+          items={selectedRecord.items || []}
           onSuccess={refetch}
         />
       )}

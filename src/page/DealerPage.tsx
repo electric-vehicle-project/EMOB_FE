@@ -1,3 +1,4 @@
+// src/pages/DealerPage.tsx
 import { DealerList } from "../components/organisms/dealer/DealerList";
 import { CardWrapper } from "../components/template/CardWrapper";
 import { useCurrentUser } from "../utils/getCurrentUser";

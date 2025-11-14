@@ -3,7 +3,7 @@
   --primary-color: #627254;
   --secondary-color: #76885b;
   --default-color: #24282b;
-  --natural-color: #dddddd;
+  --natural-color: #DDDDDD;
 }
 
 /* Subtle focus glow using primary color */
@@ -126,12 +126,17 @@
   transform: translateZ(0);
   backface-visibility: hidden;
 }
-
+.menu-stagger {
+  scrollbar-width: none;
+}
 /* Stagger utilities for sidebar main items */
 .menu-stagger > div {
   transition: transform 300ms ease, background-color 300ms ease,
     box-shadow 300ms ease, opacity 300ms ease;
   transition-delay: var(--d, 0ms);
+}
+.menu-stagger > div > .menu-label-box {
+  display: none;
 }
 .menu-stagger > div:nth-child(1) {
   --d: 0ms;

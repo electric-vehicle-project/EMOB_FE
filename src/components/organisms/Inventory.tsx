@@ -11,7 +11,12 @@ import {
 } from "recharts";
 import ChartContainer from "../atoms/ChartContainer";
 type Props = {
-  data?: any[];
+  data?: Array<{
+    type: "SEDAN" | "SUV" | "HATCHBACK" | "TRUCK" | "MOTORBIKE";
+    imported?: number;
+    exported?: number;
+    remaining?: number;
+  }>;
 };
 
 const InventoryChart: React.FC<Props> = ({ data = [] }) => (

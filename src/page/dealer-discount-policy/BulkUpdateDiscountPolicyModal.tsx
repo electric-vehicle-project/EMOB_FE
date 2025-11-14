@@ -7,6 +7,7 @@ import {
 import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IDealer } from "../../model/Dealer";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
@@ -22,23 +23,21 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
   // Tạo option danh sách đại lý
   const dealerOptions =
     dealersData?.result?.data?.map((d: IDealer) => ({
-      //   label: d.name || d.dealerName || "Không rõ đại lý",
-      label: d.id,
+      label: d.name,
       value: d.id,
     })) ?? [];
 
   // Tạo option danh sách xe
   const vehicleOptions =
     vehiclesData?.result?.data?.map((v: any) => ({
-      //   label: `${v.model || "Không rõ"} (${v.type || "N/A"})`,
-      label: v.id,
+      label: v.model,
       value: v.id,
     })) ?? [];
 
-  // ✅ Submit handler
+  // Submit handler
   const handleSubmit = async (values: any) => {
     if (!values.dateRange || values.dateRange.length !== 2) {
-      message.warning("Vui lòng chọn đầy đủ thời gian hiệu lực!");
+      toast.warning("Vui lòng chọn đầy đủ thời gian hiệu lực!");
       return;
     }
 
@@ -53,13 +52,13 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
 
     try {
       await bulkUpdate(payload);
-      message.success("✅ Cập nhật hàng loạt chính sách thành công!");
+      toast.success("Cập nhật hàng loạt chính sách thành công!");
       onSuccess?.();
       form.resetFields();
       onClose();
     } catch (err: any) {
-      message.error(
-        err?.response?.data?.message || "❌ Không thể cập nhật hàng loạt!"
+      toast.error(
+        err?.response?.data?.message || "Không thể cập nhật hàng loạt!"
       );
     }
   };
@@ -86,7 +85,7 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
         autoComplete="off"
       >
         <SelectInput
-          label="Chọn đại lý (Dealers)"
+          label="Chọn đại lý"
           name="dealerIds"
           placeholder="Chọn ít nhất một đại lý"
           options={dealerOptions}
@@ -95,7 +94,7 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
         />
 
         <SelectInput
-          label="Chọn xe (Vehicles)"
+          label="Chọn mẫu xe"
           name="vehicleModelIds"
           placeholder="Chọn ít nhất một xe"
           options={vehicleOptions}
@@ -118,11 +117,7 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
           />
         </Form.Item>
 
-        <Form.Item
-          label="Giá cuối cùng (VND)"
-          name="finalPrice"
-          rules={[{ required: true, message: "Vui lòng nhập giá cuối cùng!" }]}
-        >
+        <Form.Item label="Giá cuối cùng (VND)" name="finalPrice">
           <InputNumber
             min={0}
             style={{ width: "100%" }}

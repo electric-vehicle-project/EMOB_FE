@@ -1,4 +1,5 @@
 import React from "react";
+
 export type MenuItem = {
   key: string;
   label: React.ReactNode;
@@ -36,11 +37,12 @@ export const createMenuItems = (
 
   // Build tree từ flattened routes
   flattenedRoutes.forEach((route) => {
-    const segments = route.fullPath.split("/").filter(Boolean).slice(1); // bỏ qua 'admin'
+    // Bỏ phần đầu (admin hoặc staff) để build tree
+    const segments = route.fullPath.split("/").filter(Boolean).slice(1);
     const leafLabel = route.children;
-    const leafKey = `${
-      route.fullPath.endsWith("/") ? route.fullPath : route.fullPath + "/"
-    }${leafLabel}`;
+
+    // Key = URL đầy đủ
+    const leafKey = route.fullPath;
 
     let currentNode = menuTree;
     segments.forEach((seg) => {
@@ -49,7 +51,7 @@ export const createMenuItems = (
       currentNode = currentNode[seg];
     });
 
-    currentNode[leafLabel] = leafKey; // gán leaf
+    currentNode[leafLabel] = leafKey; // gán leaf với URL gốc
   });
 
   // Đệ quy build MenuItem[]
@@ -58,9 +60,11 @@ export const createMenuItems = (
       .map(([key, value]) => {
         const label = capitalizeFirstLetter(key);
         if (typeof value === "string") {
+          // Leaf node: dùng URL làm key
           return getItem(label, value);
         }
         if (typeof value === "object" && Object.keys(value).length > 0) {
+          // Parent node: dùng key hiện tại
           return getItem(label, `/${key}`, undefined, buildMenu(value));
         }
         return null;

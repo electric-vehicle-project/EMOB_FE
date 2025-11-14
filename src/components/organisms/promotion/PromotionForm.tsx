@@ -8,10 +8,9 @@ import {
   Row,
   Col,
 } from "antd";
-
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import type { Promotion } from "../../../model/Promotion";
-import { useGetDealers } from "../../../service/dealerService";
+import { useDealersQuery } from "../../../service/dealerService";
 import { useGetVehicles } from "../../../service/vehicleService";
 import { useEffect } from "react";
 import {
@@ -21,16 +20,40 @@ import {
 
 const { RangePicker } = DatePicker;
 
+/**
+ * Dữ liệu dùng trong form (FE) — ánh xạ với Promotion BE.
+ * `minValue` và `electricVehicleIds` khớp đúng tên với BE.
+ */
+interface PromotionFormValues {
+  name: string;
+  type: "PERCENTAGE" | "AMOUNT" | "ACCESSORY" | "INSTALLMENT_SUPPORT";
+  scope: "GLOBAL" | "LOCAL";
+  value: number;
+  minValue?: number;
+  duration?: [Dayjs, Dayjs];
+  description?: string;
+  dealerIds?: string[];
+  electricVehicleIds?: string[];
+}
+
+/**
+ * Props cho component PromotionForm
+ */
 interface Props {
   mode: "create" | "edit";
   initialValues?: Partial<Promotion>;
-  onSubmit: (values: any) => void;
+  onSubmit: (
+    values: Omit<PromotionFormValues, "duration"> & {
+      startDate?: string;
+      endDate?: string;
+    }
+  ) => void;
   isDealerScoped?: boolean;
   loading?: boolean;
 }
 
 /**
- * Form tạo / chỉnh sửa Promotion, tái sử dụng giữa Create và Edit Page.
+ * Form tạo / chỉnh sửa khuyến mãi — chuẩn hoá type theo BE (không any, không ép kiểu).
  */
 export const PromotionForm = ({
   mode,
@@ -39,30 +62,51 @@ export const PromotionForm = ({
   isDealerScoped,
   loading,
 }: Props) => {
-  const [form] = Form.useForm();
-  const { data: dealers } = useGetDealers();
+  const [form] = Form.useForm<PromotionFormValues>();
+  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
   const { data: vehicles } = useGetVehicles();
 
-  useEffect(() => {
-    if (initialValues) {
-      form.setFieldsValue({
-        ...initialValues,
-        duration:
-          initialValues.startDate && initialValues.endDate
-            ? [dayjs(initialValues.startDate), dayjs(initialValues.endDate)]
-            : undefined,
-      });
-    }
-  }, [initialValues]);
+  const dealers = dealersData?.result?.data ?? [];
 
-  const handleFinish = (values: any) => {
+  /**
+   * Gán dữ liệu ban đầu khi edit.
+   * Dùng đúng các field có trong Promotion.
+   */
+  useEffect(() => {
+    if (!initialValues) return;
+
+    const start = initialValues.startDate
+      ? dayjs(initialValues.startDate)
+      : undefined;
+    const end = initialValues.endDate
+      ? dayjs(initialValues.endDate)
+      : undefined;
+
+    form.setFieldsValue({
+      name: initialValues.name,
+      type: initialValues.type as PromotionFormValues["type"],
+      scope: initialValues.scope as PromotionFormValues["scope"],
+      value: initialValues.value ?? 0,
+      minValue: initialValues.minValue,
+      description: initialValues.description,
+      duration: start && end ? [start, end] : undefined,
+    });
+  }, [initialValues, form]);
+
+  /**
+   * Xử lý khi submit form — map `duration` thành `startDate` và `endDate`
+   */
+  const handleFinish = (values: PromotionFormValues) => {
     const payload = {
       ...values,
       startDate: values.duration?.[0]?.toISOString(),
       endDate: values.duration?.[1]?.toISOString(),
     };
-    delete payload.duration;
-    onSubmit(payload);
+
+    // Xoá duration vì BE không nhận field này
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { duration, ...finalPayload } = payload;
+    onSubmit(finalPayload);
   };
 
   return (
@@ -73,6 +117,7 @@ export const PromotionForm = ({
       disabled={loading}
       style={{ maxWidth: 900, margin: "0 auto" }}
     >
+      {/* Tên chương trình + Loại */}
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
@@ -83,12 +128,11 @@ export const PromotionForm = ({
             <Input placeholder="Nhập tên chương trình" />
           </Form.Item>
         </Col>
-
         <Col span={12}>
           <Form.Item
             name="type"
             label="Loại khuyến mãi"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: "Chọn loại khuyến mãi" }]}
           >
             <Select
               options={[
@@ -102,9 +146,14 @@ export const PromotionForm = ({
         </Col>
       </Row>
 
+      {/* Phạm vi + Giá trị */}
       <Row gutter={16}>
         <Col span={12}>
-          <Form.Item name="scope" label="Phạm vi" rules={[{ required: true }]}>
+          <Form.Item
+            name="scope"
+            label="Phạm vi"
+            rules={[{ required: true, message: "Chọn phạm vi" }]}
+          >
             <Select
               options={[
                 { label: "Toàn hệ thống", value: "GLOBAL" },
@@ -114,18 +163,18 @@ export const PromotionForm = ({
             />
           </Form.Item>
         </Col>
-
         <Col span={12}>
           <Form.Item
             name="value"
             label="Giá trị khuyến mãi (%)"
-            rules={[{ required: true, message: "Nhập giá trị" }]}
+            rules={[{ required: true, message: "Nhập giá trị khuyến mãi" }]}
           >
             <InputNumber min={1} max={100} style={{ width: "100%" }} />
           </Form.Item>
         </Col>
       </Row>
 
+      {/* Giá trị tối thiểu + Thời gian */}
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
@@ -140,13 +189,14 @@ export const PromotionForm = ({
           <Form.Item
             name="duration"
             label="Thời gian áp dụng"
-            rules={[{ required: true, message: "Chọn thời gian" }]}
+            rules={[{ required: true, message: "Chọn thời gian áp dụng" }]}
           >
             <RangePicker showTime style={{ width: "100%" }} />
           </Form.Item>
         </Col>
       </Row>
 
+      {/* Mô tả */}
       <Form.Item name="description" label="Mô tả">
         <Input.TextArea
           placeholder="Mô tả chương trình..."
@@ -155,6 +205,7 @@ export const PromotionForm = ({
         />
       </Form.Item>
 
+      {/* Áp dụng cho dealer + xe */}
       {!isDealerScoped && (
         <Row gutter={16}>
           <Col span={12}>
@@ -168,7 +219,7 @@ export const PromotionForm = ({
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="vehicleIds" label="Xe áp dụng">
+            <Form.Item name="electricVehicleIds" label="Xe áp dụng">
               <Select
                 mode="multiple"
                 placeholder="Chọn xe"
@@ -180,6 +231,7 @@ export const PromotionForm = ({
         </Row>
       )}
 
+      {/* Submit */}
       <div className="flex justify-end">
         <Button type="primary" htmlType="submit" loading={loading}>
           {mode === "create" ? "Tạo khuyến mãi" : "Cập nhật"}

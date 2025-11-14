@@ -2,13 +2,19 @@ import React from "react";
 import { Modal, Descriptions, Table, Empty, Spin, Tag } from "antd";
 import { useGetVehicleRequestById } from "../../service/vehicleRequestService";
 import type { IVehicleRequestItem } from "../../model/VehicleRequest";
+import { useGetVehicleById } from "../../service/vehicleService";
 
 interface Props {
   open: boolean;
   requestId: string;
   onClose: () => void;
 }
-
+// component convert VehicleId thành vehicleName
+const VehicleModelName: React.FC<{ vehicleId: string }> = ({ vehicleId }) => {
+  const { data, isLoading } = useGetVehicleById(vehicleId);
+  if (isLoading) return <span>...</span>;
+  return <span>{data?.result?.model || "-"}</span>;
+};
 const ViewVehicleRequestModal: React.FC<Props> = ({
   open,
   requestId,
@@ -16,7 +22,7 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
 }) => {
   const { data, isLoading } = useGetVehicleRequestById(requestId);
 
-  // ✅ Nếu API có dữ liệu thì lấy, nếu không có thì dùng mock
+  // Nếu API có dữ liệu thì lấy, nếu không có thì dùng mock
   const request = data?.result || {
     id: "MOCK-12345678",
     status: "PENDING",
@@ -46,14 +52,22 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
   };
 
   const items: IVehicleRequestItem[] = request.items || [];
-
+  // màu status
   const statusColor =
     request.status === "APPROVED"
       ? "green"
       : request.status === "REJECTED"
       ? "red"
       : "gold";
+  // convert status eng - vn
+  const viStatusMap = {
+    PENDING: "Chờ duyệt",
+    APPROVED: "Đã duyệt",
+    REJECTED: "Từ chối",
+  } as const;
 
+  const statusLabel =
+    viStatusMap[request.status as keyof typeof viStatusMap] || request.status;
   return (
     <Modal
       open={open}
@@ -70,11 +84,8 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
       ) : (
         <>
           <Descriptions bordered column={2} className="mb-4">
-            <Descriptions.Item label="Mã yêu cầu">
-              {request.id?.slice(0, 8)}...
-            </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={statusColor}>{request.status}</Tag>
+              <Tag color={statusColor}>{statusLabel}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Tổng SL">
               {request.totalQuantity}
@@ -101,12 +112,33 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
               pagination={false}
               bordered
               columns={[
-                { title: "Mã xe", dataIndex: "vehicleId", key: "vehicleId" },
+                {
+                  title: "Mã xe",
+                  dataIndex: "vehicleId",
+                  key: "vehicleId",
+                  render: (vehicleId: string) =>
+                    vehicleId ? (
+                      <VehicleModelName vehicleId={vehicleId} />
+                    ) : (
+                      "-"
+                    ),
+                },
                 { title: "Màu sắc", dataIndex: "color", key: "color" },
                 {
                   title: "Trạng thái",
                   dataIndex: "vehicleStatus",
                   key: "vehicleStatus",
+                  render: (status: string) => {
+                    const viStatusMap: Record<string, string> = {
+                      NORMAL: "Bình thường",
+                      SPECIAL: "Đặc biệt",
+                      OLD_STOCK: "Tồn kho cũ",
+                      RESERVED: "Đã đặt trước",
+                      TEST_DRIVE: "Xe lái thử",
+                    };
+
+                    return viStatusMap[status] ?? status;
+                  },
                 },
                 {
                   title: "Số lượng",

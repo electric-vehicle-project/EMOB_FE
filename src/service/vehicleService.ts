@@ -170,3 +170,59 @@ export const useGetAllVehicleUnits = (params?: unknown, options?: unknown) => {
 // ✅ Hook mới dùng đúng endpoint /vehicle/bulk và đúng chuẩn useApi
 export const useCreateVehicleUnitsBulk = () =>
   createMutationHook("vehicleUnitBulk", "/vehicle/bulk")();
+
+// ========== BULK DELETE VEHICLE UNITS ==========
+export const useDeleteVehicleUnitsBulk = () => {
+  const queryClient = useQueryClient(); // ✅ Thêm dòng này
+
+  return useMutation({
+    mutationFn: async (vehicleUnitIds: string[]) => {
+      const body = { vehicleUnitIds };
+      const res = await api.delete(`/vehicle/vehicle-units`, { data: body });
+      return res.data;
+    },
+    onSuccess: () => {
+      // ✅ Làm tươi dữ liệu các list units liên quan
+      queryClient.invalidateQueries({
+        queryKey: ["get-vehicle-units-by-model"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["get-all-vehicle-units"] });
+    },
+  });
+};
+
+// ========= AI Demand Forecast (Brand-side) =========
+// GET /api/vehicle/demandForecastFromAI
+export const useGetAIDemandForecast = (options?: unknown) => {
+  const hook = createQueryHook(
+    "ai-demand-forecast",
+    "/vehicle/demandForecastFromAI"
+  );
+  // API này không có params
+  const query = hook(options);
+
+  // Chuẩn hoá: đảm bảo trả về mảng object
+  const raw = (query.data?.result ?? query.data) as unknown;
+  const forecasts = Array.isArray(raw)
+    ? (raw as unknown[])
+    : Array.isArray((raw as { data?: unknown[] })?.data)
+    ? ((raw as { data?: unknown[] }).data as unknown[])
+    : []; // nếu BE trả {}, vẫn an toàn
+
+  return { ...query, forecasts };
+};
+
+// GET /api/vehicle/createDemandForecasts  (trigger tạo/refresh phía AI)
+export const useCreateAIDemandForecasts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Swagger ghi GET nên mình giữ đúng GET
+      const res = await api.get("/vehicle/createDemandForecasts");
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-demand-forecast"] });
+    },
+  });
+};

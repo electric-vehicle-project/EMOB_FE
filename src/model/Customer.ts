@@ -1,4 +1,8 @@
+// CUSTOMER MODEL
+
 export const MembershipLevel = {
+  NORMAL: "NORMAL",
+  BRONZE: "BRONZE",
   SILVER: "SILVER",
   GOLD: "GOLD",
   PLATINUM: "PLATINUM",
@@ -10,15 +14,16 @@ export type MembershipLevel =
 export const Gender = {
   MALE: "MALE",
   FEMALE: "FEMALE",
-  OTHER: "OTHER",
 } as const;
 
 export type Gender = (typeof Gender)[keyof typeof Gender];
 
 export const CustomerStatus = {
+  LEAD: "LEAD",
   ACTIVE: "ACTIVE",
   INACTIVE: "INACTIVE",
-  BANNED: "BANNED",
+  BLOCKED: "BLOCKED",
+  DELETED: "DELETED",
 } as const;
 
 export type CustomerStatus =
@@ -26,14 +31,14 @@ export type CustomerStatus =
 
 export interface ICustomer {
   id: string;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  address: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
   note?: string;
-  dateOfBirth: string; // hoặc Date nếu bạn xử lý qua dayjs
-  gender: "MALE" | "FEMALE";
-  loyaltyPoints: number;
-  memberShipLevel: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
-  status?: "ACTIVE" | "INACTIVE" | "BANNED";
+  dateOfBirth?: string; // dạng "YYYY-MM-DD"
+  gender?: Gender;
+  loyaltyPoints?: number;
+  memberShipLevel?: MembershipLevel;
+  status?: CustomerStatus;
 }

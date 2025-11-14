@@ -2,7 +2,7 @@
 
 export const AccountStatus = {
   ACTIVE: "ACTIVE",
-  INACTIVE: "INACTIVE", // ✅ thêm
+  INACTIVE: "INACTIVE",
   BANNED: "BANNED",
 } as const;
 
@@ -36,6 +36,8 @@ export interface IAccount {
   email: string;
   token?: string;
   refreshToken?: string;
+
+  createdAt?: string;
 }
 
 export interface AccountResponse {

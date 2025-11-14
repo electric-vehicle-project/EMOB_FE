@@ -1,15 +1,20 @@
-// src/components/molecules/report/ReportFormModal.tsx
-// EMOB-2025 - ReportFormModal (chọn 1 khách hàng hiển thị tên, gửi id)
-
 import { Modal, Form, Input, Select, Row, Col, Button } from "antd";
 import { useCustomerList } from "../../../service/customerService";
 import { mapCustomerOptions } from "../../../utils/mapToSelectOptions";
 import type { IReport } from "../../../model/Report";
 
+interface FormValues {
+  title: string;
+  description: string;
+  type: IReport["type"];
+  customerId: string;
+  vinNumber?: string;
+}
+
 interface Props {
   open: boolean;
   onCancel: () => void;
-  onSubmit: (values: any) => void;
+  onSubmit: (values: FormValues) => void;
   initialValues?: IReport | null;
 }
 
@@ -19,22 +24,24 @@ export const ReportFormModal = ({
   onSubmit,
   initialValues,
 }: Props) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<FormValues>();
+  const isEdit = Boolean(initialValues);
 
-  // 🧩 Lấy danh sách khách hàng từ service
-  const { data: customers, isLoading } = useCustomerList(0, 100);
-
-  // ✅ Trích đúng dữ liệu theo cấu trúc thực tế của BE
-  // response.result.data → mapCustomerOptions xử lý tương thích
+  // Hook lấy danh sách khách hàng
+  const { data: customers, isLoading } = useCustomerList();
   const customerOptions = mapCustomerOptions(customers);
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      if (isEdit) {
+        delete (values as Partial<FormValues>).customerId;
+        delete (values as Partial<FormValues>).vinNumber;
+      }
       onSubmit(values);
       form.resetFields();
     } catch {
-      /* ignore */
+      // no-op
     }
   };
 
@@ -42,29 +49,32 @@ export const ReportFormModal = ({
     <Modal
       open={open}
       centered
+      destroyOnClose
+      footer={null}
+      onCancel={onCancel}
       title={
         <span className="text-[#627254] text-lg font-semibold">
-          {initialValues ? "Chỉnh sửa Báo cáo" : "Thêm Báo cáo mới"}
+          {isEdit ? "Chỉnh sửa Báo cáo" : "Thêm Báo cáo mới"}
         </span>
       }
-      onCancel={onCancel}
-      footer={null}
-      destroyOnClose
     >
       <Form
         layout="vertical"
         form={form}
-        initialValues={initialValues || { type: "FEEDBACK" }}
+        initialValues={
+          isEdit
+            ? initialValues!
+            : {
+                type: "FEEDBACK",
+              }
+        }
       >
-        {/* --- Dòng 1: Tiêu đề + Loại báo cáo --- */}
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
               label="Tiêu đề"
               name="title"
-              rules={[
-                { required: true, message: "Vui lòng nhập tiêu đề báo cáo" },
-              ]}
+              rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
             >
               <Input placeholder="Nhập tiêu đề báo cáo..." />
             </Form.Item>
@@ -74,37 +84,44 @@ export const ReportFormModal = ({
             <Form.Item
               label="Loại báo cáo"
               name="type"
-              rules={[
-                { required: true, message: "Vui lòng chọn loại báo cáo" },
-              ]}
+              rules={[{ required: true, message: "Vui lòng chọn loại" }]}
             >
               <Select
-                options={[
-                  { label: "Phản hồi", value: "FEEDBACK" },
-                  { label: "Khiếu nại", value: "COMPLAINT" },
-                ]}
                 placeholder="Chọn loại báo cáo"
+                options={[
+                  { value: "FEEDBACK", label: "Phản hồi" },
+                  { value: "COMPLAINT", label: "Khiếu nại" },
+                  { value: "DAMAGE", label: "Hư hỏng" },
+                  { value: "MAINTENANCE", label: "Bảo trì" },
+                  { value: "PERFORMANCE", label: "Hiệu suất" },
+                ]}
               />
             </Form.Item>
           </Col>
         </Row>
 
-        {/* --- Dòng 2: Nội dung mô tả --- */}
+        {!isEdit && (
+          <Form.Item
+            label="Số VIN"
+            name="vinNumber"
+            rules={[{ required: true, message: "Vui lòng nhập số VIN" }]}
+          >
+            <Input placeholder="Nhập số VIN (VD: MQI-2308D734)" />
+          </Form.Item>
+        )}
+
         <Form.Item
           label="Nội dung chi tiết"
           name="description"
-          rules={[
-            { required: true, message: "Vui lòng nhập nội dung báo cáo" },
-          ]}
+          rules={[{ required: true, message: "Vui lòng nhập nội dung" }]}
         >
           <Input.TextArea
             rows={4}
-            placeholder="Mô tả chi tiết vấn đề hoặc phản hồi..."
+            placeholder="Nhập mô tả chi tiết về vấn đề hoặc phản hồi..."
             className="!resize-none !rounded-lg"
           />
         </Form.Item>
 
-        {/* --- Dòng 3: Chọn khách hàng --- */}
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
@@ -114,24 +131,16 @@ export const ReportFormModal = ({
             >
               <Select
                 showSearch
+                loading={isLoading}
                 placeholder="Chọn khách hàng"
                 optionFilterProp="label"
-                loading={isLoading}
                 options={customerOptions}
-                filterOption={(input, option) =>
-                  (option?.label ?? "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-                // ✅ chỉ cho chọn 1 khách hàng
-                mode={undefined}
-                allowClear
+                disabled={isEdit}
               />
             </Form.Item>
           </Col>
         </Row>
 
-        {/* --- Footer hành động --- */}
         <div className="flex justify-end mt-6 gap-3">
           <Button onClick={onCancel}>Hủy</Button>
           <Button
@@ -139,7 +148,7 @@ export const ReportFormModal = ({
             className="!bg-[#627254] hover:!bg-[#4f6f52]"
             onClick={handleOk}
           >
-            {initialValues ? "Cập nhật" : "Tạo mới"}
+            {isEdit ? "Cập nhật" : "Tạo mới"}
           </Button>
         </div>
       </Form>
