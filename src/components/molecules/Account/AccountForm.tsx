@@ -9,12 +9,6 @@ import type { FormInstance } from "antd/es/form";
 const trimEdges = (s: string) => (s ?? "").replace(/^\s+|\s+$/g, "");
 const toEmail = (s: string) => trimEdges(s).toLowerCase();
 const stripPhone = (s: string) => (s ?? "").replace(/[^\d+]/g, "");
-const toIntlPhone = (s: string) => {
-  const raw = stripPhone(s);
-  if (raw.startsWith("+84")) return raw;
-  if (raw.startsWith("0")) return `+84${raw.slice(1)}`;
-  return raw;
-};
 const toLocalPhone = (s: string) => {
   const raw = stripPhone(s);
   if (raw.startsWith("+84")) return `0${raw.slice(3)}`;
@@ -28,11 +22,11 @@ interface AccountFormValues {
   phone: string;
   address: string;
   gender: Gender;
-  role?: Role; // chỉ dùng khi ADMIN chọn loại tài khoản
+  role?: Role;
   dateOfBirth: Dayjs;
   password: string;
   confirmPassword: string;
-  dealerId?: string; // chỉ bắt buộc khi ADMIN tạo MANAGER
+  dealerId?: string;
 }
 
 export type AccountCreatePayload = Omit<
@@ -43,12 +37,11 @@ export type AccountCreatePayload = Omit<
 };
 
 interface Props {
-  onSubmit: (values: AccountCreatePayload) => void | Promise<void>;
+  onSubmit: (values: AccountCreatePayload) => void;
   loading?: boolean;
-  role: Role; // role của người tạo (ADMIN | MANAGER)
-  defaultCreatingRole?: Role | null; // nếu ADMIN đã chọn trước loại tạo
+  role: Role;
+  defaultCreatingRole?: Role | null;
   form?: FormInstance<AccountFormValues>;
-  /** Chỉ truyền khi ADMIN tạo MANAGER (để user chọn Dealer). Manager không cần prop này. */
   dealerOptions?: { label: string; value: string }[];
 }
 
@@ -74,37 +67,23 @@ export const AccountForm: React.FC<Props> = ({
       gender: values.gender,
     };
 
-    // Manager tạo Dealer Staff -> không gửi role/dealerId
     if (role === Role.MANAGER) {
       onSubmit(base);
-      form.resetFields();
       return;
     }
 
-    // Admin tạo
-    const finalRole = defaultCreatingRole ?? (values.role as Role | undefined);
-    const payloadForAdmin: AccountCreatePayload = {
+    const finalRole = defaultCreatingRole ?? values.role;
+    const payload: AccountCreatePayload = {
       ...base,
-      ...(finalRole ? ({ role: finalRole } as { role: Role }) : {}),
+      ...(finalRole ? { role: finalRole } : {}),
       ...(finalRole === Role.MANAGER && values.dealerId
-        ? ({ dealerId: values.dealerId } as { dealerId: string })
+        ? { dealerId: values.dealerId }
         : {}),
     };
 
-    onSubmit(payloadForAdmin);
-    form.resetFields();
+    onSubmit(payload);
   };
 
-  const genderOptions = [
-    { label: "Nam", value: Gender.MALE },
-    { label: "Nữ", value: Gender.FEMALE },
-    { label: "Khác", value: Gender.UNKNOWN },
-  ];
-
-  // Quy tắc hiển thị chọn đại lý:
-  // - Manager tạo dealer staff: KHÔNG hiển thị (BE tự gán theo manager)
-  // - Admin tạo Manager: BẮT BUỘC chọn dealer
-  // - Admin tạo EVM_STAFF: KHÔNG cần dealer
   const shouldShowDealerSelect = () => {
     if (role === Role.MANAGER) return false;
     if (role === Role.ADMIN && defaultCreatingRole === Role.MANAGER)
@@ -119,9 +98,9 @@ export const AccountForm: React.FC<Props> = ({
       onFinish={handleFinish}
       autoComplete="off"
       requiredMark="optional"
-      className="space-y-2"
       initialValues={{ gender: Gender.UNKNOWN }}
-      validateTrigger="onSubmit" // chỉ validate khi bấm "Tạo tài khoản"
+      validateTrigger="onSubmit"
+      className="space-y-2"
     >
       <Form.Item
         name="fullName"
@@ -139,7 +118,6 @@ export const AccountForm: React.FC<Props> = ({
         <Input placeholder="VD: Nguyễn Văn A" allowClear />
       </Form.Item>
 
-      {/* ADMIN chọn loại tài khoản nếu chưa cố định trước */}
       {role === Role.ADMIN && !defaultCreatingRole && (
         <Form.Item
           name="role"
@@ -156,7 +134,6 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
-      {/* ADMIN tạo Manager -> bắt buộc chọn Dealer */}
       {shouldShowDealerSelect() && (
         <Form.Item
           name="dealerId"
@@ -179,7 +156,7 @@ export const AccountForm: React.FC<Props> = ({
           { required: true, message: "Vui lòng nhập email" },
           { max: 100, message: "Email quá dài (tối đa 100 ký tự)" },
           {
-            validator: (_, value: string) => {
+            validator: (_, value) => {
               const v = toEmail(value || "");
               if (!v) return Promise.resolve();
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -200,7 +177,7 @@ export const AccountForm: React.FC<Props> = ({
           { required: true, message: "Vui lòng nhập số điện thoại" },
           { max: 30, message: "Số điện thoại quá dài" },
           {
-            validator: (_, value: string) => {
+            validator: (_, value) => {
               const raw = stripPhone(value || "");
               if (!raw) return Promise.resolve();
               if (!vnMobile.test(raw))
@@ -209,10 +186,6 @@ export const AccountForm: React.FC<Props> = ({
                     "Số điện thoại không hợp lệ (VD: 0901234567 hoặc +84901234567)"
                   )
                 );
-              const intl = toIntlPhone(raw);
-              const local = toLocalPhone(raw);
-              if (!intl || !local)
-                return Promise.reject(new Error("Số điện thoại không hợp lệ"));
               return Promise.resolve();
             },
           },
@@ -226,12 +199,11 @@ export const AccountForm: React.FC<Props> = ({
         label="Địa chỉ"
         rules={[
           { required: true, message: "Vui lòng nhập địa chỉ" },
-          { min: 10, message: "Địa chỉ quá ngắn, vui lòng nhập chi tiết hơn" },
+          { min: 10, message: "Địa chỉ quá ngắn" },
           { max: 255, message: "Địa chỉ quá dài (tối đa 255 ký tự)" },
           {
             pattern: /^[\p{L}\d\s,.'-]+$/u,
-            message:
-              "Địa chỉ chỉ được chứa chữ, số, dấu phẩy, chấm, hoặc gạch nối",
+            message: "Địa chỉ chỉ được chứa chữ, số và dấu hợp lệ",
           },
         ]}
       >
@@ -244,7 +216,14 @@ export const AccountForm: React.FC<Props> = ({
           label="Giới tính"
           rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}
         >
-          <Select placeholder="Chọn giới tính" options={genderOptions} />
+          <Select
+            placeholder="Chọn giới tính"
+            options={[
+              { label: "Nam", value: Gender.MALE },
+              { label: "Nữ", value: Gender.FEMALE },
+              { label: "Khác", value: Gender.UNKNOWN },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item
@@ -264,9 +243,7 @@ export const AccountForm: React.FC<Props> = ({
                 if (age < 14)
                   return Promise.reject(new Error("Tuổi tối thiểu là 14"));
                 if (age > 100)
-                  return Promise.reject(
-                    new Error("Tuổi tối đa cho phép là 100")
-                  );
+                  return Promise.reject(new Error("Tuổi tối đa là 100"));
                 return Promise.resolve();
               },
             },
@@ -276,9 +253,6 @@ export const AccountForm: React.FC<Props> = ({
             className="w-full"
             format="DD/MM/YYYY"
             placeholder="Chọn ngày sinh"
-            disabledDate={(current) =>
-              !!current && current > dayjs().endOf("day")
-            }
           />
         </Form.Item>
       </div>
@@ -292,14 +266,11 @@ export const AccountForm: React.FC<Props> = ({
             pattern:
               /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[\w@$!%*?&]{8,}$/,
             message:
-              "Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+              "Tối thiểu 8 ký tự gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
           },
         ]}
       >
-        <Input.Password
-          placeholder="Nhập mật khẩu"
-          autoComplete="new-password"
-        />
+        <Input.Password autoComplete="new-password" />
       </Form.Item>
 
       <Form.Item
@@ -317,10 +288,7 @@ export const AccountForm: React.FC<Props> = ({
           }),
         ]}
       >
-        <Input.Password
-          placeholder="Nhập lại mật khẩu"
-          autoComplete="new-password"
-        />
+        <Input.Password autoComplete="new-password" />
       </Form.Item>
 
       <div className="flex justify-center mt-5">
