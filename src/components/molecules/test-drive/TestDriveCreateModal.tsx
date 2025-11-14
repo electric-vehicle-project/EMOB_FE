@@ -9,12 +9,12 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import {
   useCreateTestDriveMutation,
-  useCustomerQuery,
   useFreeVehiclesQuery,
-  useVehicleQuery,
 } from "../../../service/testDriveService";
 import { useWatch } from "antd/es/form/Form";
 import { toast } from "react-toastify";
+import { useCustomerList } from "../../../service/customerService";
+import { useGetVehicles } from "../../../service/vehicleService";
 
 const { Text, Title } = Typography;
 
@@ -32,8 +32,8 @@ export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
   const [searched, setSearched] = useState(false); // NEW
 
   // Hooks
-  const { data: customers } = useCustomerQuery({}, { size: 100 });
-  const { data: vehicles } = useVehicleQuery({}, { size: 100 });
+  const { data: customers } = useCustomerList({ size: 100 });
+  const { data: vehicles } = useGetVehicles({}, { size: 100 });
   const { mutateAsync: createTestDrive, isPending } = useCreateTestDriveMutation();
   const { data: freeVehicles, refetch, isFetching } = useFreeVehiclesQuery({}, queryParams || {});
 

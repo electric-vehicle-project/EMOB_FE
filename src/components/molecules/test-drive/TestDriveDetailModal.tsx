@@ -132,11 +132,14 @@ export const TestDriveDetailModal = ({
             <div className="grid grid-cols-2 gap-x-10">
               <span>
                 <p>Xe lái thử</p>
+                <br />
                 <VehicleUnitCard vehicleUnitId={detail.testDriveVehicleUnitId} />
               </span>
 
               <RowItem label="Mã lịch lái thử" value={detail.testDriveId} />
-              
+
+              <Divider />
+
               <RowItem label="Khách hàng" value={customer?.fullName} />
 
               <RowItem label="Địa điểm" value={detail.location} />

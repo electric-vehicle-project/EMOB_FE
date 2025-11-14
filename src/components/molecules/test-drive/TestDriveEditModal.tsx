@@ -18,10 +18,10 @@ import { useWatch } from "antd/es/form/Form";
 import {
   useTestDriveDetailQuery,
   useFreeVehiclesQuery,
-  useVehicleQuery,
   useUpdateTestDriveMutation,
 } from "../../../service/testDriveService";
 import { toast } from "react-toastify";
+import { useGetVehicles } from "../../../service/vehicleService";
 
 const { Title } = Typography;
 
@@ -42,7 +42,7 @@ export const TestDriveEditModal = ({ open, testDriveId, onClose, onSuccess }: Pr
   });
   const detail = detailData?.result;
 
-  const { data: vehicles } = useVehicleQuery({}, { size: 100 });
+  const { data: vehicles } = useGetVehicles({}, { size: 100 });
   const { data: freeVehicles, refetch } = useFreeVehiclesQuery({}, queryParams);
 
   const { mutateAsync: updateTestDrive, isPending } = useUpdateTestDriveMutation();
