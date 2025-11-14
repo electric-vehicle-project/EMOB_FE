@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { Modal, Form, InputNumber, DatePicker, message, Spin } from "antd";
+import { Modal, Form, InputNumber, DatePicker, Spin } from "antd";
 import dayjs from "dayjs";
 import {
   useUpdateDiscountPolicy,
@@ -165,7 +165,6 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
-              parser={(value) => value!.replace(/,/g, "")}
               placeholder="Nhập giá cuối cùng"
             />
           </Form.Item>

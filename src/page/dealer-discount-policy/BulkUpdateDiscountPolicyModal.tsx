@@ -1,5 +1,4 @@
-import React from "react";
-import { Modal, Form, InputNumber, DatePicker, message } from "antd";
+import { Modal, Form, InputNumber, DatePicker } from "antd";
 import {
   useBulkUpdateDiscountPolicies,
   useGetAllDealers,
@@ -122,7 +121,6 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
             min={0}
             style={{ width: "100%" }}
             formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-            parser={(v) => v?.replace(/,/g, "") ?? ""}
             placeholder="Nhập giá cuối cùng"
           />
         </Form.Item>
