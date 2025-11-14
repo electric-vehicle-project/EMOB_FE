@@ -69,7 +69,8 @@ export const AccountTable: React.FC<Props> = ({
   currentUserRole,
   onViewDetails,
 }) => {
-  const isAdminTable = currentUserRole === RoleConst.ADMIN;
+  const isAdmin = currentUserRole === RoleConst.ADMIN;
+  const isManager = currentUserRole === RoleConst.MANAGER;
 
   const columns: ColumnsType<IAccount> = [
     {
@@ -94,25 +95,29 @@ export const AccountTable: React.FC<Props> = ({
         </Tooltip>
       ),
     },
+
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
       align: "center",
-      render: (email: string) => email || "-",
+      render: (email) => email || "-",
     },
+
     {
       title: "Số điện thoại",
       dataIndex: "phone",
       key: "phone",
       align: "center",
     },
+
     {
       title: "Vai trò",
       dataIndex: "role",
       key: "role",
       align: "center",
-      filters: isAdminTable
+
+      filters: isAdmin
         ? [
             { text: ROLE_LABEL[RoleConst.MANAGER], value: RoleConst.MANAGER },
             {
@@ -121,47 +126,51 @@ export const AccountTable: React.FC<Props> = ({
             },
           ]
         : undefined,
-      onFilter: isAdminTable
-        ? (value, record) => record.role === value
-        : undefined,
+
+      onFilter: isAdmin ? (value, record) => record.role === value : undefined,
+
       render: (_, record) => {
         const dealerName =
-          record.role === RoleConst.MANAGER && record.dealerId
-            ? dealerMap[record.dealerId] || ""
+          record.dealerId && dealerMap[record.dealerId]
+            ? dealerMap[record.dealerId]
             : "";
+
+        const role = record.role;
+        const isManaged = role !== RoleConst.ADMIN && dealerName;
 
         return (
           <div className="flex flex-col items-center gap-1">
-            <Tag color={ROLE_COLOR[record.role]} className="m-0">
-              {ROLE_LABEL[record.role]}
+            <Tag color={ROLE_COLOR[role]} className="m-0">
+              {ROLE_LABEL[role]}
             </Tag>
-            {dealerName ? (
+
+            {/* ADMIN quản lý MANAGER + EVM_STAFF → ghi “của đại lý …” */}
+            {isAdmin && isManaged ? (
               <span className="text-xs text-gray-700">
-                Đại lý: {dealerName}
+                của đại lý: {dealerName}
+              </span>
+            ) : null}
+
+            {/* MANAGER quản lý DEALER_STAFF → ghi “của đại lý …” */}
+            {isManager && role === RoleConst.DEALER_STAFF && dealerName ? (
+              <span className="text-xs text-gray-700">
+                của đại lý: {dealerName}
               </span>
             ) : null}
           </div>
         );
       },
     },
+
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       align: "center",
       filters: [
-        {
-          text: STATUS_LABEL[AccountStatusConst.ACTIVE],
-          value: AccountStatusConst.ACTIVE,
-        },
-        {
-          text: STATUS_LABEL[AccountStatusConst.INACTIVE],
-          value: AccountStatusConst.INACTIVE,
-        },
-        {
-          text: STATUS_LABEL[AccountStatusConst.BANNED],
-          value: AccountStatusConst.BANNED,
-        },
+        { text: STATUS_LABEL.ACTIVE, value: AccountStatusConst.ACTIVE },
+        { text: STATUS_LABEL.INACTIVE, value: AccountStatusConst.INACTIVE },
+        { text: STATUS_LABEL.BANNED, value: AccountStatusConst.BANNED },
       ],
       onFilter: (value, record) => record.status === value,
       render: (status: AccountStatusType) => (
@@ -177,18 +186,11 @@ export const AccountTable: React.FC<Props> = ({
       align: "center",
       render: (_, record) => {
         if (record.status === AccountStatusConst.BANNED) {
-          return (
-            <Tag color="red" className="m-0">
-              Đã cấm vĩnh viễn
-            </Tag>
-          );
+          return <Tag color="red">Đã cấm vĩnh viễn</Tag>;
         }
 
         const isInactive = record.status === AccountStatusConst.INACTIVE;
-        const nextStatus: "ACTIVE" | "INACTIVE" = isInactive
-          ? "ACTIVE"
-          : "INACTIVE";
-        const mainLabel = isInactive ? "Mở lại" : "Tạm ngưng";
+        const next = isInactive ? "ACTIVE" : "INACTIVE";
 
         return (
           <div className="flex justify-center gap-2">
@@ -198,10 +200,11 @@ export const AccountTable: React.FC<Props> = ({
               className={
                 isInactive ? "!bg-[#627254] hover:!bg-[#525e46] text-white" : ""
               }
-              onClick={() => onChangeStatus(record.id, nextStatus)}
+              onClick={() => onChangeStatus(record.id, next)}
             >
-              {mainLabel}
+              {isInactive ? "Mở lại" : "Tạm ngưng"}
             </Button>
+
             <Button
               size="small"
               danger
@@ -225,6 +228,7 @@ export const AccountTable: React.FC<Props> = ({
         loading={loading}
         pagination={false}
       />
+
       {pagination && (
         <div className="p-3 flex justify-center">
           <Pagination {...pagination} />
