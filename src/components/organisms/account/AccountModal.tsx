@@ -1,54 +1,74 @@
-import { Modal } from "antd";
-import { useEffect } from "react";
-import { useForm } from "antd/es/form/Form";
-import {
-  AccountForm,
-  type AccountCreatePayload,
-} from "../../molecules/Account/AccountForm";
+// src/components/organisms/account/AccountModal.tsx
+import { Modal, Form } from "antd";
+import { AccountForm } from "../../molecules/Account/AccountForm";
+import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 import { Role } from "../../../model/Account";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (values: AccountCreatePayload) => Promise<void> | void;
   creatorRole: Role;
   creatingRole: Role | null;
+  onSubmit: (values: AccountCreatePayload) => Promise<void>;
   loading?: boolean;
-  /** Chỉ truyền khi Admin tạo Manager */
   dealerOptions?: { label: string; value: string }[];
 }
 
 export const AccountModal = ({
   open,
   onClose,
-  onSubmit,
   creatorRole,
   creatingRole,
+  onSubmit,
   loading = false,
   dealerOptions = [],
 }: Props) => {
-  const [form] = useForm();
+  const [form] = Form.useForm();
 
-  useEffect(() => {
-    if (!open) form.resetFields();
-  }, [open, form]);
+  const handleSubmit = async (values: AccountCreatePayload) => {
+    try {
+      await onSubmit(values);
+    } catch (err: unknown) {
+      interface ApiError {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+      }
+      const apiError = err as ApiError;
+      const msg = apiError?.response?.data?.message ?? "";
+
+      if (msg.toLowerCase().includes("email")) {
+        form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }]);
+        return;
+      }
+
+      if (msg.toLowerCase().includes("phone")) {
+        form.setFields([
+          { name: "phone", errors: ["Số điện thoại đã tồn tại"] },
+        ]);
+        return;
+      }
+    }
+  };
 
   return (
     <Modal
       open={open}
-      title="Thêm tài khoản mới"
       onCancel={onClose}
-      destroyOnClose
-      centered
       footer={null}
+      title="Tạo tài khoản mới"
+      width={600}
+      destroyOnClose
     >
       <AccountForm
-        form={form}
-        onSubmit={onSubmit}
-        loading={loading}
         role={creatorRole}
-        defaultCreatingRole={creatingRole || undefined}
+        defaultCreatingRole={creatingRole}
+        onSubmit={handleSubmit}
+        loading={loading}
         dealerOptions={dealerOptions}
+        form={form}
       />
     </Modal>
   );

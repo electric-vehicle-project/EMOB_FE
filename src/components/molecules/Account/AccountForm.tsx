@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import { Gender, Role } from "../../../model/Account";
 import type { FormInstance } from "antd/es/form";
 
-/* ===== Helpers ===== */
+/* Helpers */
 const trimEdges = (s: string) => (s ?? "").replace(/^\s+|\s+$/g, "");
 const toEmail = (s: string) => trimEdges(s).toLowerCase();
 const stripPhone = (s: string) => (s ?? "").replace(/[^\d+]/g, "");
@@ -21,7 +21,7 @@ interface AccountFormValues {
   email: string;
   phone: string;
   address: string;
-  gender: Gender;
+  gender?: Gender;
   role?: Role;
   dateOfBirth: Dayjs;
   password: string;
@@ -32,9 +32,7 @@ interface AccountFormValues {
 export type AccountCreatePayload = Omit<
   AccountFormValues,
   "dateOfBirth" | "confirmPassword"
-> & {
-  dateOfBirth: string;
-};
+> & { dateOfBirth: string };
 
 interface Props {
   onSubmit: (values: AccountCreatePayload) => void;
@@ -64,32 +62,23 @@ export const AccountForm: React.FC<Props> = ({
       address: trimEdges(values.address),
       dateOfBirth: dayjs(values.dateOfBirth).format("YYYY-MM-DD"),
       password: values.password,
-      gender: values.gender,
+      gender: values.gender!,
     };
 
-    if (role === Role.MANAGER) {
-      onSubmit(base);
-      return;
-    }
+    if (role === Role.MANAGER) return onSubmit(base);
 
     const finalRole = defaultCreatingRole ?? values.role;
-    const payload: AccountCreatePayload = {
+    onSubmit({
       ...base,
       ...(finalRole ? { role: finalRole } : {}),
       ...(finalRole === Role.MANAGER && values.dealerId
         ? { dealerId: values.dealerId }
         : {}),
-    };
-
-    onSubmit(payload);
+    });
   };
 
-  const shouldShowDealerSelect = () => {
-    if (role === Role.MANAGER) return false;
-    if (role === Role.ADMIN && defaultCreatingRole === Role.MANAGER)
-      return true;
-    return false;
-  };
+  const showDealer = () =>
+    role === Role.ADMIN && defaultCreatingRole === Role.MANAGER;
 
   return (
     <Form
@@ -98,7 +87,6 @@ export const AccountForm: React.FC<Props> = ({
       onFinish={handleFinish}
       autoComplete="off"
       requiredMark="optional"
-      initialValues={{ gender: Gender.UNKNOWN }}
       validateTrigger="onSubmit"
       className="space-y-2"
     >
@@ -108,14 +96,14 @@ export const AccountForm: React.FC<Props> = ({
         rules={[
           { required: true, message: "Vui lòng nhập họ và tên" },
           { min: 3, message: "Họ và tên phải có ít nhất 3 ký tự" },
-          { max: 80, message: "Họ và tên quá dài (tối đa 80 ký tự)" },
+          { max: 80, message: "Họ và tên quá dài" },
           {
             pattern: /^[\p{L}\s'.-]+$/u,
             message: "Họ tên chỉ được chứa chữ cái và khoảng trắng",
           },
         ]}
       >
-        <Input placeholder="VD: Nguyễn Văn A" allowClear />
+        <Input allowClear placeholder="VD: Nguyễn Văn A" />
       </Form.Item>
 
       {role === Role.ADMIN && !defaultCreatingRole && (
@@ -134,7 +122,7 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
-      {shouldShowDealerSelect() && (
+      {showDealer() && (
         <Form.Item
           name="dealerId"
           label="Đại lý quản lý"
@@ -154,20 +142,20 @@ export const AccountForm: React.FC<Props> = ({
         label="Email"
         rules={[
           { required: true, message: "Vui lòng nhập email" },
-          { max: 100, message: "Email quá dài (tối đa 100 ký tự)" },
+          { max: 100, message: "Email quá dài" },
           {
             validator: (_, value) => {
               const v = toEmail(value || "");
               if (!v) return Promise.resolve();
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-              if (!emailRegex.test(v))
+              const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+              if (!regex.test(v))
                 return Promise.reject(new Error("Email không hợp lệ"));
               return Promise.resolve();
             },
           },
         ]}
       >
-        <Input placeholder="VD: nhanvien@emob.vn" allowClear />
+        <Input allowClear placeholder="VD: nhanvien@emob.vn" />
       </Form.Item>
 
       <Form.Item
@@ -175,23 +163,17 @@ export const AccountForm: React.FC<Props> = ({
         label="Số điện thoại"
         rules={[
           { required: true, message: "Vui lòng nhập số điện thoại" },
-          { max: 30, message: "Số điện thoại quá dài" },
           {
             validator: (_, value) => {
               const raw = stripPhone(value || "");
-              if (!raw) return Promise.resolve();
               if (!vnMobile.test(raw))
-                return Promise.reject(
-                  new Error(
-                    "Số điện thoại không hợp lệ (VD: 0901234567 hoặc +84901234567)"
-                  )
-                );
+                return Promise.reject(new Error("Số điện thoại không hợp lệ"));
               return Promise.resolve();
             },
           },
         ]}
       >
-        <Input placeholder="VD: 0901234567" allowClear />
+        <Input allowClear placeholder="VD: 0901234567" />
       </Form.Item>
 
       <Form.Item
@@ -200,14 +182,10 @@ export const AccountForm: React.FC<Props> = ({
         rules={[
           { required: true, message: "Vui lòng nhập địa chỉ" },
           { min: 10, message: "Địa chỉ quá ngắn" },
-          { max: 255, message: "Địa chỉ quá dài (tối đa 255 ký tự)" },
-          {
-            pattern: /^[\p{L}\d\s,.'-]+$/u,
-            message: "Địa chỉ chỉ được chứa chữ, số và dấu hợp lệ",
-          },
+          { max: 255, message: "Địa chỉ quá dài" },
         ]}
       >
-        <Input placeholder="VD: 123 Nguyễn Trãi, Quận 5, TP.HCM" allowClear />
+        <Input allowClear placeholder="VD: 123 Nguyễn Trãi, Quận 5" />
       </Form.Item>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -232,7 +210,7 @@ export const AccountForm: React.FC<Props> = ({
           rules={[
             { required: true, message: "Vui lòng chọn ngày sinh" },
             {
-              validator: (_, value: Dayjs) => {
+              validator(_, value: Dayjs) {
                 if (!value) return Promise.resolve();
                 const today = dayjs();
                 if (value.isAfter(today))
@@ -241,9 +219,7 @@ export const AccountForm: React.FC<Props> = ({
                   );
                 const age = today.diff(value, "year");
                 if (age < 14)
-                  return Promise.reject(new Error("Tuổi tối thiểu là 14"));
-                if (age > 100)
-                  return Promise.reject(new Error("Tuổi tối đa là 100"));
+                  return Promise.reject(new Error("Tối thiểu 14 tuổi"));
                 return Promise.resolve();
               },
             },
@@ -266,7 +242,7 @@ export const AccountForm: React.FC<Props> = ({
             pattern:
               /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[\w@$!%*?&]{8,}$/,
             message:
-              "Tối thiểu 8 ký tự gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+              "Tối thiểu 8 ký tự gồm chữ hoa, chữ thường, số & ký tự đặc biệt",
           },
         ]}
       >
@@ -281,8 +257,7 @@ export const AccountForm: React.FC<Props> = ({
           { required: true, message: "Vui lòng xác nhận mật khẩu" },
           ({ getFieldValue }) => ({
             validator(_, value) {
-              if (!value || getFieldValue("password") === value)
-                return Promise.resolve();
+              if (getFieldValue("password") === value) return Promise.resolve();
               return Promise.reject(new Error("Mật khẩu xác nhận không khớp"));
             },
           }),
