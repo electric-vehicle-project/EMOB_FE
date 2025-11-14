@@ -1,15 +1,15 @@
 import { useMemo, useState } from "react";
-import { Button, Input, Select, Space } from "antd";
+import { Button, Select } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import {
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { useNavigate } from "react-router";
+import { useSelector } from "react-redux";
+
 import { ReportTable } from "../../components/molecules/report/ReportTable";
 import { ReportFormModal } from "../../components/molecules/report/ReportFormModal";
 import { ProcessReportModal } from "../../components/molecules/report/ProcessReportModal";
 import { ReportDeleteConfirm } from "../../components/molecules/report/ReportDeleteConfirm";
+
 import {
   useReportList,
   useReportCreate,
@@ -17,10 +17,13 @@ import {
   useReportDelete,
   useReportProcess,
 } from "../../service/reportService";
+
 import { useDebounce } from "../../hook/useDebounce";
 import type { IReport } from "../../model/Report";
 import useGetParams from "../../hook/useGetParams";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
+import type { RootState } from "../../redux/store";
 
 interface ReportFormValues {
   title: string;
@@ -40,28 +43,30 @@ const STATUS_OPTIONS = [
 
 export const ReportPage = () => {
   const getParam = useGetParams();
+  const navigate = useNavigate();
+  const role = useSelector((s: RootState) => s.user?.role) ?? "MANAGER";
 
-  // --- Search & Filter
+  /** ========== SEARCH + FILTER ========== */
   const [keyword, setKeyword] = useState(getParam("keyword") ?? "");
   const [status, setStatus] = useState<IReport["status"] | undefined>(
     (getParam("status") as IReport["status"]) || undefined
   );
   const debouncedKeyword = useDebounce(keyword, 400);
 
-  // --- Pagination
+  /** ========== PAGINATION ========== */
   const [page, setPage] = useState(Number(getParam("page")) || 0);
   const [size, setSize] = useState(Number(getParam("size")) || 10);
 
-  // --- Sort (server-based)
-  const [sortField, setSortField] = useState(
-    getParam("sortField") || "createdAt"
+  /** ========== SORT ========== */
+  const [sortField, setSortField] = useState<keyof IReport>(
+    (getParam("sortField") as keyof IReport) || "createdAt"
   );
   const [sortDir, setSortDir] = useState<"asc" | "desc">(
     (getParam("sortDir") as "asc" | "desc") || "desc"
   );
 
-  // --- Query: Fetch report list
-  const { data, isLoading } = useReportList(
+  /** ========== API LIST ========== */
+  const { data, isLoading, refetch } = useReportList(
     page,
     size,
     debouncedKeyword,
@@ -70,35 +75,34 @@ export const ReportPage = () => {
     sortDir
   );
 
-  // --- Mutations
+  const reports = useMemo(() => data?.result?.data ?? [], [data]);
+  const totalElements = useMemo(
+    () => data?.result?.metadata?.totalElements ?? 0,
+    [data]
+  );
+
+  /** ========== MUTATIONS ========== */
   const createReport = useReportCreate();
   const updateReport = useReportUpdate();
   const deleteReport = useReportDelete();
   const processReport = useReportProcess();
 
-  // --- Modal state
+  /** ========== MODAL STATES ========== */
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<IReport | null>(null);
+
   const [openProcess, setOpenProcess] = useState(false);
   const [processing, setProcessing] = useState<IReport | null>(null);
+
   const [deleting, setDeleting] = useState<IReport | null>(null);
 
-  /** Handle create or update report */
-  const handleSubmit = async (values: ReportFormValues): Promise<void> => {
+  /** CREATE / UPDATE REPORT */
+  const handleSubmit = async (values: ReportFormValues) => {
     try {
       if (editing) {
-        const mergedValues: ReportFormValues = {
-          title: values.title ?? editing.title,
-          description: values.description ?? editing.description,
-          type: values.type ?? editing.type,
-          status: values.status ?? editing.status,
-          customerId: values.customerId ?? editing.customerId,
-          vinNumber: values.vinNumber ?? undefined,
-        };
-
         await updateReport.mutateAsync({
           id: editing.reportId,
-          data: mergedValues,
+          data: values,
         });
         toast.success("Cập nhật báo cáo thành công!");
       } else {
@@ -108,50 +112,45 @@ export const ReportPage = () => {
 
       setOpenForm(false);
       setEditing(null);
+      refetch();
     } catch {
       toast.error("Thao tác thất bại, vui lòng thử lại!");
     }
   };
 
-  /** Handle delete report */
-  const handleDelete = async (id: string): Promise<void> => {
+  /** DELETE REPORT */
+  const handleDelete = async (id: string) => {
     try {
       await deleteReport.mutateAsync(id);
       toast.success("Xóa báo cáo thành công!");
       setDeleting(null);
+      refetch();
     } catch {
-      toast.error("Không thể xóa báo cáo này!");
+      toast.error("Không thể xóa báo cáo!");
     }
   };
 
-  /** Handle process report (change status) */
-  const handleProcess = async (
-    nextStatus: IReport["status"],
-    solution?: string
-  ): Promise<void> => {
+  /** PROCESS REPORT */
+  const handleProcess = async (next: IReport["status"], solution?: string) => {
     if (!processing) return;
+
     try {
       await processReport.mutateAsync({
-        id: `process-report/${processing.reportId}?status=${nextStatus}`,
-        data: nextStatus === "RESOLVED" ? { solution } : {},
+        id: `process-report/${processing.reportId}?status=${next}`,
+        data: next === "RESOLVED" ? { solution } : {},
       });
       toast.success("Cập nhật trạng thái báo cáo thành công!");
+
       setOpenProcess(false);
       setProcessing(null);
+      refetch();
     } catch {
       toast.error("Không thể xử lý báo cáo!");
     }
   };
 
-  // --- Derived data
-  const reports = useMemo(() => data?.result?.data ?? [], [data]);
-  const totalElements = useMemo(
-    () => data?.result?.metadata?.totalElements ?? 0,
-    [data]
-  );
-
-  /** Reset filters and sort state */
-  const resetFilters = (): void => {
+  /** RESET FILTERS */
+  const resetFilters = () => {
     setKeyword("");
     setStatus(undefined);
     setSortField("createdAt");
@@ -163,10 +162,11 @@ export const ReportPage = () => {
   return (
     <CardWrapper>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Quản lý Báo cáo
         </h2>
+
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -177,47 +177,37 @@ export const ReportPage = () => {
         </Button>
       </div>
 
-      {/* Filter Section */}
-      <div className="mb-4">
-        <Space wrap size="middle">
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder="Tìm kiếm theo tiêu đề hoặc người tạo…"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={{ width: 320 }}
-          />
-          <Select
-            allowClear
-            placeholder="Trạng thái"
-            style={{ width: 200 }}
-            value={status}
-            onChange={(val) => {
-              setStatus(val);
-              setPage(0);
-            }}
-            options={STATUS_OPTIONS}
-          />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={resetFilters}
-            type="primary"
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
+      {/* EMOB Filter Bar */}
+      <EMOBFilterBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onReset={resetFilters}
+        filterDropdown={
+          <div className="flex flex-col gap-3">
+            <Select
+              allowClear
+              className="w-full"
+              placeholder="Trạng thái"
+              value={status}
+              options={STATUS_OPTIONS}
+              onChange={(val) => {
+                setStatus(val);
+                setPage(0);
+              }}
+            />
+          </div>
+        }
+      />
 
-      {/* Data Table */}
+      {/* Table */}
       <ReportTable
-        loading={isLoading}
         data={reports}
+        loading={isLoading}
         sortField={sortField}
         sortDir={sortDir}
-        onChangeSort={(field, dir) => {
-          setSortField(field || "createdAt");
-          setSortDir(dir === "ascend" ? "asc" : "desc");
+        onSortChange={(field, dir) => {
+          setSortField(field);
+          setSortDir(dir);
           setPage(0);
         }}
         pagination={{
@@ -225,10 +215,12 @@ export const ReportPage = () => {
           pageSize: size,
           total: totalElements,
           showSizeChanger: true,
-          onChange: (p: number, s?: number) => {
+          onChange: (p, s) => {
             setPage(p - 1);
             setSize(s ?? 10);
           },
+          position: ["bottomCenter"],
+          showTotal: (t) => `Tổng cộng ${t} báo cáo`,
         }}
         onEdit={(r) => {
           setEditing(r);
@@ -239,16 +231,17 @@ export const ReportPage = () => {
           setProcessing(r);
           setOpenProcess(true);
         }}
+        onViewDetail={(id) => navigate(`/${role.toLowerCase()}/report/${id}`)}
       />
 
       {/* Create / Edit Modal */}
       <ReportFormModal
         open={openForm}
+        initialValues={editing}
         onCancel={() => {
           setOpenForm(false);
           setEditing(null);
         }}
-        initialValues={editing}
         onSubmit={handleSubmit}
       />
 

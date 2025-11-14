@@ -2,8 +2,8 @@ import { Input, Dropdown, Button } from "antd";
 import { SearchOutlined, FilterOutlined } from "@ant-design/icons";
 
 interface EMOBFilterBarProps {
-  keyword: string;
-  onKeywordChange: (value: string) => void;
+  keyword?: string; // optional
+  onKeywordChange?: (value: string) => void; // optional
   filterDropdown: React.ReactNode;
   onReset?: () => void;
 }
@@ -14,22 +14,27 @@ export const EMOBFilterBar = ({
   filterDropdown,
   onReset,
 }: EMOBFilterBarProps) => {
+  const showSearch =
+    typeof keyword === "string" && typeof onKeywordChange === "function";
+
   return (
     <div className="flex items-center gap-4 mb-4">
-      {/* Search Box */}
-      <Input
-        allowClear
-        size="large"
-        placeholder="Tìm kiếm..."
-        prefix={<SearchOutlined className="text-gray-400" />}
-        value={keyword}
-        onChange={(e) => onKeywordChange(e.target.value)}
-        className="rounded-full h-11 max-w-md px-4"
-        style={{
-          borderRadius: 9999,
-          height: 34,
-        }}
-      />
+      {/* Search Box (optional) */}
+      {showSearch && (
+        <Input
+          allowClear
+          size="large"
+          placeholder="Tìm kiếm..."
+          prefix={<SearchOutlined className="text-gray-400" />}
+          value={keyword}
+          onChange={(e) => onKeywordChange?.(e.target.value)}
+          className="rounded-full h-11 max-w-md px-4"
+          style={{
+            borderRadius: 9999,
+            height: 34,
+          }}
+        />
+      )}
 
       {/* Filter Button */}
       <Dropdown
@@ -38,7 +43,6 @@ export const EMOBFilterBar = ({
           <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-200 w-72">
             {filterDropdown}
 
-            {/* RESET BUTTON */}
             <div className="flex justify-end mt-4">
               <Button type="primary" onClick={onReset}>
                 Đặt lại
