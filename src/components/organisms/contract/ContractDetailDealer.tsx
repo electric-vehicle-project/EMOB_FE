@@ -29,6 +29,7 @@ import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
+import { VehicleUnitCard } from "../../molecules/contract/VehicleUnitCard";
 
 
 export const ContractDetailDealer = () => {
@@ -240,83 +241,85 @@ export const ContractDetailDealer = () => {
                   Phụ lục hợp đồng
                 </h3>
                 <p className="text-gray-600 mb-3 text-center">
-                  (Chi tiết các dòng xe thuộc hợp đồng)
+                  (Chi tiết danh sách xe thuộc hợp đồng)
                 </p>
 
                 <div className="space-y-6">
-                  {(contract?.items || []).map((item:any, index:any) => (
-                    <div
-                      key={item.id}
-                      className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
-                    >
-                      <h4 className="font-semibold mb-3 text-[#394a2f]">
-                        #{index + 1}. Xe{" "}
-                        {item.vehicleStatus === "TEST_DRIVE"
-                          ? "lái thử"
-                          : item.vehicleStatus === "SPECIAL"
-                            ? "đặc biệt"
-                            : "tiêu chuẩn"}
-                      </h4>
+                  {(contract?.items || []).map((item: any, index: number) => {
+                    // 1) Lô hàng index
+                    return (
+                      <div
+                        key={item.id}
+                        className="border rounded-xl p-4 bg-gray-50 transition-colors shadow-sm"
+                      >
+                        <h4 className="px-4 text-lg font-semibold text-[#394a2f]">
+                          Lô hàng #{(index + 1).toString().padStart(2, "0")}
+                        </h4>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
-                        <p>
-                          <b>Mã xe:</b> {item.vehicleId ?? "Không xác định"}
-                        </p>
-                        <p>
-                          <b>Màu sắc:</b> {item.color || "Không xác định"}
-                        </p>
-                        <p>
-                          <b>Số lượng:</b> {item.quantity ?? 0}
-                        </p>
-                        <p>
-                          <b>Đơn giá:</b>{" "}
-                          {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Giảm giá:</b>{" "}
-                          {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Thành tiền:</b>{" "}
-                          {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Tình trạng xe:</b>{" "}
-                          {item.vehicleStatus === "NORMAL"
-                            ? "Xe tiêu chuẩn"
-                            : item.vehicleStatus === "TEST_DRIVE"
-                              ? "Xe lái thử"
-                              : item.vehicleStatus === "SPECIAL"
-                                ? "Xe đặc biệt"
-                                : "Khác"}
-                        </p>
+                        <Divider />
 
-                        <div className="col-span-2">
-                          <b>Danh sách mã xe con (Vehicle Unit IDs):</b>
+                        {/* THÔNG TIN CHUNG CỦA LÔ */}
+                        <div className="pr-4 pl-4 grid grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
+                          <p>
+                            <b>Màu sắc xe thuộc lô:</b> {item.color || "Không xác định"}
+                          </p>
+
+                          <p>
+                            <b>Số lượng (chiếc):</b> {item.quantity ?? 0}
+                          </p>
+                          <p>
+                            <b>Đơn giá lô hàng:</b>{" "}
+                            {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+
+                          <p>
+                            <b>Giảm giá:</b>{" "}
+                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+                          <p>
+                            <b>Tổng tiền lô hàng:</b>{" "}
+                            {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+
+                          <p>
+                            <b>Mã khuyến mãi:</b> {item.promotionId || "Không áp dụng"}
+                          </p>
+                        </div>
+
+                        <Divider />
+
+                        {/* DANH SÁCH XE CON */}
+                        <div className="mt-4">
+                          <b className="pl-4">Danh sách xe thuộc lô (chi tiết từng xe):</b>
+
                           {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
-                            <ul className="list-disc ml-6 mt-1 text-[14px]">
+                            <div className="grid grid-cols-3 gap-4 mt-4">
                               {item.vehicleUnitIds.map((uid: string) => (
-                                <li key={uid}>{uid}</li>
+                                <VehicleUnitCard key={uid} vehicleUnitId={uid} />
                               ))}
-                            </ul>
+                            </div>
                           ) : (
                             <p className="text-gray-500 ml-2 mt-1">Không có</p>
                           )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  <Divider />
                 </div>
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
                     <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
-                    <b>Tổng giá trị:</b>{" "}
-                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫
+                    <b>Tổng giá trị (chưa VAT):</b>{" "}
+                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫ &nbsp;&nbsp;
+                    <b>Thuế VAT:</b>{" "}
+                    {contract?.vatAmount
+                      ? `${contract?.vatAmount.toLocaleString("vi-VN")} ₫`
+                      : "0 ₫"}
                   </p>
                 </div>
               </div>
-
 
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.

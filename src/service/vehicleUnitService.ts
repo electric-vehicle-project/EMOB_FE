@@ -1,6 +1,7 @@
 // src/service/vehicleService.ts
 import { createQueryHook, createMutationHook } from "../hook/useApi";
 import api from "../config/api";
+import { useQuery } from "@tanstack/react-query";
 
 const BASE_URL = "/vehicle";
 
@@ -15,6 +16,19 @@ export const useVehicleUnitList = (
   )(options);
 
 // ✅ Lấy chi tiết 1 vehicle unit
+export const getVehicleUnitById = async (id: string) => {
+  const res = await api.get(`/vehicle/unit/${id}`);
+  return res.data;
+};
+
+export const useVehicleUnitByUnitId = (id?: string) => {
+  return useQuery({
+    queryKey: ["vehicle-unit", id],
+    queryFn: () => getVehicleUnitById(id!),
+    enabled: !!id,
+  });
+};
+
 export const useVehicleUnitById = async (vehicleUnitId: string) => {
   const res = await api.get(`/vehicle/unit/${vehicleUnitId}`);
   return res.data?.result;

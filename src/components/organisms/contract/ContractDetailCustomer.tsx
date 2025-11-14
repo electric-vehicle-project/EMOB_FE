@@ -30,6 +30,7 @@ import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useCustomerById } from "../../../service/customerService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
+import { VehicleUnitCard } from "../../molecules/contract/VehicleUnitCard";
 
 export const ContractDetailCustomer = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export const ContractDetailCustomer = () => {
   const saleOrder = useSaleOrderById(contract?.orderId).data?.result;
   const customer = useCustomerById(saleOrder?.customerId).data?.result;
   const dealer = useDealerByIdQuery(user?.dealerId).data?.result;
-   
+
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -125,7 +126,7 @@ export const ContractDetailCustomer = () => {
 
         <Button
           icon={<PrinterOutlined />}
-          type="default"  
+          type="default"
           onClick={handlePrint}
           className="border-[#627254] text-[#627254] hover:!bg-[#627254] hover:!text-white"
         >
@@ -241,64 +242,81 @@ export const ContractDetailCustomer = () => {
                   Phụ lục hợp đồng
                 </h3>
                 <p className="text-gray-600 mb-3 text-center">
-                  (Chi tiết các dòng xe thuộc hợp đồng)
+                  (Chi tiết danh sách xe thuộc hợp đồng)
                 </p>
 
                 <div className="space-y-6">
-                  {(contract?.items || []).map((item:any, index:any) => (
-                    <div
-                      key={item.id}
-                      className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
-                    >
-                      <h4 className="font-semibold mb-3 text-[#394a2f]">
-                        #{index + 1}. Xe {item.vehicleStatus === "TEST_DRIVE"
-                          ? "lái thử"
-                          : item.vehicleStatus === "SPECIAL"
-                            ? "đặc biệt"
-                            : "tiêu chuẩn"}
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
-                        <p>
-                          <b>Mẫu xe :</b> {item.id}
-                        </p>
-                        <p>
-                          <b>Màu sắc:</b> {item.color || "Không xác định"}
-                        </p>
-                        <p>
-                          <b>Số lượng:</b> {item.quantity ?? 0}
-                        </p>
-                        <p>
-                          <b>Đơn giá:</b>{" "}
-                          {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Giảm giá:</b>{" "}
-                          {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Thành tiền:</b>{" "}
-                          {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Mã khuyến mãi :</b>{" "}
-                          {item.promotionId || "Không áp dụng"}
-                        </p>
-                        <div className="col-span-2">
-                          <b>Danh sách mã xe con thuộc mẫu:</b>
+                  {(contract?.items || []).map((item: any, index: number) => {
+                    // 1) Lô hàng index
+                    return (
+                      <div
+                        key={item.id}
+                        className="border rounded-xl p-4 bg-gray-50 transition-colors shadow-sm"
+                      >
+
+                        <div className="flex justify-between px-4">
+                          <h4 className="text-lg font-semibold text-[#394a2f]">
+                            Lô hàng #{(index + 1).toString().padStart(2, "0")}
+                          </h4>
+                          <h4 className="font-semibold text-[#394a2f] italic" >
+                            Mã lô hàng: {item.id}
+                          </h4>
+                        </div>
+
+                        <Divider />
+
+                        {/* THÔNG TIN CHUNG CỦA LÔ */}
+                        <div className="pr-4 pl-4 grid grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
+                          <p>
+                            <b>Màu sắc xe thuộc lô:</b> {item.color || "Không xác định"}
+                          </p>
+
+                          <p>
+                            <b>Số lượng (chiếc):</b> {item.quantity ?? 0}
+                          </p>
+                          <p>
+                            <b>Đơn giá lô hàng:</b>{" "}
+                            {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+
+                          <p>
+                            <b>Giảm giá:</b>{" "}
+                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+                          <p>
+                            <b>Tổng tiền lô hàng:</b>{" "}
+                            {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+
+                          <p>
+                            <b>Mã khuyến mãi:</b> {item.promotionId || "Không áp dụng"}
+                          </p>
+                        </div>
+
+                        <Divider />
+
+                        {/* DANH SÁCH XE CON */}
+                        <div className="mt-4">
+                          <b className="pl-4">Danh sách xe thuộc lô (chi tiết từng xe):</b>
+
                           {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
-                            <ul className="list-disc ml-6 mt-1 text-[14px]">
+                            <div className="grid grid-cols-3 gap-4 mt-4">
                               {item.vehicleUnitIds.map((uid: string) => (
-                                <li key={uid}>{uid}</li>
+                                <VehicleUnitCard key={uid} vehicleUnitId={uid} />
                               ))}
-                            </ul>
+                            </div>
                           ) : (
                             <p className="text-gray-500 ml-2 mt-1">Không có</p>
                           )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
+                  <Divider />
                 </div>
+
+
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
@@ -312,6 +330,7 @@ export const ContractDetailCustomer = () => {
                   </p>
                 </div>
               </div>
+
 
 
 

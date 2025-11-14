@@ -20,6 +20,7 @@ import { toast } from "react-toastify";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { useCustomerById } from "../../../service/customerService";
 import { useGetAccountById } from "../../../service/accountService";
+import { VehicleUnitCard } from "../contract/VehicleUnitCard";
 
 const { Title, Text } = Typography;
 
@@ -36,10 +37,10 @@ export const TestDriveDetailModal = ({
   onClose,
   onUpdated,
 }: Props) => {
- const { data, isLoading, refetch } = useTestDriveDetailQuery(
-  testDriveId || undefined,
-  { enabled: !!testDriveId && open }
-);
+  const { data, isLoading, refetch } = useTestDriveDetailQuery(
+    testDriveId || undefined,
+    { enabled: !!testDriveId && open }
+  );
 
   const detail = data?.result;
 
@@ -61,7 +62,7 @@ export const TestDriveDetailModal = ({
         status: "CANCELLED",
       });
       toast.success("Đã hủy lịch!");
-      await refetch();  
+      await refetch();
       setConfirmOpen(false);
       onUpdated?.();
       onClose();
@@ -129,13 +130,15 @@ export const TestDriveDetailModal = ({
           <div className="mt-2">
             {/* SECTION 1 */}
             <div className="grid grid-cols-2 gap-x-10">
+              <span>
+                <p>Xe lái thử</p>
+                <VehicleUnitCard vehicleUnitId={detail.testDriveVehicleUnitId} />
+              </span>
+
               <RowItem label="Mã lịch lái thử" value={detail.testDriveId} />
+              
               <RowItem label="Khách hàng" value={customer?.fullName} />
 
-              <RowItem
-                label="Xe lái thử ID"
-                value={detail.testDriveVehicleUnitId}
-              />
               <RowItem label="Địa điểm" value={detail.location} />
 
               {role === "MANAGER" && (
@@ -186,7 +189,7 @@ export const TestDriveDetailModal = ({
                     status: "CONFIRMED",
                   });
                   toast.success("Đã duyệt lịch lái thử!");
-                  await refetch();  
+                  await refetch();
                   onUpdated?.();
                   onClose();
                 } catch {
@@ -211,7 +214,7 @@ export const TestDriveDetailModal = ({
                       status: "COMPLETED",
                     });
                     toast.success("Đã đánh dấu hoàn thành!");
-                    await refetch();  
+                    await refetch();
                     onUpdated?.();
                     onClose();
                   } catch {
