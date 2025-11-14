@@ -102,7 +102,7 @@ export const ContractTable = ({ data }: Props) => {
       key: "vatAmount",
       minWidth: 120,
       width: "12%",
-      align: "right",
+      align: "left",
       sorter: (a, b) => (a.vatAmount || 0) - (b.vatAmount || 0),
       render: (val: number) => (
         <span className="font-semibold text-gray-700">
@@ -127,7 +127,7 @@ export const ContractTable = ({ data }: Props) => {
       key: "actions",
       align: "center",
       minWidth: 100,
-      width: "6%",
+      width: "10%",
       render: (_, record) => {
         const menu = (
           <Menu
