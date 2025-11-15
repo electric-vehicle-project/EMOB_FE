@@ -9,7 +9,7 @@ export const ButtonLink: React.FC<ButtonLinkProps> = ({ to, children }) => {
   return (
     <Link
       to={to}
-      className="text-base font-medium underline underline-offset-4 hover:text-green-700 transition"
+      className="!text-white text-base font-medium underline underline-offset-4 hover:!text-[var(--natural-color)] transition"
     >
       {children}
     </Link>

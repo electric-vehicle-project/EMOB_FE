@@ -3,7 +3,7 @@
   --primary-color: #627254;
   --secondary-color: #76885b;
   --default-color: #24282b;
-  --natural-color: #DDDDDD;
+  --natural-color: #dddddd;
 }
 
 /* Subtle focus glow using primary color */
@@ -264,4 +264,24 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+
+
+.ant-table-thead > tr > th {
+  border-right: none !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-right: none !important;
+}
+
+/* Giữ border ngang */
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #a9abae !important; /* gray-200 */
+}
+
+.ant-table-container {
+  border-left: none !important;
+  border-right: none !important;
 }

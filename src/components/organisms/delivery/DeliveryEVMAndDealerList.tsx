@@ -9,7 +9,10 @@ import {
   Form,
   DatePicker,
   Pagination,
+  Input,
+  Dropdown,
 } from "antd";
+import { FilterOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import {
@@ -31,153 +34,216 @@ export const DeliveryEVMAndDealerList = () => {
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statuses, setStatuses] = useState<string[]>([]);
+  const [keyword, setKeyword] = useState("");
+
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role || "";
+  const role = (user as any)?.role;
 
   // Modal control
   const [openModal, setOpenModal] = useState(false);
   const [form] = Form.useForm();
 
-  // Query deliveries
-  const { data, isLoading, refetch } = useDeliveryQueryByEVM({}, {
-    page,
-    size,
-    sortField,
-    sortDir,
-    statuses,
-  });
+  // API queries
+  const { data, isLoading, refetch } = useDeliveryQueryByEVM(
+    {},
+    { page, size, sortField, sortDir, statuses, keyword }
+  );
 
-  // Query all contracts (EVM → Dealer)
   const { data: contractsData } = useContractQueryByEVM({}, {});
   const contracts = contractsData?.result?.data ?? [];
 
   // Mutations
   const { mutateAsync: deleteDelivery, isPending: deleting } =
     useDeliveryDeleteMutation();
+
   const { mutateAsync: completeDelivery, isPending: completing } =
     useDeliveryCompleteMutation();
+
   const { mutateAsync: createDelivery, isPending: creating } =
     useDeliveryCreateByEVMMutation();
 
   const deliveries = data?.result?.data ?? [];
   const total = data?.result?.metadata.totalElements ?? 0;
 
-  // Actions
+  // ================= FILTER DROPDOWN CONTENT =================
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      {/* STATUS */}
+      <div>
+        <b>Trạng thái</b>
+        <Select
+          mode="multiple"
+          value={statuses}
+          onChange={(v) => {
+            setStatuses(v);
+            setPage(0);
+          }}
+          allowClear
+          className="w-full mt-2"
+        >
+          <Option value="IN_PROGRESS">IN_PROGRESS</Option>
+          <Option value="SUCCESS">SUCCESS</Option>
+        </Select>
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b>Sắp xếp theo</b>
+        <Select
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="createAt">Ngày tạo</Option>
+          <Option value="deliveryDate">Ngày giao hàng</Option>
+        </Select>
+      </div>
+
+      {/* SORT DIR */}
+      <div>
+        <b>Thứ tự</b>
+        <Select
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="asc">Tăng dần</Option>
+          <Option value="desc">Giảm dần</Option>
+        </Select>
+      </div>
+    </div>
+  );
+
+  // ================= CREATE DELIVERY =================
+  const handleCreate = async () => {
+    try {
+      const values = await form.validateFields();
+      await createDelivery({
+        contractId: values.contractId,
+        deliveryDate: values.deliveryDate.format("YYYY-MM-DD"),
+      });
+
+      toast.success("Tạo đơn vận chuyển thành công!");
+      setOpenModal(false);
+      form.resetFields();
+      refetch();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể tạo đơn vận chuyển.";
+      toast.error(msg);
+    }
+  };
+
+  // ================= COMPLETE / DELETE =================
   const handleComplete = async (record: any) => {
     try {
       await completeDelivery(record.id);
-      toast.success("Đã đánh dấu hoàn tất giao hàng!");
+      toast.success("Đã đánh dấu hoàn tất!");
       refetch();
     } catch {
-      toast.error("Không thể hoàn tất giao hàng.");
+      toast.error("Không thể hoàn tất đơn vận chuyển.");
     }
   };
 
   const handleDelete = async (record: any) => {
     try {
       await deleteDelivery(record.id);
-      toast.success("Xóa giao hàng thành công!");
+      toast.success("Xóa thành công!");
       refetch();
     } catch {
-      toast.error("Không thể xóa giao hàng.");
+      toast.error("Không thể xóa đơn vận chuyển.");
     }
   };
 
-  const handleCreate = async () => {
-    try {
-      const values = await form.validateFields();
-      const payload = {
-        contractId: values.contractId,
-        deliveryDate: values.deliveryDate.format("YYYY-MM-DD"),
-      };
-      await createDelivery(payload);
-      toast.success("Tạo đơn vận chuyển thành công!");
-      setOpenModal(false);
-      form.resetFields();
-      refetch();
-    } catch (err: any) {
-      const errorMessage =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Đã xảy ra lỗi không xác định!";
-      toast.error(errorMessage);
-    }
-  };
-
+  // ================= RENDER =================
   return (
     <div>
       <span className="flex justify-between p-5">
-        <b className="text-[#627254]">Danh sách đơn vận chuyển từ Hãng xe đến Đại lý</b>
+        <b className="text-lg text-[#627254]">
+          Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
+        </b>
       </span>
-      <Card
-        extra={
-          <Space>
-            <Select
-              placeholder="Trạng thái"
-              mode="multiple"
-              value={statuses}
-              onChange={setStatuses}
-              style={{ width: 180 }}
+
+      <Card>
+        {/* Toolbar */}
+        <Space className="flex justify-between w-full pb-5">
+          <div>
+            <Input
+              placeholder="Tìm kiếm theo mã hợp đồng..."
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value);
+                setPage(0);
+              }}
               allowClear
-            >
-              <Option value="IN_PROGRESS">IN_PROGRESS</Option>
-              <Option value="SUCCESS">SUCCESS</Option>
-            </Select>
+              style={{ width: 350 }}
+            />
 
-            <Select
-              value={sortField}
-              onChange={(v) => setSortField(v)}
-              style={{ width: 150 }}
+            <Dropdown
+              trigger={["click"]}
+              open={filterOpen}
+              onOpenChange={setFilterOpen}
+              dropdownRender={() => <FilterContent />}
             >
-              <Option value="createAt">Ngày tạo</Option>
-              <Option value="deliveryDate">Ngày giao hàng</Option>
-            </Select>
+              <Button type="text" icon={<FilterOutlined style={{ fontSize: 20 }} />} />
+            </Dropdown>
+          </div>
 
-            <Select
-              value={sortDir}
-              onChange={(v) => setSortDir(v)}
-              style={{ width: '100%' }}
-            >
-              <Option value="asc">Tăng dần</Option>
-              <Option value="desc">Giảm dần</Option>
-            </Select>
-
+          <div>
             {role === "EVM_STAFF" && (
-              <>
-                <Button
-                  type="primary"
-                  className="!bg-[#627254]"
-                  onClick={() => setOpenModal(true)}
-                >
-                  + Tạo đơn vận chuyển
-                </Button>
-              </>
+              <Button
+                type="primary"
+                className="!bg-[#627254]"
+                onClick={() => setOpenModal(true)}
+              >
+                + Tạo đơn vận chuyển
+              </Button>
             )}
-          </Space>
-        }
-      >
+          </div>
+
+        </Space>
+
+        {/* TABLE */}
         <DeliveryTable
           data={deliveries}
           loading={isLoading || deleting || completing}
           page={page}
           size={size}
           total={total}
-          onPageChange={(newPage) => setPage(newPage - 1)} // convert to 0-index
+          onPageChange={(p) => setPage(p - 1)}
           onComplete={handleComplete}
           onDelete={handleDelete}
         />
+
+        {/* PAGINATION */}
         <div className="p-3 flex justify-center">
           <Pagination
             current={page + 1}
             pageSize={size}
             total={total}
-            showSizeChanger={true}
-            onChange={(v) => setSize(v)}
-            showTotal={(total) => `Tổng ${total} đơn giao hàng`}
+            showSizeChanger
+            onChange={(p, s) => {
+              setPage(p - 1);
+              setSize(s);
+            }}
+            showTotal={(t) => `Tổng ${t} đơn giao hàng`}
           />
         </div>
 
-        {/* MODAL TẠO ĐƠN */}
+        {/* MODAL */}
         <Modal
           title="Tạo đơn vận chuyển mới"
           open={openModal}
@@ -190,25 +256,19 @@ export const DeliveryEVMAndDealerList = () => {
           <Form
             layout="vertical"
             form={form}
-            initialValues={{
-              deliveryDate: dayjs(),
-            }}
+            initialValues={{ deliveryDate: dayjs() }}
           >
             <Form.Item
               label="Chọn hợp đồng"
               name="contractId"
-              rules={[{ required: true, message: "Vui lòng chọn hợp đồng" }]}
+              rules={[{ required: true }]}
             >
-              <Select
-                placeholder="Chọn số hợp đồng"
-                showSearch
-                optionFilterProp="children"
-              >
+              <Select>
                 {contracts
-                  .filter((c: any) => c.status === "SIGNED") // chỉ lấy hợp đồng đã ký
-                  .map((contract: any) => (
-                    <Option key={contract.contractId} value={contract.contractId}>
-                      {contract.contractNumber}
+                  .filter((c: any) => c.status === "SIGNED" && !c.deliveryId)
+                  .map((c: any) => (
+                    <Option key={c.contractId} value={c.contractId}>
+                      {c.contractNumber} — <span className="text-green-600">Chưa tạo vận chuyển</span>
                     </Option>
                   ))}
               </Select>
@@ -217,35 +277,19 @@ export const DeliveryEVMAndDealerList = () => {
             <Form.Item
               label="Ngày bắt đầu vận chuyển"
               name="deliveryDate"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng chọn ngày vận chuyển",
-                },
-                {
-                  validator: (_, value) => {
-                    if (!value || value.isSame(dayjs(), "day") || value.isAfter(dayjs(), "day")) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error("Ngày vận chuyển phải từ hôm nay trở đi")
-                    );
-                  },
-                },
-              ]}
+              rules={[{ required: true }]}
             >
               <DatePicker
                 format="YYYY-MM-DD"
-                className="w-full"
                 disabledDate={(current) =>
                   current && current.isBefore(dayjs().startOf("day"))
                 }
+                className="w-full"
               />
             </Form.Item>
           </Form>
         </Modal>
-      </Card >
-
+      </Card>
     </div>
   );
 };

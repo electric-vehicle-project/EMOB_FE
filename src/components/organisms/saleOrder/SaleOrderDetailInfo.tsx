@@ -1,103 +1,92 @@
-import React from "react";
-import type { SaleOrderResponse } from "../../../model/SaleOrder";
+import { Tag } from "antd";
+import type { SaleOrderResponse, OrderStatus } from "../../../model/SaleOrder";
+
+interface CustomerLite {
+  id?: string;
+  fullName?: string;
+  email?: string;
+}
+
+interface DealerLite {
+  id?: string;
+  name?: string;
+  email?: string;
+}
 
 interface Props {
   order: SaleOrderResponse;
-  role?: "MANAGER" | "DEALER_STAFF" | "EVM_STAFF" | "ADMIN" | null;
+  customer?: CustomerLite | null;
+  dealer?: DealerLite | null;
 }
 
-// Tạo type phụ có thể chứa các field linh hoạt
-type PartialSaleOrder = SaleOrderResponse & {
-  totalPrice?: number;
-  totalAmount?: number;
-  grandTotal?: number;
-  customerName?: string;
-  customerFullName?: string;
-  customerEmail?: string;
-  email?: string;
-  createdAt?: string;
-  customerId?: string;
-};
-
-export const SaleOrderDetailInfo: React.FC<Props> = ({ order, role }) => {
-  const isDealerStaff = role === "DEALER_STAFF";
-  const isEvmStaff = role === "EVM_STAFF";
-  const isManager = role === "MANAGER";
-
-  const o = order as PartialSaleOrder;
-
+export const SaleOrderDetailInfo: React.FC<Props> = ({
+  order,
+  customer,
+  dealer,
+}) => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Không xác định";
     const date = new Date(dateString);
     return date.toLocaleString("vi-VN");
   };
 
-  const customerName =
-    o.customerName ||
-    o.customerFullName ||
-    `Khách hàng #${o.customerId ?? "?"}`;
+  const hasDealer = !!order.dealerId;
 
-  const customerEmail = o.customerEmail || o.email || "Không có email";
+  const customerNameLabel = hasDealer ? "Đại lý" : "Khách hàng";
+  const customerEmailLabel = hasDealer ? "Email đại lý" : "Email khách hàng";
 
-  const total = o.totalPrice || o.totalAmount || o.grandTotal || 0;
+  const displayName = hasDealer
+    ? dealer?.name || `Đại lý #${order.dealerId ?? "?"}`
+    : customer?.fullName || `Khách hàng #${order.customerId ?? "?"}`;
+
+  const displayEmail = hasDealer
+    ? dealer?.email || "Không có email"
+    : customer?.email || "Không có email";
+
+  const total = order.totalPrice ?? 0;
+
+  const statusColor: Record<OrderStatus, "processing" | "success" | "error"> = {
+    CREATED: "processing",
+    COMPLETED: "success",
+    CANCELED: "error",
+  };
+
+  const statusText =
+    order.status === "CREATED"
+      ? "Đã tạo"
+      : order.status === "COMPLETED"
+      ? "Hoàn tất"
+      : "Đã hủy";
 
   return (
     <div className="grid grid-cols-2 gap-y-3 gap-x-8 text-[15px]">
-      {/* ===== Thông tin cơ bản ===== */}
       <p>
-        <strong>Mã đơn hàng:</strong> {o.id || "Không có"}
+        <strong>Mã đơn hàng:</strong> {order.id || "Không có"}
       </p>
 
       <p>
         <strong>Trạng thái:</strong>{" "}
-        {o.status === "CREATED"
-          ? "Đã tạo"
-          : o.status === "COMPLETED"
-          ? "Hoàn tất"
-          : o.status === "CANCELED"
-          ? "Đã hủy"
-          : "Không xác định"}
+        <Tag color={statusColor[order.status]} className="ml-1">
+          {statusText}
+        </Tag>
       </p>
 
       <p>
-        <strong>Ngày tạo:</strong> {formatDate(o.createdAt)}
+        <strong>Ngày tạo:</strong> {formatDate(order.createdAt)}
       </p>
 
       <p>
         <strong>Tổng tiền:</strong>{" "}
-        {total ? total.toLocaleString("vi-VN") + " ₫" : "Chưa có"}
-      </p>
-
-      {/* ===== Thông tin khách hàng ===== */}
-      <p>
-        <strong>Khách hàng:</strong> {customerName}
+        {total ? `${total.toLocaleString("vi-VN")} ₫` : "Chưa có"}
       </p>
 
       <p>
-        <strong>Email khách hàng:</strong> {customerEmail}
+        <strong>{customerNameLabel}:</strong> {displayName}
       </p>
 
-      {/* ===== Hiển thị thêm theo vai trò ===== */}
-      {isDealerStaff && (
-        <p className="col-span-2 text-[#4f6f52]">
-          <strong>Vai trò:</strong> Nhân viên đại lý - được phép hoàn tất hoặc
-          hủy đơn hàng.
-        </p>
-      )}
-
-      {isEvmStaff && (
-        <p className="col-span-2 text-[#4f6f52]">
-          <strong>Vai trò:</strong> Nhân viên EVM - theo dõi và xác nhận các đơn
-          hàng của đại lý.
-        </p>
-      )}
-
-      {isManager && (
-        <p className="col-span-2 text-[#4f6f52]">
-          <strong>Vai trò:</strong> Quản lý đại lý - có thể xem tất cả đơn hàng
-          thuộc quyền quản lý.
-        </p>
-      )}
+      <p>
+        <strong>{customerEmailLabel}:</strong> {displayEmail}
+      </p>
     </div>
   );
 };

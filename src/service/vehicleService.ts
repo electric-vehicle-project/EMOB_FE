@@ -190,3 +190,39 @@ export const useDeleteVehicleUnitsBulk = () => {
     },
   });
 };
+
+// ========= AI Demand Forecast (Brand-side) =========
+// GET /api/vehicle/demandForecastFromAI
+export const useGetAIDemandForecast = (options?: unknown) => {
+  const hook = createQueryHook(
+    "ai-demand-forecast",
+    "/vehicle/demandForecastFromAI"
+  );
+  // API này không có params
+  const query = hook(options);
+
+  // Chuẩn hoá: đảm bảo trả về mảng object
+  const raw = (query.data?.result ?? query.data) as unknown;
+  const forecasts = Array.isArray(raw)
+    ? (raw as unknown[])
+    : Array.isArray((raw as { data?: unknown[] })?.data)
+    ? ((raw as { data?: unknown[] }).data as unknown[])
+    : []; // nếu BE trả {}, vẫn an toàn
+
+  return { ...query, forecasts };
+};
+
+// GET /api/vehicle/createDemandForecasts  (trigger tạo/refresh phía AI)
+export const useCreateAIDemandForecasts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Swagger ghi GET nên mình giữ đúng GET
+      const res = await api.get("/vehicle/createDemandForecasts");
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-demand-forecast"] });
+    },
+  });
+};

@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  Modal,
-  Form,
-  Select,
-  InputNumber,
-  DatePicker,
-  message,
-  Card,
-} from "antd";
+import { Modal, Form, Select, InputNumber, DatePicker, Card } from "antd";
 import {
   useCreateBulkDiscountPolicy,
   useGetAllDealers,
@@ -108,7 +100,7 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
               loading={loadingDealers}
               showSearch
               filterOption={(input, option) =>
-                (option?.label ?? "")
+                String(option?.label ?? "")
                   .toLowerCase()
                   .includes(input.toLowerCase())
               }
@@ -134,7 +126,7 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
               loading={loadingVehicles}
               showSearch
               filterOption={(input, option) =>
-                (option?.label ?? "")
+                String(option?.label ?? "")
                   .toLowerCase()
                   .includes(input.toLowerCase())
               }
@@ -161,21 +153,16 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
             />
           </Form.Item>
 
-          {/* <Form.Item
-            name="finalPrice"
-            label="Giá cuối cùng (VND)"
-            rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
-          >
+          <Form.Item name="finalPrice" label="Giá cuối cùng (VND)">
             <InputNumber
               style={{ width: "100%" }}
               min={0}
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
-              parser={(value) => value!.replace(/\$\s?|(,*)/g, "")}
               placeholder="Nhập giá cuối cùng"
             />
-          </Form.Item> */}
+          </Form.Item>
 
           <Form.Item
             name="dateRange"

@@ -1,9 +1,14 @@
-import { Table, Tag, Button, Space } from "antd";
-import type { ColumnsType, TableProps } from "antd/es/table";
-import type { TablePaginationConfig } from "antd";
+import { Tag, Button } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import type { TablePaginationConfig } from "antd";
+import type { TableProps } from "antd/es/table";
+import type { SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
+
 import type { Promotion, PromotionStatus } from "../../../model/Promotion";
+import { EMOBTable } from "../../molecules/EMOBTable";
+import type { JSX } from "react";
 
 interface Props {
   data: Promotion[];
@@ -17,9 +22,44 @@ interface Props {
   pagination?: TablePaginationConfig;
 }
 
-/**
- * Bảng hiển thị danh sách khuyến mãi, hỗ trợ sắp xếp, phân trang và phân quyền thao tác.
- */
+const STATUS_LABELS: Record<PromotionStatus, string> = {
+  ACTIVE: "Đang hiệu lực",
+  UPCOMING: "Sắp diễn ra",
+  EXPIRED: "Đã kết thúc",
+  INACTIVE: "Không hoạt động",
+};
+
+const SCOPE_LABELS: Record<string, string> = {
+  GLOBAL: "Toàn hệ thống",
+  LOCAL: "Đại lý",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  PERCENTAGE: "Giảm theo %",
+  FIXED: "Giảm số tiền",
+  FIXED_AMOUNT: "Giảm số tiền",
+};
+
+const getStatusColor = (status: PromotionStatus): string => {
+  switch (status) {
+    case "ACTIVE":
+      return "green";
+    case "UPCOMING":
+      return "blue";
+    case "EXPIRED":
+      return "red";
+    case "INACTIVE":
+      return "volcano";
+    default:
+      return "default";
+  }
+};
+
+const canEditPromotion = (role: Props["role"]): boolean =>
+  role === "ADMIN" || role === "EVM_STAFF";
+
+const canDeletePromotion = (role: Props["role"]): boolean => role === "ADMIN";
+
 export const PromotionTable = ({
   data,
   loading,
@@ -31,35 +71,7 @@ export const PromotionTable = ({
   onChangeSort,
   pagination,
 }: Props) => {
-  /** Trả về màu tương ứng với trạng thái khuyến mãi */
-  const getStatusColor = (status: PromotionStatus) => {
-    switch (status) {
-      case "ACTIVE":
-        return "green";
-      case "UPCOMING":
-        return "blue";
-      case "EXPIRED":
-        return "red";
-      case "INACTIVE":
-        return "volcano";
-      default:
-        return "default";
-    }
-  };
-
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
-
-  /** Quyền sửa khuyến mãi theo vai trò và phạm vi */
-  const canEditPromotion = (scope: string): boolean => {
-    if (role === "ADMIN" || role === "EVM_STAFF") return true;
-    if (role === "MANAGER" || role === "DEALER_STAFF") return scope === "LOCAL";
-    return false;
-  };
-
-  /** Quyền xóa khuyến mãi theo vai trò (chỉ ADMIN được phép) */
-  const canDeletePromotion = (): boolean => {
-    return role === "ADMIN";
-  };
 
   const columns: ColumnsType<Promotion> = [
     {
@@ -68,7 +80,6 @@ export const PromotionTable = ({
       key: "name",
       sorter: true,
       sortOrder: sortField === "name" ? order : null,
-      align: "left",
       render: (text: string) => <span className="font-medium">{text}</span>,
     },
     {
@@ -78,9 +89,7 @@ export const PromotionTable = ({
       align: "center",
       render: (type?: string) =>
         type ? (
-          <Tag color="purple" className="px-2 py-1 rounded-md">
-            {type}
-          </Tag>
+          <Tag color="purple">{TYPE_LABELS[type] ?? type}</Tag>
         ) : (
           <span className="text-gray-400">—</span>
         ),
@@ -94,14 +103,13 @@ export const PromotionTable = ({
       sortOrder: sortField === "value" ? order : null,
       render: (val?: number) =>
         typeof val === "number" ? (
-          <span>{val}%</span>
+          `${val}%`
         ) : (
           <span className="text-gray-400">—</span>
         ),
     },
     {
       title: "Thời gian áp dụng",
-      dataIndex: "startDate",
       key: "startDate",
       align: "center",
       sorter: true,
@@ -109,9 +117,11 @@ export const PromotionTable = ({
       render: (_, record) => {
         const start = dayjs(record.startDate);
         const end = dayjs(record.endDate);
+
         if (!start.isValid() || !end.isValid()) {
           return <span className="text-gray-400">—</span>;
         }
+
         return `${start.format("DD/MM/YYYY")} - ${end.format("DD/MM/YYYY")}`;
       },
     },
@@ -121,7 +131,9 @@ export const PromotionTable = ({
       key: "scope",
       align: "center",
       render: (scope: string) => (
-        <Tag color={scope === "GLOBAL" ? "geekblue" : "success"}>{scope}</Tag>
+        <Tag color={scope === "GLOBAL" ? "geekblue" : "success"}>
+          {SCOPE_LABELS[scope]}
+        </Tag>
       ),
     },
     {
@@ -129,80 +141,80 @@ export const PromotionTable = ({
       dataIndex: "status",
       key: "status",
       align: "center",
-      render: (status: PromotionStatus) =>
+      render: (status?: PromotionStatus) =>
         status ? (
-          <Tag color={getStatusColor(status)}>{status}</Tag>
+          <Tag color={getStatusColor(status)}>{STATUS_LABELS[status]}</Tag>
         ) : (
           <span className="text-gray-400">—</span>
         ),
     },
-    {
-      title: "Thao tác",
-      key: "actions",
-      align: "center",
-      render: (_, record) => {
-        const editDisabled = !canEditPromotion(record.scope);
-        const deleteDisabled = !canDeletePromotion();
-
-        return (
-          <Space size="middle">
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              disabled={editDisabled}
-              onClick={() => onEdit?.(record.id)}
-              className={`!border-none ${
-                editDisabled
-                  ? "!bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : "!bg-[#627254] text-white hover:!bg-[#4f6f52]"
-              }`}
-            >
-              Sửa
-            </Button>
-
-            <Button
-              icon={<DeleteOutlined />}
-              disabled={deleteDisabled}
-              onClick={() => onDelete?.(record.id)}
-              className={`!border-none ${
-                deleteDisabled
-                  ? "!bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : "!bg-[#d93025] text-white hover:!bg-[#b1271e]"
-              }`}
-            >
-              Xoá
-            </Button>
-          </Space>
-        );
-      },
-    },
   ];
 
-  /** Xử lý thay đổi sắp xếp trên bảng */
-  const handleChange: TableProps<Promotion>["onChange"] = (_p, _f, sorter) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    onChangeSort?.(s?.field as string, s?.order as "ascend" | "descend");
+  const handleChange: TableProps<Promotion>["onChange"] = (
+    _pagination,
+    _filters,
+    sorter
+  ) => {
+    const s = Array.isArray(sorter)
+      ? sorter[0]
+      : (sorter as SorterResult<Promotion>);
+
+    if (!s?.field || !s.order) return;
+
+    onChangeSort(s.field as string, s.order as "ascend" | "descend");
   };
 
+  /** dropdown thao tác */
+  const actions =
+    role === "DEALER_STAFF" || role === "MANAGER"
+      ? undefined
+      : (record: Promotion) => {
+          const menu: { key: string; label: JSX.Element }[] = [];
+
+          if (canEditPromotion(role)) {
+            menu.push({
+              key: "edit",
+              label: (
+                <Button
+                  type="link"
+                  className="!text-[#627254]"
+                  icon={<EditOutlined />}
+                  onClick={() => onEdit?.(record.id)}
+                >
+                  Chỉnh sửa
+                </Button>
+              ),
+            });
+          }
+
+          if (canDeletePromotion(role)) {
+            menu.push({
+              key: "delete",
+              label: (
+                <Button
+                  type="link"
+                  className="!text-red-600"
+                  icon={<DeleteOutlined />}
+                  onClick={() => onDelete?.(record.id)}
+                >
+                  Xoá
+                </Button>
+              ),
+            });
+          }
+
+          return menu;
+        };
+
   return (
-    <Table
-      bordered
+    <EMOBTable<Promotion>
       rowKey="id"
-      size="middle"
       columns={columns}
       dataSource={data}
       loading={loading}
-      onChange={handleChange}
       pagination={pagination}
-      scroll={{ x: "max-content", y: 560 }}
-      sticky={{ offsetHeader: 0 }}
-      className="
-        bg-white
-        [&_.ant-table-thead>tr>th]:!bg-[#627254]
-        [&_.ant-table-thead>tr>th]:!text-white
-        [&_.ant-table-thead>tr>th]:!border-[#627254]
-        [&_.ant-table-tbody>tr:hover>td]:!bg-white
-      "
+      onChange={handleChange}
+      actions={actions}
     />
   );
 };

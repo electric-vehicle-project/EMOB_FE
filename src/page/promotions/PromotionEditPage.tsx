@@ -8,11 +8,10 @@ import {
   DatePicker,
   Select,
   InputNumber,
-  message,
   Spin,
   Tag,
-  Alert,
 } from "antd";
+import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useNavigate, useParams } from "react-router";
 import { useSelector } from "react-redux";
@@ -29,134 +28,107 @@ import {
   mapVehicleOptions,
 } from "../../utils/mapToSelectOptions";
 import { useDealersQuery } from "../../service/dealerService";
+import { toast } from "react-toastify";
+import { CardWrapper } from "../../components/template/CardWrapper";
+import type { CustomTagProps } from "rc-select/lib/BaseSelect";
 
 const { RangePicker } = DatePicker;
 
-// Loại vai trò người dùng
 type Role = "ADMIN" | "MANAGER" | "EVM_STAFF" | "DEALER_STAFF";
 
-// Kiểu dữ liệu người dùng đăng nhập
-interface AppUser {
-  id: string;
-  role: Role;
-  dealerId?: string;
-}
-
-// Dữ liệu form chỉnh sửa khuyến mãi
 interface FormValues {
   name: string;
   description?: string;
   type?: "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
   value?: number;
   minValue?: number;
-  duration?: [dayjs.Dayjs, dayjs.Dayjs];
+  duration?: [Dayjs, Dayjs];
   dealerIds?: string[];
   electricVehicleIds?: string[];
 }
 
-interface DealerOption {
-  label: string;
-  value: string;
-}
-
-interface VehicleOption {
-  label: string;
-  value: string;
+interface PromotionDetail {
+  id: string;
+  name: string;
+  description?: string;
+  type?: "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
+  value?: number;
+  minValue?: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  dealerIds?: string[];
+  vehicleIds?: string[];
 }
 
 export default function PromotionEditPage() {
   const [form] = Form.useForm<FormValues>();
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.user);
 
-  const missingId = !paramId;
-
-  // Lấy thông tin user từ Redux store
-  const user = useSelector((state: RootState) => state.user) as AppUser | null;
-  const role: Role = user?.role ?? "ADMIN";
-
-  const isEvmStaff = role === "EVM_STAFF";
-  const isDealerStaff = role === "DEALER_STAFF";
+  const role: Role = (user?.role as Role) ?? "ADMIN";
   const isManager = role === "MANAGER";
   const isAdmin = role === "ADMIN";
+  const isEvmStaff = role === "EVM_STAFF";
+  const isDealerStaff = role === "DEALER_STAFF";
 
-  // Quyền chỉnh sửa
   const canEditTargets = isEvmStaff || isDealerStaff;
   const canPickDealers = isEvmStaff;
 
-  // Lấy dữ liệu khuyến mãi theo ID
   const { data, isLoading } = usePromotionById(paramId);
   const { mutateAsync: updateBasic, isPending: updatingBasic } =
     usePromotionUpdate();
   const { mutateAsync: updateValue, isPending: updatingValue } =
     usePromotionUpdateValue();
 
-  // Lấy danh sách đại lý (khi có quyền chọn)
   const { data: dealersData, isLoading: loadingDealers } = useDealersQuery(
     {},
     { enabled: canPickDealers }
   );
 
-  // Lấy danh sách xe điện (khi có quyền chỉnh sửa)
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
     enabled: canEditTargets,
   });
 
-  // Chuẩn hóa dữ liệu trả về từ API
-  const promotion = data?.result as
-    | {
-        id: string;
-        name: string;
-        description?: string;
-        type?: "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
-        value?: number;
-        minValue?: number;
-        startDate?: string | null;
-        endDate?: string | null;
-        dealerIds?: string[];
-        vehicleIds?: string[];
-      }
-    | undefined;
+  const promotion = data?.result as PromotionDetail | undefined;
 
-  // Lưu lại danh sách đã áp dụng
-  const [existingDealerIds, setExistingDealerIds] = useState<string[]>([]);
-  const [existingVehicleIds, setExistingVehicleIds] = useState<string[]>([]);
-
-  // Chuẩn hóa dữ liệu Select
-  const dealerOptions: DealerOption[] = useMemo(
+  const dealerOptions = useMemo(
     () => mapDealerOptions(dealersData),
     [dealersData]
   );
-  const vehicleOptions: VehicleOption[] = useMemo(
+
+  const vehicleOptions = useMemo(
     () => mapVehicleOptions(vehiclesData),
     [vehiclesData]
   );
 
-  // Tìm label cho tag hiển thị
+  const [existingDealerIds, setExistingDealerIds] = useState<string[]>([]);
+  const [existingVehicleIds, setExistingVehicleIds] = useState<string[]>([]);
+
   const findDealerLabel = (id: string) =>
     dealerOptions.find((x) => x.value === id)?.label ?? id;
 
   const findVehicleLabel = (id: string) =>
     vehicleOptions.find((x) => x.value === id)?.label ?? "Xe không xác định";
 
-  // Tùy chỉnh hiển thị tag
   const tagRender =
     (existingIds: string[], findLabel: (id: string) => string) =>
-    (props: { value: string; closable: boolean; onClose: () => void }) => {
+    (props: CustomTagProps) => {
       const { value, closable, onClose } = props;
-      const isOld = existingIds.includes(value);
+      const stringValue = String(value);
+      const isOld = existingIds.includes(stringValue);
+
       return (
         <Tag
           color={isOld ? "default" : "blue"}
           closable={!isOld && closable}
           onClose={isOld ? (e) => e.preventDefault() : onClose}
         >
-          {findLabel(value)}
+          {findLabel(stringValue)}
         </Tag>
       );
     };
 
-  // Gán dữ liệu ban đầu cho form
   useEffect(() => {
     if (!promotion) return;
 
@@ -166,41 +138,41 @@ export default function PromotionEditPage() {
     setExistingDealerIds(dealers);
     setExistingVehicleIds(vehicles);
 
-    const start = promotion.startDate ? dayjs(promotion.startDate) : dayjs();
-    const end = promotion.endDate
-      ? dayjs(promotion.endDate)
-      : dayjs().add(7, "day");
+    let duration: [Dayjs, Dayjs] | undefined;
+    if (promotion.startDate && promotion.endDate) {
+      duration = [dayjs(promotion.startDate), dayjs(promotion.endDate)];
+    }
 
     form.setFieldsValue({
       name: promotion.name,
       description: promotion.description,
+      type: promotion.type ?? "PERCENTAGE",
       value: promotion.value,
       minValue: promotion.minValue,
-      type: promotion.type ?? "PERCENTAGE",
-      duration: [start, end],
+      duration,
       dealerIds: dealers,
       electricVehicleIds: vehicles,
     });
   }, [promotion, form]);
 
-  // Xử lý submit form
   const handleSubmit = async (values: FormValues) => {
     if (!paramId) {
-      toast.error("Thiếu ID khuyến mãi trong URL!");
+      toast.error("Thiếu ID khuyến mãi");
       return;
     }
 
     try {
-      const [start, end] = values.duration || [];
+      const [start, end] = values.duration ?? [];
 
-      const addedDealers = (values.dealerIds || []).filter(
+      const addedDealers = (values.dealerIds ?? []).filter(
         (x) => !existingDealerIds.includes(x)
       );
-      const addedVehicles = (values.electricVehicleIds || []).filter(
+
+      const addedVehicles = (values.electricVehicleIds ?? []).filter(
         (x) => !existingVehicleIds.includes(x)
       );
 
-      const payloadBase = {
+      const basePayload = {
         name: values.name,
         description: values.description,
         dealerIds: isDealerStaff ? [] : addedDealers,
@@ -208,7 +180,7 @@ export default function PromotionEditPage() {
       };
 
       if (canEditTargets) {
-        await updateBasic({ id: paramId, data: payloadBase });
+        await updateBasic({ id: paramId, data: basePayload });
       }
 
       if (isManager || isAdmin) {
@@ -227,35 +199,28 @@ export default function PromotionEditPage() {
       toast.success("Cập nhật khuyến mãi thành công!");
       navigate(-1);
     } catch {
-      toast.error("Cập nhật khuyến mãi thất bại!");
+      toast.error("Cập nhật không thành công!");
     }
   };
 
   if (isLoading || loadingDealers || loadingVehicles) {
     return (
-      <div style={{ textAlign: "center", marginTop: 100 }}>
+      <div className="flex justify-center mt-20">
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <Button onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
+    <CardWrapper>
+      <Button
+        onClick={() => navigate(-1)}
+        className="!mb-5 !bg-[#627254] !text-white !border-[#627254]"
+      >
         Quay lại
       </Button>
 
-      {missingId && (
-        <Alert
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="Thiếu ID khuyến mãi"
-          description="Đường dẫn không chứa ID hợp lệ. Vui lòng quay lại danh sách và mở lại trang chỉnh sửa."
-        />
-      )}
-
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Form<FormValues> form={form} layout="vertical" onFinish={handleSubmit}>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -271,6 +236,7 @@ export default function PromotionEditPage() {
             <Form.Item label="Loại khuyến mãi" name="type">
               <Select
                 disabled={!isManager && !isAdmin}
+                className="!rounded-lg"
                 options={[
                   { label: "Giảm theo phần trăm (%)", value: "PERCENTAGE" },
                   { label: "Giảm cố định (VNĐ)", value: "FIXED_AMOUNT" },
@@ -283,13 +249,14 @@ export default function PromotionEditPage() {
 
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label="Giá trị (%) hoặc VNĐ" name="value">
+            <Form.Item label="Giá trị" name="value">
               <InputNumber
                 disabled={!isManager && !isAdmin}
                 style={{ width: "100%" }}
               />
             </Form.Item>
           </Col>
+
           <Col span={12}>
             <Form.Item label="Đơn tối thiểu (VNĐ)" name="minValue">
               <InputNumber
@@ -308,18 +275,7 @@ export default function PromotionEditPage() {
                   mode="multiple"
                   disabled={!canPickDealers}
                   tagRender={tagRender(existingDealerIds, findDealerLabel)}
-                  options={
-                    canPickDealers
-                      ? dealerOptions.filter(
-                          (o) => !existingDealerIds.includes(o.value)
-                        )
-                      : []
-                  }
-                  placeholder={
-                    isDealerStaff
-                      ? "Đại lý của bạn sẽ tự động áp dụng"
-                      : "Chọn dealer mới để áp dụng thêm"
-                  }
+                  options={dealerOptions}
                 />
               </Form.Item>
             </Col>
@@ -329,10 +285,7 @@ export default function PromotionEditPage() {
                 <Select
                   mode="multiple"
                   tagRender={tagRender(existingVehicleIds, findVehicleLabel)}
-                  options={vehicleOptions.filter(
-                    (o) => !existingVehicleIds.includes(o.value)
-                  )}
-                  placeholder="Chọn mẫu xe mới để áp dụng thêm"
+                  options={vehicleOptions}
                 />
               </Form.Item>
             </Col>
@@ -346,6 +299,7 @@ export default function PromotionEditPage() {
                 showTime
                 disabled={!isManager && !isAdmin}
                 format="YYYY-MM-DD HH:mm"
+                className="!w-full"
               />
             </Form.Item>
           </Col>
@@ -354,7 +308,6 @@ export default function PromotionEditPage() {
             <Form.Item label="Mô tả" name="description">
               <Input.TextArea
                 rows={3}
-                disabled={isManager || isAdmin}
                 style={{ resize: "none", borderRadius: 8 }}
               />
             </Form.Item>
@@ -366,11 +319,12 @@ export default function PromotionEditPage() {
             type="primary"
             htmlType="submit"
             loading={updatingBasic || updatingValue}
+            className="!bg-[#627254] !border-[#627254] !text-white"
           >
             Cập nhật khuyến mãi
           </Button>
         </Form.Item>
       </Form>
-    </div>
+    </CardWrapper>
   );
 }

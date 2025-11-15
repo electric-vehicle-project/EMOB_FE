@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
-import { Card, Pagination, Select, Space } from "antd";
+import {
+  Card,
+  Pagination,
+  Select,
+  Space,
+  Input,
+  Dropdown,
+  Button,
+} from "antd";
+import { FilterOutlined } from "@ant-design/icons";
 import {
   useDeliveryDeleteMutation,
   useDeliveryCompleteMutation,
@@ -21,113 +30,173 @@ export const DeliveryEVMAndDealerListCurrent = () => {
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statuses, setStatuses] = useState<string[]>([]);
+  const [keyword, setKeyword] = useState("");
+
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role || "";
+  const role = (user as any)?.role || "";
   const navigate = useNavigate();
 
-  const { data, isLoading, refetch } = useDeliveryQueryByCurrentDealer({}, {
-    page,
-    size,
-    sortField,
-    sortDir,
-    statuses,
-  });
+  const { data, isLoading, refetch } = useDeliveryQueryByCurrentDealer(
+    {},
+    { page, size, sortField, sortDir, statuses, keyword }
+  );
 
   const { mutateAsync: deleteDelivery, isPending: deleting } =
     useDeliveryDeleteMutation();
+
   const { mutateAsync: completeDelivery, isPending: completing } =
     useDeliveryCompleteMutation();
 
   const deliveries = data?.result?.data ?? [];
   const total = data?.result?.metadata.totalElements ?? 0;
 
-  // Actions
+  // ================= FILTER DROPDOWN =================
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      {/* STATUS */}
+      <div>
+        <b>Trạng thái</b>
+        <Select
+          mode="multiple"
+          value={statuses}
+          onChange={(v) => {
+            setStatuses(v);
+            setPage(0);
+          }}
+          allowClear
+          className="w-full mt-2"
+        >
+          <Option value="IN_PROGRESS">IN_PROGRESS</Option>
+          <Option value="SUCCESS">SUCCESS</Option>
+        </Select>
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b>Sắp xếp theo</b>
+        <Select
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="createAt">Ngày tạo</Option>
+          <Option value="deliveryDate">Ngày giao hàng</Option>
+        </Select>
+      </div>
+
+      {/* SORT DIR */}
+      <div>
+        <b>Thứ tự</b>
+        <Select
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="asc">Tăng dần</Option>
+          <Option value="desc">Giảm dần</Option>
+        </Select>
+      </div>
+    </div>
+  );
+
+  // ================= COMPLETE / DELETE =================
   const handleComplete = async (record: any) => {
     try {
       await completeDelivery(record.id);
-      toast.success("Đã đánh dấu hoàn tất giao hàng!");
+      toast.success("Hoàn tất đơn giao hàng!");
       refetch();
     } catch {
-      toast.error("Không thể hoàn tất giao hàng.");
+      toast.error("Không thể hoàn tất đơn.");
     }
   };
 
   const handleDelete = async (record: any) => {
     try {
       await deleteDelivery(record.id);
-      toast.success("Xóa giao hàng thành công!");
+      toast.success("Đã xóa thành công!");
       refetch();
     } catch {
-      toast.error("Không thể xóa giao hàng.");
+      toast.error("Không thể xóa đơn giao hàng.");
     }
   };
 
   return (
     <div>
+      {/* HEADER */}
       <span className="flex justify-between p-5">
-        <b className="text-[#627254]">Danh sách đơn vận chuyển từ Hãng xe đến Đại lý</b>
+        <b className="text-lg text-[#627254]">
+          Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
+        </b>
+
         <b
-          onClick={() => navigate("/" + role.toLowerCase() + "/" + ROUTES.DELIVERY_CUSTOMERS)}
-          className="underline gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
+          onClick={() =>
+            navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CUSTOMERS}`)
+          }
+          className="underline cursor-pointer text-[#627254] hover:text-[#4f5a42]"
         >
           Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
         </b>
       </span>
-      <Card
-        extra={
-          <Space>
-            <Select
-              placeholder="Trạng thái"
-              mode="multiple"
-              value={statuses}
-              onChange={setStatuses}
-              style={{ width: 180 }}
-              allowClear
-            >
-              <Option value="IN_PROGRESS">IN_PROGRESS</Option>
-              <Option value="SUCCESS">SUCCESS</Option>
-            </Select>
 
-            <Select
-              value={sortField}
-              onChange={(v) => setSortField(v)}
-              style={{ width: 150 }}
-            >
-              <Option value="createAt">Ngày tạo</Option>
-              <Option value="deliveryDate">Ngày giao hàng</Option>
-            </Select>
+      <Card>
+        {/* Toolbar */}
+        <Space className="flex justify-start pb-5">
+          <Input
+            placeholder="Tìm kiếm theo mã đơn giao hàng..."
+            value={keyword}
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              setPage(0);
+            }}
+            allowClear
+            style={{ width: 350 }}
+          />
 
-            <Select
-              value={sortDir}
-              onChange={(v) => setSortDir(v)}
-              style={{ width: '100%' }}
-            >
-              <Option value="asc">Tăng dần</Option>
-              <Option value="desc">Giảm dần</Option>
-            </Select>
-            
-          </Space>
-        }
-      >
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+          >
+            <Button type="text" icon={<FilterOutlined style={{ fontSize: 20 }} />} />
+          </Dropdown>
+        </Space>
+
+        {/* TABLE */}
         <DeliveryTable
           data={deliveries}
           loading={isLoading || deleting || completing}
           page={page}
           size={size}
           total={total}
-          onPageChange={(newPage) => setPage(newPage - 1)} // convert to 0-index
+          onPageChange={(p) => setPage(p - 1)}
           onComplete={handleComplete}
           onDelete={handleDelete}
         />
 
+        {/* PAGINATION */}
         <div className="p-3 flex justify-center">
           <Pagination
             current={page + 1}
             pageSize={size}
             total={total}
-            showSizeChanger={true}
-            onChange={(v) => setSize(v)}
-            showTotal={(total) => `Tổng ${total} đơn giao hàng`}
+            showSizeChanger
+            onChange={(p, s) => {
+              setPage(p - 1);
+              setSize(s);
+            }}
+            showTotal={(t) => `Tổng ${t} đơn giao hàng`}
           />
         </div>
       </Card>

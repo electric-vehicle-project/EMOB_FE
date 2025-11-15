@@ -1,20 +1,28 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Modal, Descriptions, Tag, Button, Space, Typography } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  Modal,
+  Tag,
+  Button,
+  Space,
+  Typography,
+  Divider,
+} from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
 
 import {
   useTestDriveDetailQuery,
-  useDeleteTestDriveMutation,
+  useUpdateStatusTestDriveMutation,
 } from "../../../service/testDriveService";
 import { DeleteConfirm } from "../../organisms/DeleteConfirm";
 import { TestDriveEditModal } from "./TestDriveEditModal";
 import { toast } from "react-toastify";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { useCustomerById } from "../../../service/customerService";
+import { useGetAccountById } from "../../../service/accountService";
+import { VehicleUnitCard } from "../contract/VehicleUnitCard";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface Props {
   open: boolean;
@@ -29,12 +37,14 @@ export const TestDriveDetailModal = ({
   onClose,
   onUpdated,
 }: Props) => {
-  const { data, isLoading } = useTestDriveDetailQuery(testDriveId || undefined, {
-    enabled: !!testDriveId && open,
-  });
+  const { data, isLoading, refetch } = useTestDriveDetailQuery(
+    testDriveId || undefined,
+    { enabled: !!testDriveId && open }
+  );
+
   const detail = data?.result;
 
-  const { mutateAsync: deleteTestDrive } = useDeleteTestDriveMutation();
+  const { mutateAsync: updateStatusTestDrive, isPending } = useUpdateStatusTestDriveMutation();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -42,21 +52,41 @@ export const TestDriveDetailModal = ({
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
 
-  const handleDelete = async () => {
+  const customer = useCustomerById(detail?.customerId).data?.result;
+  const dealerStaff = useGetAccountById(detail?.salePersonId).data?.result.fullName;
+
+  const handleCancel = async () => {
     try {
-      await deleteTestDrive(testDriveId!);
-      toast.success("Đã xóa lịch lái thử!");
+      await updateStatusTestDrive({
+        id: detail.testDriveId,
+        status: "CANCELLED",
+      });
+      toast.success("Đã hủy lịch!");
+      await refetch();
       setConfirmOpen(false);
       onUpdated?.();
       onClose();
     } catch {
-      toast.error("Không thể xóa lịch lái thử!");
+      toast.error("Không thể hủy lịch!");
     }
   };
 
   const status = detail?.status;
-  const isCompletedOrCanceled = status === "COMPLETED" || status === "CANCELLED";
-  const isConfirmed = status === "CONFIRMED";
+
+  const RowItem = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: any;
+  }) => (
+    <div className="flex flex-col py-2">
+      <Text className="text-gray-500 text-sm">{label}</Text>
+      <Text className="text-[15px] font-medium text-gray-800 mt-1">
+        {value || "—"}
+      </Text>
+    </div>
+  );
 
   return (
     <>
@@ -66,6 +96,7 @@ export const TestDriveDetailModal = ({
         footer={null}
         centered
         width={800}
+        className="rounded-xl"
         destroyOnClose
         title={
           <Space align="center">
@@ -74,7 +105,7 @@ export const TestDriveDetailModal = ({
             </Title>
             <Tag
               color={
-                status === "CANCELED"
+                status === "CANCELLED"
                   ? "red"
                   : status === "COMPLETED"
                     ? "green"
@@ -82,80 +113,145 @@ export const TestDriveDetailModal = ({
                       ? "blue"
                       : "gold"
               }
+              className="font-semibold"
             >
-              {status || "—"}
+              {status}
             </Tag>
           </Space>
         }
       >
         {isLoading ? (
           <p className="text-center text-gray-500">Đang tải...</p>
-        ) : detail ? (
-          <Descriptions bordered column={1} size="middle" labelStyle={{ width: 200 }}>
-            <Descriptions.Item label="Mã lịch lái thử">
-              {detail.testDriveId}
-            </Descriptions.Item>
-            <Descriptions.Item label="Khách hàng ID">
-              {detail.customerId}
-            </Descriptions.Item>
-            <Descriptions.Item label="Xe lái thử ID">
-              {detail.testDriveVehicleUnitId}
-            </Descriptions.Item>
-            <Descriptions.Item label="Nhân viên phụ trách ID">
-              {detail.salePersonId}
-            </Descriptions.Item>
-            <Descriptions.Item label="Địa điểm">
-              {detail.location}
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời lượng">
-              {detail.duration} phút
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian lái thử">
-              {dayjs(detail.scheduledAt).format("DD/MM/YYYY HH:mm")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo">
-              {dayjs(detail.createAt).format("DD/MM/YYYY HH:mm")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Cập nhật lần cuối">
-              {dayjs(detail.updateAt).format("DD/MM/YYYY HH:mm")}
-            </Descriptions.Item>
-          </Descriptions>
-        ) : (
+        ) : !detail ? (
           <p className="text-center text-gray-500 italic mt-3">
             Không có dữ liệu lịch lái thử
           </p>
-        )}
+        ) : (
+          <div className="mt-2">
+            {/* SECTION 1 */}
+            <div className="grid grid-cols-2 gap-x-10">
+              <span>
+                <p>Xe lái thử</p>
+                <br />
+                <VehicleUnitCard vehicleUnitId={detail.testDriveVehicleUnitId} />
+              </span>
 
-        {role === "DEALER_STAFF" && (
-          <div className="flex justify-end mt-5 gap-2">
-            <Button
-              icon={<DeleteOutlined />}
-              danger
-              disabled={isCompletedOrCanceled}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Xóa
-            </Button>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              disabled={isCompletedOrCanceled || isConfirmed} // ❌ Không sửa nếu COMPLETED/CANCELED/CONFIRMED
-              onClick={() => setEditOpen(true)}
-            >
-              Chỉnh sửa
-            </Button>
+              <RowItem label="Mã lịch lái thử" value={detail.testDriveId} />
+
+              <Divider />
+
+              <RowItem label="Khách hàng" value={customer?.fullName} />
+
+              <RowItem label="Địa điểm" value={detail.location} />
+
+              {role === "MANAGER" && (
+                <RowItem label="Nhân viên phụ trách" value={dealerStaff} />
+              )}
+
+              <RowItem label="Thời lượng" value={`${detail.duration} phút`} />
+              <RowItem
+                label="Thời gian lái thử"
+                value={dayjs(detail.scheduledAt).format(
+                  "DD/MM/YYYY HH:mm"
+                )}
+              />
+            </div>
+
+            <Divider />
+
+            {/* SECTION 2 */}
+            <div className="grid grid-cols-2 gap-x-10">
+              <RowItem
+                label="Ngày tạo"
+                value={dayjs(detail.createAt).format(
+                  "DD/MM/YYYY HH:mm"
+                )}
+              />
+              <RowItem
+                label="Cập nhật lần cuối"
+                value={dayjs(detail.updateAt).format(
+                  "DD/MM/YYYY HH:mm"
+                )}
+              />
+            </div>
           </div>
         )}
+
+        {/* {role === "DEALER_STAFF" && role === "ADMIN" &&( */}
+        <div className="flex justify-end mt-6 gap-2">
+
+          {/* === CASE 1: PENDING → hiển thị nút DUYỆT === */}
+          {status === "PENDING" && (
+            <Button
+              type="primary"
+              loading={isPending}
+              onClick={async () => {
+                try {
+                  await updateStatusTestDrive({
+                    id: detail.testDriveId,
+                    status: "CONFIRMED",
+                  });
+                  toast.success("Đã duyệt lịch lái thử!");
+                  await refetch();
+                  onUpdated?.();
+                  onClose();
+                } catch {
+                  toast.error("Không thể duyệt lịch!");
+                }
+              }}
+            >
+              Duyệt lịch
+            </Button>
+          )}
+
+          {/* === CASE 2: CONFIRMED → hiển thị hoàn thành + hủy === */}
+          {status === "CONFIRMED" && (
+            <>
+              <Button
+                type="primary"
+                loading={isPending}
+                onClick={async () => {
+                  try {
+                    await updateStatusTestDrive({
+                      id: detail.testDriveId,
+                      status: "COMPLETED",
+                    });
+                    toast.success("Đã đánh dấu hoàn thành!");
+                    await refetch();
+                    onUpdated?.();
+                    onClose();
+                  } catch {
+                    toast.error("Không thể cập nhật trạng thái!");
+                  }
+                }}
+                className="!bg-[#4b7d3e]"
+              >
+                Hoàn thành
+              </Button>
+
+              <Button
+                danger
+                loading={isPending}
+                onClick={() => setConfirmOpen(true)}
+              >
+                Hủy
+              </Button>
+            </>
+          )}
+
+          {/* === CASE 3: other status → không hiển thị gì (hoàn thành/hủy rồi) === */}
+        </div>
+        {/* )} */}
       </Modal>
 
       <DeleteConfirm
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
-        onConfirm={handleDelete}
-        message="Bạn có chắc chắn muốn xóa lịch lái thử này không?"
-        okText="Xóa"
+        onConfirm={handleCancel}
+        message="Bạn có chắc chắn muốn hủy lịch lái thử này không?"
+        okText="Hủy"
         danger
-        title="Xác nhận xóa lịch lái thử"
+        title="Xác nhận hủy lịch lái thử"
       />
 
       <TestDriveEditModal

@@ -6,40 +6,62 @@ import {
   deleteMutationHook,
   updateMutationHook,
 } from "../hook/useApi";
-import axios from "axios";
-import { message } from "antd";
 import api from "../config/api";
 import { toast } from "react-toastify";
 
 const BASE_URL = "/dealer-discount-policy";
 const BASE_DEALER_URL = "/dealer";
-const BASE_AXIOS_URL = "/api/dealer-discount-policy";
 
 export const useGetDiscountPolicyById = createQueryWithPathParamHook(
   "discountPolicyDetail",
   BASE_URL
 );
 
+// get-all
 export const useGetAllDealerDiscountPolicies = (
   page = 0,
   size = 20,
-  search = ""
+  search = "",
+  status: string[] = [],
+  sortField = "effectiveDate",
+  sortDir: "asc" | "desc" = "desc"
 ) => {
-  return createQueryHook(
-    "dealerDiscountPolicies", // ✅ Dynamic queryKey
-    BASE_URL
-  )({}, { page, size, search });
+  return createQueryHook("dealerDiscountPolicies", BASE_URL)(
+    {},
+    {
+      page,
+      size,
+      search,
+      status: status.length ? status.join(",") : undefined,
+      sortField,
+      sortDir,
+    }
+  );
 };
 
+// get-all-by-dealer
 export const useGetAllDealerDiscountPoliciesByDealer = (
   page = 0,
   size = 20,
-  search = ""
+  search = "",
+  status: string[] = [],
+  sortField = "effectiveDate",
+  sortDir: "asc" | "desc" = "desc"
 ) => {
   return createQueryHook(
-    "dealerDiscountPoliciesByDealer", // ✅ Dynamic queryKey
+    "dealerDiscountPoliciesByDealer",
     `${BASE_URL}/by-dealer`
-  )({}, { page, size, search });
+  )(
+    {},
+    {
+      page,
+      size,
+      search,
+      status: status.length ? status.join(",") : undefined,
+      sortField,
+      sortDir,
+    }
+  );
 };
 
 // CREATE
@@ -66,9 +88,16 @@ export const useGetAllDealers = (
   size: number = 20,
   search: string = ""
 ) => {
-  return createQueryHook(["dealers", page, size, search], BASE_DEALER_URL)(
+  return createQueryHook(
+    "dealers", // queryKey phải là string
+    BASE_DEALER_URL
+  )(
     {},
-    { page, size, search }
+    {
+      page,
+      size,
+      search,
+    }
   );
 };
 

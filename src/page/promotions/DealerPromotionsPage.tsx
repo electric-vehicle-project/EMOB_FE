@@ -1,42 +1,36 @@
 import { useState, useMemo } from "react";
-import { Button, Input, Select, Space } from "antd";
+import { Button, Select } from "antd";
 import { toast } from "react-toastify";
-import {
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+
 import type { RootState } from "../../redux/store";
 import type { Promotion } from "../../model/Promotion";
 import {
   usePromotionList,
   usePromotionDelete,
 } from "../../service/promotionService";
+
 import { PromotionTable } from "../../components/organisms/promotion/PromotionTable";
 import { PromotionDeleteConfirm } from "../../components/organisms/promotion/PromotionDeleteConfirm";
 import { CardWrapper } from "../../components/template/CardWrapper";
-import { useDebounce } from "../../hook/useDebounce";
-
-const STATUS_OPTIONS = [
-  { label: "ACTIVE", value: "ACTIVE" },
-  { label: "UPCOMING", value: "UPCOMING" },
-  { label: "EXPIRED", value: "EXPIRED" },
-  { label: "INACTIVE", value: "INACTIVE" },
-];
+import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 
 export const DealerPromotionsPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.user);
-  const role =
-    (user?.role as "MANAGER" | "DEALER_STAFF" | "ADMIN" | "EVM_STAFF") ??
-    "DEALER_STAFF";
+
+  const role: "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF" =
+    user?.role === "ADMIN" ||
+    user?.role === "EVM_STAFF" ||
+    user?.role === "MANAGER" ||
+    user?.role === "DEALER_STAFF"
+      ? user.role
+      : "DEALER_STAFF";
 
   const [scope, setScope] = useState<string[]>(["LOCAL"]);
-  const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState<string | undefined>(undefined);
-  const debouncedKeyword = useDebounce(keyword, 400);
+
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [sortField, setSortField] = useState("createAt");
@@ -46,8 +40,8 @@ export const DealerPromotionsPage: React.FC = () => {
     scope,
     page,
     size,
-    debouncedKeyword,
-    status,
+    "", // không search
+    undefined, // không filter trạng thái
     sortField,
     sortDir
   );
@@ -56,6 +50,7 @@ export const DealerPromotionsPage: React.FC = () => {
     () => (data?.result?.data as Promotion[]) ?? [],
     [data]
   );
+
   const totalElements = useMemo(
     () => data?.result?.metadata?.totalElements ?? 0,
     [data]
@@ -65,6 +60,7 @@ export const DealerPromotionsPage: React.FC = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
   );
+
   const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
 
   const handleCreate = () => {
@@ -86,10 +82,10 @@ export const DealerPromotionsPage: React.FC = () => {
     if (!selectedPromotion) return;
     try {
       await deletePromotion(selectedPromotion.id);
-      toast.success("Đã xoá khuyến mãi thành công!");
+      toast.success("Đã xoá khuyến mãi thành công");
       refetch();
     } catch {
-      toast.error("Không thể xoá khuyến mãi này!");
+      toast.error("Không thể xoá khuyến mãi này");
     } finally {
       setConfirmOpen(false);
     }
@@ -97,8 +93,6 @@ export const DealerPromotionsPage: React.FC = () => {
 
   const resetFilters = () => {
     setScope(["LOCAL"]);
-    setKeyword("");
-    setStatus(undefined);
     setSortField("createAt");
     setSortDir("desc");
     setPage(0);
@@ -112,6 +106,7 @@ export const DealerPromotionsPage: React.FC = () => {
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi của đại lý
         </h2>
+
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -122,52 +117,28 @@ export const DealerPromotionsPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* --- Filter bar --- */}
-      <div className="mb-4">
-        <Space wrap size="middle">
-          <Select
-            allowClear
-            mode="multiple"
-            style={{ width: 300 }}
-            placeholder="Phạm vi áp dụng"
-            value={scope}
-            options={[
-              { label: "Toàn hệ thống (GLOBAL)", value: "GLOBAL" },
-              { label: "Cục bộ (LOCAL)", value: "LOCAL" },
-            ]}
-            onChange={(vals) => {
-              setScope(vals.length ? vals : ["LOCAL"]);
-              setPage(0);
-            }}
-          />
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo tên khuyến mãi..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={{ width: 300 }}
-          />
-          <Select
-            allowClear
-            style={{ width: 240 }}
-            placeholder="Trạng thái"
-            value={status}
-            options={STATUS_OPTIONS}
-            onChange={(val) => {
-              setStatus(val);
-              setPage(0);
-            }}
-          />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={resetFilters}
-            type="primary"
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
+      <EMOBFilterBar
+        onReset={resetFilters}
+        filterDropdown={
+          <div className="flex flex-col gap-4">
+            <Select
+              mode="multiple"
+              allowClear
+              className="w-full"
+              placeholder="Phạm vi áp dụng"
+              value={scope}
+              options={[
+                { label: "Toàn hệ thống", value: "GLOBAL" },
+                { label: "Đại lý", value: "LOCAL" },
+              ]}
+              onChange={(val) => {
+                setScope(val.length ? val : ["LOCAL"]);
+                setPage(0);
+              }}
+            />
+          </div>
+        }
+      />
 
       <PromotionTable
         data={promotions}

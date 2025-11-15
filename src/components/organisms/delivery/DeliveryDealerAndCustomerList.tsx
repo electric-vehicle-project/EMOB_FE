@@ -8,8 +8,11 @@ import {
   Modal,
   Form,
   DatePicker,
-  Pagination
+  Pagination,
+  Input,
+  Dropdown,
 } from "antd";
+import { FilterOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
   useDeliveryQueryByCustomers,
@@ -31,8 +34,12 @@ export const DeliveryDealerAndCustomerList = () => {
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statuses, setStatuses] = useState<string[]>([]);
+  const [keyword, setKeyword] = useState("");
+
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role || "";
+  const role = (user as any)?.role || "";
   const navigate = useNavigate();
 
   // Modal control
@@ -40,27 +47,87 @@ export const DeliveryDealerAndCustomerList = () => {
   const [form] = Form.useForm();
 
   // Query deliveries
-  const { data, isLoading, refetch } = useDeliveryQueryByCustomers({}, {
-    page,
-    size,
-    sortField,
-    sortDir,
-    statuses,
-  });
+  const { data, isLoading, refetch } = useDeliveryQueryByCustomers(
+    {},
+    {
+      page,
+      size,
+      sortField,
+      sortDir,
+      statuses,
+      keyword,
+    }
+  );
 
-  // Query hợp đồng giữa Dealer ↔ Customer
+  // Query hợp đồng Dealer ↔ Customer
   const { data: contractData } = useContractQueryByDealer({}, {});
   const contracts = contractData?.result?.data ?? [];
 
-  // Mutations
-  
   const { mutateAsync: createDelivery, isPending: creating } =
     useDeliveryCreateByDealerMutation();
 
   const deliveries = data?.result?.data ?? [];
   const total = data?.result?.metadata.totalElements ?? 0;
 
-  // Actions
+  // ============ Filter Dropdown Content ============
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      {/* STATUS */}
+      <div>
+        <b className="text-gray-700">Trạng thái</b>
+        <Select
+          mode="multiple"
+          value={statuses}
+          onChange={(v) => {
+            setStatuses(v);
+            setPage(0);
+          }}
+          allowClear
+          className="w-full mt-2"
+        >
+          <Option value="IN_PROGRESS">IN_PROGRESS</Option>
+          <Option value="SUCCESS">SUCCESS</Option>
+        </Select>
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="createAt">Ngày tạo</Option>
+          <Option value="deliveryDate">Ngày giao hàng</Option>
+        </Select>
+      </div>
+
+      {/* SORT DIR */}
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="asc">Tăng dần</Option>
+          <Option value="desc">Giảm dần</Option>
+        </Select>
+      </div>
+    </div>
+  );
+
+  // ============ CREATE DELIVERY ============
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
@@ -80,83 +147,87 @@ export const DeliveryDealerAndCustomerList = () => {
 
   return (
     <div>
+      {/* HEADER */}
       <span className="flex justify-between p-5">
-        <b className="text-[#627254]">Danh sách đơn vận chuyển từ Đại lý đến Khách hàng</b>
+        <b className="text-lg text-[#627254]">
+          Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
+        </b>
+
         <b
-          onClick={() => navigate("/" + role.toLowerCase() + "/" + ROUTES.DELIVERY_CURRENT_DEALER)}
-          className="underline gap-2 text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
+          onClick={() =>
+            navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CURRENT_DEALER}`)
+          }
+          className="underline text-[#627254] cursor-pointer hover:text-[#4f5a42]"
         >
           Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
         </b>
       </span>
-      <Card
-        extra={
-          <Space>
-            <Select
-              placeholder="Trạng thái"
-              mode="multiple"
-              value={statuses}
-              onChange={setStatuses}
-              style={{ width: 180 }}
+
+      <Card>
+        {/* Toolbar */}
+        <Space className="flex justify-between w-full pb-5">
+          <div>
+            <Input
+              placeholder="Tìm kiếm theo mã hợp đồng..."
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value);
+                setPage(0);
+              }}
               allowClear
-            >
-              <Option value="IN_PROGRESS">IN_PROGRESS</Option>
-              <Option value="SUCCESS">SUCCESS</Option>
-            </Select>
+              style={{ width: 350 }}
+            />
 
-            <Select
-              value={sortField}
-              onChange={(v) => setSortField(v)}
-              style={{ width: 150 }}
+            <Dropdown
+              trigger={["click"]}
+              open={filterOpen}
+              onOpenChange={setFilterOpen}
+              dropdownRender={() => <FilterContent />}
             >
-              <Option value="createAt">Ngày tạo</Option>
-              <Option value="deliveryDate">Ngày giao hàng</Option>
-            </Select>
+              <Button type="text" icon={<FilterOutlined style={{ fontSize: 20 }} />} />
+            </Dropdown>
+          </div>
 
-            <Select
-              value={sortDir}
-              onChange={(v) => setSortDir(v)}
-              style={{ width: '100%' }}
-            >
-              <Option value="asc">Tăng dần</Option>
-              <Option value="desc">Giảm dần</Option>
-            </Select>
-
+          <div>
             {role === "DEALER_STAFF" && (
-              <>
-                <Button
-                  type="primary"
-                  className="!bg-[#627254]"
-                  onClick={() => setOpenModal(true)}
-                >
-                  + Tạo đơn vận chuyển
-                </Button>
-              </>
+              <Button
+                type="primary"
+                className="!bg-[#627254]"
+                onClick={() => setOpenModal(true)}
+              >
+                + Tạo đơn vận chuyển
+              </Button>
             )}
+          </div>
 
-          </Space>
-        }
-      >
+        </Space>
+
+        {/* TABLE */}
         <DeliveryTable
           data={deliveries}
           loading={isLoading}
           page={page}
           size={size}
           total={total}
-          onPageChange={(newPage) => setPage(newPage - 1)}
+          onPageChange={(p) => setPage(p - 1)}
         />
+
+        {/* PAGINATION */}
         <div className="p-3 flex justify-center">
           <Pagination
             current={page + 1}
             pageSize={size}
             total={total}
-            showSizeChanger={true}
-            onChange={(v) => setSize(v)}
-            showTotal={(total) => `Tổng ${total} đơn giao hàng`}
+            showSizeChanger
+            onChange={(p, s) => {
+              setPage(p - 1);
+              setSize(s);
+            }}
+            showTotal={(t) => `Tổng ${t} đơn giao hàng`}
           />
         </div>
 
-        {/* MODAL TẠO ĐƠN */}
+        {/* MODAL */}
         <Modal
           title="Tạo đơn giao hàng cho Khách hàng"
           open={openModal}
@@ -169,25 +240,19 @@ export const DeliveryDealerAndCustomerList = () => {
           <Form
             layout="vertical"
             form={form}
-            initialValues={{
-              deliveryDate: dayjs(),
-            }}
+            initialValues={{ deliveryDate: dayjs() }}
           >
             <Form.Item
               label="Chọn hợp đồng"
               name="contractId"
-              rules={[{ required: true, message: "Vui lòng chọn hợp đồng" }]}
+              rules={[{ required: true }]}
             >
-              <Select
-                placeholder="Chọn số hợp đồng"
-                showSearch
-                optionFilterProp="children"
-              >
+              <Select placeholder="Chọn hợp đồng" showSearch>
                 {contracts
-                  .filter((c: any) => c.status === "SIGNED") // chỉ hợp đồng đã ký
-                  .map((contract: any) => (
-                    <Option key={contract.contractId} value={contract.contractId}>
-                      {contract.contractNumber}
+                  .filter((c: any) => c.status === "SIGNED" && !c.deliveryId)
+                  .map((c: any) => (
+                    <Option key={c.contractId} value={c.contractId}>
+                      {c.contractNumber} — <span className="text-green-600">Chưa tạo vận chuyển</span>
                     </Option>
                   ))}
               </Select>
@@ -197,21 +262,13 @@ export const DeliveryDealerAndCustomerList = () => {
               label="Ngày bắt đầu vận chuyển"
               name="deliveryDate"
               rules={[
-                {
-                  required: true,
-                  message: "Vui lòng chọn ngày vận chuyển",
-                },
+                { required: true },
                 {
                   validator: (_, value) => {
-                    if (
-                      !value ||
-                      value.isSame(dayjs(), "day") ||
-                      value.isAfter(dayjs(), "day")
-                    ) {
+                    if (!value || value.isAfter(dayjs().startOf("day")))
                       return Promise.resolve();
-                    }
                     return Promise.reject(
-                      new Error("Ngày vận chuyển phải từ hôm nay trở đi")
+                      "Ngày vận chuyển phải từ hôm nay trở đi"
                     );
                   },
                 },

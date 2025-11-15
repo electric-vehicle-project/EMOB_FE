@@ -1,5 +1,14 @@
-import { useState } from "react";
-import { Card, Select, Space, Input } from "antd";
+import { useEffect, useState } from "react";
+import {
+  Card,
+  Select,
+  Space,
+  Input,
+  Pagination,
+  Dropdown,
+  Button,
+} from "antd";
+import { FilterOutlined } from "@ant-design/icons";
 import {
   useContractQueryByEVM,
 } from "../../../service/contractService";
@@ -15,87 +24,142 @@ export const ContractListAllDealers = () => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [keyword, setKeyword] = useState("");
 
-  const { data } = useContractQueryByEVM({}, {
-    page,
-    size,
-    sortField,
-    sortDir,
-    statuses,
-    keyword,
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const { data, refetch } = useContractQueryByEVM(
+    {},
+    {
+      page,
+      size,
+      sortField,
+      sortDir,
+      statuses,
+      keyword,
+    }
+  );
+
+  useEffect(() => {
+    refetch();
   });
+
   const contracts = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
 
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      <div>
+        <b className="text-gray-700">Trạng thái</b>
+        <Select
+          mode="multiple"
+          value={statuses}
+          onChange={(v) => {
+            setStatuses(v);
+            setPage(0);
+          }}
+          allowClear
+          className="w-full mt-2"
+        >
+          <Option value="PENDING">PENDING</Option>
+          <Option value="SIGNED">SIGNED</Option>
+          <Option value="TERMINATED">TERMINATED</Option>
+        </Select>
+      </div>
+
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="createdAt">Ngày tạo</Option>
+          <Option value="updatedAt">Ngày cập nhật</Option>
+          <Option value="purchaseDate">Ngày ký kết</Option>
+        </Select>
+      </div>
+
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="asc">ASC</Option>
+          <Option value="desc">DESC</Option>
+        </Select>
+      </div>
+    </div>
+  );
+
   return (
     <div>
-      <span>Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý</span>
-      <Card
-        extra={
-          <Space className="overflow-x-hidden">
-            <Input
-              placeholder="Tìm kiếm theo mã hợp đồng..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              allowClear
-              style={{ width: 450 }}
+      <span className="flex justify-between p-5">
+        <b className="text-lg text-[#627254]">
+          Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý
+        </b>
+      </span>
+
+      <Card>
+        {/* TOOLBAR */}
+        <Space className="flex justify-start pb-5">
+          <Input
+            placeholder="Tìm kiếm theo mã hợp đồng..."
+            value={keyword}
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              setPage(0);
+            }}
+            allowClear
+            style={{ width: 350 }}
+          />
+
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+          >
+            <Button
+              type="text"
+              icon={<FilterOutlined style={{ fontSize: 20 }} />}
+              className="text-gray-600 hover:text-black"
             />
+          </Dropdown>
+        </Space>
 
-            <Select
-              placeholder="Trạng thái"
-              mode="multiple"
-              value={statuses}
-              onChange={setStatuses}
-              style={{ width: 180 }}
-              allowClear
-            >
-              <Option value="PENDING">PENDING</Option>
-              <Option value="SIGNED">SIGNED</Option>
-              <Option value="TERMINATED">TERMINATED</Option>
-            </Select>
-
-            <Select
-              value={sortField}
-              onChange={(v) => setSortField(v)}
-              style={{ width: 150 }}
-            >
-              <Option value="createdAt">Ngày tạo</Option>
-              <Option value="updatedAt">Ngày cập nhật</Option>
-              <Option value="purchaseDate">Ngày ký kết</Option>
-            </Select>
-
-            <Select
-              value={sortDir}
-              onChange={(v) => setSortDir(v)}
-              style={{ width: 100 }}
-            >
-              <Option value="asc">ASC</Option>
-              <Option value="desc">DESC</Option>
-            </Select>
-
-            <Select
-              value={size}
-              onChange={(v) => setSize(v)}
-              style={{ width: 120 }}
-            >
-              <Option value={10}>10 / page</Option>
-              <Option value={20}>20 / page</Option>
-              <Option value={50}>50 / page</Option>
-              <Option value={100}>100 / page</Option>
-            </Select>
-          </Space>
-        }
-      >
+        {/* TABLE */}
         <ContractTable
           data={contracts}
-          pagination={{
-            current: page + 1,
-            pageSize: size,
-            total,
-            showSizeChanger: false,
-            onChange: (newPage) => setPage(newPage - 1),
-            showTotal: (t) => `Tổng ${t} hợp đồng`,
-          }}
+          page={page}
+          size={size}
+          total={total}
+          onPageChange={(p) => setPage(p - 1)}
         />
+
+        {/* PAGINATION */}
+        <div className="p-3 flex justify-center">
+          <Pagination
+            current={page + 1}
+            pageSize={size}
+            total={total}
+            showSizeChanger
+            onChange={(p, s) => {
+              setPage(p - 1);
+              setSize(s);
+            }}
+            showTotal={(t) => `Tổng ${t} hợp đồng`}
+          />
+        </div>
       </Card>
     </div>
   );

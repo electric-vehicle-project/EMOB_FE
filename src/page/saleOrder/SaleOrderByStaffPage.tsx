@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { message, Spin } from "antd";
+import { Spin } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { CardWrapper } from "../../components/template/CardWrapper";

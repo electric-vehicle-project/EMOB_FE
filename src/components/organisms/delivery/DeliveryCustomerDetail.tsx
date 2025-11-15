@@ -9,6 +9,7 @@ import {
 } from "../../../service/deliveryService";
 import { toast } from "react-toastify";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
+import { VehicleUnitCard } from "../../molecules/contract/VehicleUnitCard";
 
 export const DeliveryCustomerDetail = () => {
     const navigate = useNavigate();
@@ -92,7 +93,7 @@ export const DeliveryCustomerDetail = () => {
                                     icon={<DeleteOutlined />}
                                     loading={deleting}
                                     onClick={handleDelete}
-                                    className="!bg-red-700 hover:!bg-red-600 !border-none text-white"
+                                    className="!bg-black hover:!bg-gray-600 !border-none text-white"
                                 >
                                     Xóa đơn giao hàng
                                 </Button>
@@ -149,14 +150,14 @@ export const DeliveryCustomerDetail = () => {
                         </div>
 
                         <div className="col-span-2">
-                            <p className="text-sm text-gray-500">Danh sách xe (ID)</p>
+                            <b className="pl-4">Danh sách xe vận chuyển (chi tiết từng xe):</b>
                             <div className="p-3 bg-gray-50 rounded-lg max-h-60 overflow-y-auto border border-gray-200">
                                 {delivery.vehicleIds?.length ? (
-                                    <ul className="list-disc pl-5 text-sm space-y-1">
-                                        {delivery.vehicleIds.map((v: string) => (
-                                            <li key={v}>{v}</li>
+                                    <div className="grid grid-cols-3 gap-4 mt-4">
+                                        {delivery.vehicleIds.map((uid: string) => (
+                                            <VehicleUnitCard key={uid} vehicleUnitId={uid} />
                                         ))}
-                                    </ul>
+                                    </div>
                                 ) : (
                                     <p className="italic text-gray-400">Không có dữ liệu xe</p>
                                 )}
