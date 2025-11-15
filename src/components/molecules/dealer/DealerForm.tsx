@@ -11,7 +11,7 @@ interface Props {
   currentId?: string;
   existingDealers: IDealer[];
   onFinish: (values: DealerFormValues) => void;
-  onCanSubmitChange?: (can: boolean) => void; // giữ để không lỗi chỗ khác, không dùng
+  onCanSubmitChange?: (can: boolean) => void;
   baseline: DealerFormValues | null;
 }
 
@@ -35,7 +35,7 @@ export const DealerForm: React.FC<Props> = ({
       autoComplete="off"
       requiredMark="optional"
       className="space-y-2"
-      validateTrigger="onSubmit" // ✅ chỉ validate khi submit
+      validateTrigger="onSubmit"
       onFinish={(values) => onFinish(normalizeDealerValues(values))}
     >
       <Form.Item
@@ -57,26 +57,22 @@ export const DealerForm: React.FC<Props> = ({
           { type: "email", message: "Email không hợp lệ" },
           { required: true, message: "Vui lòng nhập email liên hệ" },
           {
-            // ✅ rule kiểm tra trùng email
             validator: (_, value) => {
               if (!value) return Promise.resolve();
               const normalized = String(value).trim().toLowerCase();
 
               const duplicated = existingDealers.some((d) => {
-                const dealerEmail = (d.emailContact || "").trim().toLowerCase();
-                if (!dealerEmail) return false;
-                // khi edit thì bỏ qua chính bản thân nó
+                const email = (d.emailContact || "").trim().toLowerCase();
+                if (!email) return false;
                 if (isEdit && currentId && d.id === currentId) return false;
-                return dealerEmail === normalized;
+                return email === normalized;
               });
 
-              if (duplicated) {
-                return Promise.reject(
-                  new Error("Email này đã tồn tại trong hệ thống")
-                );
-              }
-
-              return Promise.resolve();
+              return duplicated
+                ? Promise.reject(
+                    new Error("Email này đã tồn tại trong hệ thống")
+                  )
+                : Promise.resolve();
             },
           },
         ]}
@@ -92,6 +88,25 @@ export const DealerForm: React.FC<Props> = ({
           {
             pattern: /^(0|\+84)(1|2|3|4|5|6|7|8|9)\d{8}$/,
             message: "Số điện thoại không hợp lệ",
+          },
+          {
+            validator: (_, value) => {
+              if (!value) return Promise.resolve();
+              const normalized = String(value).trim();
+
+              const duplicated = existingDealers.some((d) => {
+                const phone = (d.phoneContact || "").trim();
+                if (!phone) return false;
+                if (isEdit && currentId && d.id === currentId) return false;
+                return phone === normalized;
+              });
+
+              return duplicated
+                ? Promise.reject(
+                    new Error("Số điện thoại này đã tồn tại trong hệ thống")
+                  )
+                : Promise.resolve();
+            },
           },
         ]}
       >
@@ -115,8 +130,7 @@ export const DealerForm: React.FC<Props> = ({
           <Select
             options={REGION_OPTIONS}
             placeholder="Chọn khu vực"
-            showSearch={false}
-            allowClear
+            allowClear={false}
           />
         </Form.Item>
       </div>
