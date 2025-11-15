@@ -1,3 +1,4 @@
+// src/service/vehicleService.ts
 // ==================================
 // EMOB 2025 - Vehicle Service
 // KHÔNG sửa useApi.ts, KHÔNG sửa api.ts
@@ -55,7 +56,7 @@ export const useUpdateVehicle = () =>
 export const useDeleteVehicle = () =>
   deleteMutationHook("delete-vehicle", BASE_URL)();
 
-// ========== UPDATE PRICES (đặc thù: PUT /vehicle/{id}/prices) ==========
+// ========== UPDATE PRICES (PUT /vehicle/{id}/prices) ==========
 export const useUpdateVehiclePrices = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -70,7 +71,6 @@ export const useUpdateVehiclePrices = () => {
       return res.data;
     },
     onSuccess: (_data, vars) => {
-      // làm tươi chi tiết xe và list
       queryClient.invalidateQueries({
         queryKey: ["get-vehicle-by-id", vars.id],
       });
@@ -86,7 +86,7 @@ export const useUploadVehicleImages = () =>
     `${BASE_URL}/images`
   )();
 
-// ========== BULK CREATE UNITS ==========
+// ========== BULK CREATE UNITS (cũ) ==========
 export const useBulkCreateVehicleUnits = () =>
   createMutationHook("bulk-create-vehicle-units", `${UNIT_URL}/bulk`)();
 
@@ -173,7 +173,7 @@ export const useCreateVehicleUnitsBulk = () =>
 
 // ========== BULK DELETE VEHICLE UNITS ==========
 export const useDeleteVehicleUnitsBulk = () => {
-  const queryClient = useQueryClient(); // ✅ Thêm dòng này
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (vehicleUnitIds: string[]) => {
@@ -182,7 +182,6 @@ export const useDeleteVehicleUnitsBulk = () => {
       return res.data;
     },
     onSuccess: () => {
-      // ✅ Làm tươi dữ liệu các list units liên quan
       queryClient.invalidateQueries({
         queryKey: ["get-vehicle-units-by-model"],
       });
@@ -191,15 +190,16 @@ export const useDeleteVehicleUnitsBulk = () => {
   });
 };
 
-export const useGetAIDemandForecast = (vehicleId?: string) => {
+// ========== AI Demand Forecast (GET /vehicle/demandForecastFromAI, dùng modelName) ==========
+export const useGetAIDemandForecast = () => {
   return {
-    refetch: async () => {
-      if (!vehicleId) return null;
+    refetch: async (modelName?: string) => {
+      if (!modelName) return null;
 
       const token = localStorage.getItem("token") ?? "";
       const url = `${
         import.meta.env.VITE_BASE_URL
-      }/vehicle/demandForecastFromAI?model=${vehicleId}`;
+      }/vehicle/demandForecastFromAI?model=${encodeURIComponent(modelName)}`;
 
       const res = await fetch(url, {
         method: "GET",
@@ -209,11 +209,12 @@ export const useGetAIDemandForecast = (vehicleId?: string) => {
         },
       });
 
-      return await res.json();
+      return res.json();
     },
   };
 };
 
+// ========== (Giữ lại, nhưng BulkPage không dùng) ==========
 export const useCreateAIDemandForecasts = (vehicleId?: string) => {
   return {
     refetch: async () => {
@@ -232,7 +233,7 @@ export const useCreateAIDemandForecasts = (vehicleId?: string) => {
         },
       });
 
-      return await res.json();
+      return res.json();
     },
   };
 };

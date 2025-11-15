@@ -22,7 +22,6 @@ import {
   useGetVehicleById,
   useCreateVehicleUnitsBulk,
   useGetAIDemandForecast,
-  useCreateAIDemandForecasts,
 } from "../../service/vehicleService";
 import { ROUTES } from "../../model/routePaths";
 import { useCurrentUser } from "../../utils/getCurrentUser";
@@ -54,17 +53,11 @@ type ApiColorForecast = {
   predictedColorDemand: number;
 };
 
-type ApiSupplyPlan = {
+type ApiForecastItem = {
   modelName: string;
   predictedDealerDemand?: number;
   recommendedProduction?: number;
   colorForecast?: ApiColorForecast[];
-};
-
-type ApiForecastRoot = {
-  country?: string;
-  region?: string;
-  supplyPlan?: ApiSupplyPlan[];
 };
 
 const normalize = (s?: string) =>
@@ -120,14 +113,12 @@ export const VehicleBulkPage = () => {
     [baseRetail, multiplier]
   );
 
-  // ================= AI Forecast Hooks =================
-  const demandForecast = useGetAIDemandForecast(vehicleId ?? "");
-  const createForecast = useCreateAIDemandForecasts(vehicleId ?? "");
+  // ========== AI Forecast Hook (chỉ gọi GET /vehicle/demandForecastFromAI) ==========
+  const demandForecast = useGetAIDemandForecast();
 
   const [forecastOpen, setForecastOpen] = useState<boolean>(false);
-  const [triggering, setTriggering] = useState<boolean>(false);
   const [loadingForecast, setLoadingForecast] = useState<boolean>(false);
-  const [forecastRaw, setForecastRaw] = useState<ApiForecastRoot[]>([]);
+  const [forecastRaw, setForecastRaw] = useState<ApiForecastItem[]>([]);
 
   const fetchMultiplier = async (status: FormValues["status"]) => {
     try {
@@ -146,30 +137,38 @@ export const VehicleBulkPage = () => {
     fetchMultiplier(status);
   };
 
-  // ================= Replace axios.get() =================
-
-  const triggerForecast = async () => {
-    setTriggering(true);
-    try {
-      await demandForecast.refetch();
-    } finally {
-      setTriggering(false);
-    }
-  };
+  // ========== Lấy forecast từ AI, dùng modelName (không dùng id) ==========
 
   const loadForecasts = async () => {
+    if (!vehicleInfo?.model) {
+      toast.error("Không xác định được model để dự báo.");
+      setForecastRaw([]);
+      return;
+    }
+
     setLoadingForecast(true);
     try {
-      const res = await createForecast.refetch();
-      const data = res?.data;
+      const res = await demandForecast.refetch(vehicleInfo.model);
+      const raw: unknown = res;
 
-      const list: ApiForecastRoot[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.result)
-        ? data.result
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
+      let list: ApiForecastItem[] = [];
+
+      if (Array.isArray(raw)) {
+        list = raw as ApiForecastItem[];
+      } else if (
+        raw &&
+        typeof raw === "object" &&
+        Array.isArray((raw as { result?: unknown }).result)
+      ) {
+        list = ((raw as { result?: unknown }).result ??
+          []) as ApiForecastItem[];
+      } else if (
+        raw &&
+        typeof raw === "object" &&
+        Array.isArray((raw as { data?: unknown }).data)
+      ) {
+        list = ((raw as { data?: unknown }).data ?? []) as ApiForecastItem[];
+      }
 
       setForecastRaw(list);
     } catch {
@@ -182,20 +181,16 @@ export const VehicleBulkPage = () => {
 
   const openForecast = async () => {
     setForecastOpen(true);
-    await triggerForecast();
     await loadForecasts();
   };
 
   const handleRefresh = async () => {
-    await triggerForecast();
     await loadForecasts();
   };
 
-  // ================= Rows =================
+  // ========== Rows bảng ==========
   type Row = {
     key: string;
-    country?: string;
-    region?: string;
     modelName: string;
     predictedDealerDemand?: number;
     recommendedProduction?: number;
@@ -205,36 +200,28 @@ export const VehicleBulkPage = () => {
   };
 
   const modelRows: Row[] = useMemo(() => {
-    const currentModel = normalize(
-      (vehicleInfo?.model as string | undefined) ||
-        (vehicleInfo?.name as string | undefined)
-    );
-
+    const currentModel = normalize(vehicleInfo?.model);
     if (!currentModel) return [];
 
     const rows: Row[] = [];
-    for (const bucket of forecastRaw || []) {
-      const plans = Array.isArray(bucket?.supplyPlan) ? bucket.supplyPlan : [];
-      for (const p of plans) {
-        if (normalize(p?.modelName) !== currentModel) continue;
-        const top = topColorOf(p.colorForecast);
-        rows.push({
-          key: `${bucket.region || bucket.country || "x"}-${p.modelName}`,
-          country: bucket.country,
-          region: bucket.region,
-          modelName: p.modelName,
-          predictedDealerDemand: p.predictedDealerDemand,
-          recommendedProduction: p.recommendedProduction,
-          topColor: top?.color,
-          topColorDemand: top?.predictedColorDemand,
-          allColors: p.colorForecast || [],
-        });
-      }
+    for (const item of forecastRaw || []) {
+      if (normalize(item.modelName) !== currentModel) continue;
+
+      const top = topColorOf(item.colorForecast);
+      rows.push({
+        key: `${item.modelName}`,
+        modelName: item.modelName,
+        predictedDealerDemand: item.predictedDealerDemand,
+        recommendedProduction: item.recommendedProduction,
+        topColor: top?.color,
+        topColorDemand: top?.predictedColorDemand,
+        allColors: item.colorForecast || [],
+      });
     }
     return rows;
   }, [forecastRaw, vehicleInfo]);
 
-  // ================= Submit =================
+  // ========== Submit ==========
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
       toast.error("Thiếu vehicleId. Vui lòng quay lại.");
@@ -320,38 +307,25 @@ export const VehicleBulkPage = () => {
 
   const columns: ColumnsType<Row> = [
     {
-      title: "Khu vực",
-      key: "region",
-      width: 200,
-      render: (_, r) => (
-        <div className="flex flex-col">
-          <span className="font-medium">{r.region || "—"}</span>
-          <span className="text-xs text-gray-500">
-            {r.country ? `Quốc gia: ${r.country}` : ""}
-          </span>
-        </div>
-      ),
-    },
-    {
       title: "Model",
       dataIndex: "modelName",
     },
     {
-      title: "Demand",
+      title: "Nhu cầu đại lý",
       dataIndex: "predictedDealerDemand",
       align: "right",
       render: (v) =>
         typeof v === "number" ? <Tag color="blue">{fmt(v)}</Tag> : "—",
     },
     {
-      title: "Production",
+      title: "Sản lượng khuyến nghị",
       dataIndex: "recommendedProduction",
       align: "right",
       render: (v) =>
         typeof v === "number" ? <Tag color="green">{fmt(v)}</Tag> : "—",
     },
     {
-      title: "Top Color",
+      title: "Màu ưu tiên",
       key: "topColor",
       align: "center",
       render: (_, r) =>
@@ -408,7 +382,7 @@ export const VehicleBulkPage = () => {
               {role === "EVM_STAFF" && (
                 <Button
                   onClick={openForecast}
-                  loading={triggering || loadingForecast}
+                  loading={loadingForecast}
                   icon={<ExperimentOutlined />}
                   type="default"
                 >
@@ -426,7 +400,6 @@ export const VehicleBulkPage = () => {
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : vehicleInfo ? (
           <>
-            {/* ẢNH */}
             <div className="flex flex-col lg:flex-row gap-10">
               <div className="flex-1 flex flex-col items-center">
                 <Image
@@ -453,7 +426,6 @@ export const VehicleBulkPage = () => {
                 </div>
               </div>
 
-              {/* FORM */}
               <div className="flex-1">
                 <Form<FormValues>
                   form={form}
@@ -535,7 +507,6 @@ export const VehicleBulkPage = () => {
         )}
       </Card>
 
-      {/* MODAL */}
       <Modal
         open={forecastOpen}
         onCancel={() => setForecastOpen(false)}
@@ -544,12 +515,12 @@ export const VehicleBulkPage = () => {
         destroyOnClose
         title={
           <div className="flex items-center gap-3">
-            <span>🔮 Dự báo (AI)</span>
+            <span>🔮 Dự báo nhu cầu</span>
             <Button
               size="small"
               icon={<ReloadOutlined />}
               onClick={handleRefresh}
-              loading={loadingForecast || triggering}
+              loading={loadingForecast}
             >
               Làm mới
             </Button>
