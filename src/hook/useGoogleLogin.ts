@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { supabase } from "../config/supabase";
 import { useDispatch } from "react-redux";
@@ -10,7 +11,7 @@ import { useLoginByGoogleMutation } from "../service/authenticationService";
  * Custom hook để xử lý luồng đăng nhập Google
  */
 export const useGoogleLogin = () => {
-  const { mutate: loginMutation, isPending } = useLoginByGoogleMutation();
+  const { mutate: loginMutation } = useLoginByGoogleMutation();
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
