@@ -1,5 +1,5 @@
-import { Modal, Button, message } from "antd";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Modal, Button } from "antd";
+import { useEffect, useRef } from "react";
 import { useForm } from "antd/es/form/Form";
 import type { IDealer, Region } from "../../../model/Dealer";
 import { DealerForm } from "../../molecules/dealer/DealerForm";
@@ -26,7 +26,6 @@ export const DealerModal = ({
   initialValues,
 }: Props) => {
   const [form] = useForm<DealerFormValues>();
-  const [canSubmit, setCanSubmit] = useState(false);
   const baselineRef = useRef<DealerFormValues | null>(null);
 
   const { data: allDealersResp, refetch: refetchAllDealers } = useDealersQuery(
@@ -34,10 +33,7 @@ export const DealerModal = ({
     { page: 0, size: 1000, sortField: "createdAt", sortDir: "desc" }
   );
 
-  const allDealers: IDealer[] = useMemo(
-    () => allDealersResp?.result?.data ?? [],
-    [allDealersResp]
-  );
+  const allDealers: IDealer[] = allDealersResp?.result?.data ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -45,7 +41,6 @@ export const DealerModal = ({
     refetchAllDealers();
 
     if (initialValues) {
-      // ✅ Khi chỉnh sửa: set đúng giá trị cũ (nếu có)
       form.setFieldsValue({
         name: initialValues.name,
         emailContact: initialValues.emailContact,
@@ -55,14 +50,11 @@ export const DealerModal = ({
         region: initialValues.region as Region,
       });
     } else {
-      // ✅ Khi thêm mới: reset sạch form, không set region mặc định
       form.resetFields();
     }
 
-    // Cập nhật baseline cho logic dirty-check
     const id = setTimeout(() => {
       baselineRef.current = normalizeDealerValues(form.getFieldsValue());
-      setCanSubmit(false);
     }, 0);
 
     return () => clearTimeout(id);
@@ -89,11 +81,29 @@ export const DealerModal = ({
         message?: string;
       }
       const e = err as ApiError;
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Không thể lưu. Vui lòng thử lại.";
-      toast.error(msg);
+
+      const backendMsg = e?.response?.data?.message;
+
+      // trường hợp đang sửa
+      if (initialValues) {
+        if (backendMsg) {
+          toast.error(`Không thể cập nhật thông tin đại lý.`);
+        } else if (e.message) {
+          toast.error(`Không thể cập nhật thông tin đại lý.`);
+        } else {
+          toast.error("Không thể cập nhật thông tin đại lý.");
+        }
+        return;
+      }
+
+      // trường hợp đang tạo mới
+      if (backendMsg) {
+        toast.error(`Không thể tạo đại lý.`);
+      } else if (e.message) {
+        toast.error(`Không thể tạo đại lý.`);
+      } else {
+        toast.error("Không thể tạo đại lý.");
+      }
     }
   };
 
@@ -101,13 +111,8 @@ export const DealerModal = ({
     <div className="flex justify-center">
       <Button
         type="primary"
-        className={`px-6 py-2 rounded-md w-full sm:w-auto ${
-          !canSubmit
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-evm-green hover:!bg-[#4f6f52]"
-        }`}
-        disabled={!canSubmit}
-        onClick={() => form.submit()}
+        className="px-6 py-2 rounded-md w-full sm:w-auto bg-evm-green hover:!bg-[#4f6f52]"
+        onClick={() => form.submit()} // bấm mới validate
       >
         {initialValues ? "Lưu thay đổi" : "Tạo đại lý"}
       </Button>
@@ -130,7 +135,6 @@ export const DealerModal = ({
         currentId={initialValues?.id}
         existingDealers={allDealers}
         onFinish={handleFinish}
-        onCanSubmitChange={setCanSubmit}
         baseline={baselineRef.current}
       />
     </Modal>
