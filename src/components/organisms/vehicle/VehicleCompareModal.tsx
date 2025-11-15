@@ -55,6 +55,7 @@ const LABELS: Record<string, string> = {
   importPrice: "Giá nhập (₫)",
   retailPrice: "Giá bán lẻ (₫)",
 };
+
 const UNITS: Record<string, string> = {
   batteryKwh: "kWh",
   rangeKm: "km",
@@ -63,7 +64,9 @@ const UNITS: Record<string, string> = {
   weightKg: "kg",
   topSpeedKmh: "km/h",
 };
+
 const MONEY = new Set(["importPrice", "retailPrice"]);
+
 const ORDER = [
   "brand",
   "model",
@@ -78,10 +81,12 @@ const ORDER = [
   "weightKg",
 ];
 
-const PLACEHOLDER = "https://placehold.co/420x300?text=No+Image";
+const PLACEHOLDER =
+  "https://placehold.co/420x300?text=Ch%C6%B0a+c%C3%B3+%E1%BA%A3nh";
+
 const isNum = (v: unknown) =>
   typeof v === "number" ||
-  (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v)));
+  (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v)));
 
 type MetricKey =
   | "brand"
@@ -129,12 +134,14 @@ const canonicalKey = (keyName: string): string => {
   if (k.includes("type") || k.includes("loại")) return "type";
   return keyName;
 };
+
 const normBetter = (v: unknown): "left" | "right" | null => {
   const s = String(v ?? "").toLowerCase();
   if (s === "left") return "left";
   if (s === "right") return "right";
   return null;
 };
+
 const fmt = (key: string, value: unknown): string => {
   if (value === null || value === undefined || value === "") return "—";
   if (MONEY.has(key) && isNum(value))
@@ -195,7 +202,7 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
       : PLACEHOLDER;
 
   // =========================
-  // Parse payload từ BE (typed, không dùng any)
+  // Parse payload từ BE
   // =========================
   type BackendFieldA = {
     keyName: string;
@@ -271,7 +278,6 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     return [];
   }
 
-  // Lấy giá trị tuyệt đối từ 2 vehicle detail (không tự tính tốt/kém)
   type Cell = string | number | null | undefined;
   const pickCellValue = (src: IVehicle | undefined, key: string): Cell => {
     if (!src || !isMetricKey(key)) return undefined;
@@ -313,12 +319,11 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     }
   };
 
-  // Thống kê nhanh
   const stats = useMemo(() => {
     const data = rows ?? [];
-    let left = 0,
-      right = 0,
-      equal = 0;
+    let left = 0;
+    let right = 0;
+    let equal = 0;
     data.forEach((r) => {
       if (!r.different || !r.betterFor) equal++;
       else if (r.betterFor === "left") left++;
@@ -327,12 +332,12 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     return { left, right, equal, total: data.length };
   }, [rows]);
 
-  // Màu nền theo phán quyết BE
   const BG = {
-    win: "rgba(76,175,80,0.12)",
-    lose: "rgba(244,67,54,0.12)",
-    equal: "rgba(158,158,158,0.12)",
+    win: "rgba(34, 197, 94, 0.28)",
+    lose: "rgba(220, 38, 38, 0.12)",
+    equal: "rgba(148, 163, 184, 0.16)",
   };
+
   const cellBg = (side: "left" | "right", r: CompareRow) => {
     if (!r.different || !r.betterFor)
       return { background: BG.equal, borderRadius: 8, padding: 8 };
@@ -346,15 +351,7 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
       open={open}
       onCancel={onClose}
       okText="Bắt đầu so sánh"
-      title={
-        <Space align="center" size={8}>
-          <ColumnWidthOutlined className="text-[#627254]" />
-          <span>So sánh mẫu xe</span>
-          <Tooltip title="Giá trị hiển thị là thông số thật của 2 mẫu; màu nền: xanh (tốt hơn), đỏ (kém hơn), xám (bằng nhau).">
-            <InfoCircleOutlined />
-          </Tooltip>
-        </Space>
-      }
+      cancelText="Hủy"
       width={1000}
       destroyOnClose
       onOk={handleCompare}
@@ -363,13 +360,30 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
         className:
           "!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md",
       }}
+      cancelButtonProps={{ className: "rounded-md" }}
+      title={
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <ColumnWidthOutlined className="text-[#627254]" />
+            <span className="font-semibold text-[15px]">So sánh mẫu xe</span>
+            <Tooltip title="So sánh nhanh thông số kỹ thuật và giá giữa hai mẫu xe điện. Màu nền: xanh (tốt hơn), đỏ (kém hơn), xám (tương đương).">
+              <InfoCircleOutlined className="text-gray-500" />
+            </Tooltip>
+          </div>
+          <span className="text-xs text-gray-500">
+            Chọn một mẫu xe khác để so sánh với mẫu hiện tại.
+          </span>
+        </div>
+      }
     >
       {/* Chọn xe */}
-      <div className="w-full">
-        <Text>Chọn mẫu xe để so sánh với “{leftName || leftId}”:</Text>
+      <div className="w-full mb-4">
+        <Text className="text-sm text-gray-700">
+          Chọn mẫu xe để so sánh với “{leftName || leftId}”:
+        </Text>
         <Select
           className="w-full mt-2"
-          placeholder="Chọn mẫu xe"
+          placeholder="Chọn mẫu xe để so sánh"
           value={rightId}
           onChange={setRightId}
           showSearch
@@ -379,25 +393,31 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
       </div>
 
       {/* Header có ảnh */}
-      <Divider className="my-12" />
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-6">
-        <div className="md:col-span-5 border rounded-2xl p-12 md:p-6 bg-white">
-          <div className="text-xs text-gray-500 mb-1">Hiện tại</div>
+      <Divider className="my-6" />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
+        {/* Mẫu hiện tại */}
+        <div className="md:col-span-5 border rounded-2xl p-5 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-gray-500">Mẫu hiện tại</div>
+          </div>
           <div className="w-full h-48 overflow-hidden rounded-xl border flex items-center justify-center bg-white mb-3">
             <img
               src={leftImg}
-              alt={leftName}
+              alt={leftName || "Mẫu xe hiện tại"}
               className="object-contain h-full"
               onError={(e) =>
                 ((e.currentTarget as HTMLImageElement).src = PLACEHOLDER)
               }
             />
           </div>
-          <Title level={4} style={{ marginTop: 0 }}>
+          <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>
             {leftName || "—"}
           </Title>
           {leftInfo?.retailPrice ? (
-            <Tag color="green">
+            <Tag
+              className="rounded-full border-none"
+              style={{ background: "rgba(98,114,84,0.08)", color: "#414d38" }}
+            >
               Giá bán lẻ: {leftInfo.retailPrice.toLocaleString("vi-VN")}₫
             </Tag>
           ) : (
@@ -405,27 +425,34 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
           )}
         </div>
 
+        {/* Mũi tên giữa */}
         <div className="hidden md:flex md:col-span-2 items-center justify-center">
           <ArrowRightOutlined style={{ fontSize: 24, color: "#999" }} />
         </div>
 
-        <div className="md:col-span-5 border rounded-2xl p-12 md:p-6 bg-white">
-          <div className="text-xs text-gray-500 mb-1">Xe so sánh</div>
+        {/* Mẫu so sánh */}
+        <div className="md:col-span-5 border rounded-2xl p-5 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-gray-500">Mẫu so sánh</div>
+          </div>
           <div className="w-full h-48 overflow-hidden rounded-xl border flex items-center justify-center bg-white mb-3">
             <img
               src={rightImg}
-              alt={rightName}
+              alt={rightName || "Mẫu xe so sánh"}
               className="object-contain h-full"
               onError={(e) =>
                 ((e.currentTarget as HTMLImageElement).src = PLACEHOLDER)
               }
             />
           </div>
-          <Title level={4} style={{ marginTop: 0 }}>
-            {rightName || "—"}
+          <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>
+            {rightName || "Chưa chọn mẫu so sánh"}
           </Title>
           {rightInfo?.retailPrice ? (
-            <Tag color="blue">
+            <Tag
+              className="rounded-full border-none"
+              style={{ background: "rgba(59,130,246,0.08)", color: "#1d4ed8" }}
+            >
               Giá bán lẻ: {rightInfo.retailPrice.toLocaleString("vi-VN")}₫
             </Tag>
           ) : (
@@ -437,18 +464,37 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
       {/* Tóm tắt */}
       {rows && (
         <>
-          <Divider className="my-12" />
-          <Space wrap size={[8, 8]} aria-label="Tóm tắt kết quả so sánh">
-            <Tag color="green">Hiện tại tốt hơn: {stats.left}</Tag>
-            <Tag color="blue">Xe so sánh tốt hơn: {stats.right}</Tag>
-            <Tag>Giống nhau: {stats.equal}</Tag>
-            <Tag color="gold">Tổng tiêu chí: {stats.total}</Tag>
+          <Divider className="my-6" />
+          <Space
+            wrap
+            size={[8, 8]}
+            aria-label="Tóm tắt kết quả so sánh"
+            className="mb-3"
+          >
+            <Tag
+              className="rounded-full border-none"
+              style={{ background: "rgba(98,114,84,0.12)", color: "#414d38" }}
+            >
+              Mẫu hiện tại tốt hơn: {stats.left}
+            </Tag>
+            <Tag
+              className="rounded-full border-none"
+              style={{ background: "rgba(59,130,246,0.12)", color: "#1d4ed8" }}
+            >
+              Mẫu so sánh tốt hơn: {stats.right}
+            </Tag>
+            <Tag className="rounded-full border-none">
+              Tương đương: {stats.equal}
+            </Tag>
+            <Tag className="rounded-full border-none" color="gold">
+              Tổng số tiêu chí: {stats.total}
+            </Tag>
           </Space>
         </>
       )}
 
       {/* Bảng so sánh */}
-      <div className="mt-4">
+      <div className="mt-2">
         {loading ? (
           <div className="flex justify-center py-8">
             <Spin />
@@ -458,25 +504,26 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
             className="mt-3"
             type="info"
             showIcon
-            message="Hãy chọn mẫu xe rồi nhấn “Bắt đầu so sánh”."
+            message="Hãy chọn mẫu xe rồi nhấn “Bắt đầu so sánh” để xem kết quả."
           />
         ) : rows.length === 0 ? (
-          <Empty description="Chưa có dữ liệu so sánh" />
+          <Empty description="Chưa có dữ liệu so sánh cho hai mẫu xe này." />
         ) : (
           <Table<CompareRow>
             pagination={false}
+            size="middle"
             rowKey={(r) => r.key}
             dataSource={rows}
             className="rounded-xl overflow-hidden"
             columns={[
               {
-                title: "Thông số",
+                title: "Tiêu chí",
                 dataIndex: "label",
                 width: 240,
                 render: (v: string) => <Text strong>{v}</Text>,
               },
               {
-                title: "Hiện tại",
+                title: "Mẫu hiện tại",
                 dataIndex: "left",
                 render: (_: unknown, r) => (
                   <div style={cellBg("left", r)}>
@@ -485,7 +532,7 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
                 ),
               },
               {
-                title: "Xe so sánh",
+                title: "Mẫu so sánh",
                 dataIndex: "right",
                 render: (_: unknown, r) => (
                   <div style={cellBg("right", r)}>
@@ -498,13 +545,16 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
                 dataIndex: "betterFor",
                 width: 260,
                 render: (v: CompareRow["betterFor"]) => {
-                  if (!v) return <Tag>Không chênh lệch</Tag>;
+                  if (!v) return <Tag>Không có chênh lệch rõ ràng</Tag>;
                   const name =
                     v === "left"
-                      ? leftName || "Hiện tại"
-                      : rightName || "Xe so sánh";
+                      ? leftName || "Mẫu hiện tại"
+                      : rightName || "Mẫu so sánh";
                   return (
-                    <Tag color={v === "left" ? "green" : "blue"}>
+                    <Tag
+                      className="rounded-full border-none"
+                      color={v === "left" ? "green" : "blue"}
+                    >
                       <ArrowUpOutlined /> Nghiêng về “{name}”
                     </Tag>
                   );

@@ -1,6 +1,7 @@
+// src/page/vehicle/VehicleDetailPage.tsx
 /* EMOB-2025 - VehicleDetailPage */
-import { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { Card, Tag, Space, Tooltip, Popconfirm, Image } from "antd";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Card, Tag, Image, Dropdown, Menu } from "antd";
 import {
   useLocation,
   useNavigate,
@@ -8,8 +9,8 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { useSelector } from "react-redux";
-import type { ReactElement } from "react";
 import type { Role } from "../../model/Account";
+import type { IVehicle } from "../../model/Vehicle";
 import {
   canBulkCreateUnits,
   canCompareVehicles,
@@ -27,6 +28,10 @@ import {
   useDeleteVehicle,
 } from "../../service/vehicleService";
 import { VehicleCompareModal } from "../../components/organisms/vehicle/VehicleCompareModal";
+import VehicleUnitListModal from "../../components/organisms/vehicle/VehicleUnitListModal";
+import VehicleEditModal from "../../components/organisms/vehicle/VehicleEditModal";
+import VehiclePriceUpdateModal from "../../components/organisms/vehicle/VehiclePriceUpdateModal";
+import { DeleteConfirm } from "../../components/organisms/DeleteConfirm";
 import {
   EditOutlined,
   ArrowLeftOutlined,
@@ -36,11 +41,13 @@ import {
   ColumnWidthOutlined,
   DeleteOutlined,
   PictureOutlined,
+  EllipsisOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import { ROUTES } from "../../model/routePaths";
 import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import VehicleUnitListModal from "../../components/organisms/vehicle/VehicleUnitListModal";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { toast } from "react-toastify";
 
@@ -49,19 +56,36 @@ type Sel = { auth?: { user?: { role?: Role | null } } };
 // ==== Điều hướng có nhớ nguồn ====
 type NavState = {
   from?: "bulk" | "edit" | "list" | string;
-  backTo?: string; // ví dụ: `${basePath}/${ROUTES.EVM_VEHICLE}`
+  backTo?: string;
+};
+
+const formatSpecValue = (
+  value?: string | number | null,
+  unit?: string
+): string => {
+  if (value === null || value === undefined || value === "") return "—";
+
+  if (typeof value === "number") {
+    const base = value.toLocaleString("vi-VN");
+    return unit ? `${base} ${unit}` : base;
+  }
+
+  const base = String(value);
+  return unit ? `${base} ${unit}` : base;
 };
 
 const SpecItem = ({
   label,
   value,
+  unit,
 }: {
   label: string;
   value?: string | number | null;
+  unit?: string;
 }) => (
   <div className="grid grid-cols-5 gap-3 py-2">
     <div className="col-span-2 text-sm text-neutral-500">{label}</div>
-    <div className="col-span-3 font-medium">{value ?? "—"}</div>
+    <div className="col-span-3 font-medium">{formatSpecValue(value, unit)}</div>
   </div>
 );
 
@@ -70,7 +94,6 @@ export const VehicleDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Role lấy chắc chắn
   const reduxRole = useSelector((s: Sel) => s.auth?.user?.role);
   const tokenRole = (useCurrentUser() as { role?: Role } | null)?.role ?? null;
   const urlSeg =
@@ -93,6 +116,15 @@ export const VehicleDetailPage = () => {
     enabled: !!id,
   });
 
+  // ===== Local state luôn sync và cho phép cập nhật ngay sau khi edit =====
+  const [viewVehicle, setViewVehicle] = useState<IVehicle | null>(null);
+
+  useEffect(() => {
+    if (vehicle) {
+      setViewVehicle(vehicle as IVehicle);
+    }
+  }, [vehicle]);
+
   useEffect(() => {
     const http401 =
       error &&
@@ -106,17 +138,16 @@ export const VehicleDetailPage = () => {
     useDeleteVehicle();
 
   const [compareOpen, setCompareOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [priceOpen, setPriceOpen] = useState(false);
 
-  // =========================
-  // Xem lô xe bằng query param
-  // =========================
   const [searchParams] = useSearchParams();
   const [unitsOpen, setUnitsOpen] = useState(false);
   useEffect(() => {
     setUnitsOpen(searchParams.get("openUnits") === "1");
   }, [searchParams]);
 
-  // ⚠️ Cache nguồn điều hướng (list/edit/bulk) + backTo để dùng cho nút back
   const fromRef = useRef<NavState["from"] | null>(null);
   const backToRef = useRef<string | null>(null);
   useEffect(() => {
@@ -125,7 +156,6 @@ export const VehicleDetailPage = () => {
     if (st?.backTo) backToRef.current = st.backTo;
   }, [location.state]);
 
-  // Mở modal: thêm openUnits=1 nhưng GIỮ state hiện tại
   const handleOpenUnits = useCallback(() => {
     const next = new URLSearchParams(location.search);
     next.set("openUnits", "1");
@@ -136,7 +166,6 @@ export const VehicleDetailPage = () => {
     );
   }, [location.search, navigate, location.state]);
 
-  // Đóng modal: xóa openUnits và GIỮ state
   const handleCloseUnits = useCallback(() => {
     const next = new URLSearchParams(location.search);
     next.delete("openUnits");
@@ -147,26 +176,20 @@ export const VehicleDetailPage = () => {
     );
   }, [location.search, navigate, location.state]);
 
-  const priced = hasVehiclePriced(vehicle);
-
-  // ==== Nút Back xử lý đầy đủ các luồng ====
   const handleBack = useCallback(() => {
     const fromState = fromRef.current;
     const backTo = backToRef.current;
 
-    // 1) Nếu vừa quay lại từ trang nhập lô (Bulk) → quay về list đích rõ ràng
     if (fromState === "bulk" && backTo) {
       navigate(backTo, { replace: true });
       return;
     }
 
-    // 2) Nếu đến từ list/edit → luôn về list
     if (fromState === "edit" || fromState === "list") {
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
       return;
     }
 
-    // 3) Luồng thường: có history thì back, không thì về list
     if (window.history.length > 2) {
       navigate(-1);
     } else {
@@ -174,159 +197,104 @@ export const VehicleDetailPage = () => {
     }
   }, [navigate, basePath]);
 
-  const actions = useMemo(() => {
-    const arr: ReactElement[] = [];
-    arr.push(
-      <Button key="back" icon={<ArrowLeftOutlined />} onClick={handleBack}>
-        Quay lại
-      </Button>
-    );
+  const priced = hasVehiclePriced(viewVehicle ?? undefined);
 
-    if (canEditVehicle(role)) {
-      arr.push(
-        <Button
+  // ===== Gallery state =====
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const rawImages: string[] = Array.isArray(viewVehicle?.images)
+    ? (viewVehicle?.images as string[])
+    : [];
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [rawImages.length]);
+
+  const safeImages =
+    rawImages.length > 0 ? rawImages : ["/images/vehicle-placeholder.png"];
+  const hasMultiple = safeImages.length > 1;
+
+  const name = `${viewVehicle?.brand ?? ""} ${viewVehicle?.model ?? ""}`.trim();
+  const mainImage =
+    safeImages[activeIndex] || "/images/vehicle-placeholder.png";
+
+  // ===== Menu 3 chấm cho các thao tác (trừ Quay lại) =====
+  const menu = (
+    <Menu>
+      {canEditVehicle(role) && (
+        <Menu.Item
           key="edit"
           icon={<EditOutlined />}
-          onClick={() =>
-            navigate(
-              `${basePath}/${ROUTES.EVM_VEHICLE_EDIT}`.replace(":id", id),
-              { state: { from: "detail" } }
-            )
-          }
-          className="rounded-md"
+          disabled={isLoading || !viewVehicle}
+          onClick={() => setEditOpen(true)}
         >
-          Chỉnh sửa
-        </Button>
-      );
-    }
+          Chỉnh sửa thông tin
+        </Menu.Item>
+      )}
 
-    if (canDeleteVehicle(role)) {
-      arr.push(
-        <Popconfirm
-          key="delete"
-          title="Xóa mẫu xe?"
-          description="Hành động này không thể hoàn tác."
-          okText="Xóa"
-          okButtonProps={{ danger: true, loading: deleting }}
-          cancelText="Hủy"
-          onConfirm={async () => {
-            try {
-              await deleteVehicle(id);
-              toast.success("Đã xóa mẫu xe.");
-              // Sau khi xóa, về list để tránh back 2 lần
-              navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
-            } catch {
-              toast.error("Xóa không thành công.");
-            }
-          }}
+      {canUpdatePrice(role) && (
+        <Menu.Item
+          key="update-price"
+          icon={<DollarOutlined />}
+          disabled={!viewVehicle}
+          onClick={() => setPriceOpen(true)}
         >
-          <Button icon={<DeleteOutlined />} danger className="rounded-md">
-            Xóa
-          </Button>
-        </Popconfirm>
-      );
-    }
+          Cập nhật giá
+        </Menu.Item>
+      )}
 
-    if (canBulkCreateUnits(role)) {
-      const btn = (
-        <Button
+      {canBulkCreateUnits(role) && (
+        <Menu.Item
           key="add-batch"
           icon={<PlusOutlined />}
           disabled={!priced}
           onClick={() =>
             navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`, {
-              state: { from: "detail" }, // mở Bulk từ Detail
+              state: { from: "detail" },
             })
           }
-          className="rounded-md"
         >
-          Thêm lô xe
-        </Button>
-      );
-      arr.push(
-        priced ? (
-          btn
-        ) : (
-          <Tooltip
-            key="add-batch-tip"
-            title="Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật."
-          >
-            <span>{btn}</span>
-          </Tooltip>
-        )
-      );
-    }
+          Nhập kho
+        </Menu.Item>
+      )}
 
-    if (canUpdatePrice(role)) {
-      arr.push(
-        <Button
-          key="update-price"
-          type="primary"
-          icon={<DollarOutlined />}
-          onClick={() =>
-            navigate(
-              `${basePath}/${ROUTES.EVM_VEHICLE_PRICE_UPDATE}`.replace(
-                ":id",
-                id
-              )
-            )
-          }
-          className="rounded-md !bg-[#627254] !border-[#627254] hover:!bg-[#76885B]"
-        >
-          Cập nhật giá
-        </Button>
-      );
-    }
-
-    if (canViewUnits()) {
-      arr.push(
-        <Button
+      {canViewUnits() && (
+        <Menu.Item
           key="view-units"
           icon={<AppstoreOutlined />}
           onClick={handleOpenUnits}
-          className="rounded-md"
         >
           Xem lô xe
-        </Button>
-      );
-    }
+        </Menu.Item>
+      )}
 
-    if (canCompareVehicles()) {
-      arr.push(
-        <Button
+      {canCompareVehicles() && (
+        <Menu.Item
           key="compare"
-          type="primary"
           icon={<ColumnWidthOutlined />}
           onClick={() => setCompareOpen(true)}
-          className="rounded-md !bg-[#627254] !border-[#627254] hover:!bg-[#76885B]"
         >
-          So sánh
-        </Button>
-      );
-    }
+          So sánh mẫu xe
+        </Menu.Item>
+      )}
 
-    return arr;
-  }, [
-    role,
-    id,
-    basePath,
-    navigate,
-    priced,
-    deleting,
-    deleteVehicle,
-    handleBack,
-    handleOpenUnits,
-  ]);
-
-  const name = `${vehicle?.brand ?? ""} ${vehicle?.model ?? ""}`.trim();
-  const images: string[] = Array.isArray(vehicle?.images)
-    ? vehicle!.images
-    : [];
-  const mainImage = images[0] || "/images/vehicle-placeholder.png";
-
-  // --- Lightbox preview (Antd Image.PreviewGroup) ---
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewIndex, setPreviewIndex] = useState(0);
+      {canDeleteVehicle(role) && (
+        <>
+          <Menu.Divider />
+          <Menu.Item
+            key="delete"
+            icon={<DeleteOutlined />}
+            danger
+            disabled={deleting || !viewVehicle}
+            onClick={() => setDeleteOpen(true)}
+          >
+            Xóa mẫu xe
+          </Menu.Item>
+        </>
+      )}
+    </Menu>
+  );
 
   return (
     <CardWrapper
@@ -334,30 +302,79 @@ export const VehicleDetailPage = () => {
       subtitle="Thông tin tổng quan & thông số kỹ thuật"
       variant="dashboard"
     >
-      <div className="flex items-center justify-between -mt-2">
-        <div />
-        <Space wrap>{actions}</Space>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <Button
+          key="back"
+          icon={<ArrowLeftOutlined />}
+          onClick={handleBack}
+          className="rounded-full border border-[#d3d7c3] bg-white px-3 h-9 text-[#414d38] hover:bg-[#f5f7f0] hover:border-[#c4c8b0]"
+        >
+          Quay lại
+        </Button>
+
+        <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+          <Button className="rounded-full bg-[#f5f7f0] border border-[#d3d7c3] flex items-center gap-2 px-3 h-9 text-[#414d38] transition-colors duration-150 hover:bg-[#ecefe2] hover:border-[#c4c8b0]">
+            <span className="hidden sm:inline text-xs font-medium tracking-wide">
+              Thao tác
+            </span>
+            <EllipsisOutlined className="text-lg" />
+          </Button>
+        </Dropdown>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* ====== ẢNH & GALLERY ====== */}
+        {/* ẢNH & GALLERY */}
         <Card loading={isLoading} className="rounded-2xl lg:col-span-5">
-          {/* Lightbox viewer (ẩn, điều khiển qua state) */}
           <Image.PreviewGroup
-            items={(images.length ? images : [mainImage]) as string[]}
+            items={safeImages as string[]}
             preview={{
               visible: previewOpen,
-              current: previewIndex,
+              current: activeIndex,
               onVisibleChange: (v) => setPreviewOpen(v),
-              onChange: (idx) => setPreviewIndex(idx),
+              onChange: (idx) => setActiveIndex(idx),
+              toolbarRender: (_node, info) => {
+                const { icons, actions } = info;
+                const { zoomInIcon, zoomOutIcon, prevIcon, nextIcon } = icons;
+                const { onZoomIn, onZoomOut, onActive } = actions;
+                return (
+                  <div className="ant-image-preview-operations">
+                    {prevIcon && (
+                      <div
+                        className="ant-image-preview-operations-operation"
+                        onClick={() => onActive?.(-1)}
+                      >
+                        {prevIcon}
+                      </div>
+                    )}
+                    {nextIcon && (
+                      <div
+                        className="ant-image-preview-operations-operation"
+                        onClick={() => onActive?.(1)}
+                      >
+                        {nextIcon}
+                      </div>
+                    )}
+                    <div
+                      className="ant-image-preview-operations-operation"
+                      onClick={onZoomIn}
+                    >
+                      {zoomInIcon}
+                    </div>
+                    <div
+                      className="ant-image-preview-operations-operation"
+                      onClick={onZoomOut}
+                    >
+                      {zoomOutIcon}
+                    </div>
+                  </div>
+                );
+              },
             }}
           />
 
-          {/* Ảnh chính */}
           <div
             className="group w-full aspect-[4/3] overflow-hidden flex items-center justify-center bg-white rounded-xl border cursor-zoom-in relative"
             onClick={() => {
-              setPreviewIndex(0);
               setPreviewOpen(true);
             }}
           >
@@ -371,28 +388,56 @@ export const VehicleDetailPage = () => {
                   "/images/vehicle-placeholder.png";
               }}
             />
+
+            {hasMultiple && (
+              <>
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-black/40 text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setActiveIndex((prev) =>
+                      prev === 0 ? safeImages.length - 1 : prev - 1
+                    );
+                  }}
+                  aria-label="Ảnh trước"
+                >
+                  <LeftOutlined />
+                </button>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-black/40 text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setActiveIndex((prev) =>
+                      prev === safeImages.length - 1 ? 0 : prev + 1
+                    );
+                  }}
+                  aria-label="Ảnh tiếp theo"
+                >
+                  <RightOutlined />
+                </button>
+              </>
+            )}
+
             <div className="pointer-events-none absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1 rounded-md bg-black/50 text-white text-xs px-2 py-1">
               <PictureOutlined />
               Nhấn để phóng to
             </div>
           </div>
 
-          {/* Thumbnails */}
-          {images.length > 1 && (
+          {safeImages.length > 1 && (
             <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2">
-              {images.slice(0, 6).map((url, i) => (
+              {safeImages.slice(0, 6).map((url, i) => (
                 <button
                   key={i}
                   type="button"
                   className={`h-16 rounded-xl border overflow-hidden bg-white focus:outline-none focus:ring-2 focus:ring-[#627254] ${
-                    i === previewIndex
+                    i === activeIndex
                       ? "ring-2 ring-[#627254]"
                       : "border-gray-300"
                   }`}
-                  onClick={() => {
-                    setPreviewIndex(i);
-                    setPreviewOpen(true);
-                  }}
+                  onClick={() => setActiveIndex(i)}
                   title={`Xem ảnh ${i + 1}`}
                 >
                   <img
@@ -408,64 +453,68 @@ export const VehicleDetailPage = () => {
                 </button>
               ))}
 
-              {images.length > 6 && (
+              {safeImages.length > 6 && (
                 <button
                   type="button"
                   onClick={() => {
-                    setPreviewIndex(0);
+                    setActiveIndex(0);
                     setPreviewOpen(true);
                   }}
                   className="h-16 rounded-xl border border-dashed bg-gray-50 hover:bg-gray-100 transition text-sm text-gray-600"
                   title="Xem tất cả ảnh"
                 >
-                  +{images.length - 6} ảnh
+                  +{safeImages.length - 6} ảnh
                 </button>
               )}
             </div>
           )}
         </Card>
 
-        {/* ====== THÔNG TIN CHI TIẾT ====== */}
+        {/* THÔNG TIN CHI TIẾT */}
         <Card loading={isLoading} className="rounded-2xl lg:col-span-7">
-          {!isLoading && vehicle && (
+          {!isLoading && viewVehicle && (
             <>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-semibold text-[#414d38]">
-                    {name || vehicle.id}
+                    {name || viewVehicle.id}
                   </h2>
-                  {vehicle.brand && (
+                  {viewVehicle.brand && (
                     <div className="text-neutral-500 mt-0.5">
-                      {vehicle.brand}
+                      {viewVehicle.brand}
                     </div>
                   )}
 
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {vehicle.type && (
-                      <Tag className="rounded-full">{vehicle.type}</Tag>
+                    {viewVehicle.type && (
+                      <Tag className="rounded-full">{viewVehicle.type}</Tag>
                     )}
-                    {typeof vehicle.rangeKm === "number" && (
+                    {typeof viewVehicle.rangeKm === "number" && (
                       <Tag className="rounded-full">
-                        Tầm: {vehicle.rangeKm} km
+                        Tầm: {viewVehicle.rangeKm.toLocaleString("vi-VN")} km
                       </Tag>
                     )}
-                    {typeof vehicle.batteryKwh === "number" && (
+                    {typeof viewVehicle.batteryKwh === "number" && (
                       <Tag className="rounded-full">
-                        Pin: {vehicle.batteryKwh} kWh
+                        Pin: {viewVehicle.batteryKwh.toLocaleString("vi-VN")}{" "}
+                        kWh
                       </Tag>
                     )}
-                    {typeof vehicle.powerKw === "number" && (
+                    {typeof viewVehicle.powerKw === "number" && (
                       <Tag className="rounded-full">
-                        Công suất: {vehicle.powerKw} kW
+                        Công suất: {viewVehicle.powerKw.toLocaleString("vi-VN")}{" "}
+                        kW
                       </Tag>
                     )}
                   </div>
 
                   {isEvmStaff(role) && !priced && (
-                    <Tag color="orange" className="mt-3">
-                      Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật trước khi
-                      nhập lô.
-                    </Tag>
+                    <div className="mt-4">
+                      <Tag color="orange">
+                        Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật trước
+                        khi nhập lô.
+                      </Tag>
+                    </div>
                   )}
                 </div>
 
@@ -474,13 +523,13 @@ export const VehicleDetailPage = () => {
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
                       Giá nhập:
                       <span className="text-[#414d38]">
-                        {vehicle.importPrice?.toLocaleString("vi-VN")} ₫
+                        {viewVehicle.importPrice?.toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                     <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
                       Giá bán lẻ:
                       <span className="text-[#414d38]">
-                        {vehicle.retailPrice?.toLocaleString("vi-VN")} ₫
+                        {viewVehicle.retailPrice?.toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                   </div>
@@ -492,25 +541,40 @@ export const VehicleDetailPage = () => {
                   Thông số kỹ thuật
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                  <SpecItem label="Hãng" value={vehicle.brand} />
-                  <SpecItem label="Mẫu" value={vehicle.model} />
-                  <SpecItem label="Loại" value={vehicle.type} />
-                  <SpecItem label="Pin (kWh)" value={vehicle.batteryKwh} />
+                  <SpecItem label="Hãng" value={viewVehicle.brand} />
+                  <SpecItem label="Mẫu" value={viewVehicle.model} />
+                  <SpecItem label="Loại" value={viewVehicle.type} />
                   <SpecItem
-                    label="Tầm hoạt động (km)"
-                    value={vehicle.rangeKm}
+                    label="Pin"
+                    value={viewVehicle.batteryKwh}
+                    unit="kWh"
                   />
-                  <SpecItem label="Công suất (kW)" value={vehicle.powerKw} />
                   <SpecItem
-                    label="Tốc độ tối đa (km/h)"
-                    value={vehicle.topSpeedKmh}
+                    label="Tầm hoạt động"
+                    value={viewVehicle.rangeKm}
+                    unit="km"
                   />
-                  <SpecItem label="Khối lượng (kg)" value={vehicle.weightKg} />
                   <SpecItem
-                    label="Thời gian sạc (giờ)"
-                    value={vehicle.chargeTimeHr}
+                    label="Công suất"
+                    value={viewVehicle.powerKw}
+                    unit="kW"
                   />
-                  <SpecItem label="Ngày tạo" value={vehicle.createdAt} />
+                  <SpecItem
+                    label="Tốc độ tối đa"
+                    value={viewVehicle.topSpeedKmh}
+                    unit="km/h"
+                  />
+                  <SpecItem
+                    label="Khối lượng"
+                    value={viewVehicle.weightKg}
+                    unit="kg"
+                  />
+                  <SpecItem
+                    label="Thời gian sạc"
+                    value={viewVehicle.chargeTimeHr}
+                    unit="giờ"
+                  />
+                  <SpecItem label="Ngày tạo" value={viewVehicle.createdAt} />
                 </div>
               </div>
             </>
@@ -531,6 +595,48 @@ export const VehicleDetailPage = () => {
           open={unitsOpen}
           onClose={handleCloseUnits}
           vehicleId={id}
+        />
+      )}
+
+      {id && (
+        <VehicleEditModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          vehicleId={id}
+          vehicle={viewVehicle ?? null}
+          loading={isLoading}
+          onUpdated={(next) => setViewVehicle(next)}
+        />
+      )}
+
+      {id && (
+        <VehiclePriceUpdateModal
+          open={priceOpen}
+          onClose={() => setPriceOpen(false)}
+          vehicleId={id}
+          vehicle={viewVehicle}
+          onUpdated={(next) => setViewVehicle(next)}
+        />
+      )}
+
+      {id && (
+        <DeleteConfirm
+          open={deleteOpen}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={async () => {
+            try {
+              await deleteVehicle(id);
+              toast.success("Đã xóa mẫu xe.");
+              setDeleteOpen(false);
+              navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
+            } catch {
+              toast.error("Xóa không thành công.");
+            }
+          }}
+          title="Xóa mẫu xe?"
+          message="Hành động này không thể hoàn tác."
+          okText="Xóa"
+          danger
         />
       )}
     </CardWrapper>

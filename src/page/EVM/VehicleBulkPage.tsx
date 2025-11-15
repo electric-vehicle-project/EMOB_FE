@@ -11,11 +11,8 @@ import {
   Image,
   Space,
   Modal,
-  Table,
   Empty,
-  Tag,
 } from "antd";
-import type { ColumnsType } from "antd/es/table";
 import dayjs, { type Dayjs } from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -26,12 +23,9 @@ import {
 import { ROUTES } from "../../model/routePaths";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { toast } from "react-toastify";
-import {
-  ReloadOutlined,
-  ExperimentOutlined,
-  CheckOutlined,
-} from "@ant-design/icons";
+import { ReloadOutlined, CheckOutlined } from "@ant-design/icons";
 import { Button } from "../../components/atoms/Button";
+import { DeleteConfirm } from "../../components/organisms/DeleteConfirm";
 
 const { Option } = Select;
 
@@ -99,6 +93,8 @@ export const VehicleBulkPage = () => {
   const { mutateAsync: bulkCreate, isPending } = useCreateVehicleUnitsBulk();
 
   const [multiplier, setMultiplier] = useState<number>(1);
+  const [isLoadingMultiplier, setIsLoadingMultiplier] =
+    useState<boolean>(false);
 
   const baseRetail = useMemo(
     () =>
@@ -113,14 +109,18 @@ export const VehicleBulkPage = () => {
     [baseRetail, multiplier]
   );
 
-  // ========== AI Forecast Hook (chỉ gọi GET /vehicle/demandForecastFromAI) ==========
+  // ================= AI Forecast Hooks =================
   const demandForecast = useGetAIDemandForecast();
 
   const [forecastOpen, setForecastOpen] = useState<boolean>(false);
   const [loadingForecast, setLoadingForecast] = useState<boolean>(false);
   const [forecastRaw, setForecastRaw] = useState<ApiForecastItem[]>([]);
 
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+
   const fetchMultiplier = async (status: FormValues["status"]) => {
+    setIsLoadingMultiplier(true);
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BASE_URL}/vehicle-price-rules/${status}`
@@ -129,7 +129,9 @@ export const VehicleBulkPage = () => {
       setMultiplier(typeof newMultiplier === "number" ? newMultiplier : 1);
     } catch {
       setMultiplier(1);
-      toast.error("Không thể lấy multiplier của price rule!");
+      toast.error("Không thể lấy hệ số giá từ price rule.");
+    } finally {
+      setIsLoadingMultiplier(false);
     }
   };
 
@@ -137,18 +139,11 @@ export const VehicleBulkPage = () => {
     fetchMultiplier(status);
   };
 
-  // ========== Lấy forecast từ AI, dùng modelName (không dùng id) ==========
-
+  // ================= Lấy forecast từ BE =================
   const loadForecasts = async () => {
-    if (!vehicleInfo?.model) {
-      toast.error("Không xác định được model để dự báo.");
-      setForecastRaw([]);
-      return;
-    }
-
     setLoadingForecast(true);
     try {
-      const res = await demandForecast.refetch(vehicleInfo.model);
+      const res = await demandForecast.refetch(vehicleInfo?.model);
       const raw: unknown = res;
 
       let list: ApiForecastItem[] = [];
@@ -188,7 +183,7 @@ export const VehicleBulkPage = () => {
     await loadForecasts();
   };
 
-  // ========== Rows bảng ==========
+  // ================= Chuẩn hóa dữ liệu forecast theo model =================
   type Row = {
     key: string;
     modelName: string;
@@ -221,7 +216,17 @@ export const VehicleBulkPage = () => {
     return rows;
   }, [forecastRaw, vehicleInfo]);
 
-  // ========== Submit ==========
+  const best = useMemo(
+    () => (modelRows.length > 0 ? modelRows[0] : undefined),
+    [modelRows]
+  );
+
+  const topColor = best?.topColor;
+  const topColorDemand = best?.topColorDemand;
+  const recommended = best?.recommendedProduction;
+  const predicted = best?.predictedDealerDemand;
+
+  // ================= Submit + Hủy =================
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
       toast.error("Thiếu vehicleId. Vui lòng quay lại.");
@@ -237,9 +242,9 @@ export const VehicleBulkPage = () => {
       });
 
       toast.success(
-        ` Nhập ${values.quantity} xe (${
+        `Nhập ${values.quantity} xe (${
           values.status
-        }) thành công — Giá/xe: ${previewPrice.toLocaleString()}₫`
+        }) thành công — Giá/xe: ${previewPrice.toLocaleString("vi-VN")}₫`
       );
 
       navigate(
@@ -253,8 +258,16 @@ export const VehicleBulkPage = () => {
         }
       );
     } catch {
-      toast.error("Không thể nhập đơn vị xe. Vui lòng thử lại!");
+      toast.error("Không thể nhập đơn vị xe. Vui lòng thử lại.");
     }
+  };
+
+  const handleCancelBulk = () => {
+    if (!form.isFieldsTouched()) {
+      navigate(-1);
+      return;
+    }
+    setCancelConfirmOpen(true);
   };
 
   const imageList: string[] = Array.isArray(vehicleInfo?.images)
@@ -266,7 +279,7 @@ export const VehicleBulkPage = () => {
 
   useEffect(() => {
     if (!vehicleId) {
-      toast.error("Thiếu vehicleId");
+      toast.error("Thiếu vehicleId.");
       navigate(-1);
     }
   }, [vehicleId, navigate]);
@@ -275,124 +288,69 @@ export const VehicleBulkPage = () => {
     fetchMultiplier("NORMAL");
   }, []);
 
-  const colorColumns: ColumnsType<ApiColorForecast> = [
-    {
-      title: "Màu",
-      dataIndex: "color",
-      key: "color",
-    },
-    {
-      title: "Nhu cầu",
-      dataIndex: "predictedColorDemand",
-      align: "right",
-      render: (v) => fmt(v),
-    },
-    {
-      title: "Chọn",
-      key: "pick",
-      align: "center",
-      render: (_, c) => (
-        <Button
-          size="small"
-          onClick={() => {
-            form.setFieldValue("color", c.color);
-            toast.success(`Đã chọn màu ${c.color}`);
-          }}
-        >
-          Chọn
-        </Button>
-      ),
-    },
-  ];
-
-  const columns: ColumnsType<Row> = [
-    {
-      title: "Model",
-      dataIndex: "modelName",
-    },
-    {
-      title: "Nhu cầu đại lý",
-      dataIndex: "predictedDealerDemand",
-      align: "right",
-      render: (v) =>
-        typeof v === "number" ? <Tag color="blue">{fmt(v)}</Tag> : "—",
-    },
-    {
-      title: "Sản lượng khuyến nghị",
-      dataIndex: "recommendedProduction",
-      align: "right",
-      render: (v) =>
-        typeof v === "number" ? <Tag color="green">{fmt(v)}</Tag> : "—",
-    },
-    {
-      title: "Màu ưu tiên",
-      key: "topColor",
-      align: "center",
-      render: (_, r) =>
-        r.topColor ? (
-          <div className="flex flex-col items-center">
-            <Tag color="purple">{r.topColor}</Tag>
-            <span className="text-xs text-gray-500">
-              Nhu cầu: {fmt(r.topColorDemand)}
-            </span>
-          </div>
-        ) : (
-          "—"
-        ),
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      align: "center",
-      render: (_, r) => (
-        <Button
-          type="primary"
-          icon={<CheckOutlined />}
-          className="!bg-[#627254] !border-[#627254]"
-          onClick={() => {
-            const q =
-              typeof r.recommendedProduction === "number"
-                ? r.recommendedProduction
-                : r.predictedDealerDemand;
-
-            const patch: Partial<FormValues> = {};
-            if (typeof q === "number") patch.quantity = q;
-            if (r.topColor) patch.color = r.topColor;
-
-            form.setFieldsValue(patch as FormValues);
-            toast.success("Đã áp dụng dự báo vào form.");
-            setForecastOpen(false);
-          }}
-        >
-          Áp dụng
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <div className="flex justify-center min-h-[90vh] bg-gray-50 py-10 px-4">
       <Card
         bordered={false}
-        className="w-full max-w-5xl shadow-md rounded-2xl p-6"
+        className="w-full max-w-5xl shadow-sm rounded-2xl border border-gray-100 overflow-hidden bg-white"
+        headStyle={{ padding: "14px 20px", borderBottom: "1px solid #e5e7eb" }}
+        bodyStyle={{ padding: 20 }}
         title={
-          <div className="flex justify-between items-center">
-            <span>Nhập kho hàng loạt xe điện</span>
-            <div className="flex gap-2">
-              {role === "EVM_STAFF" && (
-                <Button
-                  onClick={openForecast}
-                  loading={loadingForecast}
-                  icon={<ExperimentOutlined />}
-                  type="default"
-                >
-                  Dự báo AI
-                </Button>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-[#414d38]">
+                Nhập kho hàng loạt xe điện
+              </span>
+              {vehicleInfo && (
+                <span className="text-xs text-gray-500">
+                  {vehicleInfo.brand} · {vehicleInfo.model} ·{" "}
+                  {vehicleInfo.type ?? "EV"}
+                </span>
               )}
-              <Button onClick={() => navigate(-1)} type="default">
-                Quay lại
-              </Button>
             </div>
+            {role === "EVM_STAFF" && (
+              <button
+                onClick={openForecast}
+                disabled={!vehicleInfo || loadingForecast}
+                className="
+      relative overflow-hidden
+      flex items-center gap-2
+      px-7 py-2 rounded-full text-xs font-semibold tracking-wide
+      text-[#2e4b32]
+      transition-all duration-300
+      active:scale-[0.94]
+      hover:scale-[1.06] 
+      bg-white
+    "
+              >
+                {/* VIỀN ĐIỆN XANH EMOB */}
+                <span
+                  className="
+        absolute inset-0 rounded-full p-[2px]
+        bg-gradient-to-r from-[#7bc47f] via-[#40c463] to-[#7bc47f]
+        animate-electric-border-green
+        opacity-95
+        z-0
+      "
+                >
+                  <span className="block w-full h-full rounded-full bg-white" />
+                </span>
+
+                {/* AURA GLOW XANH TO & RÕ */}
+                <span
+                  className="
+        absolute inset-0 rounded-full
+        bg-green-300/40 blur-2xl
+        animate-electric-aura-green
+        z-0
+      "
+                />
+
+                {/* ICON + TEXT */}
+                <span className="relative z-10 text-base">🌿</span>
+                <span className="relative z-10">Dự báo AI</span>
+              </button>
+            )}
           </div>
         }
       >
@@ -401,31 +359,108 @@ export const VehicleBulkPage = () => {
         ) : vehicleInfo ? (
           <>
             <div className="flex flex-col lg:flex-row gap-10">
+              {/* ẢNH + INFO */}
               <div className="flex-1 flex flex-col items-center">
-                <Image
-                  src={mainImage}
-                  alt="vehicle"
-                  width={420}
-                  height={300}
-                  className="rounded-lg shadow-sm border object-cover"
-                />
-                <div className="mt-4 text-center">
-                  <h3 className="text-xl font-semibold text-[#627254]">
+                <div className="w-full max-w-md rounded-2xl overflow-hidden bg-gradient-to-b from-[#f5f7f0] to-white border">
+                  {/* ==== PREVIEW MAIN IMAGE ONLY ==== */}
+                  <Image.PreviewGroup
+                    items={[mainImage]}
+                    preview={{
+                      visible: previewOpen,
+                      current: 0,
+                      onVisibleChange: (v) => setPreviewOpen(v),
+                      onChange: () => {},
+                      toolbarRender: (_node, info) => {
+                        const { icons, actions } = info;
+                        const { zoomInIcon, zoomOutIcon, prevIcon, nextIcon } =
+                          icons;
+                        const { onZoomIn, onZoomOut, onActive } = actions;
+
+                        return (
+                          <div className="ant-image-preview-operations">
+                            {/* Prev (nếu có nhiều ảnh sẽ hoạt động, còn 1 ảnh thì ẩn) */}
+                            {prevIcon && (
+                              <div
+                                className="ant-image-preview-operations-operation"
+                                onClick={() => onActive?.(-1)}
+                              >
+                                {prevIcon}
+                              </div>
+                            )}
+
+                            {/* Next */}
+                            {nextIcon && (
+                              <div
+                                className="ant-image-preview-operations-operation"
+                                onClick={() => onActive?.(1)}
+                              >
+                                {nextIcon}
+                              </div>
+                            )}
+
+                            {/* Zoom In */}
+                            <div
+                              className="ant-image-preview-operations-operation"
+                              onClick={onZoomIn}
+                            >
+                              {zoomInIcon}
+                            </div>
+
+                            {/* Zoom Out */}
+                            <div
+                              className="ant-image-preview-operations-operation"
+                              onClick={onZoomOut}
+                            >
+                              {zoomOutIcon}
+                            </div>
+                          </div>
+                        );
+                      },
+                    }}
+                  >
+                    <div
+                      className="group w-full max-w-md rounded-2xl overflow-hidden bg-gradient-to-b from-[#f5f7f0] to-white border cursor-zoom-in relative"
+                      onClick={() => setPreviewOpen(true)}
+                    >
+                      <img
+                        src={mainImage}
+                        alt="vehicle"
+                        className="object-contain w-full h-[260px] transition-transform duration-300 group-hover:scale-105 bg-white"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "/images/vehicle-placeholder.png";
+                        }}
+                      />
+
+                      <div className="absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1 rounded-md bg-black/50 text-white text-xs px-2 py-1 pointer-events-none">
+                        Nhấn để phóng to
+                      </div>
+                    </div>
+                  </Image.PreviewGroup>
+                </div>
+
+                <div className="mt-4 text-center space-y-1">
+                  <h3 className="text-xl font-semibold text-[#414d38]">
                     {vehicleInfo.brand} – {vehicleInfo.model}
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    Loại: {vehicleInfo.type} | Pin: {vehicleInfo.batteryKwh} kWh
-                    | Tầm: {vehicleInfo.rangeKm} km
+                    Loại: {vehicleInfo.type} · Pin:{" "}
+                    {vehicleInfo.batteryKwh?.toLocaleString("vi-VN") ?? "—"} kWh
+                    · Tầm: {vehicleInfo.rangeKm?.toLocaleString("vi-VN") ?? "—"}{" "}
+                    km
                   </p>
-                  <p className="text-gray-700 font-medium mt-2">
+                  <p className="text-gray-700 text-sm">
                     Giá bán lẻ:{" "}
-                    <span className="text-[#627254]">
-                      {vehicleInfo.retailPrice?.toLocaleString() ?? "—"}₫
+                    <span className="text-[#627254] font-semibold">
+                      {typeof vehicleInfo.retailPrice === "number"
+                        ? `${vehicleInfo.retailPrice.toLocaleString("vi-VN")}₫`
+                        : "—"}
                     </span>
                   </p>
                 </div>
               </div>
 
+              {/* FORM */}
               <div className="flex-1">
                 <Form<FormValues>
                   form={form}
@@ -437,65 +472,112 @@ export const VehicleBulkPage = () => {
                     productionYear: dayjs(),
                   }}
                 >
-                  <Space className="w-full" size="middle">
+                  <Space className="w-full" size="middle" direction="vertical">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Form.Item
+                        label="Số lượng nhập kho"
+                        name="quantity"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng nhập số lượng.",
+                          },
+                        ]}
+                      >
+                        <InputNumber
+                          min={1}
+                          className="w-full"
+                          placeholder="Nhập số lượng xe"
+                        />
+                      </Form.Item>
+
+                      <Form.Item label="Giá dự kiến / xe">
+                        <div className="flex items-center gap-2">
+                          <InputNumber
+                            value={previewPrice}
+                            disabled
+                            className="w-full"
+                            formatter={(v) =>
+                              `${Number(v || 0).toLocaleString("vi-VN")}`
+                            }
+                            addonAfter="₫"
+                          />
+                          {isLoadingMultiplier && (
+                            <ReloadOutlined className="animate-spin text-gray-400" />
+                          )}
+                        </div>
+                      </Form.Item>
+                    </div>
+
                     <Form.Item
-                      label="Số lượng"
-                      name="quantity"
-                      className="flex-1"
-                      rules={[{ required: true }]}
+                      label="Màu sơn"
+                      name="color"
+                      rules={[
+                        { required: true, message: "Vui lòng nhập màu sơn." },
+                      ]}
                     >
-                      <InputNumber min={1} className="w-full" />
+                      <Input placeholder="Ví dụ: Trắng ngọc trai, Đen, Xanh lá" />
                     </Form.Item>
 
-                    <Form.Item label="Giá dự kiến" className="flex-1">
-                      <InputNumber
-                        value={previewPrice}
-                        readOnly
-                        className="w-full"
-                        formatter={(v) => `${Number(v || 0).toLocaleString()}`}
-                      />
-                    </Form.Item>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Form.Item
+                        label="Năm sản xuất"
+                        name="productionYear"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng chọn năm sản xuất.",
+                          },
+                        ]}
+                      >
+                        <DatePicker
+                          picker="year"
+                          className="w-full"
+                          placeholder="Chọn năm"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        label="Tình trạng lô xe"
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng chọn tình trạng.",
+                          },
+                        ]}
+                      >
+                        <Select onChange={handleStatusChange}>
+                          <Option value="NORMAL">Xe mới</Option>
+                          <Option value="SPECIAL">
+                            Xe đặc biệt / trưng bày
+                          </Option>
+                          <Option value="OLD_STOCK">Xe tồn kho</Option>
+                          <Option value="TEST_DRIVE">Xe lái thử</Option>
+                          <Option value="RESERVED">Xe giữ chỗ</Option>
+                        </Select>
+                      </Form.Item>
+                    </div>
+
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={isPending}
+                      block
+                      className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] mt-3 rounded-md"
+                    >
+                      Nhập kho
+                    </Button>
+
+                    <Button
+                      type="default"
+                      block
+                      className="mt-2 rounded-md border border-gray-300"
+                      onClick={handleCancelBulk}
+                    >
+                      Hủy nhập kho
+                    </Button>
                   </Space>
-
-                  <Form.Item
-                    label="Màu sơn"
-                    name="color"
-                    rules={[{ required: true }]}
-                  >
-                    <Input />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Năm sản xuất"
-                    name="productionYear"
-                    rules={[{ required: true }]}
-                  >
-                    <DatePicker picker="year" className="w-full" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Tình trạng"
-                    name="status"
-                    rules={[{ required: true }]}
-                  >
-                    <Select onChange={handleStatusChange}>
-                      <Option value="NORMAL">Xe mới</Option>
-                      <Option value="SPECIAL">Xe đặc biệt</Option>
-                      <Option value="OLD_STOCK">Xe tồn kho</Option>
-                      <Option value="TEST_DRIVE">Lái thử</Option>
-                      <Option value="RESERVED">Giữ chỗ</Option>
-                    </Select>
-                  </Form.Item>
-
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={isPending}
-                    block
-                    className="bg-[#627254] text-white mt-6"
-                  >
-                    Nhập kho
-                  </Button>
                 </Form>
               </div>
             </div>
@@ -507,6 +589,7 @@ export const VehicleBulkPage = () => {
         )}
       </Card>
 
+      {/* MODAL AI Forecast - giao diện bong bóng chat */}
       <Modal
         open={forecastOpen}
         onCancel={() => setForecastOpen(false)}
@@ -514,51 +597,159 @@ export const VehicleBulkPage = () => {
         width={920}
         destroyOnClose
         title={
-          <div className="flex items-center gap-3">
-            <span>🔮 Dự báo nhu cầu</span>
-            <Button
-              size="small"
-              icon={<ReloadOutlined />}
-              onClick={handleRefresh}
-              loading={loadingForecast}
-            >
-              Làm mới
-            </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-[#414d38]">
+              🔮 Dự báo nhu cầu nhập kho
+            </span>
+            <span className="text-xs text-gray-500">
+              Dựa trên dữ liệu 3 tháng gần nhất
+            </span>
           </div>
         }
       >
         {loadingForecast ? (
           <Skeleton active paragraph={{ rows: 6 }} />
-        ) : modelRows.length === 0 ? (
-          <Empty description="Không có dự báo phù hợp cho model này." />
-        ) : (
-          <Table<Row>
-            rowKey="key"
-            dataSource={modelRows}
-            columns={columns}
-            pagination={false}
-            expandable={{
-              expandedRowRender: (r) =>
-                Array.isArray(r.allColors) && r.allColors.length > 0 ? (
-                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium mb-2">Theo màu</div>
-                    <Table<ApiColorForecast>
-                      size="small"
-                      rowKey={(c) => `${r.key}-${c.color}`}
-                      dataSource={r.allColors}
-                      columns={colorColumns}
-                      pagination={false}
-                    />
-                  </div>
-                ) : (
-                  <div className="text-gray-400 px-4 py-2">
-                    Không có dữ liệu màu.
-                  </div>
-                ),
-            }}
+        ) : !best ? (
+          <Empty
+            description={
+              vehicleInfo?.model
+                ? `Không có dự báo phù hợp cho model ${vehicleInfo.model}.`
+                : "Không có dự báo phù hợp cho model này."
+            }
           />
+        ) : (
+          <div className="space-y-6">
+            {/* Thanh hành động phía trên, tránh trùng nút X */}
+            <div className="flex justify-end mb-2">
+              <Button
+                size="small"
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                loading={loadingForecast}
+                className="rounded-full border border-gray-200"
+              >
+                Làm mới dự báo
+              </Button>
+            </div>
+
+            {/* Bong bóng chat AI */}
+            <div className="flex gap-3">
+              <div className="h-10 w-10 rounded-full overflow-hidden border">
+                <img
+                  src="/AI_avatar.png"
+                  alt="AI Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="max-w-[640px] rounded-2xl bg-gray-100 px-4 py-3 shadow-sm">
+                <p className="mt-1 text-sm text-gray-700">
+                  Dự báo cho tháng tiếp theo:{" "}
+                  {typeof topColorDemand === "number" ? (
+                    <>
+                      nhu cầu ước tính khoảng <b>{fmt(topColorDemand)} xe</b>{" "}
+                      cho {topColor ? <b>màu {topColor}</b> : "màu ưu tiên"}.
+                    </>
+                  ) : (
+                    "hệ thống chưa có đủ dữ liệu chi tiết theo màu."
+                  )}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-700">
+                  Hệ thống đề xuất nhập khoảng{" "}
+                  {typeof recommended === "number" ? (
+                    <b>{fmt(recommended)} xe</b>
+                  ) : typeof predicted === "number" ? (
+                    <b>{fmt(predicted)} xe</b>
+                  ) : (
+                    "một số lượng phù hợp"
+                  )}{" "}
+                  để đáp ứng nhu cầu dự kiến trong tháng tới.
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    className="!bg-[#627254] !border-[#627254] rounded-full px-4"
+                    onClick={() => {
+                      const q =
+                        typeof recommended === "number"
+                          ? recommended
+                          : predicted;
+
+                      const patch: Partial<FormValues> = {};
+                      if (typeof q === "number") patch.quantity = q;
+                      if (topColor) patch.color = topColor;
+
+                      form.setFieldsValue(patch as FormValues);
+                      toast.success("Đã áp dụng dự báo vào form.");
+                      setForecastOpen(false);
+                    }}
+                  >
+                    Áp dụng vào form
+                  </Button>
+
+                  <Button
+                    onClick={() => setForecastOpen(false)}
+                    className="rounded-full px-4"
+                  >
+                    Tự nhập thủ công
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Thẻ tóm tắt số liệu */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">Nhu cầu đại lý dự báo</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {typeof predicted === "number" ? `${fmt(predicted)} xe` : "—"}
+                </p>
+              </Card>
+
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">Sản lượng khuyến nghị</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {typeof recommended === "number"
+                    ? `${fmt(recommended)} xe`
+                    : "—"}
+                </p>
+              </Card>
+
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">Màu ưu tiên</p>
+                <p className="mt-1 text-lg font-semibold">{topColor ?? "—"}</p>
+              </Card>
+
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">
+                  Nhu cầu màu ưu tiên (ước tính)
+                </p>
+                <p className="mt-1 text-lg font-semibold">
+                  {typeof topColorDemand === "number"
+                    ? `${fmt(topColorDemand)} xe`
+                    : "—"}
+                </p>
+              </Card>
+            </div>
+          </div>
         )}
       </Modal>
+
+      <DeleteConfirm
+        open={cancelConfirmOpen}
+        onCancel={() => setCancelConfirmOpen(false)}
+        onConfirm={() => {
+          setCancelConfirmOpen(false);
+          navigate(-1);
+        }}
+        title="Hủy nhập lô xe?"
+        message="Các thông tin đã nhập sẽ bị mất. Bạn có chắc chắn muốn hủy?"
+        okText="Hủy nhập"
+        danger
+      />
     </div>
   );
 };

@@ -52,10 +52,10 @@ import DealerPointRuleAdminPage from "../page/dealer-point-rule/DealerPointRuleA
 import VehicleListPage from "../page/EVM/VehicleListPage";
 import VehicleBulkPage from "../page/EVM/VehicleBulkPage";
 import VehicleDetailPage from "../page/EVM/VehicleDetailPage";
-import VehicleCreatePage from "../page/EVM/VehicleCreatePage";
-import VehicleEditPage from "../page/EVM/VehicleEditPage";
+import VehicleCreatePage from "../components/organisms/vehicle/VehicleCreateModal";
+// import VehicleEditPage, { VehicleEditModal } from "../components/organisms/vehicle/VehicleEditModal";
 import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
-import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
+// import { VehiclePriceUpdateModal } from "../components/organisms/vehicle/VehiclePriceUpdateModal";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import { TestDriveByCurrentStaffPage } from "../page/test-drive/TestDriveByCurrentStaffPage";
 import { DealerDiscountPolicyPage } from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
@@ -116,12 +116,12 @@ export const router = createBrowserRouter([
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
-      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      // { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditModal /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
-      {
-        path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
-        element: <VehiclePriceUpdatePage />,
-      },
+      // {
+      //   path: ROUTES.EVM_VEHICLE_PRICE_UPDATE,
+      //   element: <VehiclePriceUpdateModal />,
+      // },
 
       { path: ROUTES.PROMOTIONS, element: <EvmPromotionsPage /> },
       { path: ROUTES.PROMOTION_EDIT, element: <PromotionEditPage /> },
@@ -156,7 +156,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
-      { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditPage /> },
+      // { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditModal /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
 
       { path: ROUTES.DEALER, element: <DealerPage /> },
@@ -283,7 +283,10 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.TEST_DRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.TEST_DRIVE_BY_CURRENT_STAFF, element: <TestDriveByCurrentStaffPage /> },
+      {
+        path: ROUTES.TEST_DRIVE_BY_CURRENT_STAFF,
+        element: <TestDriveByCurrentStaffPage />,
+      },
       { path: ROUTES.SALE_ORDER, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },

@@ -1,18 +1,44 @@
-/* EMOB-2025 - VehicleListPage (fix back navigation flow) */
+// src/page/vehicle/VehicleListPage.tsx
+/* EMOB-2025 - VehicleListPage (with Create Vehicle modal + DeleteConfirm + Filter) */
 import { useMemo, useState, useEffect } from "react";
-import { Empty, Input, Pagination, Row, Col, Spin } from "antd";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  Empty,
+  Input,
+  Pagination,
+  Row,
+  Col,
+  Spin,
+  Modal,
+  Form,
+  Space,
+  Select,
+  Dropdown,
+} from "antd";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  CarOutlined,
+  SlidersOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { Role } from "../../model/Account";
 import type { IVehicle } from "../../model/Vehicle";
+import type { UploadFile } from "antd/es/upload";
 import { getRoleBasePath } from "../../utils/roleGuard";
-import { useGetVehicles } from "../../service/vehicleService";
+import { useGetVehicles, useCreateVehicle } from "../../service/vehicleService";
 import { VehicleCard } from "../../components/organisms/vehicle/VehicleCard";
 import { ROUTES } from "../../model/routePaths";
 import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
+import { uploadFiles } from "../../utils/uploadFile";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { DeleteConfirm } from "../../components/organisms/DeleteConfirm";
+
+const { Option } = Select;
 
 /** Small debounce hook (no external deps) */
 function useDebounce<T>(value: T, delay = 350): T {
@@ -41,6 +67,11 @@ export const VehicleListPage = () => {
   const [size, setSize] = useState(12);
   const [q, setQ] = useState("");
 
+  // ===== Filter state =====
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [types, setTypes] = useState<string[]>([]);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
   const debouncedQ = useDebounce(q, 350);
 
   const { vehicles, metadata, isLoading } = useGetVehicles(
@@ -49,11 +80,19 @@ export const VehicleListPage = () => {
       size,
       keyword: debouncedQ.trim() || undefined,
       sortField: "createdAt",
-      sortDir: "desc",
+      sortDir,
+      type: types.length ? types : undefined,
     },
     {
       keepPreviousData: true,
-      queryKey: ["get-vehicles", page, size, debouncedQ.trim()],
+      queryKey: [
+        "get-vehicles",
+        page,
+        size,
+        debouncedQ.trim(),
+        sortDir,
+        types.join(","),
+      ],
     }
   );
 
@@ -73,6 +112,62 @@ export const VehicleListPage = () => {
 
   const total = metadata?.totalElements ?? items.length ?? 0;
 
+  // ===== Create modal state + hooks =====
+  const [createOpen, setCreateOpen] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [form] = Form.useForm<IVehicle>();
+  const queryClient = useQueryClient();
+  const createVehicle = useCreateVehicle();
+
+  const handleOpenCreate = () => {
+    form.resetFields();
+    setCreateOpen(true);
+  };
+
+  const handleCancelCreate = () => {
+    const isDirty = form.isFieldsTouched();
+    if (isDirty) {
+      setConfirmCancelOpen(true);
+    } else {
+      setCreateOpen(false);
+      form.resetFields();
+    }
+  };
+
+  const handleCreate = async (values: IVehicle) => {
+    try {
+      const fileList =
+        (values.images as unknown as UploadFile[] | undefined) ?? [];
+      const rawFiles =
+        fileList
+          .map((f) =>
+            f.originFileObj instanceof File ? f.originFileObj : null
+          )
+          .filter((f): f is NonNullable<typeof f> => f !== null) ?? [];
+
+      const uploadedUrls =
+        rawFiles.length > 0 ? await uploadFiles(rawFiles) : [];
+
+      const payload: IVehicle = {
+        ...values,
+        images:
+          uploadedUrls.length > 0
+            ? uploadedUrls
+            : ["https://placehold.co/300x200?text=Vehicle"],
+      };
+
+      await createVehicle.mutateAsync(payload);
+      queryClient.invalidateQueries({ queryKey: ["get-vehicles"] });
+
+      toast.success("Thêm xe mới thành công!");
+      form.resetFields();
+      setCreateOpen(false);
+    } catch (err: unknown) {
+      console.error("❌ Lỗi khi tạo xe:", err);
+      toast.error("Không thể thêm xe!");
+    }
+  };
+
   const searchBox = (
     <div className="w-full max-w-[340px] md:max-w-[420px]">
       <Input
@@ -90,12 +185,58 @@ export const VehicleListPage = () => {
     </div>
   );
 
+  // ===== Filter dropdown content =====
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      {/* TYPE */}
+      <div>
+        <b className="text-gray-700">Loại xe</b>
+        <Select
+          mode="multiple"
+          value={types}
+          onChange={(v) => {
+            setTypes((v as string[]) ?? []);
+            setPage(1);
+          }}
+          allowClear
+          className="w-full mt-2"
+          placeholder="Chọn loại xe"
+        >
+          <Option value="SEDAN">SEDAN</Option>
+          <Option value="SUV">SUV</Option>
+          <Option value="HATCHBACK">HATCHBACK</Option>
+          <Option value="TRUCK">TRUCK</Option>
+          <Option value="MOTORBIKE">MOTORBIKE</Option>
+        </Select>
+      </div>
+
+      {/* SORT DIR */}
+      <div>
+        <b className="text-gray-700">Thứ tự thời gian</b>
+        <Select
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v as "asc" | "desc");
+            setPage(1);
+          }}
+          className="w-full mt-2"
+        >
+          <Option value="desc">Mới nhất → Cũ hơn</Option>
+          <Option value="asc">Cũ hơn → Mới nhất</Option>
+        </Select>
+      </div>
+    </div>
+  );
+
   const addButton = allowCreate ? (
     <Button
       type="primary"
       icon={<PlusOutlined />}
       className="rounded-md !bg-[#627254] !border-[#627254] hover:!bg-[#76885B]"
-      onClick={() => navigate(`${basePath}/${ROUTES.EVM_VEHICLE_NEW}`)}
+      onClick={handleOpenCreate}
     >
       Thêm mẫu xe
     </Button>
@@ -109,8 +250,22 @@ export const VehicleListPage = () => {
       subtitle="Danh sách toàn bộ các mẫu xe điện trong hệ thống"
       variant="dashboard"
     >
-      <div className="flex items-center justify-between mb-5 gap-3">
-        {searchBox}
+      {/* Header: Search + Filter + Add */}
+      <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {searchBox}
+
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+            placement="bottomRight"
+          >
+            <SlidersOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
+          </Dropdown>
+        </div>
+
         {addButton}
       </div>
 
@@ -148,7 +303,6 @@ export const VehicleListPage = () => {
                         power: v.powerKw,
                         type: v.type,
                       }}
-                      // ✅ Truyền state để biết "đến từ danh sách"
                       onOpenDetail={(id) =>
                         navigate(
                           `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(
@@ -181,6 +335,68 @@ export const VehicleListPage = () => {
           </>
         )}
       </Spin>
+
+      {/* Modal tạo mẫu xe */}
+      <Modal
+        open={createOpen}
+        onCancel={handleCancelCreate}
+        footer={null}
+        width={820}
+        destroyOnClose
+        title={
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <CarOutlined className="text-[#627254]" />
+              <span className="text-base font-semibold">Thêm xe điện mới</span>
+            </div>
+            <span className="text-xs text-gray-500">
+              Nhập thông tin model xe, hình ảnh và thông số cơ bản để thêm vào
+              hệ thống.
+            </span>
+          </div>
+        }
+      >
+        <VehicleForm
+          form={form}
+          onFinish={handleCreate}
+          canEditPrices={false}
+        />
+
+        <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
+          <Space>
+            <Button
+              onClick={handleCancelCreate}
+              className="rounded-md"
+              disabled={createVehicle.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => form.submit()}
+              loading={createVehicle.isPending}
+              className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md"
+            >
+              Tạo xe
+            </Button>
+          </Space>
+        </div>
+      </Modal>
+
+      {/* DeleteConfirm cho hủy tạo xe (mất dữ liệu form) */}
+      <DeleteConfirm
+        open={createOpen && confirmCancelOpen}
+        onCancel={() => setConfirmCancelOpen(false)}
+        onConfirm={() => {
+          setConfirmCancelOpen(false);
+          setCreateOpen(false);
+          form.resetFields();
+        }}
+        title="Hủy tạo xe mới?"
+        message="Các thông tin đã nhập sẽ bị mất. Bạn có chắc chắn muốn hủy?"
+        okText="Hủy tạo"
+        danger
+      />
     </CardWrapper>
   );
 };

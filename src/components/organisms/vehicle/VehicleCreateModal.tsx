@@ -1,19 +1,20 @@
-import { Card, Button, Space, Form } from "antd";
+// src/components/organisms/vehicle/VehicleCreateModal.tsx
+import { Card, Button, Space, Form, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
-import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
-import { useCreateVehicle } from "../../service/vehicleService";
-import { useCurrentUser } from "../../utils/getCurrentUser";
-import type { IVehicle } from "../../model/Vehicle";
+import { VehicleForm } from "../../molecules/EVM/VehicleForm";
+import { useCreateVehicle } from "../../../service/vehicleService";
+import { useCurrentUser } from "../../../utils/getCurrentUser";
+import type { IVehicle } from "../../../model/Vehicle";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { ROUTES } from "../../model/routePaths";
-import { getRoleBasePath } from "../../utils/roleGuard";
+import { ROUTES } from "../../../model/routePaths";
+import { getRoleBasePath } from "../../../utils/roleGuard";
 import type { UploadFile } from "antd/es/upload";
-import { uploadFiles } from "../../utils/uploadFile";
+import { uploadFiles } from "../../../utils/uploadFile";
 import { CarOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 
-export const VehicleCreatePage = () => {
+export const VehicleCreateModal = () => {
   const [form] = Form.useForm<IVehicle>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -39,9 +40,10 @@ export const VehicleCreatePage = () => {
           .map((f) =>
             f.originFileObj instanceof File ? f.originFileObj : null
           )
-          .filter(Boolean) ?? [];
+          .filter((f): f is NonNullable<typeof f> => f !== null) ?? [];
 
-      const uploadedUrls = await uploadFiles(rawFiles as File[]);
+      const uploadedUrls =
+        rawFiles.length > 0 ? await uploadFiles(rawFiles) : [];
 
       const payload: IVehicle = {
         ...values,
@@ -54,28 +56,52 @@ export const VehicleCreatePage = () => {
       await createVehicle.mutateAsync(payload);
       queryClient.invalidateQueries({ queryKey: ["get-vehicles"] });
 
-      toast.success("✅ Thêm xe mới thành công!");
+      toast.success("Thêm xe mới thành công!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
     } catch (err: unknown) {
       console.error("❌ Lỗi khi tạo xe:", err);
-      toast.error("❌ Không thể thêm xe!");
+      toast.error("Không thể thêm xe!");
     }
   };
 
-  const handleCancel = () => navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
+  const handleCancel = () => {
+    const isDirty = form.isFieldsTouched();
+
+    if (isDirty) {
+      Modal.confirm({
+        title: "Hủy tạo xe mới?",
+        content: "Các thông tin đã nhập sẽ bị mất. Bạn có chắc chắn muốn hủy?",
+        okText: "Hủy tạo",
+        cancelText: "Tiếp tục chỉnh sửa",
+        okButtonProps: { danger: true },
+        onOk: () => {
+          navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
+        },
+      });
+    } else {
+      navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
+    }
+  };
 
   return (
     <div className="flex justify-center items-start min-h-[90vh] bg-gray-50 py-10 px-4">
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <CarOutlined className="text-[#627254]" />
-            <span className="text-lg font-semibold">Thêm xe điện mới</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <CarOutlined className="text-[#627254]" />
+              <span className="text-lg font-semibold">Thêm xe điện mới</span>
+            </div>
+            <span className="text-xs text-gray-500">
+              Nhập thông tin model xe, hình ảnh và thông số cơ bản để thêm vào
+              hệ thống.
+            </span>
           </div>
         }
         className="w-full max-w-4xl shadow-md rounded-2xl"
         styles={{
           header: { borderBottom: "1px solid #f0f0f0" },
+          body: { paddingTop: 24, paddingBottom: 24 },
         }}
       >
         <VehicleForm
@@ -84,9 +110,13 @@ export const VehicleCreatePage = () => {
           canEditPrices={false}
         />
 
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
           <Space>
-            <Button onClick={handleCancel} className="rounded-md">
+            <Button
+              onClick={handleCancel}
+              className="rounded-md"
+              disabled={createVehicle.isPending}
+            >
               Hủy
             </Button>
             <Button
@@ -104,4 +134,4 @@ export const VehicleCreatePage = () => {
   );
 };
 
-export default VehicleCreatePage;
+export default VehicleCreateModal;
