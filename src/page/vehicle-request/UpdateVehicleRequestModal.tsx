@@ -9,6 +9,7 @@ import {
 } from "../../service/vehicleRequestService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IVehicle } from "../../model/Vehicle";
+import type { NamePath } from "antd/es/form/interface";
 
 interface UpdateVehicleRequestModalProps {
   open: boolean;
@@ -24,7 +25,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
   onSuccess,
 }) => {
   const [form] = Form.useForm();
-  const { data, isLoading } = useGetVehicleRequestById(requestId);
+  const { data } = useGetVehicleRequestById(requestId);
   const { mutateAsync: updateVehicleRequest, isPending } =
     useUpdateVehicleRequest();
 
@@ -41,7 +42,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
     }));
   }, [vehiclesData]);
 
-  // 🧩 Đổ dữ liệu cũ vào form
+  // Đổ dữ liệu cũ vào form
   useEffect(() => {
     if (data?.result) {
       const req = data.result;
@@ -57,7 +58,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
     }
   }, [data, form]);
 
-  // 🧩 Submit form
+  // Submit form
   const handleSubmit = async (values: any) => {
     const payload = {
       items: values.items.map((item: any) => ({
@@ -68,8 +69,6 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
         quantity: item.quantity,
       })),
     };
-
-    console.log("📦 Payload cập nhật:", payload);
 
     try {
       await updateVehicleRequest({ id: requestId, data: payload });
@@ -88,7 +87,6 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
       onCancel={onClose}
       footer={null}
       centered
-      destroyOnClose
       width={800}
     >
       <Form
@@ -108,7 +106,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
                 >
                   <SelectInput
                     {...restField}
-                    name={[name, "vehicleId"]}
+                    name={[name, "vehicleId"] as NamePath}
                     label="Xe"
                     placeholder="Chọn xe"
                     options={vehicleOptions}
@@ -118,15 +116,15 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
 
                   <SelectInput
                     {...restField}
-                    name={[name, "vehicleStatus"]}
+                    name={[name, "vehicleStatus"] as NamePath}
                     label="Trạng thái xe"
                     placeholder="Chọn trạng thái"
                     options={[
-                      { label: "NORMAL", value: "NORMAL" },
-                      { label: "SPECIAL", value: "SPECIAL" },
-                      { label: "OLD_STOCK", value: "OLD_STOCK" },
-                      { label: "RESERVED", value: "RESERVED" },
-                      { label: "TEST_DRIVE", value: "TEST_DRIVE" },
+                      { label: "Bình thường", value: "NORMAL" },
+                      { label: "Đặc biệt", value: "SPECIAL" },
+                      { label: "Tồn kho cũ", value: "OLD_STOCK" },
+                      { label: "Đã đặt trước", value: "RESERVED" },
+                      { label: "Xe lái thử", value: "TEST_DRIVE" },
                     ]}
                     rules={[
                       { required: true, message: "Vui lòng chọn trạng thái" },
@@ -135,7 +133,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
 
                   <TextInput
                     {...restField}
-                    name={[name, "color"]}
+                    name={[name, "color"] as NamePath}
                     label="Màu sắc"
                     placeholder="Nhập màu xe"
                     rules={[{ required: true, message: "Vui lòng nhập màu" }]}
@@ -143,7 +141,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
 
                   <NumberInput
                     {...restField}
-                    name={[name, "quantity"]}
+                    name={[name, "quantity"] as NamePath}
                     label="Số lượng"
                     min={1}
                     placeholder="Nhập số lượng"
@@ -155,9 +153,13 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
                   <div className="flex items-end justify-end">
                     {fields.length > 1 && (
                       <Button
-                        danger
                         onClick={() => remove(name)}
-                        className="bg-red-500 text-white"
+                        style={{
+                          backgroundColor: "#ef4444",
+                          color: "white",
+                          border: "none",
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white border-none"
                       >
                         Xóa
                       </Button>

@@ -34,7 +34,6 @@ import { OTPCard } from "../components/organisms/auth/OTPCard";
 import { ResetPasswordCard } from "../components/organisms/auth/ResetPasswordCard";
 import GoogleCallback from "../page/GoogleCallback";
 import OverviewRevenueDealer from "../page/overview/OverviewRevenueDealer";
-import DealerDiscountPolicyPage from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 import { ContractDetailDealerPage } from "../page/contract/ContractDetailDealerPage";
 import { ContractAllDealersPage } from "../page/contract/ContractAllDealersPage";
 import { DeliveryEVMAndDealerPage } from "../page/delivery/DeliveryEVMAndDealerPage";
@@ -59,6 +58,7 @@ import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
+import { DealerDiscountPolicyPage } from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====

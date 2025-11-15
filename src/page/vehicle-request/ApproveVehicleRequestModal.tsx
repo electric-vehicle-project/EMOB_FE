@@ -1,4 +1,3 @@
-import React from "react";
 import { Modal, Form, Button } from "antd";
 import SelectInput from "../../components/atoms/SelectInput";
 import { useApproveVehicleRequest } from "../../service/vehicleRequestService";

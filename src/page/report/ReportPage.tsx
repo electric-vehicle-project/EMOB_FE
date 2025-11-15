@@ -18,9 +18,25 @@ import {
   useReportProcess,
 } from "../../service/reportService";
 import { useDebounce } from "../../hook/useDebounce";
-import type { IReport } from "../../model/Report";
 import useGetParams from "../../hook/useGetParams";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import type { IReport } from "../../model/report";
+
+interface ReportFormValues {
+  title: string;
+  description: string;
+  type: IReport["type"];
+  status?: IReport["status"];
+  customerId: string;
+  vinNumber?: string;
+}
+
+const STATUS_OPTIONS = [
+  { label: "Đang chờ", value: "PENDING" },
+  { label: "Đang xử lý", value: "IN_PROGRESS" },
+  { label: "Đã giải quyết", value: "RESOLVED" },
+  { label: "Đã xóa", value: "DELETED" },
+];
 
 interface ReportFormValues {
   title: string;

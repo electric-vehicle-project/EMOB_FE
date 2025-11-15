@@ -52,13 +52,22 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
   };
 
   const items: IVehicleRequestItem[] = request.items || [];
+  // màu status
   const statusColor =
     request.status === "APPROVED"
       ? "green"
       : request.status === "REJECTED"
       ? "red"
       : "gold";
+  // convert status eng - vn
+  const viStatusMap = {
+    PENDING: "Chờ duyệt",
+    APPROVED: "Đã duyệt",
+    REJECTED: "Từ chối",
+  } as const;
 
+  const statusLabel =
+    viStatusMap[request.status as keyof typeof viStatusMap] || request.status;
   return (
     <Modal
       open={open}
@@ -76,7 +85,7 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
         <>
           <Descriptions bordered column={2} className="mb-4">
             <Descriptions.Item label="Trạng thái">
-              <Tag color={statusColor}>{request.status}</Tag>
+              <Tag color={statusColor}>{statusLabel}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Tổng SL">
               {request.totalQuantity}
@@ -119,6 +128,17 @@ const ViewVehicleRequestModal: React.FC<Props> = ({
                   title: "Trạng thái",
                   dataIndex: "vehicleStatus",
                   key: "vehicleStatus",
+                  render: (status: string) => {
+                    const viStatusMap: Record<string, string> = {
+                      NORMAL: "Bình thường",
+                      SPECIAL: "Đặc biệt",
+                      OLD_STOCK: "Tồn kho cũ",
+                      RESERVED: "Đã đặt trước",
+                      TEST_DRIVE: "Xe lái thử",
+                    };
+
+                    return viStatusMap[status] ?? status;
+                  },
                 },
                 {
                   title: "Số lượng",
