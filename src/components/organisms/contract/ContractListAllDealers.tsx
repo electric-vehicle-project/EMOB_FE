@@ -8,7 +8,7 @@ import {
   Dropdown,
   Button,
 } from "antd";
-import { SlidersOutlined } from "@ant-design/icons";
+import { SearchOutlined, SlidersOutlined } from "@ant-design/icons";
 import {
   useContractQueryByEVM,
 } from "../../../service/contractService";
@@ -120,6 +120,7 @@ export const ContractListAllDealers = () => {
               setPage(0);
             }}
             allowClear
+            prefix={<SearchOutlined />}
             style={{ width: 350 }}
           />
 

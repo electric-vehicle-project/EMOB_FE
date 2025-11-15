@@ -8,7 +8,7 @@ import {
   Dropdown,
   Button,
 } from "antd";
-import { SlidersOutlined } from "@ant-design/icons";
+import { SearchOutlined, SlidersOutlined } from "@ant-design/icons";
 import { useContractQueryByDealer } from "../../../service/contractService";
 import { ContractTable } from "../../molecules/contract/ContractTable";
 import { useNavigate } from "react-router-dom";
@@ -150,6 +150,7 @@ export const ContractListAllCustomers = () => {
               setPage(0);
             }}
             allowClear
+            prefix={<SearchOutlined />}
             style={{ width: 350 }}
           />
 
