@@ -1,4 +1,4 @@
-import { Modal, Form, message } from "antd";
+import { Modal, Form } from "antd";
 import SelectInput from "../../components/atoms/SelectInput";
 import {
   useBulkDeleteDiscountPolicies,

@@ -74,15 +74,15 @@ const ViewDiscountPolicyModal: React.FC<ViewDealerDiscountPolicyModalProps> = ({
           size="middle"
           labelStyle={{ width: 200, fontWeight: 600 }}
         >
-          <Descriptions.Item label="Đại lý (Dealer)">
+          <Descriptions.Item label="Đại lý">
             {dealerMap.get(policy.dealerId) || policy.dealerId}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Xe (Vehicle)">
+          <Descriptions.Item label="Xe">
             {vehicleMap.get(policy.vehicleId) || policy.vehicleId}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Giá cuối cùng (VND)">
+          <Descriptions.Item label="Giá cuối cùng">
             <strong className="text-green-600">
               {policy.finalPrice
                 ? `${policy.finalPrice.toLocaleString("vi-VN")} ₫`
@@ -108,12 +108,6 @@ const ViewDiscountPolicyModal: React.FC<ViewDealerDiscountPolicyModalProps> = ({
               ? dayjs(policy.createAt).format("DD/MM/YYYY HH:mm")
               : "—"}
           </Descriptions.Item>
-
-          {/* <Descriptions.Item label="Ngày cập nhật gần nhất">
-            {policy.updatedAt
-              ? dayjs(policy.updatedAt).format("DD/MM/YYYY HH:mm")
-              : "—"}
-          </Descriptions.Item> */}
         </Descriptions>
       ) : (
         <p className="text-center text-gray-500 py-6">
