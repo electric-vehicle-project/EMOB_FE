@@ -1,10 +1,12 @@
-import React from "react";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useCurrentUser } from "../utils/getCurrentUser";
+import { toast } from "react-toastify";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useCurrentUser();
 
   return (
     <div
@@ -27,7 +29,12 @@ const HomePage: React.FC = () => {
           <Button
             size="large"
             className="!rounded-full font-semibold px-8 shadow-md text-[15px] tracking-wide !bg-white !text-black"
-            onClick={() => navigate("/auth/login")}
+            onClick={() => {
+              if (user) {
+                navigate("/" + user.role.toLowerCase())
+              }
+              else navigate("/auth/login")
+            }}
           >
             Đăng nhập
           </Button>

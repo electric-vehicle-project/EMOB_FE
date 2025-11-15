@@ -267,3 +267,21 @@
 }
 
 
+
+.ant-table-thead > tr > th {
+  border-right: none !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-right: none !important;
+}
+
+/* Giữ border ngang */
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #a9abae !important; /* gray-200 */
+}
+
+.ant-table-container {
+  border-left: none !important;
+  border-right: none !important;
+}

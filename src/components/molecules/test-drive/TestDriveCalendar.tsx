@@ -35,9 +35,9 @@ export const TestDriveCalendar = ({
 
   // Màu trạng thái
   const statusColorMap: Record<string, string> = {
-    PENDING: "#d48806", // vàng cam
-    CONFIRMED: "#237804", // xanh lá
-    COMPLETED: "#096dd9", // xanh dương
+    PENDING: "#fca117", // vàng cam
+    CONFIRMED: "#096dd9", // xanh lá
+    COMPLETED: "#237804", // xanh dương
     CANCELLED: "#cf1322", // đỏ
   };
 
@@ -63,7 +63,7 @@ export const TestDriveCalendar = ({
             className="flex flex-col items-center justify-center h-[80px] w-full rounded-md cursor-pointer transition-transform transform hover:scale-110"
             style={{
               backgroundColor: "#f9f9f9",
-              border: `1px solid ${color}33`,
+              border: `5px solid ${color}33`,
             }}
           >
             <UserOutlined style={{ color, fontSize: 20, marginBottom: 4 }} />

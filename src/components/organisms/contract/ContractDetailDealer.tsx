@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useParams, useNavigate } from "react-router";
 import {
   Card,
@@ -8,7 +9,7 @@ import {
   Select,
   InputNumber,
   Form,
-  DatePicker,
+  DatePicker
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -168,11 +169,9 @@ export const ContractDetailDealer = () => {
             </p>
 
             <p>
-              <b>BÊN A (Hãng xe):</b> Công ty TNHH EMOB Electric Vehicle
+              <b>BÊN A (Hãng xe):</b> Công ty TNHH Xe Điện EMOB 
               <br />
-              Đại diện: Ông/Bà{" "}
-              <b>{user?.fullName ?? "______________________"}</b> - Chức vụ:
-              Nhân viên hãng xe
+              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên hãng xe
               <br />
               Địa chỉ: Tòa nhà FPTU, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
             </p>
@@ -180,8 +179,7 @@ export const ContractDetailDealer = () => {
             <p>
               <b>BÊN B (Đại lý):</b> {dealer?.name ?? "______________________"}
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: Nhân viên đại
-              lý
+              Đại diện: Ông/Bà ______________________ - Chức vụ: ______________________
               <br />
               Địa chỉ: {dealer?.address ?? "______________________"}
             </p>
@@ -240,84 +238,70 @@ export const ContractDetailDealer = () => {
                   Phụ lục hợp đồng
                 </h3>
                 <p className="text-gray-600 mb-3 text-center">
-                  (Chi tiết các dòng xe thuộc hợp đồng)
+                  (Chi tiết danh sách xe thuộc hợp đồng)
                 </p>
 
                 <div className="space-y-6">
-                  {(contract?.items || []).map((item: any, index: number) => (
-                    <div
-                      key={item.id}
-                      className="border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors shadow-sm"
-                    >
-                      <h4 className="font-semibold mb-3 text-[#394a2f]">
-                        #{index + 1}. Xe{" "}
-                        {item.vehicleStatus === "TEST_DRIVE"
-                          ? "lái thử"
-                          : item.vehicleStatus === "SPECIAL"
-                          ? "đặc biệt"
-                          : "tiêu chuẩn"}
-                      </h4>
+                  {(contract?.items || []).map((item: any, index: number) => {
+                    // 1) Lô hàng index
+                    return (
+                      <div
+                        key={item.id}
+                        className="border rounded-xl p-4 bg-gray-50 transition-colors shadow-sm"
+                      >
+                        <h4 className="px-4 text-lg font-semibold text-[#394a2f]">
+                          Lô hàng #{(index + 1).toString().padStart(2, "0")}
+                        </h4>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
-                        <p>
-                          <b>Mã xe:</b> {item.vehicleId ?? "Không xác định"}
-                        </p>
-                        <p>
-                          <b>Màu sắc:</b> {item.color || "Không xác định"}
-                        </p>
-                        <p>
-                          <b>Số lượng:</b> {item.quantity ?? 0}
-                        </p>
-                        <p>
-                          <b>Đơn giá:</b>{" "}
-                          {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Giảm giá:</b>{" "}
-                          {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Thành tiền:</b>{" "}
-                          {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
-                        </p>
-                        <p>
-                          <b>Tình trạng xe:</b>{" "}
-                          {item.vehicleStatus === "NORMAL"
-                            ? "Xe tiêu chuẩn"
-                            : item.vehicleStatus === "TEST_DRIVE"
-                            ? "Xe lái thử"
-                            : item.vehicleStatus === "SPECIAL"
-                            ? "Xe đặc biệt"
-                            : "Khác"}
-                        </p>
+                        <Divider />
 
-                        <div className="col-span-2">
-                          <b>Danh sách mã xe con (Vehicle Unit IDs):</b>
-                          {item.vehicleUnitIds &&
-                          item.vehicleUnitIds.length > 0 ? (
-                            <ul className="list-disc ml-6 mt-1 text-[14px]">
-                              {item.vehicleUnitIds.map((uid: string) => (
-                                <li key={uid}>{uid}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-gray-500 ml-2 mt-1">Không có</p>
-                          )}
+                        {/* THÔNG TIN CHUNG CỦA LÔ */}
+                        <div className="pr-4 pl-4 grid grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
+                          <p>
+                            <b>Màu sắc xe thuộc lô:</b> {item.color || "Không xác định"}
+                          </p>
+
+                          <p>
+                            <b>Số lượng (chiếc):</b> {item.quantity ?? 0}
+                          </p>
+                          <p>
+                            <b>Đơn giá lô hàng:</b>{" "}
+                            {item.unitPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+
+                          <p>
+                            <b>Giảm giá:</b>{" "}
+                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+                          <p>
+                            <b>Tổng tiền lô hàng:</b>{" "}
+                            {item.totalPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                          </p>
+
+                          <p>
+                            <b>Mã khuyến mãi:</b> {item.promotionId || "Không áp dụng"}
+                          </p>
                         </div>
+
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  <Divider />
                 </div>
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
-                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0}{" "}
-                    &nbsp;&nbsp;
-                    <b>Tổng giá trị:</b>{" "}
-                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫
+                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
+                    <b>Tổng giá trị (chưa VAT):</b>{" "}
+                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫ &nbsp;&nbsp;
+                    <b>Thuế VAT:</b>{" "}
+                    {contract?.vatAmount
+                      ? `${contract?.vatAmount.toLocaleString("vi-VN")} ₫`
+                      : "0 ₫"}
                   </p>
                 </div>
               </div>
+
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
               <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
@@ -330,22 +314,14 @@ export const ContractDetailDealer = () => {
           <div className="flex justify-between items-start mt-8 mr-10 ml-10">
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex">
-                (đã ký)
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                (Ký và ghi rõ họ tên)
-              </p>
+              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
 
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <div className="border h-28 w-40 mx-auto mt-2 items-center justify-center flex text-green-900">
-                {contract?.status === "SIGNED" ? "(đã ký)" : ""}
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                (Ký và ghi rõ họ tên)
-              </p>
+              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
           </div>
 

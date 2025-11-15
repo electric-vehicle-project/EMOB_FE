@@ -99,6 +99,8 @@ export const ROUTES = {
 
   // TEST DRIVE
   TEST_DRIVE: "test-drive",
+  TEST_DRIVE_BY_CURRENT_STAFF: "test-drive/staff",
+
 
   //InstallmentPlan
   INSTALLMENT_PLAN: "installment-plan",
