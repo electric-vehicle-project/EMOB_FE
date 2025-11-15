@@ -10,34 +10,25 @@ import {
   Skeleton,
   Image,
   Space,
-  Alert,
   Modal,
-  Table,
   Empty,
-  Tag,
 } from "antd";
-import type { ColumnsType } from "antd/es/table";
 import dayjs, { type Dayjs } from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   useGetVehicleById,
   useCreateVehicleUnitsBulk,
+  useGetAIDemandForecast,
 } from "../../service/vehicleService";
 import { ROUTES } from "../../model/routePaths";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import api from "../../config/api";
 import { toast } from "react-toastify";
-import {
-  ReloadOutlined,
-  ExperimentOutlined,
-  CheckOutlined,
-} from "@ant-design/icons";
-// ⭐ Button wrapper của dự án
+import { ReloadOutlined, CheckOutlined } from "@ant-design/icons";
 import { Button } from "../../components/atoms/Button";
+import { DeleteConfirm } from "../../components/organisms/DeleteConfirm";
 
 const { Option } = Select;
 
-// ================== Form types ==================
 type FormValues = {
   quantity: number;
   color: string;
@@ -51,26 +42,18 @@ type FormValues = {
     | "SOLD";
 };
 
-// ================== API types ==================
 type ApiColorForecast = {
   color: string;
   predictedColorDemand: number;
 };
 
-type ApiSupplyPlan = {
+type ApiForecastItem = {
   modelName: string;
   predictedDealerDemand?: number;
   recommendedProduction?: number;
   colorForecast?: ApiColorForecast[];
 };
 
-type ApiForecastRoot = {
-  country?: string;
-  region?: string;
-  supplyPlan?: ApiSupplyPlan[];
-};
-
-// ================== Utils ==================
 const normalize = (s?: string) =>
   (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
@@ -84,9 +67,6 @@ const topColorOf = (colors?: ApiColorForecast[]) => {
   )[0];
 };
 
-const BASE_URL = "/vehicle";
-
-// =================================================
 export const VehicleBulkPage = () => {
   const [form] = Form.useForm<FormValues>();
   const navigate = useNavigate();
@@ -95,6 +75,7 @@ export const VehicleBulkPage = () => {
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
+
   const basePath =
     role === "ADMIN"
       ? "/admin"
@@ -112,6 +93,8 @@ export const VehicleBulkPage = () => {
   const { mutateAsync: bulkCreate, isPending } = useCreateVehicleUnitsBulk();
 
   const [multiplier, setMultiplier] = useState<number>(1);
+  const [isLoadingMultiplier, setIsLoadingMultiplier] =
+    useState<boolean>(false);
 
   const baseRetail = useMemo(
     () =>
@@ -126,20 +109,29 @@ export const VehicleBulkPage = () => {
     [baseRetail, multiplier]
   );
 
-  // ========== Dự báo AI ==========
+  // ================= AI Forecast Hooks =================
+  const demandForecast = useGetAIDemandForecast();
+
   const [forecastOpen, setForecastOpen] = useState<boolean>(false);
-  const [triggering, setTriggering] = useState<boolean>(false);
   const [loadingForecast, setLoadingForecast] = useState<boolean>(false);
-  const [forecastRaw, setForecastRaw] = useState<ApiForecastRoot[]>([]);
+  const [forecastRaw, setForecastRaw] = useState<ApiForecastItem[]>([]);
+
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
   const fetchMultiplier = async (status: FormValues["status"]) => {
+    setIsLoadingMultiplier(true);
     try {
-      const res = await api.get(`/vehicle-price-rules/${status}`);
-      const newMultiplier = res?.data?.result?.multiplier;
+      const res = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/vehicle-price-rules/${status}`
+      ).then((r) => r.json());
+      const newMultiplier = res?.result?.multiplier;
       setMultiplier(typeof newMultiplier === "number" ? newMultiplier : 1);
     } catch {
       setMultiplier(1);
-      toast.error("Không thể lấy multiplier của price rule!");
+      toast.error("Không thể lấy hệ số giá từ price rule.");
+    } finally {
+      setIsLoadingMultiplier(false);
     }
   };
 
@@ -147,30 +139,32 @@ export const VehicleBulkPage = () => {
     fetchMultiplier(status);
   };
 
-  // Gọi API kích hoạt và lấy kết quả dự báo
-  const triggerForecast = async () => {
-    try {
-      setTriggering(true);
-      await api.get(`${BASE_URL}/demandForecastFromAI`);
-    } catch {
-      // Backend có thể chạy async — vẫn tiếp tục fetch danh sách
-    } finally {
-      setTriggering(false);
-    }
-  };
-
+  // ================= Lấy forecast từ BE =================
   const loadForecasts = async () => {
     setLoadingForecast(true);
     try {
-      const res = await api.get(`${BASE_URL}/createDemandForecasts`);
-      const data = res?.data;
-      const list: ApiForecastRoot[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.result)
-        ? data.result
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
+      const res = await demandForecast.refetch(vehicleInfo?.model);
+      const raw: unknown = res;
+
+      let list: ApiForecastItem[] = [];
+
+      if (Array.isArray(raw)) {
+        list = raw as ApiForecastItem[];
+      } else if (
+        raw &&
+        typeof raw === "object" &&
+        Array.isArray((raw as { result?: unknown }).result)
+      ) {
+        list = ((raw as { result?: unknown }).result ??
+          []) as ApiForecastItem[];
+      } else if (
+        raw &&
+        typeof raw === "object" &&
+        Array.isArray((raw as { data?: unknown }).data)
+      ) {
+        list = ((raw as { data?: unknown }).data ?? []) as ApiForecastItem[];
+      }
+
       setForecastRaw(list);
     } catch {
       toast.error("Không thể tải dự báo AI.");
@@ -182,20 +176,16 @@ export const VehicleBulkPage = () => {
 
   const openForecast = async () => {
     setForecastOpen(true);
-    await triggerForecast();
     await loadForecasts();
   };
 
   const handleRefresh = async () => {
-    await triggerForecast();
     await loadForecasts();
   };
 
-  // Lọc đúng model hiện tại từ supplyPlan của từng (country, region)
+  // ================= Chuẩn hóa dữ liệu forecast theo model =================
   type Row = {
     key: string;
-    country?: string;
-    region?: string;
     modelName: string;
     predictedDealerDemand?: number;
     recommendedProduction?: number;
@@ -205,36 +195,38 @@ export const VehicleBulkPage = () => {
   };
 
   const modelRows: Row[] = useMemo(() => {
-    const currentModel = normalize(
-      (vehicleInfo?.model as string | undefined) ||
-        (vehicleInfo?.name as string | undefined)
-    );
-
+    const currentModel = normalize(vehicleInfo?.model);
     if (!currentModel) return [];
 
     const rows: Row[] = [];
-    for (const bucket of forecastRaw || []) {
-      const plans = Array.isArray(bucket?.supplyPlan) ? bucket.supplyPlan : [];
-      for (const p of plans) {
-        if (normalize(p?.modelName) !== currentModel) continue;
-        const top = topColorOf(p.colorForecast);
-        rows.push({
-          key: `${bucket.region || bucket.country || "x"}-${p.modelName}`,
-          country: bucket.country,
-          region: bucket.region,
-          modelName: p.modelName,
-          predictedDealerDemand: p.predictedDealerDemand,
-          recommendedProduction: p.recommendedProduction,
-          topColor: top?.color,
-          topColorDemand: top?.predictedColorDemand,
-          allColors: p.colorForecast || [],
-        });
-      }
+    for (const item of forecastRaw || []) {
+      if (normalize(item.modelName) !== currentModel) continue;
+
+      const top = topColorOf(item.colorForecast);
+      rows.push({
+        key: `${item.modelName}`,
+        modelName: item.modelName,
+        predictedDealerDemand: item.predictedDealerDemand,
+        recommendedProduction: item.recommendedProduction,
+        topColor: top?.color,
+        topColorDemand: top?.predictedColorDemand,
+        allColors: item.colorForecast || [],
+      });
     }
     return rows;
   }, [forecastRaw, vehicleInfo]);
 
-  // ========== SUBMIT ==========
+  const best = useMemo(
+    () => (modelRows.length > 0 ? modelRows[0] : undefined),
+    [modelRows]
+  );
+
+  const topColor = best?.topColor;
+  const topColorDemand = best?.topColorDemand;
+  const recommended = best?.recommendedProduction;
+  const predicted = best?.predictedDealerDemand;
+
+  // ================= Submit + Hủy =================
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
       toast.error("Thiếu vehicleId. Vui lòng quay lại.");
@@ -250,9 +242,9 @@ export const VehicleBulkPage = () => {
       });
 
       toast.success(
-        ` Nhập ${values.quantity} xe (${
+        `Nhập ${values.quantity} xe (${
           values.status
-        }) thành công — Giá/xe ước tính: ${previewPrice.toLocaleString()}₫`
+        }) thành công — Giá/xe: ${previewPrice.toLocaleString("vi-VN")}₫`
       );
 
       navigate(
@@ -261,324 +253,335 @@ export const VehicleBulkPage = () => {
           replace: true,
           state: {
             from: "bulk",
-            backTo: `${basePath}/${ROUTES.EVM_VEHICLE}`, // hoặc ROUTES.EVM_VEHICLE_LIST nếu bạn dùng tên này
+            backTo: `${basePath}/${ROUTES.EVM_VEHICLE}`,
           },
         }
       );
-    } catch (err: unknown) {
-      const maybeAxios = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      } | null;
-      const msg =
-        maybeAxios?.response?.data?.message ||
-        maybeAxios?.message ||
-        "❌ Không thể nhập đơn vị xe. Vui lòng thử lại!";
-      toast.error(msg);
+    } catch {
+      toast.error("Không thể nhập đơn vị xe. Vui lòng thử lại.");
     }
+  };
+
+  const handleCancelBulk = () => {
+    if (!form.isFieldsTouched()) {
+      navigate(-1);
+      return;
+    }
+    setCancelConfirmOpen(true);
   };
 
   const imageList: string[] = Array.isArray(vehicleInfo?.images)
     ? vehicleInfo.images.filter((u: string) => !!u && /^https?:\/\//i.test(u))
     : [];
+
   const mainImage =
     imageList[0] || "https://placehold.co/400x300?text=No+Image";
 
   useEffect(() => {
     if (!vehicleId) {
-      toast.error("Thiếu vehicleId");
+      toast.error("Thiếu vehicleId.");
       navigate(-1);
     }
   }, [vehicleId, navigate]);
 
-  // Lấy multiplier lần đầu (status mặc định NORMAL)
   useEffect(() => {
     fetchMultiplier("NORMAL");
   }, []);
-
-  // ===== Bảng dự báo (chỉ hiện trong Modal) =====
-  const colorColumns: ColumnsType<ApiColorForecast> = [
-    {
-      title: "Màu",
-      dataIndex: "color",
-      key: "color",
-      render: (v) => v || "—",
-    },
-    {
-      title: "Nhu cầu dự báo",
-      dataIndex: "predictedColorDemand",
-      key: "predictedColorDemand",
-      align: "right",
-      render: (v: number) => fmt(v),
-    },
-    {
-      title: "Thao tác",
-      key: "pick",
-      align: "center",
-      render: (_: unknown, c) => (
-        <Button
-          size="small"
-          onClick={() => {
-            if (c?.color) {
-              form.setFieldValue("color", c.color);
-              toast.success(`Đã chọn màu ${c.color} vào form.`);
-            }
-          }}
-        >
-          Chọn màu này
-        </Button>
-      ),
-    },
-  ];
-
-  const columns: ColumnsType<Row> = [
-    {
-      title: "Khu vực",
-      key: "region",
-      width: 200,
-      render: (_, r) => (
-        <div className="flex flex-col">
-          <span className="font-medium">{r.region || "—"}</span>
-          <span className="text-xs text-gray-500">
-            {r.country ? `Quốc gia: ${r.country}` : ""}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: "Model",
-      dataIndex: "modelName",
-      key: "modelName",
-    },
-    {
-      title: "Demand (Dealer)",
-      dataIndex: "predictedDealerDemand",
-      key: "predictedDealerDemand",
-      align: "right",
-      render: (v: number) =>
-        typeof v === "number" ? <Tag color="blue">{fmt(v)}</Tag> : "—",
-    },
-    {
-      title: "Recommended Production",
-      dataIndex: "recommendedProduction",
-      key: "recommendedProduction",
-      align: "right",
-      render: (v: number) =>
-        typeof v === "number" ? <Tag color="green">{fmt(v)}</Tag> : "—",
-    },
-    {
-      title: "Top Color",
-      key: "topColor",
-      align: "center",
-      render: (_, r) =>
-        r.topColor ? (
-          <div className="flex flex-col items-center">
-            <Tag color="purple">{r.topColor}</Tag>
-            <span className="text-xs text-gray-500">
-              Nhu cầu: {fmt(r.topColorDemand)}
-            </span>
-          </div>
-        ) : (
-          <span className="text-gray-400">—</span>
-        ),
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      align: "center",
-      render: (_: unknown, r) => (
-        <Button
-          type="primary"
-          icon={<CheckOutlined />}
-          className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md"
-          onClick={() => {
-            const q =
-              typeof r.recommendedProduction === "number" &&
-              r.recommendedProduction > 0
-                ? r.recommendedProduction
-                : typeof r.predictedDealerDemand === "number" &&
-                  r.predictedDealerDemand > 0
-                ? r.predictedDealerDemand
-                : undefined;
-
-            const patch: Partial<FormValues> = {};
-            if (typeof q === "number") patch.quantity = q;
-            if (r.topColor) patch.color = r.topColor;
-
-            if (Object.keys(patch).length === 0) {
-              toast.info(
-                "Dự báo không có trường phù hợp (quantity/color) để áp dụng."
-              );
-              return;
-            }
-
-            form.setFieldsValue(patch as FormValues);
-            toast.success("Đã áp dụng dự báo vào form thêm lô.");
-            setForecastOpen(false);
-          }}
-        >
-          Áp dụng vào form
-        </Button>
-      ),
-    },
-  ];
 
   return (
     <div className="flex justify-center min-h-[90vh] bg-gray-50 py-10 px-4">
       <Card
         bordered={false}
-        className="w-full max-w-5xl shadow-md rounded-2xl p-6"
+        className="w-full max-w-5xl shadow-sm rounded-2xl border border-gray-100 overflow-hidden bg-white"
+        headStyle={{ padding: "14px 20px", borderBottom: "1px solid #e5e7eb" }}
+        bodyStyle={{ padding: 20 }}
         title={
-          <div className="flex justify-between items-center">
-            <span>Nhập kho hàng loạt xe điện</span>
-            <div className="flex gap-2">
-              {role === "EVM_STAFF" && (
-                <Button
-                  onClick={openForecast}
-                  loading={triggering || loadingForecast}
-                  className="rounded-lg border-gray-300"
-                  icon={<ExperimentOutlined />}
-                  type="default"
-                >
-                  Dự báo AI
-                </Button>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-[#414d38]">
+                Nhập kho hàng loạt xe điện
+              </span>
+              {vehicleInfo && (
+                <span className="text-xs text-gray-500">
+                  {vehicleInfo.brand} · {vehicleInfo.model} ·{" "}
+                  {vehicleInfo.type ?? "EV"}
+                </span>
               )}
-              <Button
-                onClick={() => navigate(-1)}
-                className="rounded-lg border-gray-300"
-                type="default"
-              >
-                Quay lại
-              </Button>
             </div>
+            {role === "EVM_STAFF" && (
+              <button
+                onClick={openForecast}
+                disabled={!vehicleInfo || loadingForecast}
+                className="
+      relative overflow-hidden
+      flex items-center gap-2
+      px-7 py-2 rounded-full text-xs font-semibold tracking-wide
+      text-[#2e4b32]
+      transition-all duration-300
+      active:scale-[0.94]
+      hover:scale-[1.06] 
+      bg-white
+    "
+              >
+                {/* VIỀN ĐIỆN XANH EMOB */}
+                <span
+                  className="
+        absolute inset-0 rounded-full p-[2px]
+        bg-gradient-to-r from-[#7bc47f] via-[#40c463] to-[#7bc47f]
+        animate-electric-border-green
+        opacity-95
+        z-0
+      "
+                >
+                  <span className="block w-full h-full rounded-full bg-white" />
+                </span>
+
+                {/* AURA GLOW XANH TO & RÕ */}
+                <span
+                  className="
+        absolute inset-0 rounded-full
+        bg-green-300/40 blur-2xl
+        animate-electric-aura-green
+        z-0
+      "
+                />
+
+                {/* ICON + TEXT */}
+                <span className="relative z-10 text-base">🌿</span>
+                <span className="relative z-10">Dự báo AI</span>
+              </button>
+            )}
           </div>
         }
       >
         {vehicleLoading ? (
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : vehicleInfo ? (
-          <div className="flex flex-col lg:flex-row gap-10">
-            {/* ẢNH & THÔNG TIN MẪU XE */}
-            <div className="flex-1 flex flex-col items-center">
-              <Image
-                src={mainImage}
-                alt="vehicle"
-                width={420}
-                height={300}
-                className="rounded-lg shadow-sm border object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src =
-                    "https://placehold.co/420x300?text=No+Image";
-                }}
-              />
-              <div className="mt-4 text-center">
-                <h3 className="text-xl font-semibold text-[#627254]">
-                  {vehicleInfo.brand} – {vehicleInfo.model}
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  Loại: {vehicleInfo.type} | Pin: {vehicleInfo.batteryKwh} kWh |
-                  Tầm: {vehicleInfo.rangeKm} km
-                </p>
-                <p className="text-gray-700 font-medium mt-2">
-                  Giá bán lẻ (model):{" "}
-                  <span className="text-[#627254]">
-                    {typeof vehicleInfo.retailPrice === "number"
-                      ? vehicleInfo.retailPrice.toLocaleString()
-                      : "Chưa có"}
-                    ₫
-                  </span>
-                </p>
-                <Alert
-                  className="mt-3"
-                  type="info"
-                  showIcon
-                  message="Giá đơn vị sẽ do hệ thống tính: Giá bán lẻ * hệ số (loại mẫu xe)"
-                />
+          <>
+            <div className="flex flex-col lg:flex-row gap-10">
+              {/* ẢNH + INFO */}
+              <div className="flex-1 flex flex-col items-center">
+                <div className="w-full max-w-md rounded-2xl overflow-hidden bg-gradient-to-b from-[#f5f7f0] to-white border">
+                  {/* ==== PREVIEW MAIN IMAGE ONLY ==== */}
+                  <Image.PreviewGroup
+                    items={[mainImage]}
+                    preview={{
+                      visible: previewOpen,
+                      current: 0,
+                      onVisibleChange: (v) => setPreviewOpen(v),
+                      onChange: () => {},
+                      toolbarRender: (_node, info) => {
+                        const { icons, actions } = info;
+                        const { zoomInIcon, zoomOutIcon, prevIcon, nextIcon } =
+                          icons;
+                        const { onZoomIn, onZoomOut, onActive } = actions;
+
+                        return (
+                          <div className="ant-image-preview-operations">
+                            {/* Prev (nếu có nhiều ảnh sẽ hoạt động, còn 1 ảnh thì ẩn) */}
+                            {prevIcon && (
+                              <div
+                                className="ant-image-preview-operations-operation"
+                                onClick={() => onActive?.(-1)}
+                              >
+                                {prevIcon}
+                              </div>
+                            )}
+
+                            {/* Next */}
+                            {nextIcon && (
+                              <div
+                                className="ant-image-preview-operations-operation"
+                                onClick={() => onActive?.(1)}
+                              >
+                                {nextIcon}
+                              </div>
+                            )}
+
+                            {/* Zoom In */}
+                            <div
+                              className="ant-image-preview-operations-operation"
+                              onClick={onZoomIn}
+                            >
+                              {zoomInIcon}
+                            </div>
+
+                            {/* Zoom Out */}
+                            <div
+                              className="ant-image-preview-operations-operation"
+                              onClick={onZoomOut}
+                            >
+                              {zoomOutIcon}
+                            </div>
+                          </div>
+                        );
+                      },
+                    }}
+                  >
+                    <div
+                      className="group w-full max-w-md rounded-2xl overflow-hidden bg-gradient-to-b from-[#f5f7f0] to-white border cursor-zoom-in relative"
+                      onClick={() => setPreviewOpen(true)}
+                    >
+                      <img
+                        src={mainImage}
+                        alt="vehicle"
+                        className="object-contain w-full h-[260px] transition-transform duration-300 group-hover:scale-105 bg-white"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "/images/vehicle-placeholder.png";
+                        }}
+                      />
+
+                      <div className="absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1 rounded-md bg-black/50 text-white text-xs px-2 py-1 pointer-events-none">
+                        Nhấn để phóng to
+                      </div>
+                    </div>
+                  </Image.PreviewGroup>
+                </div>
+
+                <div className="mt-4 text-center space-y-1">
+                  <h3 className="text-xl font-semibold text-[#414d38]">
+                    {vehicleInfo.brand} – {vehicleInfo.model}
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Loại: {vehicleInfo.type} · Pin:{" "}
+                    {vehicleInfo.batteryKwh?.toLocaleString("vi-VN") ?? "—"} kWh
+                    · Tầm: {vehicleInfo.rangeKm?.toLocaleString("vi-VN") ?? "—"}{" "}
+                    km
+                  </p>
+                  <p className="text-gray-700 text-sm">
+                    Giá bán lẻ:{" "}
+                    <span className="text-[#627254] font-semibold">
+                      {typeof vehicleInfo.retailPrice === "number"
+                        ? `${vehicleInfo.retailPrice.toLocaleString("vi-VN")}₫`
+                        : "—"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* FORM */}
+              <div className="flex-1">
+                <Form<FormValues>
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmit}
+                  initialValues={{
+                    quantity: 1,
+                    status: "NORMAL",
+                    productionYear: dayjs(),
+                  }}
+                >
+                  <Space className="w-full" size="middle" direction="vertical">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Form.Item
+                        label="Số lượng nhập kho"
+                        name="quantity"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng nhập số lượng.",
+                          },
+                        ]}
+                      >
+                        <InputNumber
+                          min={1}
+                          className="w-full"
+                          placeholder="Nhập số lượng xe"
+                        />
+                      </Form.Item>
+
+                      <Form.Item label="Giá dự kiến / xe">
+                        <div className="flex items-center gap-2">
+                          <InputNumber
+                            value={previewPrice}
+                            disabled
+                            className="w-full"
+                            formatter={(v) =>
+                              `${Number(v || 0).toLocaleString("vi-VN")}`
+                            }
+                            addonAfter="₫"
+                          />
+                          {isLoadingMultiplier && (
+                            <ReloadOutlined className="animate-spin text-gray-400" />
+                          )}
+                        </div>
+                      </Form.Item>
+                    </div>
+
+                    <Form.Item
+                      label="Màu sơn"
+                      name="color"
+                      rules={[
+                        { required: true, message: "Vui lòng nhập màu sơn." },
+                      ]}
+                    >
+                      <Input placeholder="Ví dụ: Trắng ngọc trai, Đen, Xanh lá" />
+                    </Form.Item>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Form.Item
+                        label="Năm sản xuất"
+                        name="productionYear"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng chọn năm sản xuất.",
+                          },
+                        ]}
+                      >
+                        <DatePicker
+                          picker="year"
+                          className="w-full"
+                          placeholder="Chọn năm"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        label="Tình trạng lô xe"
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng chọn tình trạng.",
+                          },
+                        ]}
+                      >
+                        <Select onChange={handleStatusChange}>
+                          <Option value="NORMAL">Xe mới</Option>
+                          <Option value="SPECIAL">
+                            Xe đặc biệt / trưng bày
+                          </Option>
+                          <Option value="OLD_STOCK">Xe tồn kho</Option>
+                          <Option value="TEST_DRIVE">Xe lái thử</Option>
+                          <Option value="RESERVED">Xe giữ chỗ</Option>
+                        </Select>
+                      </Form.Item>
+                    </div>
+
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={isPending}
+                      block
+                      className="!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] mt-3 rounded-md"
+                    >
+                      Nhập kho
+                    </Button>
+
+                    <Button
+                      type="default"
+                      block
+                      className="mt-2 rounded-md border border-gray-300"
+                      onClick={handleCancelBulk}
+                    >
+                      Hủy nhập kho
+                    </Button>
+                  </Space>
+                </Form>
               </div>
             </div>
-
-            {/* FORM NHẬP LÔ */}
-            <div className="flex-1">
-              <Form<FormValues>
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                initialValues={{
-                  quantity: 1,
-                  status: "NORMAL",
-                  productionYear: dayjs(),
-                }}
-                className="space-y-2"
-              >
-                <Space direction="horizontal" size="middle" className="w-full">
-                  <Form.Item
-                    label="Số lượng cần nhập"
-                    name="quantity"
-                    className="flex-1"
-                    rules={[{ required: true, message: "Nhập số lượng" }]}
-                  >
-                    <InputNumber min={1} className="w-full" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Giá dự kiến (giá bán lẻ x hệ số)"
-                    className="flex-1"
-                  >
-                    <InputNumber
-                      value={previewPrice}
-                      readOnly
-                      className="w-full"
-                      formatter={(value) =>
-                        `${Number(value || 0).toLocaleString()}`
-                      }
-                    />
-                  </Form.Item>
-                </Space>
-
-                <Form.Item
-                  label="Màu sơn"
-                  name="color"
-                  rules={[{ required: true, message: "Nhập màu sơn" }]}
-                >
-                  <Input placeholder="Ví dụ: Trắng" />
-                </Form.Item>
-
-                <Form.Item
-                  label="Năm sản xuất"
-                  name="productionYear"
-                  rules={[{ required: true, message: "Chọn năm sản xuất" }]}
-                >
-                  <DatePicker picker="year" className="w-full" />
-                </Form.Item>
-
-                <Form.Item
-                  label="Tình trạng ban đầu"
-                  name="status"
-                  rules={[{ required: true, message: "Chọn tình trạng xe" }]}
-                >
-                  <Select onChange={handleStatusChange}>
-                    <Option value="NORMAL">Xe mới (bình thường)</Option>
-                    <Option value="SPECIAL">Xe trưng bày / đặc biệt</Option>
-                    <Option value="OLD_STOCK">
-                      Xe tồn kho cũ / chuyển kho
-                    </Option>
-                    <Option value="TEST_DRIVE">Xe lái thử</Option>
-                    <Option value="RESERVED">Xe được đặt giữ chỗ</Option>
-                  </Select>
-                </Form.Item>
-
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={isPending}
-                  block
-                  className="bg-[#627254] hover:bg-[#76885B] text-white font-semibold rounded-lg mt-6 py-2"
-                >
-                  Nhập kho
-                </Button>
-              </Form>
-            </div>
-          </div>
+          </>
         ) : (
           <p className="text-center text-gray-400">
             Không tìm thấy thông tin xe.
@@ -586,7 +589,7 @@ export const VehicleBulkPage = () => {
         )}
       </Card>
 
-      {/* ===== Modal Dự báo AI ===== */}
+      {/* MODAL AI Forecast - giao diện bong bóng chat */}
       <Modal
         open={forecastOpen}
         onCancel={() => setForecastOpen(false)}
@@ -594,58 +597,159 @@ export const VehicleBulkPage = () => {
         width={920}
         destroyOnClose
         title={
-          <div className="flex items-center gap-3 pr-16">
-            <span>🔮 Dự báo nhu cầu (AI)</span>
-            <Button
-              size="small"
-              icon={<ReloadOutlined />}
-              onClick={handleRefresh}
-              loading={loadingForecast || triggering}
-              className="rounded-md"
-              type="default"
-            >
-              Làm mới
-            </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-[#414d38]">
+              🔮 Dự báo nhu cầu nhập kho
+            </span>
+            <span className="text-xs text-gray-500">
+              Dựa trên dữ liệu 3 tháng gần nhất
+            </span>
           </div>
         }
       >
         {loadingForecast ? (
           <Skeleton active paragraph={{ rows: 6 }} />
-        ) : modelRows.length === 0 ? (
-          <div className="py-10">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có dự báo phù hợp cho model này."
-            />
-          </div>
-        ) : (
-          <Table<Row>
-            rowKey="key"
-            dataSource={modelRows}
-            columns={columns}
-            pagination={false}
-            expandable={{
-              expandedRowRender: (r) =>
-                Array.isArray(r.allColors) && r.allColors.length > 0 ? (
-                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium mb-2">Phân rã theo màu</div>
-                    <Table<ApiColorForecast>
-                      size="small"
-                      rowKey={(c) => `${r.key}-${c.color}`}
-                      dataSource={r.allColors}
-                      columns={colorColumns}
-                      pagination={false}
-                    />
-                  </div>
-                ) : (
-                  <div className="text-gray-400 px-4 py-2">
-                    Không có dữ liệu màu.
-                  </div>
-                ),
-            }}
+        ) : !best ? (
+          <Empty
+            description={
+              vehicleInfo?.model
+                ? `Không có dự báo phù hợp cho model ${vehicleInfo.model}.`
+                : "Không có dự báo phù hợp cho model này."
+            }
           />
+        ) : (
+          <div className="space-y-6">
+            {/* Thanh hành động phía trên, tránh trùng nút X */}
+            <div className="flex justify-end mb-2">
+              <Button
+                size="small"
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                loading={loadingForecast}
+                className="rounded-full border border-gray-200"
+              >
+                Làm mới dự báo
+              </Button>
+            </div>
+
+            {/* Bong bóng chat AI */}
+            <div className="flex gap-3">
+              <div className="h-10 w-10 rounded-full overflow-hidden border">
+                <img
+                  src="/AI_avatar.png"
+                  alt="AI Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="max-w-[640px] rounded-2xl bg-gray-100 px-4 py-3 shadow-sm">
+                <p className="mt-1 text-sm text-gray-700">
+                  Dự báo cho tháng tiếp theo:{" "}
+                  {typeof topColorDemand === "number" ? (
+                    <>
+                      nhu cầu ước tính khoảng <b>{fmt(topColorDemand)} xe</b>{" "}
+                      cho {topColor ? <b>màu {topColor}</b> : "màu ưu tiên"}.
+                    </>
+                  ) : (
+                    "hệ thống chưa có đủ dữ liệu chi tiết theo màu."
+                  )}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-700">
+                  Hệ thống đề xuất nhập khoảng{" "}
+                  {typeof recommended === "number" ? (
+                    <b>{fmt(recommended)} xe</b>
+                  ) : typeof predicted === "number" ? (
+                    <b>{fmt(predicted)} xe</b>
+                  ) : (
+                    "một số lượng phù hợp"
+                  )}{" "}
+                  để đáp ứng nhu cầu dự kiến trong tháng tới.
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    className="!bg-[#627254] !border-[#627254] rounded-full px-4"
+                    onClick={() => {
+                      const q =
+                        typeof recommended === "number"
+                          ? recommended
+                          : predicted;
+
+                      const patch: Partial<FormValues> = {};
+                      if (typeof q === "number") patch.quantity = q;
+                      if (topColor) patch.color = topColor;
+
+                      form.setFieldsValue(patch as FormValues);
+                      toast.success("Đã áp dụng dự báo vào form.");
+                      setForecastOpen(false);
+                    }}
+                  >
+                    Áp dụng vào form
+                  </Button>
+
+                  <Button
+                    onClick={() => setForecastOpen(false)}
+                    className="rounded-full px-4"
+                  >
+                    Tự nhập thủ công
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Thẻ tóm tắt số liệu */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">Nhu cầu đại lý dự báo</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {typeof predicted === "number" ? `${fmt(predicted)} xe` : "—"}
+                </p>
+              </Card>
+
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">Sản lượng khuyến nghị</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {typeof recommended === "number"
+                    ? `${fmt(recommended)} xe`
+                    : "—"}
+                </p>
+              </Card>
+
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">Màu ưu tiên</p>
+                <p className="mt-1 text-lg font-semibold">{topColor ?? "—"}</p>
+              </Card>
+
+              <Card size="small" className="border border-gray-200">
+                <p className="text-xs text-gray-500">
+                  Nhu cầu màu ưu tiên (ước tính)
+                </p>
+                <p className="mt-1 text-lg font-semibold">
+                  {typeof topColorDemand === "number"
+                    ? `${fmt(topColorDemand)} xe`
+                    : "—"}
+                </p>
+              </Card>
+            </div>
+          </div>
         )}
       </Modal>
+
+      <DeleteConfirm
+        open={cancelConfirmOpen}
+        onCancel={() => setCancelConfirmOpen(false)}
+        onConfirm={() => {
+          setCancelConfirmOpen(false);
+          navigate(-1);
+        }}
+        title="Hủy nhập lô xe?"
+        message="Các thông tin đã nhập sẽ bị mất. Bạn có chắc chắn muốn hủy?"
+        okText="Hủy nhập"
+        danger
+      />
     </div>
   );
 };

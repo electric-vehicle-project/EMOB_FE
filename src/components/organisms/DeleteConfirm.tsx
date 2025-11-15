@@ -1,3 +1,4 @@
+// src/components/organisms/DeleteConfirm.tsx
 import { Modal } from "antd";
 
 interface Props {

@@ -266,8 +266,6 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.12);
 }
 
-
-
 .ant-table-thead > tr > th {
   border-right: none !important;
 }
@@ -284,4 +282,41 @@
 .ant-table-container {
   border-left: none !important;
   border-right: none !important;
+}
+
+/* Viền điện xanh EMOB */
+@keyframes electricPulseBorderGreen {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    filter: hue-rotate(25deg) brightness(1.35);
+  }
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+}
+
+.animate-electric-border-green {
+  animation: electricPulseBorderGreen 2.8s linear infinite;
+}
+
+/* Aura xanh đậm – rõ – to */
+@keyframes electricAuraGreen {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+}
+
+.animate-electric-aura-green {
+  animation: electricAuraGreen 3.2s ease-in-out infinite;
 }

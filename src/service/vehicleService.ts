@@ -1,3 +1,4 @@
+// src/service/vehicleService.ts
 // ==================================
 // EMOB 2025 - Vehicle Service
 // KHÔNG sửa useApi.ts, KHÔNG sửa api.ts
@@ -55,7 +56,7 @@ export const useUpdateVehicle = () =>
 export const useDeleteVehicle = () =>
   deleteMutationHook("delete-vehicle", BASE_URL)();
 
-// ========== UPDATE PRICES (đặc thù: PUT /vehicle/{id}/prices) ==========
+// ========== UPDATE PRICES (PUT /vehicle/{id}/prices) ==========
 export const useUpdateVehiclePrices = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -70,7 +71,6 @@ export const useUpdateVehiclePrices = () => {
       return res.data;
     },
     onSuccess: (_data, vars) => {
-      // làm tươi chi tiết xe và list
       queryClient.invalidateQueries({
         queryKey: ["get-vehicle-by-id", vars.id],
       });
@@ -86,7 +86,7 @@ export const useUploadVehicleImages = () =>
     `${BASE_URL}/images`
   )();
 
-// ========== BULK CREATE UNITS ==========
+// ========== BULK CREATE UNITS (cũ) ==========
 export const useBulkCreateVehicleUnits = () =>
   createMutationHook("bulk-create-vehicle-units", `${UNIT_URL}/bulk`)();
 
@@ -173,7 +173,7 @@ export const useCreateVehicleUnitsBulk = () =>
 
 // ========== BULK DELETE VEHICLE UNITS ==========
 export const useDeleteVehicleUnitsBulk = () => {
-  const queryClient = useQueryClient(); // ✅ Thêm dòng này
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (vehicleUnitIds: string[]) => {
@@ -182,7 +182,6 @@ export const useDeleteVehicleUnitsBulk = () => {
       return res.data;
     },
     onSuccess: () => {
-      // ✅ Làm tươi dữ liệu các list units liên quan
       queryClient.invalidateQueries({
         queryKey: ["get-vehicle-units-by-model"],
       });
@@ -191,38 +190,50 @@ export const useDeleteVehicleUnitsBulk = () => {
   });
 };
 
-// ========= AI Demand Forecast (Brand-side) =========
-// GET /api/vehicle/demandForecastFromAI
-export const useGetAIDemandForecast = (options?: unknown) => {
-  const hook = createQueryHook(
-    "ai-demand-forecast",
-    "/vehicle/demandForecastFromAI"
-  );
-  // API này không có params
-  const query = hook(options);
+// ========== AI Demand Forecast (GET /vehicle/demandForecastFromAI, dùng modelName) ==========
+export const useGetAIDemandForecast = () => {
+  return {
+    refetch: async (modelName?: string) => {
+      if (!modelName) return null;
 
-  // Chuẩn hoá: đảm bảo trả về mảng object
-  const raw = (query.data?.result ?? query.data) as unknown;
-  const forecasts = Array.isArray(raw)
-    ? (raw as unknown[])
-    : Array.isArray((raw as { data?: unknown[] })?.data)
-    ? ((raw as { data?: unknown[] }).data as unknown[])
-    : []; // nếu BE trả {}, vẫn an toàn
+      const token = localStorage.getItem("token") ?? "";
+      const url = `${
+        import.meta.env.VITE_BASE_URL
+      }/vehicle/demandForecastFromAI?model=${encodeURIComponent(modelName)}`;
 
-  return { ...query, forecasts };
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return res.json();
+    },
+  };
 };
 
-// GET /api/vehicle/createDemandForecasts  (trigger tạo/refresh phía AI)
-export const useCreateAIDemandForecasts = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      // Swagger ghi GET nên mình giữ đúng GET
-      const res = await api.get("/vehicle/createDemandForecasts");
-      return res.data;
+// ========== (Giữ lại, nhưng BulkPage không dùng) ==========
+export const useCreateAIDemandForecasts = (vehicleId?: string) => {
+  return {
+    refetch: async () => {
+      if (!vehicleId) return null;
+
+      const token = localStorage.getItem("token") ?? "";
+      const url = `${
+        import.meta.env.VITE_BASE_URL
+      }/vehicle/createDemandForecasts?model=${vehicleId}`;
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ai-demand-forecast"] });
-    },
-  });
+  };
 };

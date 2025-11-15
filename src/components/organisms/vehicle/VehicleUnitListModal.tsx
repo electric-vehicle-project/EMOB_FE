@@ -1,24 +1,18 @@
 // src/components/organisms/vehicle/VehicleUnitListModal.tsx
-import {
-  Modal,
-  Table,
-  Tag,
-  Pagination,
-  Typography,
-  Empty,
-  Spin,
-  Popconfirm,
-} from "antd";
+import { Modal, Table, Tag, Pagination, Typography, Empty, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
+import type { Key } from "react";
 import dayjs from "dayjs";
 import {
   useGetVehicleUnitsByVehicleIdPaged,
   useDeleteVehicleUnitsBulk,
 } from "../../../service/vehicleService";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
-import { Button } from "../../atoms/Button"; // ✅ dùng Button tuỳ biến
+import { Button } from "../../atoms/Button";
 import { toast } from "react-toastify";
+import { DeleteConfirm } from "../DeleteConfirm";
+import { DeleteOutlined, AppstoreOutlined } from "@ant-design/icons";
 
 type Props = {
   open: boolean;
@@ -38,12 +32,11 @@ type VehicleUnitRow = {
     | "RESERVED"
     | "SOLD";
   productionYear?: string;
-  price?: number; // hiển thị là "Giá bán lẻ"
+  price?: number;
 };
 
 const { Text } = Typography;
 
-// ✅ label tiếng Việt cho trạng thái
 const STATUS_LABEL_VI: Record<VehicleUnitRow["status"], string> = {
   NORMAL: "Xe mới (bình thường)",
   SPECIAL: "Trưng bày / đặc biệt",
@@ -53,7 +46,6 @@ const STATUS_LABEL_VI: Record<VehicleUnitRow["status"], string> = {
   SOLD: "Đã bán",
 };
 
-// màu Tag giữ như cũ
 const STATUS_COLORS: Record<VehicleUnitRow["status"], string> = {
   NORMAL: "green",
   SPECIAL: "purple",
@@ -71,7 +63,6 @@ export default function VehicleUnitListModal({
   const [page, setPage] = useState(0);
   const size = 10;
 
-  // ✅ Chỉ EVM_STAFF được xoá
   const role = (useCurrentUser() as { role?: string } | null)?.role ?? "";
   const isEvmStaff = role === "EVM_STAFF";
 
@@ -85,18 +76,21 @@ export default function VehicleUnitListModal({
     { enabled: open && !!vehicleId, keepPreviousData: true }
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const units = (query.data?.units ?? []) as VehicleUnitRow[];
+  const units = useMemo(
+    () => (query.data?.units ?? []) as VehicleUnitRow[],
+    [query.data?.units]
+  );
+
   const metadata = query.data?.metadata as
     | { totalElements?: number }
     | undefined;
   const { isLoading } = query;
   const total = metadata?.totalElements ?? 0;
 
-  // ===== Xoá hàng loạt =====
   const { mutateAsync: deleteUnits, isPending: deleting } =
     useDeleteVehicleUnitsBulk();
-  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+
+  const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
   const selectedIds = useMemo(
     () => selectedKeys.map((k) => String(k)),
     [selectedKeys]
@@ -106,12 +100,19 @@ export default function VehicleUnitListModal({
     () => (units || []).map((u) => u.vehicleUnitId),
     [units]
   );
+
   const allPageSelected =
     allKeysOnPage.length > 0 &&
     allKeysOnPage.every((k) => selectedIds.includes(k));
 
   const selectAllCurrentPage = () => setSelectedKeys(allKeysOnPage);
   const clearSelection = () => setSelectedKeys([]);
+
+  useEffect(() => {
+    if (open) {
+      setSelectedKeys([]);
+    }
+  }, [page, open]);
 
   const askDeleteBulk = async () => {
     if (!selectedIds.length) return;
@@ -127,14 +128,18 @@ export default function VehicleUnitListModal({
     }
   };
 
-  // ===== Cột hiển thị =====
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const columns: ColumnsType<VehicleUnitRow> = [
     {
       title: "Số khung (VIN)",
       dataIndex: "vinNumber",
       render: (v: string) => <Text copyable>{v}</Text>,
     },
-    { title: "Màu sắc", dataIndex: "color" },
+    {
+      title: "Màu sắc",
+      dataIndex: "color",
+    },
     {
       title: "Trạng thái",
       dataIndex: "status",
@@ -148,24 +153,28 @@ export default function VehicleUnitListModal({
       render: (v?: string) => (v ? dayjs(v).format("YYYY") : "—"),
     },
     {
-      // 🔁 ĐỔI NHÃN CỘT
       title: "Giá bán lẻ",
       dataIndex: "price",
+      align: "right",
       render: (p?: number) =>
         typeof p === "number" ? `${p.toLocaleString("vi-VN")}₫` : "—",
     },
   ];
 
-  // ===== rowSelection (ẩn checkbox ở header + UI gọn) =====
   const rowSelection = isEvmStaff
     ? {
         selectedRowKeys: selectedKeys,
-        onChange: (keys: React.Key[]) => setSelectedKeys(keys),
+        onChange: (keys: Key[]) => setSelectedKeys(keys),
         getCheckboxProps: () => ({ disabled: deleting }),
-        columnTitle: <span />, // ẩn checkbox header
+        columnTitle: <span />,
         selections: false as const,
       }
     : undefined;
+
+  const currentCount = units.length;
+  const totalLabel = `${currentCount.toLocaleString(
+    "vi-VN"
+  )} / ${total.toLocaleString("vi-VN")} đơn vị xe`;
 
   return (
     <Modal
@@ -173,15 +182,29 @@ export default function VehicleUnitListModal({
       onCancel={onClose}
       footer={null}
       width={isEvmStaff ? 1000 : 950}
-      title="📦 Danh sách đơn vị xe"
       destroyOnClose
+      title={
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <AppstoreOutlined className="text-[#627254]" />
+            <span className="font-semibold text-[15px]">
+              Danh sách đơn vị xe
+            </span>
+          </div>
+          <span className="text-xs text-gray-500">
+            Quản lý các đơn vị xe thuộc mẫu xe hiện tại.
+          </span>
+        </div>
+      }
     >
-      {/* ===== Toolbar tinh gọn, đẹp hơn ===== */}
       {isEvmStaff && (
-        <div className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 mb-3 shadow-sm">
+        <div className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2 mb-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-50 text-gray-700 border text-xs font-medium">
-              Đã chọn: {selectedIds.length}
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-50 text-gray-700 border text-xs font-medium">
+              Đã chọn:{" "}
+              <span className="ml-1 font-semibold">
+                {selectedIds.length.toLocaleString("vi-VN")}
+              </span>
             </span>
 
             {!allPageSelected ? (
@@ -191,7 +214,7 @@ export default function VehicleUnitListModal({
                 onClick={selectAllCurrentPage}
                 disabled={units.length === 0}
               >
-                Chọn tất cả trang này
+                Chọn tất cả trên trang này
               </Button>
             ) : (
               <Button
@@ -199,60 +222,52 @@ export default function VehicleUnitListModal({
                 className="!px-0 !text-[#627254]"
                 onClick={clearSelection}
               >
-                Bỏ chọn
+                Bỏ chọn trang này
               </Button>
             )}
           </div>
 
           {selectedIds.length > 0 && (
-            <Popconfirm
-              title="Xoá các đơn vị xe đã chọn?"
-              description={`Bạn sắp xoá ${selectedIds.length} đơn vị xe. Không thể hoàn tác.`}
-              okText="Xoá"
-              cancelText="Hủy"
-              okButtonProps={{ danger: true, loading: deleting }}
-              onConfirm={askDeleteBulk}
+            <Button
+              type="primary"
+              danger
+              size="middle"
+              loading={deleting}
+              className="flex items-center gap-2 rounded-full !px-4 !h-9 shadow-sm"
+              onClick={() => setConfirmOpen(true)}
             >
-              <Button
-                type="primary"
-                danger
-                size="small"
-                loading={deleting}
-                className="!px-3"
-              >
-                🗑️ Xoá đã chọn
-              </Button>
-            </Popconfirm>
+              <DeleteOutlined />
+              <span className="font-medium">Xoá các mục đã chọn</span>
+            </Button>
           )}
         </div>
       )}
 
-      {/* ===== Bảng ===== */}
-      {isLoading && (units?.length ?? 0) === 0 ? (
+      {isLoading && units.length === 0 ? (
         <div className="flex justify-center py-10">
           <Spin size="large" />
         </div>
-      ) : (units?.length ?? 0) === 0 ? (
+      ) : units.length === 0 ? (
         <Empty
-          description="Không có lô xe nào thuộc xe này."
+          description="Không có đơn vị xe nào thuộc mẫu xe này."
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
         <>
-          <Table
-            dataSource={(units || []) as VehicleUnitRow[]}
+          <Table<VehicleUnitRow>
+            dataSource={units}
             columns={columns}
             rowKey={(r) => r.vehicleUnitId}
             pagination={false}
             size="middle"
             bordered
             rowSelection={rowSelection}
+            className="rounded-xl overflow-hidden bg-white"
             scroll={{ x: true }}
           />
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-gray-600">
-              Tổng cộng: {(units || []).length} / {total} xe
-            </span>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+            <span className="text-gray-600 text-sm">{totalLabel}</span>
             <Pagination
               current={page + 1}
               total={total}
@@ -263,6 +278,21 @@ export default function VehicleUnitListModal({
           </div>
         </>
       )}
+
+      <DeleteConfirm
+        open={confirmOpen && selectedIds.length > 0}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={async () => {
+          await askDeleteBulk();
+          setConfirmOpen(false);
+        }}
+        title="Xoá các đơn vị xe đã chọn?"
+        message={`Bạn sắp xoá ${selectedIds.length.toLocaleString(
+          "vi-VN"
+        )} đơn vị xe. Hành động này không thể hoàn tác.`}
+        okText="Xoá"
+        danger
+      />
     </Modal>
   );
 }
