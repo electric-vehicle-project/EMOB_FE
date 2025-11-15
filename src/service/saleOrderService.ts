@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -6,6 +7,9 @@ import {
   deleteMutationHook,
 } from "../hook/useApi";
 import type { OrderStatus } from "../model/SaleOrder";
+import api from "../config/api";
+import { toast } from "react-toastify";
+import type { AxiosError } from "axios";
 
 const BASE_URL = "/sale-order";
 
@@ -134,10 +138,32 @@ export const useSaleOrderById = createQueryWithPathParamHook(
 
 //  POST /sale-order/{id}/completed
 // (Hoàn tất đơn hàng)
-export const useSaleOrderComplete = createMutationHook(
-  "saleOrderListCurrentDealer",
-  `${BASE_URL}/completed`
-);
+export const useSaleOrderCompleteDirect = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!id) throw new Error("Missing sale order ID");
+      const res = await api.post(`/sale-order/${id}/completed`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Đơn hàng đã được hoàn tất");
+      queryClient.invalidateQueries({
+        queryKey: ["saleOrderListCurrentDealer"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["saleOrderListStaffCurrent"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["saleOrderListDealers"] });
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      toast.error(
+        err.response?.data?.message || "Không thể hoàn tất đơn hàng!"
+      );
+    },
+  });
+};
 
 //  DELETE /sale-order/{id}
 // (Hủy đơn hàng)

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Tag, Descriptions, Button, Typography, Skeleton, message } from "antd";
+import { Tag, Descriptions, Button, Typography, Skeleton } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useReportById } from "../../service/reportService";
 import { CardWrapper } from "../../components/template/CardWrapper";

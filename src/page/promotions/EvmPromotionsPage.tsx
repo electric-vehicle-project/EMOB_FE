@@ -1,41 +1,29 @@
 import { useState, useMemo } from "react";
-import { Button, Input, Select, Space } from "antd";
+import { Button } from "antd";
 import { toast } from "react-toastify";
-import {
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+
 import type { RootState } from "../../redux/store";
 import type { Promotion } from "../../model/Promotion";
+
 import {
   usePromotionList,
   usePromotionDelete,
 } from "../../service/promotionService";
+
 import { PromotionTable } from "../../components/organisms/promotion/PromotionTable";
 import { PromotionDeleteConfirm } from "../../components/organisms/promotion/PromotionDeleteConfirm";
 import { CardWrapper } from "../../components/template/CardWrapper";
-import { useDebounce } from "../../hook/useDebounce";
-
-const STATUS_OPTIONS = [
-  { label: "ACTIVE", value: "ACTIVE" },
-  { label: "UPCOMING", value: "UPCOMING" },
-  { label: "EXPIRED", value: "EXPIRED" },
-  { label: "INACTIVE", value: "INACTIVE" },
-];
 
 export const EvmPromotionsPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.user);
-  const role =
-    (user?.role as "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF") ??
-    "EVM_STAFF";
 
-  const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState<string | undefined>(undefined);
-  const debouncedKeyword = useDebounce(keyword, 400);
+  const role: "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF" =
+    user?.role ?? "EVM_STAFF";
+
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [sortField, setSortField] = useState("createAt");
@@ -45,8 +33,8 @@ export const EvmPromotionsPage: React.FC = () => {
     "GLOBAL",
     page,
     size,
-    debouncedKeyword,
-    status,
+    undefined, // no keyword
+    undefined, // no status filter
     sortField,
     sortDir
   );
@@ -55,6 +43,7 @@ export const EvmPromotionsPage: React.FC = () => {
     () => (data?.result?.data as Promotion[]) ?? [],
     [data]
   );
+
   const totalElements = useMemo(
     () => data?.result?.metadata?.totalElements ?? 0,
     [data]
@@ -64,6 +53,7 @@ export const EvmPromotionsPage: React.FC = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
   );
+
   const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
 
   const handleCreate = () => {
@@ -85,23 +75,13 @@ export const EvmPromotionsPage: React.FC = () => {
     if (!selectedPromotion) return;
     try {
       await deletePromotion(selectedPromotion.id);
-      toast.success("Đã xoá khuyến mãi thành công!");
+      toast.success("Đã xoá khuyến mãi thành công");
       refetch();
     } catch {
-      toast.error("Không thể xoá khuyến mãi này!");
+      toast.error("Không thể xoá khuyến mãi này");
     } finally {
       setConfirmOpen(false);
     }
-  };
-
-  const resetFilters = () => {
-    setKeyword("");
-    setStatus(undefined);
-    setSortField("createAt");
-    setSortDir("desc");
-    setPage(0);
-    setSize(10);
-    refetch();
   };
 
   return (
@@ -110,7 +90,8 @@ export const EvmPromotionsPage: React.FC = () => {
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi toàn hệ thống
         </h2>
-        {(role === "EVM_STAFF" || role === "DEALER_STAFF") && (
+
+        {(role === "ADMIN" || role === "EVM_STAFF") && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -120,37 +101,6 @@ export const EvmPromotionsPage: React.FC = () => {
             Tạo khuyến mãi
           </Button>
         )}
-      </div>
-
-      <div className="mb-4">
-        <Space wrap size="middle">
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo tên khuyến mãi..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={{ width: 300 }}
-          />
-          <Select
-            allowClear
-            style={{ width: 240 }}
-            placeholder="Trạng thái"
-            value={status}
-            options={STATUS_OPTIONS}
-            onChange={(val) => {
-              setStatus(val);
-              setPage(0);
-            }}
-          />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={resetFilters}
-            type="primary"
-          >
-            Reset
-          </Button>
-        </Space>
       </div>
 
       <PromotionTable

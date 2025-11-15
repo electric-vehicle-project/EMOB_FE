@@ -33,7 +33,9 @@ export interface SaleOrderResponse {
 
   items?: {
     id: string;
-    vehicleName: string;
+    vehicleId?: string;
+    vehicleUnitIds: string[];
+    vehicleStatus: string;
     color: string;
     quantity: number;
     unitPrice: number;

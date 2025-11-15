@@ -58,6 +58,7 @@ import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
+import ReportDetailPage from "../page/report/ReportDetailPage";
 import { DealerDiscountPolicyPage } from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
@@ -214,6 +215,7 @@ export const router = createBrowserRouter([
         element: <SaleOrderByStaffPage />,
       },
       { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage /> },
       { path: ROUTES.CONTRACT, element: <ContractAllCustomersPage /> },
       {
         path: ROUTES.CONTRACT_WITH_EVM,
@@ -284,6 +286,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
       { path: ROUTES.REPORT, element: <ReportPage /> },
+      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage /> },
       { path: ROUTES.CONTRACT, element: <ContractAllCustomersPage /> },
       {
         path: ROUTES.CONTRACT_WITH_EVM,
