@@ -1,5 +1,5 @@
 import { Table, Pagination, Tag, Menu, Dropdown } from "antd";
-import type { ColumnsType, TableProps } from "antd/es/table";
+import type { ColumnsType } from "antd/es/table";
 import { EllipsisOutlined } from "@ant-design/icons";
 import type { IDealer } from "../../../model/Dealer";
 import { formatDateTimeVietnam } from "../../../utils/timeFeature";
@@ -18,6 +18,7 @@ interface Props {
   onEdit: (dealer: IDealer) => void;
   onDelete: (id: string) => void;
 
+  /* vẫn giữ props nhưng table không dùng */
   sortField: string | null;
   sortDir: "asc" | "desc" | null;
   onSortChange: (field: string | null, dir: "asc" | "desc" | null) => void;
@@ -38,34 +39,11 @@ export const DealerTable = ({
   canModify = false,
   pagination,
   isLoading,
-  sortField,
-  sortDir,
-  onSortChange,
-  countryOptions,
-  activeCountry,
-  onFilterCountry,
 }: Props) => {
   const regionColors: Record<string, string> = {
     NORTH: "green",
     CENTRAL: "blue",
     SOUTH: "volcano",
-  };
-
-  // Toggle sort giống behavior mặc định AntD
-  const toggleSort = (field: string) => {
-    if (sortField !== field) {
-      onSortChange(field, "asc");
-      return;
-    }
-    if (sortDir === "asc") {
-      onSortChange(field, "desc");
-      return;
-    }
-    if (sortDir === "desc") {
-      onSortChange(null, null);
-      return;
-    }
-    onSortChange(field, "asc");
   };
 
   const columns: ColumnsType<IDealer> = [
@@ -74,46 +52,25 @@ export const DealerTable = ({
       dataIndex: "name",
       key: "name",
       align: "center",
-      sorter: true,
-      sortOrder:
-        sortField === "name"
-          ? sortDir === "asc"
-            ? "ascend"
-            : "descend"
-          : undefined,
-      onHeaderCell: () => ({
-        onClick: () => toggleSort("name"),
-      }),
     },
-
     {
       title: "Email",
       dataIndex: "emailContact",
       key: "emailContact",
       align: "center",
     },
-
     {
       title: "Điện thoại",
       dataIndex: "phoneContact",
       key: "phoneContact",
       align: "center",
     },
-
     {
       title: "Quốc gia",
       dataIndex: "country",
       key: "country",
       align: "center",
-      filters: countryOptions.map((c) => ({ text: c, value: c })),
-      filterMultiple: false,
-      filteredValue: activeCountry ? [activeCountry] : null,
-      onFilter: () => true,
-      onHeaderCell: () => ({
-        onClick: (e: React.MouseEvent) => e.stopPropagation(), // chặn sort khi bấm filter
-      }),
     },
-
     {
       title: "Khu vực",
       dataIndex: "region",
@@ -132,29 +89,17 @@ export const DealerTable = ({
         );
       },
     },
-
     {
       title: "Địa chỉ",
       dataIndex: "address",
       key: "address",
       align: "center",
     },
-
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
-      sorter: true,
-      sortOrder:
-        sortField === "createdAt"
-          ? sortDir === "asc"
-            ? "ascend"
-            : "descend"
-          : undefined,
-      onHeaderCell: () => ({
-        onClick: () => toggleSort("createdAt"),
-      }),
       render: (val: string) => (val ? formatDateTimeVietnam(val) : "-"),
     },
   ];
@@ -164,7 +109,6 @@ export const DealerTable = ({
       title: "Thao tác",
       key: "actions",
       align: "center",
-      minWidth: 100,
       width: "6%",
       render: (_, record) => {
         const menuItems = [
@@ -182,21 +126,18 @@ export const DealerTable = ({
           },
         ];
 
-        const menu = <Menu items={menuItems} />;
-
         return (
-          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+          <Dropdown
+            overlay={<Menu items={menuItems} />}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
             <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
           </Dropdown>
         );
       },
     });
   }
-
-  const handleChange: TableProps<IDealer>["onChange"] = (_, filters) => {
-    const countryVal = filters.country?.[0] as string | undefined;
-    onFilterCountry(countryVal);
-  };
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -206,8 +147,6 @@ export const DealerTable = ({
         columns={columns}
         loading={isLoading}
         pagination={false}
-        onChange={handleChange}
-        sortDirections={["ascend", "descend"]}
       />
 
       {pagination && (
