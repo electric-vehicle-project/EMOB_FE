@@ -12,7 +12,7 @@ import {
   Input,
   Dropdown,
 } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { SearchOutlined, SlidersOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import {
@@ -189,6 +189,7 @@ export const DeliveryEVMAndDealerList = () => {
                 setPage(0);
               }}
               allowClear
+              prefix={<SearchOutlined />}
               style={{ width: 350 }}
             />
 
@@ -198,7 +199,7 @@ export const DeliveryEVMAndDealerList = () => {
               onOpenChange={setFilterOpen}
               dropdownRender={() => <FilterContent />}
             >
-              <Button type="text" icon={<FilterOutlined style={{ fontSize: 20 }} />} />
+              <Button type="text" icon={<SlidersOutlined style={{ fontSize: 20 }} />} />
             </Dropdown>
           </div>
 

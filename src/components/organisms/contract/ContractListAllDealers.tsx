@@ -8,7 +8,7 @@ import {
   Dropdown,
   Button,
 } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { SearchOutlined, SlidersOutlined } from "@ant-design/icons";
 import {
   useContractQueryByEVM,
 } from "../../../service/contractService";
@@ -120,6 +120,7 @@ export const ContractListAllDealers = () => {
               setPage(0);
             }}
             allowClear
+            prefix={<SearchOutlined />}
             style={{ width: 350 }}
           />
 
@@ -131,7 +132,7 @@ export const ContractListAllDealers = () => {
           >
             <Button
               type="text"
-              icon={<FilterOutlined style={{ fontSize: 20 }} />}
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
               className="text-gray-600 hover:text-black"
             />
           </Dropdown>

@@ -11,7 +11,7 @@ import {
   Space,
   Divider,
 } from "antd";
-import { FilterOutlined, PlusOutlined } from "@ant-design/icons";
+import { SlidersOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTestDriveQuery } from "../../../service/testDriveService";
 import { TestDriveCalendar } from "../../molecules/test-drive/TestDriveCalendar";
 import { TestDriveCreateModal } from "../../molecules/test-drive/TestDriveCreateModal";
@@ -218,7 +218,7 @@ export const TestDrive = () => {
               >
                 <Button
                   type="text"
-                  icon={<FilterOutlined style={{ fontSize: 20 }} />}
+                  icon={<SlidersOutlined style={{ fontSize: 20 }} />}
                   className="text-gray-600 hover:text-black"
                 />
               </Dropdown>

@@ -141,9 +141,11 @@ export const ContractTable = ({ data }: Props) => {
           />
         );
 
+
+        
         return (
           <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
-            <EllipsisOutlined className="text-5xl cursor-pointer text-gray-600 hover:text-black" />
+            <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
           </Dropdown>
         );
       },

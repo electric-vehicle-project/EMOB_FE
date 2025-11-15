@@ -8,7 +8,7 @@ import {
   Dropdown,
   Button,
 } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { SearchOutlined, SlidersOutlined } from "@ant-design/icons";
 import {
   useContractQueryByCurrentDealer,
 } from "../../../service/contractService";
@@ -45,8 +45,8 @@ export const ContractListCurrentDealer = () => {
   );
 
   useEffect(() => {
-      refetch();
-    });
+    refetch();
+  });
 
   const contracts = data?.result?.data ?? [];
   const total = data?.result?.metadata?.totalElements ?? 0;
@@ -138,6 +138,7 @@ export const ContractListCurrentDealer = () => {
               setPage(0);
             }}
             allowClear
+            prefix={<SearchOutlined />}
             style={{ width: 350 }}
           />
 
@@ -149,7 +150,7 @@ export const ContractListCurrentDealer = () => {
           >
             <Button
               type="text"
-              icon={<FilterOutlined style={{ fontSize: 20 }} />}
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
               className="text-gray-600 hover:text-black"
             />
           </Dropdown>

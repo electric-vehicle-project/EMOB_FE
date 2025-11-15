@@ -58,9 +58,9 @@ import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
 // import { VehiclePriceUpdateModal } from "../components/organisms/vehicle/VehiclePriceUpdateModal";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import { TestDriveByCurrentStaffPage } from "../page/test-drive/TestDriveByCurrentStaffPage";
-import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
-import ReportDetailPage from "../page/report/ReportDetailPage";
 import { DealerDiscountPolicyPage } from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
+import ReportDetailPage from "../page/report/ReportDetailPage";
+import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====
@@ -216,7 +216,7 @@ export const router = createBrowserRouter([
         element: <SaleOrderByStaffPage />,
       },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage /> },
+      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage/> },
       { path: ROUTES.CONTRACT, element: <ContractAllCustomersPage /> },
       {
         path: ROUTES.CONTRACT_WITH_EVM,
