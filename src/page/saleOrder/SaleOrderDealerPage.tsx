@@ -1,24 +1,26 @@
 import { useState } from "react";
-import { Button, Input, Select, Space, message } from "antd";
-import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { Button, Select } from "antd";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
+
 import {
   useSaleOrderListCurrentDealer,
   useSaleOrderDelete,
 } from "../../service/saleOrderService";
+
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
+import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import { useDebounce } from "../../hook/useDebounce";
-import type { SelectProps } from "antd";
+import { toast } from "react-toastify";
 
-const STATUS_OPTIONS: SelectProps<OrderStatus[]>["options"] = [
-  { label: "CREATED", value: "CREATED" as OrderStatus },
-  { label: "COMPLETED", value: "COMPLETED" as OrderStatus },
-  { label: "CANCELED", value: "CANCELED" as OrderStatus },
+const STATUS_OPTIONS = [
+  { label: "Đã tạo", value: "CREATED" as OrderStatus },
+  { label: "Hoàn tất", value: "COMPLETED" as OrderStatus },
+  { label: "Đã huỷ", value: "CANCELED" as OrderStatus },
 ];
 
 type DealerRole = "MANAGER" | "DEALER_STAFF";
@@ -28,17 +30,22 @@ const SaleOrderDealerPage: React.FC = () => {
   const user = useSelector((s: RootState) => s.user);
   const role = (user?.role as DealerRole) ?? "DEALER_STAFF";
 
+  // Search + Filter
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
+
   const [statuses, setStatuses] = useState<OrderStatus[] | undefined>(
     undefined
   );
+
+  // Pagination + Sort
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // API
   const { data, isLoading, isFetching, refetch } =
     useSaleOrderListCurrentDealer({
       page,
@@ -49,11 +56,14 @@ const SaleOrderDealerPage: React.FC = () => {
       sortDir,
     });
 
-  const orders = data?.result?.data ?? data?.data ?? [];
+  const orders: SaleOrderResponse[] = data?.result?.data ?? data?.data ?? [];
+
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
+  // Cancel logic
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const { mutateAsync: cancelOrder, isPending: canceling } =
     useSaleOrderDelete();
 
@@ -66,15 +76,16 @@ const SaleOrderDealerPage: React.FC = () => {
     if (!selectedId) return;
     try {
       await cancelOrder(selectedId);
-      message.success("Đã hủy đơn hàng thành công!");
+      toast.success("Đã hủy đơn hàng thành công!");
       refetch();
     } catch {
-      message.error("Không thể hủy đơn hàng này!");
+      toast.error("Không thể hủy đơn hàng này!");
     } finally {
       setConfirmOpen(false);
     }
   };
 
+  // Reset filters
   const resetFilters = () => {
     setKeyword("");
     setStatuses(undefined);
@@ -91,60 +102,50 @@ const SaleOrderDealerPage: React.FC = () => {
 
   return (
     <CardWrapper>
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Đơn hàng của đại lý
         </h2>
+
         {role === "MANAGER" ? (
           <Button
-            onClick={() => navigate("/manager/sale-order/staff-summary")}
             type="primary"
+            onClick={() => navigate("/manager/sale-order/staff-summary")}
           >
             Xem doanh số theo nhân viên
           </Button>
         ) : (
           <Button
-            onClick={() => navigate("/dealer_staff/sale-order/staff")}
             type="primary"
+            onClick={() => navigate("/dealer_staff/sale-order/staff")}
           >
             Xem đơn hàng của tôi
           </Button>
         )}
       </div>
 
-      <div className="mb-4">
-        <Space wrap size="middle">
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo mã đơn / đại lý / ghi chú…"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={{ width: 320 }}
-          />
-          <Select<OrderStatus[]>
-            allowClear
-            mode="multiple"
-            style={{ width: 320 }}
-            placeholder="Trạng thái (chọn nhiều)"
-            value={statuses}
-            options={STATUS_OPTIONS}
-            onChange={(vals) => {
-              const v = (vals as OrderStatus[]) || [];
-              setStatuses(v.length ? v : undefined);
-              setPage(0);
-            }}
-          />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={resetFilters}
-            type="primary"
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
+      {/* FILTER BAR (EMOB) */}
+      <EMOBFilterBar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onReset={resetFilters}
+        filterDropdown={
+          <div className="flex flex-col gap-4">
+            <Select<OrderStatus[]>
+              mode="multiple"
+              allowClear
+              className="w-full"
+              placeholder="Trạng thái"
+              value={statuses}
+              options={STATUS_OPTIONS}
+              onChange={(vals) => setStatuses(vals.length ? vals : undefined)}
+            />
+          </div>
+        }
+      />
 
+      {/* TABLE */}
       <SaleOrderTable
         data={orders}
         loading={isLoading || isFetching || canceling}

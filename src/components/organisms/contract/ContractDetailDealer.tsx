@@ -30,13 +30,13 @@ import { DeleteConfirm } from "../DeleteConfirm";
 import { useSaleOrderById } from "../../../service/saleOrderService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
 
-
 export const ContractDetailDealer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data, isLoading, refetch } = useContractDetailQuery(id);
 
-  const { mutateAsync: signContract, isPending: signing } = useContractSignMutation();
+  const { mutateAsync: signContract, isPending: signing } =
+    useContractSignMutation();
   const { mutateAsync: cancelContract } = useContractCancelMutation();
 
   const user = useCurrentUser();
@@ -75,16 +75,16 @@ export const ContractDetailDealer = () => {
         paymentStatus === "FULL"
           ? { contractId: contract.contractId }
           : {
-            contractId: contract.contractId,
-            deposit: formValues.deposit,
-            downPayment: formValues.downPayment,
-            termMonths: formValues.termMonths,
-            interestRate: formValues.interestRate,
-          };
+              contractId: contract.contractId,
+              deposit: formValues.deposit,
+              downPayment: formValues.downPayment,
+              termMonths: formValues.termMonths,
+              interestRate: formValues.interestRate,
+            };
 
       await signContract({
         params: baseParams,
-        body
+        body,
       });
       toast.success("Đã ký hợp đồng thành công!");
       refetch();
@@ -153,10 +153,12 @@ export const ContractDetailDealer = () => {
                   (Số: {contract?.contractNumber})
                 </p>
               </div>
-              <div className="text-end italic">TP.HCM, ngày {dayjs(contract?.createdAt).format("DD")} tháng {dayjs(contract?.createdAt).format("MM")} năm {dayjs(contract?.createdAt).format("YYYY")}
+              <div className="text-end italic">
+                TP.HCM, ngày {dayjs(contract?.createdAt).format("DD")} tháng{" "}
+                {dayjs(contract?.createdAt).format("MM")} năm{" "}
+                {dayjs(contract?.createdAt).format("YYYY")}
               </div>
             </>
-
           }
         >
           {/* ---------- Nội dung hợp đồng ---------- */}
@@ -175,7 +177,7 @@ export const ContractDetailDealer = () => {
             </p>
 
             <p>
-              <b>BÊN B (Đại lý):</b>  {dealer?.name ?? "______________________"}
+              <b>BÊN B (Đại lý):</b> {dealer?.name ?? "______________________"}
               <br />
               Đại diện: Ông/Bà ______________________ - Chức vụ: ______________________
               <br />
@@ -214,8 +216,8 @@ export const ContractDetailDealer = () => {
                 {contract?.status === "PENDING"
                   ? "Chưa thanh toán"
                   : contract?.status === "SIGNED"
-                    ? "Đã thỏa thuận"
-                    : contract?.status || "Không xác định"}
+                  ? "Đã thỏa thuận"
+                  : contract?.status || "Không xác định"}
               </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
@@ -231,7 +233,6 @@ export const ContractDetailDealer = () => {
               <b>Điều 5. Điều khoản chung</b>
               {/* ---------- Phụ lục hợp đồng ---------- */}
               <Divider />
-
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-3 text-center uppercase">
                   Phụ lục hợp đồng
@@ -324,7 +325,6 @@ export const ContractDetailDealer = () => {
             </div>
           </div>
 
-
           <Divider />
 
           <div className="flex justify-end gap-3 mt-6 print:hidden">
@@ -345,7 +345,6 @@ export const ContractDetailDealer = () => {
                 >
                   Hủy hợp đồng
                 </Button>
-
               </>
             )}
             {contract?.status === "SIGNED" && (
@@ -370,7 +369,7 @@ export const ContractDetailDealer = () => {
           disabled:
             paymentStatus === "INSTALLMENT"
               ? !form.isFieldsTouched(true) ||
-              form.getFieldsError().some(({ errors }) => errors.length > 0)
+                form.getFieldsError().some(({ errors }) => errors.length > 0)
               : false,
         }}
       >
@@ -380,7 +379,7 @@ export const ContractDetailDealer = () => {
           className="mt-2"
           onValuesChange={() => {
             // Bắt buộc re-render để cập nhật trạng thái nút khi người dùng nhập
-            form.validateFields().catch(() => { });
+            form.validateFields().catch(() => {});
           }}
         >
           <Form.Item label="Trạng thái thanh toán">
@@ -402,7 +401,8 @@ export const ContractDetailDealer = () => {
                 rules={[
                   {
                     required: true,
-                    message: "Tiền đặt cọc ít nhất phải đạt 10% giá trị tổng đơn",
+                    message:
+                      "Tiền đặt cọc ít nhất phải đạt 10% giá trị tổng đơn",
                   },
                   {
                     validator: (_, value) => {

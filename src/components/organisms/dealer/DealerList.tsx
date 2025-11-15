@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
-import { Result, Button, Empty, message } from "antd";
+import { Result, Button, Empty } from "antd";
 import type { IDealer } from "../../../model/Dealer";
 import { SearchBar } from "../../molecules/SearchBar";
-import { DealerModal } from "./DealerModal";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useDebounce } from "../../../hook/useDebounce";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
@@ -18,35 +17,51 @@ import {
   normalizeDealerValues,
 } from "../../molecules/dealer/dealerUtils";
 import type { DealerApiModel } from "../../../model/Dealer";
+import { toast } from "react-toastify";
+import { DealerModal } from "./DealerModal";
 
 export const DealerList = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // === SORT ===
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  // === FILTER COUNTRY ===
+  const [country, setCountry] = useState<string | undefined>(undefined);
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
   const canView = role === "ADMIN" || role === "EVM_STAFF";
   const canModify = role === "ADMIN";
+
+  // === MAIN QUERY PARAMS ===
   const params = useMemo(
     () => ({
       page: current - 1,
       size: pageSize,
       keyword: debouncedSearch || undefined,
-      sortField: "createdAt",
-      sortDir: "desc",
+      sortField,
+      sortDir,
+      country,
     }),
-    [current, pageSize, debouncedSearch]
+    [current, pageSize, debouncedSearch, sortField, sortDir, country]
   );
 
+  // === MAIN DEALER QUERY ===
   const { data, refetch, isLoading, isError, error } = useDealersQuery(
     { enabled: canView },
     params
   );
+
   const dealers: IDealer[] = useMemo(() => {
     const raw: DealerApiModel[] = data?.result?.data ?? [];
     return raw.map((d) => ({
@@ -63,6 +78,21 @@ export const DealerList = () => {
 
   const total = data?.result?.metadata?.totalElements ?? 0;
 
+  // === FIX FILTER ISSUE: ALWAYS LOAD ALL COUNTRIES ===
+  const { data: allDealerResp } = useDealersQuery(
+    { enabled: true },
+    { page: 0, size: 9999, sortField: "createdAt", sortDir: "desc" }
+  );
+
+  const countryOptions = useMemo<string[]>(() => {
+    const list =
+      allDealerResp?.result?.data
+        ?.map((d: DealerApiModel) => d.country)
+        .filter((c: string | undefined): c is string => Boolean(c)) ?? [];
+    return Array.from(new Set(list));
+  }, [allDealerResp]);
+
+  // === MUTATIONS ===
   const createDealer = useCreateDealerMutation();
   const updateDealer = useUpdateDealerMutation();
   const deleteDealer = useDeleteDealerMutation();
@@ -73,11 +103,12 @@ export const DealerList = () => {
 
     if (editDealer?.id) {
       await updateDealer.mutateAsync({ id: editDealer.id, data: payload });
-      message.success("Cập nhật đại lý thành công");
+      toast.success("Cập nhật đại lý thành công");
     } else {
       await createDealer.mutateAsync(payload);
-      message.success("Tạo đại lý thành công");
+      toast.success("Tạo đại lý thành công");
     }
+
     setModalOpen(false);
     setEditDealer(undefined);
     refetch();
@@ -86,11 +117,12 @@ export const DealerList = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
     await deleteDealer.mutateAsync(deleteId);
-    message.success("Đã xóa đại lý");
+    toast.success("Đã xóa đại lý");
     setDeleteId(null);
     refetch();
   };
 
+  // === PERMISSION ===
   if (!canView)
     return (
       <Result
@@ -167,6 +199,19 @@ export const DealerList = () => {
             },
             showTotal: (t) => `Tổng ${t} đại lý`,
           }}
+          sortField={sortField}
+          sortDir={sortDir}
+          onSortChange={(f, d) => {
+            setSortField(f ?? "createdAt");
+            setSortDir(d ?? "desc");
+            setCurrent(1);
+          }}
+          countryOptions={countryOptions}
+          activeCountry={country}
+          onFilterCountry={(c) => {
+            setCountry(c);
+            setCurrent(1);
+          }}
         />
       ) : (
         <Empty description="Không có dữ liệu" />
@@ -180,6 +225,7 @@ export const DealerList = () => {
             onSubmit={handleSave}
             initialValues={editDealer}
           />
+
           <DeleteConfirm
             open={!!deleteId}
             onConfirm={handleDelete}

@@ -1,6 +1,5 @@
 import React from "react";
 import { Row, Col, Card, Statistic } from "antd";
-import CardTitle from "../atoms/CardTitle";
 
 export interface SummaryCardProps {
   imported: string | number;

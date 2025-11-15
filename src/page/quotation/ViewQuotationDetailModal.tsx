@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Modal, Descriptions, Spin, Alert, Tag, Divider, Tooltip } from "antd";
+import { Modal, Descriptions, Spin, Alert, Tag, Divider } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircleOutlined,
@@ -8,14 +8,12 @@ import {
 } from "@ant-design/icons";
 import type { IQuotationItem } from "../../model/Quotation";
 import { useGetQuotationById } from "../../service/quotationService";
-import {
-  useCustomerById,
-  useCustomerList,
-} from "../../service/customerService";
+import { useCustomerList } from "../../service/customerService";
 import { useGetVehicles } from "../../service/vehicleService";
 import { usePromotionList } from "../../service/promotionService";
 import { useDealerByIdQuery } from "../../service/dealerService";
 import { useGetAccountById } from "../../service/accountService";
+import { useCurrentUser } from "../../utils/getCurrentUser";
 
 interface ViewQuotationModalProps {
   open?: boolean;
@@ -23,12 +21,22 @@ interface ViewQuotationModalProps {
   onClose?: () => void;
 }
 
-/* Hiển thị tên người tạo */
+/* Hiển thị tên người tạo  - sdt*/
 const AccountName: React.FC<{ accountId: string }> = ({ accountId }) => {
   const { data, isLoading } = useGetAccountById(accountId);
+
   if (isLoading)
     return <span className="text-gray-400 italic">Đang tải...</span>;
-  return <span>{data?.result?.fullName || "-"}</span>;
+
+  const user = data?.result;
+  const name = user?.fullName || "-";
+  const phone = user?.phone || "Không có SĐT";
+
+  return (
+    <span>
+      {name} - {phone}
+    </span>
+  );
 };
 
 /* Hiển thị tên đại lý */
@@ -43,7 +51,7 @@ const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
   );
 };
 
-/* 🌿 Component chính */
+/* Component chính */
 const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   open,
   quotationId,
@@ -54,10 +62,13 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
     retry: false,
   });
 
+  // bắt role
+  const account = useCurrentUser();
+  const role = account?.role;
   const quotation = data?.result;
   const is401Error = error?.response?.status === 401;
 
-  const { data: customersData } = useCustomerList(0, 100);
+  const { data: customersData } = useCustomerList({ page: 0, size: 100 });
   const { data: vehiclesData } = useGetVehicles(0, 100);
   const { data: promotionsData } = usePromotionList("", 0, 100);
 
@@ -86,7 +97,15 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   }, [promotionsData]);
 
   // Trạng thái màu + icon
-  const getStatusTag = (status: string) => {
+  const getStatusTag = (status: string | null | undefined) => {
+    if (!status) {
+      return (
+        <Tag icon={<ClockCircleOutlined />} color="default">
+          Không rõ
+        </Tag>
+      );
+    }
+
     switch (status) {
       case "APPROVED":
         return (
@@ -94,19 +113,53 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
             Đã duyệt
           </Tag>
         );
+
       case "PENDING":
         return (
           <Tag icon={<ClockCircleOutlined />} color="gold">
             Đang chờ
           </Tag>
         );
-      default:
+
+      case "REJECTED":
         return (
           <Tag icon={<CloseCircleOutlined />} color="error">
             Từ chối
           </Tag>
         );
+
+      case "EXPIRED":
+        return (
+          <Tag icon={<CloseCircleOutlined />} color="volcano">
+            Hết hạn
+          </Tag>
+        );
+
+      default:
+        return (
+          <Tag icon={<ClockCircleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
     }
+  };
+  // get status vehicle
+  const getVehicleStatusTag = (status: string | null) => {
+    const config: Record<string, { color: string; text: string }> = {
+      NORMAL: { color: "blue", text: "Bình thường" },
+      SPECIAL: { color: "purple", text: "Đặc biệt" },
+      TEST_DRIVE: { color: "geekblue", text: "Xe lái thử" },
+      RESERVED: { color: "orange", text: "Đã đặt trước" },
+      OLD_STOCK: { color: "volcano", text: "Tồn kho cũ" },
+      SOLD: { color: "red", text: "Đã bán" },
+    };
+
+    // lấy màu status
+    const st =
+      status && config[status]
+        ? config[status]
+        : { color: "default", text: status ?? "Không rõ" };
+    return <Tag color={st.color}>{st.text}</Tag>;
   };
 
   return (
@@ -189,14 +242,31 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                 <DealerName dealerId={quotation.dealerId} />
               </Descriptions.Item>
 
-              <Descriptions.Item label="Người tạo">
-                <AccountName accountId={quotation.accountId} />
-                {/* {quotation.accountId} */}
-              </Descriptions.Item>
+              {role == "MANAGER" && (
+                <Descriptions.Item label="Người tạo">
+                  <AccountName accountId={quotation.accountId} />
+                </Descriptions.Item>
+              )}
 
               <Descriptions.Item label="Số lượng">
                 <span className="font-semibold text-[#627254]">
                   {quotation.totalQuantity ?? 0}
+                </span>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Tổng thuế">
+                <span className="font-semibold text-[#627254]">
+                  {quotation.vatAmount != null
+                    ? `${quotation.vatAmount.toLocaleString("vi-VN")} ₫`
+                    : "-"}
+                </span>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Giảm giá">
+                <span className="font-semibold text-[#627254]">
+                  {quotation.vatAmount != null
+                    ? `${quotation.vatAmount.toLocaleString("vi-VN")} ₫`
+                    : "-"}
                 </span>
               </Descriptions.Item>
 
@@ -254,7 +324,7 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                         : "Không áp dụng"}
                     </Descriptions.Item>
                     <Descriptions.Item label="Trạng thái xe">
-                      <Tag color="blue">{item.vehicleStatus}</Tag>
+                      {getVehicleStatusTag(item.vehicleStatus)}
                     </Descriptions.Item>
                     <Descriptions.Item label="Màu sắc">
                       {item.color}

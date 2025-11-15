@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import { Form, Button, message, Modal, Spin } from "antd";
+import { Form, Button, Modal, Spin, Input } from "antd";
+import type { NamePath } from "antd/es/form/interface";
 import type { IQuotationItem } from "../../model/Quotation";
+
 import SelectInput from "../../components/atoms/SelectInput";
 import NumberInput from "../../components/atoms/NumberInput";
+
 import {
   useGetQuotationById,
   useUpdateQuotation,
@@ -10,6 +13,7 @@ import {
 import { usePromotionList } from "../../service/promotionService";
 import { useCustomerList } from "../../service/customerService";
 import { useGetVehicles } from "../../service/vehicleService";
+import { toast } from "react-toastify";
 
 export interface UpdateQuotationPayload {
   items: IQuotationItem[];
@@ -17,9 +21,22 @@ export interface UpdateQuotationPayload {
   validUntil: number;
 }
 
+export interface UpdateQuotationFormValues {
+  customerId: string;
+  validUntil: number;
+  items: {
+    id: string;
+    vehicleId: string;
+    promotionId: string | null;
+    vehicleStatus: string;
+    color: string;
+    quantity: number;
+  }[];
+}
+
 export interface UpdateQuotationModalProps {
-  open?: boolean;
-  quotationId?: string;
+  open: boolean;
+  quotationId: string;
   onClose?: () => void;
   onSuccess?: () => void;
 }
@@ -30,104 +47,89 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<UpdateQuotationFormValues>();
 
-  /** Hook lấy chi tiết báo giá */
   const { data: quotationData, isLoading: isFetching } = useGetQuotationById(
-    quotationId!,
-    {
-      enabled: !!quotationId && open,
-    }
+    quotationId,
+    { enabled: !!quotationId && open }
   );
-
-  /** Hook cập nhật báo giá */
+  // call api update
   const { mutateAsync: updateQuotation, isPending } = useUpdateQuotation();
 
-  /** Fetch danh sách từ API */
-  const { data: customersData, isLoading: loadingCustomers } = useCustomerList(
-    0,
-    100
-  );
+  const { data: customersData, isLoading: loadingCustomers } = useCustomerList({
+    page: 0,
+    size: 100,
+  });
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
     0,
     100
   );
   const { data: promotionsData, isLoading: loadingPromotions } =
     usePromotionList("", 0, 100);
-
-  /** Chuyển đổi data thành options cho Select */
+  // select list
   const customerOptions = useMemo(() => {
-    const customers = customersData?.result?.data || [];
-    return customers.map((customer: any) => ({
-      label: `${customer.fullName} - ${customer.phoneNumber || customer.email}`,
-      value: customer.id,
+    return (customersData?.result?.data || []).map((c: any) => ({
+      label: `${c.fullName} - ${c.phoneNumber || c.email}`,
+      value: c.id,
     }));
   }, [customersData]);
 
   const vehicleOptions = useMemo(() => {
-    const vehicles = vehiclesData?.result?.data || [];
-    return vehicles.map((vehicle: any) => ({
-      label: `${vehicle.model} (${vehicle.type})`,
-      value: vehicle.id,
+    return (vehiclesData?.result?.data || []).map((v: any) => ({
+      label: `${v.model} (${v.type})`,
+      value: v.id,
     }));
   }, [vehiclesData]);
 
   const promotionOptions = useMemo(() => {
-    const promotions = promotionsData?.result?.data || [];
     return [
       { label: "Không áp dụng", value: "" },
-      ...promotions.map((promo: any) => ({
-        label: `${promo.name} - Giảm ${promo.value}`,
-        value: promo.id,
+      ...(promotionsData?.result?.data || []).map((p: any) => ({
+        label: `${p.name} - Giảm ${p.value}`,
+        value: p.id,
       })),
     ];
   }, [promotionsData]);
 
-  /** Khi dữ liệu có, fill vào form */
+  /** Fill form */
   useEffect(() => {
     if (quotationData?.result) {
-      const quotation = quotationData.result;
-      const item = quotation.items?.[0] || {};
+      const q = quotationData.result;
 
       form.setFieldsValue({
-        itemId: item.id,
-        vehicleId: item.vehicleId,
-        promotionId: item.promotionId || "",
-        vehicleStatus: item.vehicleStatus,
-        color: item.color,
-        quantity: item.quantity,
-        customerId: quotation.customerId,
-        validUntil: quotation.validUntil,
+        customerId: q.customerId,
+        validUntil: q.validUntil,
+        items: q.items?.map((item: IQuotationItem) => ({
+          id: item.id,
+          vehicleId: item.vehicleId,
+          promotionId: item.promotionId || "",
+          vehicleStatus: item.vehicleStatus,
+          color: item.color,
+          quantity: item.quantity,
+        })),
       });
     }
   }, [quotationData, form]);
 
-  /** 🔹 Submit form */
-  const handleSubmit = async (values: any) => {
+  /** Submit */
+  const handleSubmit = async (values: UpdateQuotationFormValues) => {
     const payload: UpdateQuotationPayload = {
-      items: [
-        {
-          id: values.itemId,
-          vehicleId: values.vehicleId,
-          promotionId: values.promotionId || null,
-          vehicleStatus: values.vehicleStatus,
-          color: values.color,
-          quantity: values.quantity,
-        },
-      ],
+      items: values.items.map((item) => ({
+        ...item,
+        promotionId: item.promotionId || null,
+      })),
       customerId: values.customerId,
       validUntil: values.validUntil,
     };
 
     try {
       await updateQuotation({ id: quotationId, data: payload });
-      message.success("Cập nhật báo giá thành công!");
+      toast.success("Cập nhật báo giá thành công!");
       form.resetFields();
       onSuccess?.();
       onClose?.();
     } catch (error: any) {
-      console.error("Update quotation error:", error);
-      message.error(
+      toast.error(
         error?.response?.data?.message || "Cập nhật báo giá thất bại."
       );
     }
@@ -140,7 +142,7 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
       footer={null}
       destroyOnClose
       centered
-      width={600}
+      width={900}
       title={<span className="text-lg font-semibold">Cập nhật báo giá</span>}
     >
       {isFetching ? (
@@ -152,101 +154,121 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
           layout="vertical"
           form={form}
           onFinish={handleSubmit}
-          className="max-w-2xl"
+          className="max-w-3xl"
         >
-          {/* Chọn khách hàng */}
-          <SelectInput
-            label="Khách hàng"
-            name="customerId"
-            placeholder="Chọn khách hàng"
-            options={customerOptions}
-            loading={loadingCustomers}
-            showSearch
-            filterOption={(input, option) =>
-              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-            }
-            rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
-          />
+          {/* CUSTOMER & VALID UNTIL */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SelectInput
+              label="Khách hàng"
+              name="customerId"
+              placeholder="Chọn khách hàng"
+              options={customerOptions}
+              loading={loadingCustomers}
+              showSearch
+              filterOption={(input, option) =>
+                String(option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
+            />
 
-          {/* 🔹 Chọn xe */}
-          <SelectInput
-            label="Xe"
-            name="vehicleId"
-            placeholder="Chọn xe"
-            options={vehicleOptions}
-            loading={loadingVehicles}
-            showSearch
-            filterOption={(input, option) =>
-              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-            }
-            rules={[{ required: true, message: "Vui lòng chọn xe" }]}
-          />
+            <NumberInput
+              label="Thời hạn hiệu lực (ngày)"
+              name="validUntil"
+              min={0}
+              placeholder="Nhập số ngày hiệu lực"
+              rules={[{ required: true, message: "Thời hạn là bắt buộc" }]}
+            />
+          </div>
 
-          {/* 🔹 Chọn khuyến mãi */}
-          <SelectInput
-            label="Khuyến mãi"
-            name="promotionId"
-            placeholder="Chọn khuyến mãi (nếu có)"
-            options={promotionOptions}
-            loading={loadingPromotions}
-            showSearch
-          />
+          {/* ITEMS */}
+          <Form.List name="items">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name }) => (
+                  <div
+                    key={key}
+                    className="grid grid-cols-1 md:grid-cols-6 gap-3 p-4 border rounded-lg bg-gray-50 mt-4"
+                  >
+                    <SelectInput
+                      name={[name, "vehicleId"] as NamePath}
+                      label="Xe"
+                      placeholder="Chọn xe"
+                      options={vehicleOptions}
+                      loading={loadingVehicles}
+                      rules={[{ required: true, message: "Vui lòng chọn xe" }]}
+                    />
 
-          {/* 🔹 Trạng thái xe */}
-          <SelectInput
-            label="Trạng thái xe"
-            name="vehicleStatus"
-            placeholder="Chọn trạng thái xe"
-            options={[
-              { label: "Bình thường", value: "NORMAL" },
-              { label: "Đặc biệt", value: "SPECIAL" },
-              { label: "Xe lái thử", value: "TEST_DRIVE" },
-              { label: "Đã đặt trước", value: "RESERVED" },
-              { label: "Tồn kho cũ", value: "OLD_STOCK" },
-              { label: "Đã bán", value: "SOLD" },
-            ]}
-            rules={[{ required: true, message: "Hãy chọn trạng thái xe" }]}
-          />
+                    <SelectInput
+                      name={[name, "promotionId"] as NamePath}
+                      label="Khuyến mãi"
+                      placeholder="Chọn khuyến mãi"
+                      options={promotionOptions}
+                      loading={loadingPromotions}
+                    />
 
-          {/* 🔹 Màu sắc */}
-          <SelectInput
-            label="Màu sắc"
-            name="color"
-            placeholder="Chọn màu xe"
-            options={[
-              { label: "Đen", value: "BLACK" },
-              { label: "Trắng", value: "WHITE" },
-              { label: "Đỏ", value: "RED" },
-              { label: "Xanh dương", value: "BLUE" },
-              { label: "Bạc", value: "SILVER" },
-              { label: "Xám", value: "GRAY" },
-              { label: "Vàng", value: "YELLOW" },
-              { label: "Cam", value: "ORANGE" },
-            ]}
-            rules={[{ required: true, message: "Vui lòng chọn màu xe" }]}
-          />
+                    <SelectInput
+                      name={[name, "vehicleStatus"] as NamePath}
+                      label="Trạng thái"
+                      placeholder="Chọn trạng thái"
+                      options={[
+                        { label: "Bình thường", value: "NORMAL" },
+                        { label: "Đặc biệt", value: "SPECIAL" },
+                        { label: "Xe lái thử", value: "TEST_DRIVE" },
+                        { label: "Đặt trước", value: "RESERVED" },
+                        { label: "Tồn kho cũ", value: "OLD_STOCK" },
+                        { label: "Đã bán", value: "SOLD" },
+                      ]}
+                      rules={[{ required: true, message: "Chọn trạng thái" }]}
+                    />
 
-          {/* 🔹 Số lượng */}
-          <NumberInput
-            label="Số lượng"
-            name="quantity"
-            min={1}
-            placeholder="Nhập số lượng"
-            rules={[{ required: true, message: "Số lượng là bắt buộc" }]}
-          />
+                    <Form.Item
+                      name={[name, "color"] as NamePath}
+                      label="Màu sắc"
+                      rules={[{ required: true, message: "Nhập màu xe" }]}
+                    >
+                      <Input placeholder="Nhập màu xe" />
+                    </Form.Item>
 
-          {/* 🔹 Thời hạn hiệu lực */}
-          <NumberInput
-            label="Thời hạn hiệu lực (ngày)"
-            name="validUntil"
-            min={0}
-            placeholder="Nhập số ngày hiệu lực"
-            rules={[
-              { required: true, message: "Thời hạn hiệu lực là bắt buộc" },
-            ]}
-          />
+                    <NumberInput
+                      name={[name, "quantity"] as NamePath}
+                      label="Số lượng"
+                      min={1}
+                      rules={[{ required: true, message: "Nhập số lượng" }]}
+                    />
 
-          <div className="flex justify-end gap-3 mt-4">
+                    <div className="flex items-end justify-end">
+                      {fields.length > 1 && (
+                        <Button
+                          style={{
+                            backgroundColor: "#ef4444",
+                            color: "white",
+                            border: "none",
+                          }}
+                          onClick={() => remove(name)}
+                        >
+                          Xóa
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  block
+                  className="mt-3 border-[#627254] text-[#627254]"
+                >
+                  + Thêm xe vào báo giá
+                </Button>
+              </>
+            )}
+          </Form.List>
+
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-3 mt-6">
             <Button onClick={onClose}>Hủy</Button>
             <Button type="primary" htmlType="submit" loading={isPending}>
               Cập nhật

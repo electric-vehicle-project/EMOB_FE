@@ -1,5 +1,4 @@
-import React from "react";
-import { Modal, Form, InputNumber, DatePicker, message } from "antd";
+import { Modal, Form, InputNumber, DatePicker } from "antd";
 import {
   useBulkUpdateDiscountPolicies,
   useGetAllDealers,
@@ -7,6 +6,7 @@ import {
 import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IDealer } from "../../model/Dealer";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
@@ -36,7 +36,7 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
   // Submit handler
   const handleSubmit = async (values: any) => {
     if (!values.dateRange || values.dateRange.length !== 2) {
-      message.warning("Vui lòng chọn đầy đủ thời gian hiệu lực!");
+      toast.warning("Vui lòng chọn đầy đủ thời gian hiệu lực!");
       return;
     }
 
@@ -51,12 +51,12 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
 
     try {
       await bulkUpdate(payload);
-      message.success("Cập nhật hàng loạt chính sách thành công!");
+      toast.success("Cập nhật hàng loạt chính sách thành công!");
       onSuccess?.();
       form.resetFields();
       onClose();
     } catch (err: any) {
-      message.error(
+      toast.error(
         err?.response?.data?.message || "Không thể cập nhật hàng loạt!"
       );
     }
@@ -116,16 +116,11 @@ const BulkUpdateDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
           />
         </Form.Item>
 
-        <Form.Item
-          label="Giá cuối cùng (VND)"
-          name="finalPrice"
-          rules={[{ required: true, message: "Vui lòng nhập giá cuối cùng!" }]}
-        >
+        <Form.Item label="Giá cuối cùng (VND)" name="finalPrice">
           <InputNumber
             min={0}
             style={{ width: "100%" }}
             formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-            parser={(v) => v?.replace(/,/g, "") ?? ""}
             placeholder="Nhập giá cuối cùng"
           />
         </Form.Item>

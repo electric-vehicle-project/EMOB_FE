@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Form, InputNumber, Button, message, Spin } from "antd";
+import { Card, Form, InputNumber, Button, Spin } from "antd";
 import {
   useUpdateVehiclePrices,
   useGetVehicleById,
@@ -7,6 +7,7 @@ import {
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useEffect } from "react";
 import { ROUTES } from "../../model/routePaths";
+import { toast } from "react-toastify";
 
 export const VehiclePriceUpdatePage = () => {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export const VehiclePriceUpdatePage = () => {
 
   useEffect(() => {
     if (role !== "ADMIN") {
-      message.warning("⚠️ Chỉ Admin mới có quyền cập nhật giá!");
+      toast.warning("⚠️ Chỉ Admin mới có quyền cập nhật giá!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!), {
         replace: true,
       });
@@ -53,17 +54,17 @@ export const VehiclePriceUpdatePage = () => {
     const sameImport = values.importPrice === oldImport;
     const sameRetail = values.retailPrice === oldRetail;
     if (sameImport && sameRetail) {
-      message.info("Không có thay đổi nào để cập nhật.");
+      toast.info("Không có thay đổi nào để cập nhật.");
       return;
     }
 
     try {
       await updatePrices.mutateAsync({ id: id!, data: values });
-      message.success("💰 Giá xe đã được cập nhật thành công!");
+      toast.success("💰 Giá xe đã được cập nhật thành công!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", id!));
     } catch (error) {
       console.error("❌ Update error:", error);
-      message.error("Không thể cập nhật giá. Vui lòng thử lại sau.");
+      toast.error("Không thể cập nhật giá. Vui lòng thử lại sau.");
     }
   };
 

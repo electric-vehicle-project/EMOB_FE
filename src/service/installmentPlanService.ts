@@ -1,5 +1,5 @@
 // src/service/installmentPlanService.ts
-import { createQueryHook } from "../hook/useApi";
+import { createQueryHook, createQueryWithPathParamHook } from "../hook/useApi";
 
 // ===============================
 // 🔹 QUERY HOOKS (GET)
@@ -15,3 +15,14 @@ export const useCurrentDealerInstallmentPlansQuery = createQueryHook(
   "currentDealerInstallmentPlans",
   "/installment/current-dealer"
 );
+
+export const useInstallmetnPlanByCustomersQuery = createQueryHook(
+  "currentDealerInstallmentPlans",
+  "/installment/by-customer"
+);
+
+export const useInstallmetnPlanByCustomersByIdQuery =
+  createQueryWithPathParamHook(
+    "currentDealerInstallmentPlans",
+    "/installment/by-customer"
+  );

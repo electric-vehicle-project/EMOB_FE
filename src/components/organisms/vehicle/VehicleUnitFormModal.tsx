@@ -1,16 +1,9 @@
 // src/components/organisms/EVM/VehicleUnitFormModal.tsx
-import {
-  Modal,
-  Form,
-  InputNumber,
-  Input,
-  DatePicker,
-  Select,
-  message,
-} from "antd";
+import { Modal, Form, InputNumber, Input, DatePicker, Select } from "antd";
 import { useBulkCreateVehicleUnits } from "../../../service/vehicleService";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
+import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
@@ -57,11 +50,11 @@ export default function VehicleUnitFormModal({
         status: values.status, // ✅ chuẩn enum BE
       });
 
-      message.success("✅ Tạo lô xe thành công");
+      toast.success(" Tạo lô xe thành công");
       form.resetFields();
       onClose();
     } catch {
-      message.error("❌ Không thể tạo lô xe, vui lòng thử lại!");
+      toast.error(" Không thể tạo lô xe, vui lòng thử lại!");
     }
   };
 

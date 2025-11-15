@@ -1,21 +1,16 @@
-import { Table, InputNumber, Button, Tag } from "antd";
+import { InputNumber, Tag, Button } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { SaveOutlined } from "@ant-design/icons";
 import type { IDealerPointRule } from "../../../model/DealerPointRule";
 import React from "react";
+import { toast } from "react-toastify";
+import { EMOBTable } from "../../molecules/EMOBTable";
 
 interface Props {
   data: IDealerPointRule[];
   loading?: boolean;
-  editable?: boolean; // ✅ true: cho Manager chỉnh sửa, false: chỉ đọc (Dealer_Staff)
+  editable?: boolean;
   onUpdate?: (updatedData: IDealerPointRule[]) => void;
 }
-
-const headerStyle: React.CSSProperties = {
-  backgroundColor: "#394e31",
-  color: "#fff",
-  ["--ant-table-header-sort-active-bg" as unknown as string]: "#394e31",
-};
 
 export const DealerPointRuleTable: React.FC<Props> = ({
   data,
@@ -44,7 +39,13 @@ export const DealerPointRuleTable: React.FC<Props> = ({
   };
 
   const handleSave = () => {
-    onUpdate?.(editableData);
+    if (!onUpdate) {
+      toast.error("Không thể cập nhật quyền này");
+      return;
+    }
+
+    onUpdate(editableData);
+    toast.success("Cập nhật thành công");
   };
 
   const columns: ColumnsType<IDealerPointRule> = [
@@ -53,26 +54,15 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       dataIndex: "membershipLevel",
       key: "membershipLevel",
       align: "center",
-      onHeaderCell: () => ({ style: headerStyle }),
+      width: 160,
       render: (level: string) => {
-        let color: string;
-        switch (level) {
-          case "BRONZE":
-            color = "volcano";
-            break;
-          case "SILVER":
-            color = "gray";
-            break;
-          case "GOLD":
-            color = "gold";
-            break;
-          case "PLATINUM":
-            color = "geekblue";
-            break;
-          default:
-            color = "default";
-        }
-        return <Tag color={color}>{level}</Tag>;
+        const mapColor: Record<string, string> = {
+          BRONZE: "volcano",
+          SILVER: "gray",
+          GOLD: "gold",
+          PLATINUM: "geekblue",
+        };
+        return <Tag color={mapColor[level] || "default"}>{level}</Tag>;
       },
     },
     {
@@ -80,7 +70,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       dataIndex: "minPoints",
       key: "minPoints",
       align: "center",
-      onHeaderCell: () => ({ style: headerStyle }),
+      width: 160,
       render: (val: number, record) =>
         editable ? (
           <InputNumber
@@ -91,9 +81,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
             }
           />
         ) : (
-          <span className="text-gray-800 font-medium">
-            {val?.toLocaleString("vi-VN")}
-          </span>
+          val.toLocaleString("vi-VN")
         ),
     },
     {
@@ -101,7 +89,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       dataIndex: "price",
       key: "price",
       align: "center",
-      onHeaderCell: () => ({ style: headerStyle }),
+      width: 180,
       render: (val: number, record) =>
         editable ? (
           <InputNumber
@@ -113,41 +101,28 @@ export const DealerPointRuleTable: React.FC<Props> = ({
             }
           />
         ) : (
-          <span className="text-gray-800 font-medium">
-            {val?.toLocaleString("vi-VN")} ₫
-          </span>
+          `${val.toLocaleString("vi-VN")} ₫`
         ),
     },
   ];
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md">
-      <Table
-        bordered
+      <EMOBTable
         rowKey="membershipLevel"
-        size="middle"
         columns={columns}
         dataSource={editableData}
         loading={loading}
         pagination={false}
         scroll={{ x: "max-content" }}
-        sticky={{ offsetHeader: 0 }}
-        className="bg-white [&_.ant-table-thead>tr>th]:!text-white"
       />
 
-      {/* Nút cập nhật chỉ hiển thị nếu có quyền chỉnh sửa */}
       {editable && (
         <div className="flex justify-end mt-4">
           <Button
             type="primary"
-            icon={<SaveOutlined />}
             onClick={handleSave}
-            disabled={!onUpdate}
-            className={`!border-none ${
-              onUpdate
-                ? "!bg-[#627254] hover:!bg-[#4f6f52] text-white"
-                : "!bg-gray-400 text-gray-200 cursor-not-allowed"
-            }`}
+            className="!bg-[#627254] !border-[#627254] !text-white hover:!bg-[#4f6f52]"
           >
             Cập nhật
           </Button>

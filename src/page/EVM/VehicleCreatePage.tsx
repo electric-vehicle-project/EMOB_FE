@@ -1,4 +1,4 @@
-import { Card, message, Button, Space, Form } from "antd";
+import { Card, Button, Space, Form } from "antd";
 import { useNavigate } from "react-router-dom";
 import { VehicleForm } from "../../components/molecules/EVM/VehicleForm";
 import { useCreateVehicle } from "../../service/vehicleService";
@@ -11,6 +11,7 @@ import { getRoleBasePath } from "../../utils/roleGuard";
 import type { UploadFile } from "antd/es/upload";
 import { uploadFiles } from "../../utils/uploadFile";
 import { CarOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
 
 export const VehicleCreatePage = () => {
   const [form] = Form.useForm<IVehicle>();
@@ -24,7 +25,7 @@ export const VehicleCreatePage = () => {
 
   useEffect(() => {
     if (role !== "EVM_STAFF") {
-      message.warning("Tài khoản của bạn không có quyền thêm xe mới!");
+      toast.warning("Tài khoản của bạn không có quyền thêm xe mới!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
     }
   }, [role, navigate, basePath]);
@@ -53,11 +54,11 @@ export const VehicleCreatePage = () => {
       await createVehicle.mutateAsync(payload);
       queryClient.invalidateQueries({ queryKey: ["get-vehicles"] });
 
-      message.success("✅ Thêm xe mới thành công!");
+      toast.success("✅ Thêm xe mới thành công!");
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`);
     } catch (err: unknown) {
       console.error("❌ Lỗi khi tạo xe:", err);
-      message.error("❌ Không thể thêm xe!");
+      toast.error("❌ Không thể thêm xe!");
     }
   };
 

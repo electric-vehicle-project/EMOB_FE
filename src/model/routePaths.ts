@@ -84,6 +84,10 @@ export const ROUTES = {
 
   NOTFOUND: "*",
 
+  //Detail Vehicle
+  DEALER_STAFF_VEHICLE_DETAIL: "dealer-staff/vehicle/:id",
+  MANAGER_VEHICLE_DETAIL: "manager/vehicle/:id",
+
   // CONTRACT
   CONTRACT: "contract",
   CONTRACT_WITH_EVM: "contract/with-evm",
@@ -100,4 +104,5 @@ export const ROUTES = {
 
   //InstallmentPlan
   INSTALLMENT_PLAN: "installment-plan",
+  INSTALLMENT_PLAN_CUSTOMERS: "installment-plan-customers",
 };

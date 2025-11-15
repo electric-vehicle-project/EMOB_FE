@@ -1,11 +1,19 @@
-import { Table, Tag, Button, Space } from "antd";
-import type { ColumnsType, TableProps } from "antd/es/table";
+import { Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import type { TablePaginationConfig } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import type { TableProps } from "antd/es/table";
 import { useSelector } from "react-redux";
-import type { RootState } from "../../../redux/store";
 import dayjs from "dayjs";
-import type { ICustomer } from "../../../model/Customer";
+
+import type { RootState } from "../../../redux/store";
+import type {
+  ICustomer,
+  CustomerStatus,
+  MembershipLevel,
+} from "../../../model/Customer";
+import { EMOBTable } from "../../molecules/EMOBTable";
+import type { SorterResult } from "antd/es/table/interface";
+import type { JSX } from "react";
 
 interface Props {
   data: ICustomer[];
@@ -18,16 +26,37 @@ interface Props {
   // --- Server sort
   sortField: string;
   sortDir: "asc" | "desc";
-  onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
+  onChangeSort: (
+    field?: string,
+    order?: "ascend" | "ascend" | "descend"
+  ) => void;
 
-  // --- Server pagination (pass through)
+  // --- Server pagination
   pagination?: TablePaginationConfig;
 }
 
-const headerStyle: React.CSSProperties = {
-  backgroundColor: "#394e31",
-  color: "#fff",
-  ["--ant-table-header-sort-active-bg" as unknown as string]: "#394e31",
+const STATUS_COLORS: Record<CustomerStatus, string> = {
+  LEAD: "blue",
+  ACTIVE: "green",
+  INACTIVE: "orange",
+  BLOCKED: "volcano",
+  DELETED: "red",
+};
+
+const STATUS_LABELS: Record<CustomerStatus, string> = {
+  LEAD: "Tiềm năng",
+  ACTIVE: "Đang hoạt động",
+  INACTIVE: "Ngừng hoạt động",
+  BLOCKED: "Bị chặn",
+  DELETED: "Đã xoá",
+};
+
+const MEMBERSHIP_LABELS: Record<MembershipLevel, string> = {
+  NORMAL: "Thường",
+  BRONZE: "Đồng",
+  SILVER: "Bạc",
+  GOLD: "Vàng",
+  PLATINUM: "Bạch kim",
 };
 
 export const CustomerTable = ({
@@ -43,25 +72,10 @@ export const CustomerTable = ({
   pagination,
 }: Props) => {
   const user = useSelector((s: RootState) => s.user);
-  const role = (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
-  const rolePrefix = role === "MANAGER" ? "/manager" : "/dealer_staff";
+  const role =
+    (user?.role as "MANAGER" | "DEALER_STAFF" | null) ?? "DEALER_STAFF";
 
-  const getStatusColor = (status: ICustomer["status"]) => {
-    switch (status) {
-      case "ACTIVE":
-        return "green";
-      case "LEAD":
-        return "blue";
-      case "INACTIVE":
-        return "orange";
-      case "BLOCKED":
-        return "volcano";
-      case "DELETED":
-        return "red";
-      default:
-        return "default";
-    }
-  };
+  const rolePrefix = role === "MANAGER" ? "/manager" : "/dealer_staff";
 
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
@@ -72,15 +86,14 @@ export const CustomerTable = ({
       key: "fullName",
       sorter: true,
       sortOrder: sortField === "fullName" ? order : null,
-      onHeaderCell: () => ({ style: headerStyle }),
-      render: (text: string, record: ICustomer) => (
+      render: (text: string | undefined, record: ICustomer) => (
         <a
           onClick={() =>
             window.open(`${rolePrefix}/customers/${record.id}`, "_self")
           }
           className="text-[#4f6f52] hover:text-[#627254] font-medium transition-colors cursor-pointer"
         >
-          {text}
+          {text || "Không xác định"}
         </a>
       ),
     },
@@ -90,7 +103,7 @@ export const CustomerTable = ({
       key: "email",
       sorter: true,
       sortOrder: sortField === "email" ? order : null,
-      onHeaderCell: () => ({ style: headerStyle }),
+      render: (email?: string) => email || "—",
     },
     {
       title: "Số điện thoại",
@@ -98,15 +111,19 @@ export const CustomerTable = ({
       key: "phoneNumber",
       sorter: true,
       sortOrder: sortField === "phoneNumber" ? order : null,
-      onHeaderCell: () => ({ style: headerStyle }),
+      render: (phone?: string) => phone || "—",
     },
     {
       title: "Cấp độ",
       dataIndex: "memberShipLevel",
       key: "memberShipLevel",
       align: "center",
-      onHeaderCell: () => ({ style: headerStyle }),
-      render: (level: string) => <Tag color="geekblue">{level}</Tag>,
+      render: (level?: MembershipLevel) =>
+        level ? (
+          <Tag color="geekblue">{MEMBERSHIP_LABELS[level]}</Tag>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       title: "Ngày sinh",
@@ -115,7 +132,6 @@ export const CustomerTable = ({
       align: "center",
       sorter: true,
       sortOrder: sortField === "dateOfBirth" ? order : null,
-      onHeaderCell: () => ({ style: headerStyle }),
       render: (val?: string) => (val ? dayjs(val).format("DD/MM/YYYY") : "—"),
     },
     {
@@ -123,72 +139,76 @@ export const CustomerTable = ({
       dataIndex: "status",
       key: "status",
       align: "center",
-      onHeaderCell: () => ({ style: headerStyle }),
-      render: (status: ICustomer["status"]) => (
-        <Tag color={getStatusColor(status)}>{status}</Tag>
-      ),
-    },
-    {
-      title: "Thao tác",
-      key: "actions",
-      align: "center",
-      onHeaderCell: () => ({ style: headerStyle }),
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => onEdit?.(record.id)}
-            disabled={!canEdit}
-            className={`!border-none ${
-              canEdit
-                ? "!bg-[#627254] text-white hover:!bg-[#4f6f52]"
-                : "!bg-gray-400 text-gray-200 cursor-not-allowed"
-            }`}
-          >
-            Sửa
-          </Button>
-
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete?.(record.id)}
-            disabled={!canDelete}
-            className={`!border-none ${
-              canDelete
-                ? "!bg-[#d93025] text-white hover:!bg-[#b1271e]"
-                : "!bg-gray-400 text-gray-200 cursor-not-allowed"
-            }`}
-          >
-            Xoá
-          </Button>
-        </Space>
-      ),
+      render: (status?: CustomerStatus) =>
+        status ? (
+          <Tag color={STATUS_COLORS[status]}>{STATUS_LABELS[status]}</Tag>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
   ];
 
-  const handleChange: TableProps<ICustomer>["onChange"] = (_p, _f, sorter) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+  const handleChange: TableProps<ICustomer>["onChange"] = (
+    _pagination,
+    _filters,
+    sorter
+  ) => {
+    const s = Array.isArray(sorter)
+      ? sorter[0]
+      : (sorter as SorterResult<ICustomer>);
+
     const field = s?.field as string | undefined;
-    const order = s?.order as "ascend" | "descend" | undefined;
-    onChangeSort?.(field, order);
+    const orderValue = s?.order as "ascend" | "descend" | undefined;
+    onChangeSort(field, orderValue);
   };
 
+  const hasActions = Boolean(canEdit || canDelete);
+
+  const actions = !hasActions
+    ? undefined
+    : (record: ICustomer): { key: string; label: JSX.Element }[] => {
+        const menu: { key: string; label: JSX.Element }[] = [];
+
+        if (canEdit) {
+          menu.push({
+            key: "edit",
+            label: (
+              <div
+                className="text-[#627254] cursor-pointer"
+                onClick={() => onEdit?.(record.id)}
+              >
+                Chỉnh sửa
+              </div>
+            ),
+          });
+        }
+
+        if (canDelete) {
+          menu.push({
+            key: "delete",
+            label: (
+              <div
+                className="text-red-600 cursor-pointer"
+                onClick={() => onDelete?.(record.id)}
+              >
+                Xoá
+              </div>
+            ),
+          });
+        }
+
+        return menu;
+      };
+
   return (
-    <Table
-      bordered
+    <EMOBTable<ICustomer>
       rowKey="id"
-      size="middle"
       columns={columns}
       dataSource={data}
       loading={loading}
-      onChange={handleChange}
       pagination={pagination}
-      scroll={{ x: "max-content", y: 560 }}
-      sticky={{ offsetHeader: 0 }}
-      className="
-        bg-white
-        [&_.ant-table-thead>tr>th]:!text-white
-      "
+      onChange={handleChange}
+      actions={actions}
     />
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { Modal, Form, InputNumber, DatePicker, message, Spin } from "antd";
+import { Modal, Form, InputNumber, DatePicker, Spin } from "antd";
 import dayjs from "dayjs";
 import {
   useUpdateDiscountPolicy,
@@ -9,6 +9,7 @@ import {
 import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IVehicle } from "../../model/Vehicle";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
@@ -90,12 +91,12 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
 
     try {
       await updatePolicy({ id: policyId, data: payload });
-      message.success("✅ Cập nhật chính sách chiết khấu thành công!");
+      toast.success(" Cập nhật chính sách chiết khấu thành công!");
       onSuccess?.();
       onClose();
     } catch (error: any) {
-      message.error(
-        error?.response?.data?.message || "❌ Cập nhật chính sách thất bại!"
+      toast.error(
+        error?.response?.data?.message || " Cập nhật chính sách thất bại!"
       );
     }
   };
@@ -164,7 +165,6 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
-              parser={(value) => value!.replace(/,/g, "")}
               placeholder="Nhập giá cuối cùng"
             />
           </Form.Item>

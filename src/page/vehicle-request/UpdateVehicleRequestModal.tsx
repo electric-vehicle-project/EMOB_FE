@@ -9,6 +9,7 @@ import {
 } from "../../service/vehicleRequestService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IVehicle } from "../../model/Vehicle";
+import type { NamePath } from "antd/es/form/interface";
 
 interface UpdateVehicleRequestModalProps {
   open: boolean;
@@ -24,11 +25,15 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
   onSuccess,
 }) => {
   const [form] = Form.useForm();
-  const { data, isLoading } = useGetVehicleRequestById(requestId);
+  const { data } = useGetVehicleRequestById(requestId);
+  const { mutateAsync: updateVehicleRequest, isPending } =
+    useUpdateVehicleRequest();
+
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
     0,
     100
   );
+
   const vehicleOptions = useMemo(() => {
     const vehicles = vehiclesData?.result?.data || [];
     return vehicles.map((v: IVehicle) => ({
@@ -36,43 +41,42 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
       value: v.id,
     }));
   }, [vehiclesData]);
-  const { mutateAsync: updateVehicleRequest, isPending } =
-    useUpdateVehicleRequest();
 
+  // Đổ dữ liệu cũ vào form
   useEffect(() => {
     if (data?.result) {
       const req = data.result;
-      const item = req.items?.[0] || {};
       form.setFieldsValue({
-        itemId: item.id,
-        vehicleId: item.vehicleId,
-        vehicleStatus: item.vehicleStatus,
-        color: item.color,
-        quantity: item.quantity,
+        items: req.items?.map((item: any) => ({
+          id: item.id,
+          vehicleId: item.vehicleId,
+          vehicleStatus: item.vehicleStatus,
+          color: item.color,
+          quantity: item.quantity,
+        })),
       });
     }
   }, [data, form]);
 
+  // Submit form
   const handleSubmit = async (values: any) => {
     const payload = {
-      items: [
-        {
-          id: values.itemId,
-          vehicleId: values.vehicleId,
-          vehicleStatus: values.vehicleStatus,
-          color: values.color,
-          quantity: values.quantity,
-        },
-      ],
+      items: values.items.map((item: any) => ({
+        id: item.id,
+        vehicleId: item.vehicleId,
+        vehicleStatus: item.vehicleStatus,
+        color: item.color,
+        quantity: item.quantity,
+      })),
     };
 
     try {
       await updateVehicleRequest({ id: requestId, data: payload });
-      message.success("Vehicle request updated successfully!");
-      if (onSuccess) onSuccess();
+      message.success("Cập nhật yêu cầu thành công!");
+      onSuccess?.();
       onClose();
-    } catch (err) {
-      message.error("Failed to update vehicle request.");
+    } catch (err: any) {
+      message.error("Không thể cập nhật yêu cầu.");
     }
   };
 
@@ -83,8 +87,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
       onCancel={onClose}
       footer={null}
       centered
-      destroyOnClose
-      width={600}
+      width={800}
     >
       <Form
         layout="vertical"
@@ -92,44 +95,93 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
         onFinish={handleSubmit}
         className="space-y-3"
       >
-        <SelectInput
-          label="Xe"
-          name="vehicleId"
-          placeholder="Chọn xe"
-          options={vehicleOptions}
-          loading={loadingVehicles}
-          rules={[{ required: true, message: "Vui lòng chọn xe" }]}
-        />
+        {/* ====== Form.List cho phép cập nhật nhiều dòng ====== */}
+        <Form.List name="items">
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...restField }) => (
+                <div
+                  key={key}
+                  className="grid grid-cols-1 md:grid-cols-5 gap-4 border p-4 rounded-md mb-3 bg-gray-50"
+                >
+                  <SelectInput
+                    {...restField}
+                    name={[name, "vehicleId"] as NamePath}
+                    label="Xe"
+                    placeholder="Chọn xe"
+                    options={vehicleOptions}
+                    loading={loadingVehicles}
+                    rules={[{ required: true, message: "Vui lòng chọn xe" }]}
+                  />
 
-        <SelectInput
-          label="Trạng thái xe"
-          name="vehicleStatus"
-          placeholder="Chọn trạng thái xe"
-          options={[
-            { label: "Bình thường", value: "NORMAL" },
-            { label: "Đặc biệt", value: "SPECIAL" },
-            { label: "Hàng tồn cũ", value: "OLD_STOCK" },
-            { label: "Đã đặt trước", value: "RESERVED" },
-            { label: "Xe lái thử", value: "TEST_DRIVE" },
-          ]}
-          rules={[{ required: true, message: "Vui lòng chọn trạng thái xe" }]}
-        />
+                  <SelectInput
+                    {...restField}
+                    name={[name, "vehicleStatus"] as NamePath}
+                    label="Trạng thái xe"
+                    placeholder="Chọn trạng thái"
+                    options={[
+                      { label: "Bình thường", value: "NORMAL" },
+                      { label: "Đặc biệt", value: "SPECIAL" },
+                      { label: "Tồn kho cũ", value: "OLD_STOCK" },
+                      { label: "Đã đặt trước", value: "RESERVED" },
+                      { label: "Xe lái thử", value: "TEST_DRIVE" },
+                    ]}
+                    rules={[
+                      { required: true, message: "Vui lòng chọn trạng thái" },
+                    ]}
+                  />
 
-        <TextInput
-          label="Màu xe"
-          name="color"
-          placeholder="Nhập màu xe"
-          rules={[{ required: true, message: "Vui lòng nhập màu xe" }]}
-        />
+                  <TextInput
+                    {...restField}
+                    name={[name, "color"] as NamePath}
+                    label="Màu sắc"
+                    placeholder="Nhập màu xe"
+                    rules={[{ required: true, message: "Vui lòng nhập màu" }]}
+                  />
 
-        <NumberInput
-          label="Số lượng"
-          name="quantity"
-          min={1}
-          placeholder="Nhập số lượng"
-          rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
-        />
+                  <NumberInput
+                    {...restField}
+                    name={[name, "quantity"] as NamePath}
+                    label="Số lượng"
+                    min={1}
+                    placeholder="Nhập số lượng"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập số lượng" },
+                    ]}
+                  />
 
+                  <div className="flex items-end justify-end">
+                    {fields.length > 1 && (
+                      <Button
+                        onClick={() => remove(name)}
+                        style={{
+                          backgroundColor: "#ef4444",
+                          color: "white",
+                          border: "none",
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white border-none"
+                      >
+                        Xóa
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Nút thêm dòng */}
+              <Button
+                type="dashed"
+                onClick={() => add()}
+                block
+                className="mt-2 border-[#627254] text-[#627254]"
+              >
+                + Thêm xe
+              </Button>
+            </>
+          )}
+        </Form.List>
+
+        {/* ====== Hành động ====== */}
         <div className="flex justify-end gap-3 mt-4">
           <Button onClick={onClose}>Hủy</Button>
           <Button type="primary" htmlType="submit" loading={isPending}>

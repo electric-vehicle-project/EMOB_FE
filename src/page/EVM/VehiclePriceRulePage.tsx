@@ -7,7 +7,6 @@ import {
   InputNumber,
   Input,
   Tag,
-  message,
   Typography,
   Skeleton,
   Form,
@@ -30,6 +29,7 @@ import {
   VEHICLE_STATUS_LABELS,
   VEHICLE_STATUS_COLORS,
 } from "../../model/VehiclePriceRule";
+import { toast } from "react-toastify";
 
 const { Text } = Typography;
 
@@ -75,7 +75,7 @@ export const VehiclePriceRulePage = () => {
 
   useEffect(() => {
     if (error) {
-      message.error("Không thể tải quy tắc giá. Vui lòng thử lại!");
+      toast.error("Không thể tải quy tắc giá. Vui lòng thử lại!");
     }
   }, [error]);
 
@@ -89,7 +89,7 @@ export const VehiclePriceRulePage = () => {
   // PUT cập nhật (Admin only)
   const handleSave = async () => {
     if (!isAdmin) {
-      message.warning("Chỉ Admin được chỉnh sửa!");
+      toast.warning("Chỉ Admin được chỉnh sửa!");
       return;
     }
     if (!isDirty) return;
@@ -120,17 +120,17 @@ export const VehiclePriceRulePage = () => {
 
       // Thông báo theo loại thay đổi
       if (addedCount > 0) {
-        message.success(`Đã thêm ${addedCount} quy tắc mới`);
+        toast.success(`Đã thêm ${addedCount} quy tắc mới`);
       }
       if (changedMultiplierCount > 0) {
-        message.success(
+        toast.success(
           changedNoteCount > 0 && changedMultiplierCount === 1
             ? "Sửa giá thành công (1 mục)"
             : `Sửa giá thành công (${changedMultiplierCount} mục)`
         );
       }
       if (changedNoteCount > 0) {
-        message.success(
+        toast.success(
           changedNoteCount === 1
             ? "Sửa ghi chú thành công (1 mục)"
             : `Sửa ghi chú thành công (${changedNoteCount} mục)`
@@ -142,13 +142,13 @@ export const VehiclePriceRulePage = () => {
         changedMultiplierCount === 0 &&
         changedNoteCount === 0
       ) {
-        message.success("Cập nhật quy tắc giá thành công!");
+        toast.success("Cập nhật quy tắc giá thành công!");
       }
 
       setBaseline(rules);
       refetch?.();
     } catch {
-      message.error("Lưu thất bại! Vui lòng thử lại.");
+      toast.error("Lưu thất bại! Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -166,7 +166,7 @@ export const VehiclePriceRulePage = () => {
       setRules((prev) => [...prev, newRule]);
       setShowModal(false);
       form.resetFields();
-      message.success("Đã thêm quy tắc. Nhấn 'Lưu thay đổi' để xác nhận!");
+      toast.success("Đã thêm quy tắc. Nhấn 'Lưu thay đổi' để xác nhận!");
     } catch {
       // validate fail -> im lặng
     }

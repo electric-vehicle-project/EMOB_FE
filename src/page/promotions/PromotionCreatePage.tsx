@@ -1,21 +1,9 @@
-// src/page/promotion/PromotionCreatePage.tsx
 import { useEffect, useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Select,
-  message as antdMessage,
-  Space,
-  Spin,
-  Typography,
-} from "antd";
+import { Form, Input, Button, Select, Space, Spin, Typography } from "antd";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
-
 import type { RootState } from "../../redux/store";
 import type { Role } from "../../utils/promotionPermissions";
-
 import { usePromotionCreate } from "../../service/promotionService";
 import { useGetVehicles } from "../../service/vehicleService";
 import {
@@ -23,6 +11,8 @@ import {
   mapVehicleOptions,
 } from "../../utils/mapToSelectOptions";
 import { useDealersQuery } from "../../service/dealerService";
+import { toast } from "react-toastify";
+import { CardWrapper } from "../../components/template/CardWrapper";
 
 const { Title } = Typography;
 
@@ -37,7 +27,7 @@ export default function PromotionCreatePage() {
   const [form] = Form.useForm<PromotionFormValues>();
   const navigate = useNavigate();
 
-  // ===== USER INFO & ROLE =====
+  // USER INFO
   const user = useSelector((s: RootState) => s.user ?? {}) as Partial<{
     id: string;
     dealerId: string;
@@ -51,7 +41,7 @@ export default function PromotionCreatePage() {
 
   const canFetchDealers = isEvmStaff || isAdmin;
 
-  // ===== API HOOKS =====
+  // API HOOKS
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
   const { data: dealersData, isLoading: loadingDealers } = useDealersQuery({
     enabled: canFetchDealers,
@@ -60,7 +50,6 @@ export default function PromotionCreatePage() {
     enabled: true,
   });
 
-  // ===== STATE LOCAL =====
   const [dealerOptions, setDealerOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -69,72 +58,69 @@ export default function PromotionCreatePage() {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // ===== MAP DỮ LIỆU TỪ API -> SELECT OPTIONS =====
+  // MAP API → SELECT
   useEffect(() => {
-    // 🔹 Chuẩn hóa danh sách xe điện
     setVehicleOptions(mapVehicleOptions(vehiclesData));
 
-    // 🔹 Chuẩn hóa danh sách đại lý (chỉ khi có quyền)
     if (dealersData && canFetchDealers) {
       setDealerOptions(mapDealerOptions(dealersData));
     }
 
-    if (vehiclesData || (dealersData && canFetchDealers)) setLoading(false);
+    if (vehiclesData || (dealersData && canFetchDealers)) {
+      setLoading(false);
+    }
   }, [dealersData, vehiclesData, canFetchDealers]);
 
-  // ===== SET DEALER ID MẶC ĐỊNH CHO DEALER STAFF =====
+  // DEFAULT DEALER FOR DEALER STAFF
   useEffect(() => {
     if (isDealerStaff && user.dealerId) {
       form.setFieldsValue({ dealerId: [user.dealerId] });
     }
   }, [isDealerStaff, user.dealerId, form]);
 
-  // ===== SUBMIT FORM =====
+  // SUBMIT
   const handleSubmit = async (values: PromotionFormValues) => {
     try {
       const payload = {
         dealerId: isDealerStaff ? [user.dealerId!] : values.dealerId ?? [],
-        electricVehiclesId: values.electricVehiclesId ?? [],
+        electricVehiclesId: values.electricVehiclesId,
         name: values.name.trim(),
         description: values.description?.trim() || "",
       };
 
-      console.log("📦 Payload gửi BE:", payload);
-
       await createPromotion(payload);
-      antdMessage.success("Tạo khuyến mãi thành công!");
+      toast.success("Tạo khuyến mãi thành công!");
       navigate(-1);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error("❌ Lỗi tạo khuyến mãi:", err.message);
-      } else {
-        console.error("❌ Lỗi tạo khuyến mãi:", err);
-      }
-      antdMessage.error("Tạo khuyến mãi thất bại!");
+    } catch {
+      toast.error("Tạo khuyến mãi thất bại!");
     }
   };
 
-  // ===== LOADING STATE =====
+  // LOADING
   if (loading || loadingDealers || loadingVehicles) {
     return (
-      <div style={{ textAlign: "center", marginTop: 100 }}>
+      <div className="flex justify-center mt-20">
         <Spin size="large" />
       </div>
     );
   }
 
-  // ===== KIỂM TRA QUYỀN TRUY CẬP =====
+  // ACCESS GUARD
   if (!isDealerStaff && !isEvmStaff && !isAdmin) {
-    antdMessage.warning("Bạn không có quyền truy cập trang này!");
+    toast.warning("Bạn không có quyền truy cập trang này!");
     navigate(-1);
     return null;
   }
 
-  // ===== RENDER UI =====
   return (
-    <div style={{ padding: 24 }}>
+    <CardWrapper>
       <Space style={{ marginBottom: 20 }}>
-        <Button onClick={() => navigate(-1)}>⬅ Quay lại</Button>
+        <Button
+          onClick={() => navigate(-1)}
+          className="!bg-[#627254] !text-white !border-[#627254]"
+        >
+          ⬅ Quay lại
+        </Button>
         <Title level={4}>Tạo khuyến mãi mới</Title>
       </Space>
 
@@ -143,7 +129,6 @@ export default function PromotionCreatePage() {
         layout="vertical"
         onFinish={handleSubmit}
       >
-        {/* DEALER ID */}
         <Form.Item label="Áp dụng cho đại lý" name="dealerId">
           <Select
             mode="multiple"
@@ -151,14 +136,13 @@ export default function PromotionCreatePage() {
             disabled={isDealerStaff}
             placeholder={
               isDealerStaff
-                ? "Tự động gán đại lý của bạn"
-                : "Bỏ trống nếu muốn tạo khuyến mãi toàn hệ thống (GLOBAL)"
+                ? "Tự động áp dụng cho đại lý của bạn"
+                : "Bỏ trống để tạo khuyến mãi GLOBAL"
             }
-            options={dealerOptions} // ✅ hiển thị name, gửi id
+            options={dealerOptions}
           />
         </Form.Item>
 
-        {/* ELECTRIC VEHICLE IDS */}
         <Form.Item
           label="Xe điện áp dụng"
           name="electricVehiclesId"
@@ -169,35 +153,37 @@ export default function PromotionCreatePage() {
           <Select
             mode="multiple"
             allowClear
-            placeholder="Chọn xe điện áp dụng"
-            options={vehicleOptions} // ✅ hiển thị brand + model, gửi id
+            placeholder="Chọn xe điện"
+            options={vehicleOptions}
           />
         </Form.Item>
 
-        {/* NAME */}
         <Form.Item
           label="Tên khuyến mãi"
           name="name"
           rules={[{ required: true, message: "Vui lòng nhập tên khuyến mãi" }]}
         >
-          <Input placeholder="Nhập tên khuyến mãi (ví dụ: Giảm giá 10%)" />
+          <Input placeholder="VD: Giảm giá 10%" />
         </Form.Item>
 
-        {/* DESCRIPTION */}
         <Form.Item label="Mô tả" name="description">
           <Input.TextArea
             rows={3}
-            placeholder="Mô tả chi tiết khuyến mãi"
             style={{ resize: "none", borderRadius: 8 }}
           />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={isPending}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isPending}
+            className="!bg-[#627254] !border-[#627254] !text-white"
+          >
             Tạo khuyến mãi
           </Button>
         </Form.Item>
       </Form>
-    </div>
+    </CardWrapper>
   );
 }

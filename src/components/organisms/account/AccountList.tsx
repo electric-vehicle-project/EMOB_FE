@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { App, Result, Empty, Button } from "antd";
+import { Result, Empty, Button } from "antd";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
@@ -13,16 +13,76 @@ import { useDebounce } from "../../../hook/useDebounce";
 import {
   useGetAccountsByAdmin,
   useGetAccountsByManager,
-  useRegisterByAdmin,
   useChangeAccountStatus,
   useBanAccount,
 } from "../../../service/accountService";
 import { useDealersQuery } from "../../../service/dealerService";
 import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
+import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
+import api from "../../../config/api";
+
+/* ===== Helper: xây URL đăng ký đúng theo baseURL từ api config, không hard-code host ===== */
+const getApiBaseUrl = () => api.defaults.baseURL ?? "";
+
+const getRegisterPathByRole = (creatorRole: Role) =>
+  creatorRole === Role.MANAGER
+    ? "/auth/register-by-manager"
+    : "/auth/register-by-admin";
+
+const registerAccount = async (
+  creatorRole: Role,
+  payload: AccountCreatePayload
+) => {
+  const baseUrl = getApiBaseUrl();
+  const path = getRegisterPathByRole(creatorRole);
+  const url = `${baseUrl}${path}`;
+
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  let data: unknown;
+
+  if (contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    data = text;
+  }
+
+  if (!response.ok) {
+    interface ApiError extends Error {
+      status: number;
+      data: unknown;
+    }
+    const errorMessage =
+      typeof data === "string"
+        ? data || "Tạo tài khoản thất bại"
+        : typeof data === "object" &&
+          data !== null &&
+          "message" in data &&
+          typeof (data as { message: unknown }).message === "string"
+        ? (data as { message: string }).message
+        : "Tạo tài khoản thất bại";
+    const err = new Error(errorMessage) as ApiError;
+    err.status = response.status;
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+};
 
 export const AccountList = () => {
-  const { message } = App.useApp();
   const user = useSelector((state: RootState) => state.user);
   const currentRole = user?.role as Role;
 
@@ -38,6 +98,8 @@ export const AccountList = () => {
     id: string;
     next: "ACTIVE" | "INACTIVE";
   } | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
 
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
@@ -52,11 +114,8 @@ export const AccountList = () => {
     queryKey: ["accounts-by-manager", page, pageSize],
   });
 
-  // ====== Dealers (for Admin) ======
-  // Nếu service có hỗ trợ enabled, bạn có thể truyền { enabled: isAdmin } vào đây.
   const { data: dealersData } = useDealersQuery({}, { size: 1000 });
 
-  // Map dealerId -> dealerName (đang dùng cho cột bảng)
   const dealerMap = useMemo(() => {
     const dealers = dealersData?.result?.data ?? [];
     const map: Record<string, string> = {};
@@ -66,7 +125,6 @@ export const AccountList = () => {
     return map;
   }, [dealersData]);
 
-  // Tạo options cho Select "Đại lý quản lý" trong form (Admin tạo Manager)
   const dealerOptions = useMemo(() => {
     const list = dealersData?.result?.data ?? dealersData?.data ?? [];
     return (list as { id: string; name: string }[]).map((d) => ({
@@ -75,7 +133,6 @@ export const AccountList = () => {
     }));
   }, [dealersData]);
 
-  const registerByAdmin = useRegisterByAdmin();
   const changeStatus = useChangeAccountStatus();
   const banAccount = useBanAccount();
 
@@ -115,61 +172,17 @@ export const AccountList = () => {
 
   /* ======================== CREATE ACCOUNT ======================== */
   const handleCreate = async (values: AccountCreatePayload) => {
-    try {
-      if (isManager) {
-        // Manager tạo Dealer Staff: gọi trực tiếp bằng fetch (bỏ qua Axios interceptor)
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          "http://localhost:8080/api/auth/register-by-manager",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(values),
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Tạo tài khoản thất bại!");
-        }
-
-        toast.success("✅ Tạo tài khoản thành công!");
-        setAccountModalOpen(false);
-        setCreatingRole(null);
-        await refetch();
-      } else {
-        // Admin tạo Manager hoặc EVM Staff (vẫn dùng hook bình thường)
-        await registerByAdmin.mutateAsync(values);
-        toast.success("✅ Tạo tài khoản thành công!");
-        setAccountModalOpen(false);
-        setCreatingRole(null);
-        await refetch();
-      }
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      const msg = err?.message ?? "";
-      let readable = "Không thể tạo tài khoản!";
-      if (msg.includes("Empty token"))
-        readable = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
-      else if (msg.includes("Duplicate") && msg.includes("email"))
-        readable = "Email đã tồn tại trong hệ thống!";
-      else if (msg.includes("Duplicate") && msg.includes("phone"))
-        readable = "Số điện thoại đã được sử dụng!";
-      else if (msg.includes("Dealer not found"))
-        readable = "Không tìm thấy đại lý tương ứng!";
-      else if (msg.includes("Invalid role")) readable = "Vai trò không hợp lệ!";
-      else if (msg) readable = msg;
-      message.error(readable);
-    }
+    await registerAccount(currentRole, values);
+    toast.success("✅ Tạo tài khoản thành công!");
+    setAccountModalOpen(false);
+    setCreatingRole(null);
+    await refetch();
   };
 
   /* ======================== STATUS & BAN ======================== */
   const doChangeStatus = async (id: string, next: "ACTIVE" | "INACTIVE") => {
     await changeStatus.mutateAsync({ id, data: { status: next } });
-    message.success(
+    toast.success(
       next === "ACTIVE" ? "Đã mở lại tài khoản" : "Đã tạm ngưng tài khoản"
     );
     await refetch();
@@ -177,7 +190,7 @@ export const AccountList = () => {
 
   const doBan = async (id: string) => {
     await banAccount.mutateAsync(id);
-    message.success("Đã cấm vĩnh viễn tài khoản!");
+    toast.success("Đã cấm vĩnh viễn tài khoản!");
     await refetch();
   };
 
@@ -193,7 +206,16 @@ export const AccountList = () => {
     showTotal: (total: number) => `Tổng cộng ${total} tài khoản`,
   };
 
-  /* ======================== RENDER ======================== */
+  const handleViewDetails = (account: IAccount) => {
+    setSelectedAccount(account);
+    setDetailModalOpen(true);
+  };
+
+  const selectedDealerName =
+    selectedAccount?.dealerId && dealerMap[selectedAccount.dealerId]
+      ? dealerMap[selectedAccount.dealerId]
+      : undefined;
+
   return (
     <div className="space-y-4">
       {/* Search & Add */}
@@ -227,28 +249,29 @@ export const AccountList = () => {
         )}
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-2xl shadow-sm bg-white border border-gray-100">
-        {filteredAccounts.length > 0 ? (
-          <AccountTable
-            data={filteredAccounts}
-            loading={isLoading}
-            canModify
-            pagination={paginationConfig}
-            dealerMap={dealerMap}
-            currentUserRole={currentRole}
-            onChangeStatus={(id, next) => setConfirmStatus({ id, next })}
-            onBan={(id) => setConfirmBanId(id)}
-          />
-        ) : (
+      {/* Table (đồng bộ UI với DealerTable, không scroll ngang/dọc) */}
+      {filteredAccounts.length > 0 ? (
+        <AccountTable
+          data={filteredAccounts}
+          loading={isLoading}
+          canModify
+          pagination={paginationConfig}
+          dealerMap={dealerMap}
+          currentUserRole={currentRole}
+          onChangeStatus={(id, next) => setConfirmStatus({ id, next })}
+          onBan={(id) => setConfirmBanId(id)}
+          onViewDetails={handleViewDetails}
+        />
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <Empty
             description="Không tìm thấy tài khoản nào"
             className="py-10 text-gray-500"
           />
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Modals */}
+      {/* Role select (Admin) */}
       {isAdmin && (
         <AccountRoleSelectModal
           open={roleModalOpen}
@@ -261,6 +284,7 @@ export const AccountList = () => {
         />
       )}
 
+      {/* Create modal */}
       <AccountModal
         open={accountModalOpen}
         onClose={() => {
@@ -271,7 +295,6 @@ export const AccountList = () => {
         creatingRole={creatingRole}
         onSubmit={handleCreate}
         loading={false}
-        // ⬇️ Quan trọng: truyền options vào khi Admin đang tạo Manager
         dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 
@@ -304,6 +327,17 @@ export const AccountList = () => {
         okText="Cấm vĩnh viễn"
         danger
         message="Bạn có chắc chắn muốn cấm vĩnh viễn tài khoản này?"
+      />
+
+      {/* Detail modal */}
+      <AccountDetailModal
+        open={detailModalOpen}
+        account={selectedAccount}
+        dealerName={selectedDealerName}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedAccount(null);
+        }}
       />
     </div>
   );

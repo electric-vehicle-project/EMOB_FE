@@ -1,4 +1,4 @@
-import { Modal, Form, message } from "antd";
+import { Modal, Form } from "antd";
 import SelectInput from "../../components/atoms/SelectInput";
 import {
   useBulkDeleteDiscountPolicies,
@@ -7,6 +7,7 @@ import {
 import { useGetVehicles } from "../../service/vehicleService";
 import type { IDealer } from "../../model/Dealer";
 import type { IVehicle } from "../../model/Vehicle";
+import { toast } from "react-toastify";
 
 const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
   const [form] = Form.useForm();
@@ -36,12 +37,12 @@ const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
 
     try {
       await bulkDelete(payload);
-      message.success("Đã xóa chính sách hàng loạt!");
+      toast.success("Đã xóa chính sách hàng loạt!");
       onSuccess?.();
       onClose();
       form.resetFields();
     } catch (err: any) {
-      message.error("Xóa hàng loạt thất bại!");
+      toast.error("Xóa hàng loạt thất bại!");
     }
   };
 

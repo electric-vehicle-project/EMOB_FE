@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { message, Spin } from "antd";
+import { Spin } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { CardWrapper } from "../../components/template/CardWrapper";
@@ -8,6 +8,7 @@ import { useSalesByStaff } from "../../service/saleOrderService";
 import { useGetAccountsByManager } from "../../service/accountService";
 import { mapToSelectOptions } from "../../utils/mapToSelectOptions";
 import type { SalesByStaffResponse } from "../../model/SaleOrder";
+import { toast } from "react-toastify";
 
 const SaleOrderByStaffPage: React.FC = () => {
   // ==============================
@@ -46,7 +47,7 @@ const SaleOrderByStaffPage: React.FC = () => {
   // 🚨 Xử lý lỗi
   // ==============================
   useEffect(() => {
-    if (isError) message.error("Không thể tải dữ liệu doanh số!");
+    if (isError) toast.error("Không thể tải dữ liệu doanh số!");
   }, [isError]);
 
   // ==============================

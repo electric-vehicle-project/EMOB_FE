@@ -4,7 +4,6 @@ import {
   Input,
   InputNumber,
   Button,
-  message,
   Upload,
   Tag,
   Result,
@@ -14,6 +13,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useUpdateVehiclePrices } from "../../service/vehicleService";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export const VehiclePricePage = () => {
   const [vehicleId, setVehicleId] = useState("");
@@ -46,21 +46,21 @@ export const VehiclePricePage = () => {
           retailPrice: values.retailPrice,
         },
       });
-      message.success("✅ Cập nhật giá xe thành công!");
+      toast.success("✅ Cập nhật giá xe thành công!");
       form.resetFields();
     } catch {
-      message.error("❌ Không thể cập nhật giá xe!");
+      toast.error("❌ Không thể cập nhật giá xe!");
     }
   };
 
   const handleUpload = (info: UploadChangeParam<UploadFile>) => {
     const file = info.file;
     if (file.type !== "image/png") {
-      message.error("Chỉ chấp nhận file PNG!");
+      toast.error("Chỉ chấp nhận file PNG!");
       return;
     }
     if (file.status === "done" || file.originFileObj) {
-      message.success("Tải hình thành công!");
+      toast.success("Tải hình thành công!");
       const blob = file.originFileObj as File | undefined;
       if (blob) form.setFieldValue("image", URL.createObjectURL(blob));
     }

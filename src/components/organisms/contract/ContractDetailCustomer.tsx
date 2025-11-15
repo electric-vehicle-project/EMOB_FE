@@ -47,6 +47,7 @@ export const ContractDetailCustomer = () => {
   const customer = useCustomerById(saleOrder?.customerId).data?.result;
   const dealer = useDealerByIdQuery(user?.dealerId).data?.result;
 
+
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -79,12 +80,12 @@ export const ContractDetailCustomer = () => {
         paymentStatus === "FULL"
           ? { contractId: contract.contractId }
           : {
-            contractId: contract.contractId,
-            deposit: formValues.deposit,
-            downPayment: formValues.downPayment,
-            termMonths: formValues.termMonths,
-            interestRate: formValues.interestRate,
-          };
+              contractId: contract.contractId,
+              deposit: formValues.deposit,
+              downPayment: formValues.downPayment,
+              termMonths: formValues.termMonths,
+              interestRate: formValues.interestRate,
+            };
 
       await signContract({ params: baseParams, body });
       toast.success("Đã ký hợp đồng thành công!");
@@ -170,9 +171,11 @@ export const ContractDetailCustomer = () => {
             </p>
 
             <p>
-              <b>BÊN A (Đại lý):</b>  {dealer?.name ?? "______________________"}
+              <b>BÊN A (Đại lý):</b> {dealer?.name ?? "______________________"}
               <br />
-              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên đại lý
+              Đại diện: Ông/Bà{" "}
+              <b>{user?.fullName ?? "______________________"}</b> - Chức vụ:
+              Nhân viên đại lý
               <br />
               Địa chỉ: {dealer?.address ?? "______________________"}
             </p>
@@ -180,7 +183,8 @@ export const ContractDetailCustomer = () => {
             <p>
               <b>BÊN B (Khách hàng):</b>
               <br />
-              Đại diện: Ông/Bà <b>{customer?.fullName ?? "______________________"}</b>
+              Đại diện: Ông/Bà{" "}
+              <b>{customer?.fullName ?? "______________________"}</b>
               <br />
               Địa chỉ: {customer?.address ?? "______________________"}
               <br />
@@ -219,8 +223,8 @@ export const ContractDetailCustomer = () => {
                 {contract?.status === "PENDING"
                   ? "Chưa thanh toán"
                   : contract?.status === "SIGNED"
-                    ? "Đã thỏa thuận"
-                    : contract?.status || "Không xác định"}
+                  ? "Đã thỏa thuận"
+                  : contract?.status || "Không xác định"}
               </b>
               <br />- Bên B chịu trách nhiệm thanh toán đầy đủ và đúng hạn.
             </p>
@@ -236,7 +240,6 @@ export const ContractDetailCustomer = () => {
               <b>Điều 5. Điều khoản chung</b>
               {/* ---------- Phụ lục hợp đồng ---------- */}
               <Divider />
-
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-3 text-center uppercase">
                   Phụ lục hợp đồng
@@ -320,9 +323,11 @@ export const ContractDetailCustomer = () => {
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
-                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
+                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0}{" "}
+                    &nbsp;&nbsp;
                     <b>Tổng giá trị (chưa VAT):</b>{" "}
-                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫ &nbsp;&nbsp;
+                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫
+                    &nbsp;&nbsp;
                     <b>Thuế VAT:</b>{" "}
                     {contract?.vatAmount
                       ? `${contract?.vatAmount.toLocaleString("vi-VN")} ₫`
@@ -360,25 +365,26 @@ export const ContractDetailCustomer = () => {
           <Divider />
 
           <div className="flex justify-end gap-3 mt-6 print:hidden">
-            {contract?.status === "PENDING" && user?.role === "DEALER_STAFF" && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<FileDoneOutlined />}
-                  onClick={handleOpenSign}
-                  className="!bg-[#627254] hover:!bg-[#556547] text-white"
-                >
-                  Ký hợp đồng
-                </Button>
-                <Button
-                  danger
-                  onClick={() => setDeleteModalVisible(true)}
-                  className="!bg-[#f34b4b] hover:!bg-[#ba0000] !text-white rounded-xl h-9"
-                >
-                  Hủy hợp đồng
-                </Button>
-              </>
-            )}
+            {contract?.status === "PENDING" &&
+              user?.role === "DEALER_STAFF" && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<FileDoneOutlined />}
+                    onClick={handleOpenSign}
+                    className="!bg-[#627254] hover:!bg-[#556547] text-white"
+                  >
+                    Ký hợp đồng
+                  </Button>
+                  <Button
+                    danger
+                    onClick={() => setDeleteModalVisible(true)}
+                    className="!bg-[#f34b4b] hover:!bg-[#ba0000] !text-white rounded-xl h-9"
+                  >
+                    Hủy hợp đồng
+                  </Button>
+                </>
+              )}
             {contract?.status === "SIGNED" && (
               <Button disabled type="default">
                 Hợp đồng đã được ký
@@ -401,7 +407,7 @@ export const ContractDetailCustomer = () => {
           disabled:
             paymentStatus === "INSTALLMENT"
               ? !form.isFieldsTouched(true) ||
-              form.getFieldsError().some(({ errors }) => errors.length > 0)
+                form.getFieldsError().some(({ errors }) => errors.length > 0)
               : false,
         }}
       >
@@ -410,7 +416,7 @@ export const ContractDetailCustomer = () => {
           layout="vertical"
           className="mt-2"
           onValuesChange={() => {
-            form.validateFields().catch(() => { });
+            form.validateFields().catch(() => {});
           }}
         >
           <Form.Item label="Trạng thái thanh toán">
@@ -493,12 +499,7 @@ export const ContractDetailCustomer = () => {
                 label="Lãi suất (%)"
                 rules={[{ required: true, message: "Vui lòng nhập lãi suất" }]}
               >
-                <InputNumber
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  className="!w-full"
-                />
+                <InputNumber min={0} max={100} step={0.1} className="!w-full" />
               </Form.Item>
             </>
           )}

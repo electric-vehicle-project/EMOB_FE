@@ -7,6 +7,7 @@ import { useCurrentUser } from "../../../utils/getCurrentUser";
 import {
   useCurrentDealerInstallmentPlansQuery,
   useInstallmentPlansQuery,
+  useInstallmetnPlanByCustomersQuery,
 } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
 import type { InstallmentPlanApiModel } from "../../../model/InstallmentPlan";
@@ -45,6 +46,10 @@ export const InstallmentPlanList = () => {
   // ADMIN và EVM_STAFF xem tất cả kế hoạch
   const isDealerRole = role === "DEALER_STAFF" || role === "MANAGER";
   const isAdminRole = role === "ADMIN" || role === "EVM_STAFF";
+  // const customerPlansQuery = useInstallmetnPlanByCustomersQuery(
+  //   { enabled: canView && isDealerRole },
+  //   params
+  // );
 
   // Gọi cả 2 hooks nhưng chỉ enable một trong hai dựa trên role
   const allPlansQuery = useInstallmentPlansQuery(

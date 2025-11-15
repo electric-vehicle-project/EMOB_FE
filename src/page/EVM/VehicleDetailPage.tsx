@@ -1,6 +1,6 @@
 /* EMOB-2025 - VehicleDetailPage */
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { Card, Tag, Space, Tooltip, message, Popconfirm, Image } from "antd";
+import { Card, Tag, Space, Tooltip, Popconfirm, Image } from "antd";
 import {
   useLocation,
   useNavigate,
@@ -42,8 +42,15 @@ import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import VehicleUnitListModal from "../../components/organisms/vehicle/VehicleUnitListModal";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { toast } from "react-toastify";
 
 type Sel = { auth?: { user?: { role?: Role | null } } };
+
+// ==== Điều hướng có nhớ nguồn ====
+type NavState = {
+  from?: "bulk" | "edit" | "list" | string;
+  backTo?: string; // ví dụ: `${basePath}/${ROUTES.EVM_VEHICLE}`
+};
 
 const SpecItem = ({
   label,
@@ -92,7 +99,7 @@ export const VehicleDetailPage = () => {
       typeof error === "object" &&
       (error as { response?: { status?: number } })?.response?.status === 401;
     if (http401)
-      message.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+      toast.error("🔒 Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
   }, [error]);
 
   const { mutateAsync: deleteVehicle, isPending: deleting } =
@@ -109,13 +116,13 @@ export const VehicleDetailPage = () => {
     setUnitsOpen(searchParams.get("openUnits") === "1");
   }, [searchParams]);
 
-  // ⚠️ Cache nguồn điều hướng (list/edit) để không bị mất khi đổi query
-  const fromRef = useRef<"list" | "edit" | null>(null);
+  // ⚠️ Cache nguồn điều hướng (list/edit/bulk) + backTo để dùng cho nút back
+  const fromRef = useRef<NavState["from"] | null>(null);
+  const backToRef = useRef<string | null>(null);
   useEffect(() => {
-    const from =
-      typeof location.state === "object" &&
-      (location.state as Record<string, unknown>)?.from;
-    if (from === "list" || from === "edit") fromRef.current = from;
+    const st = (location.state as NavState | null) ?? null;
+    if (st?.from) fromRef.current = st.from;
+    if (st?.backTo) backToRef.current = st.backTo;
   }, [location.state]);
 
   // Mở modal: thêm openUnits=1 nhưng GIỮ state hiện tại
@@ -142,13 +149,24 @@ export const VehicleDetailPage = () => {
 
   const priced = hasVehiclePriced(vehicle);
 
-  // Back button logic (ổn định dù đã mở/đóng modal)
+  // ==== Nút Back xử lý đầy đủ các luồng ====
   const handleBack = useCallback(() => {
     const fromState = fromRef.current;
+    const backTo = backToRef.current;
+
+    // 1) Nếu vừa quay lại từ trang nhập lô (Bulk) → quay về list đích rõ ràng
+    if (fromState === "bulk" && backTo) {
+      navigate(backTo, { replace: true });
+      return;
+    }
+
+    // 2) Nếu đến từ list/edit → luôn về list
     if (fromState === "edit" || fromState === "list") {
       navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
       return;
     }
+
+    // 3) Luồng thường: có history thì back, không thì về list
     if (window.history.length > 2) {
       navigate(-1);
     } else {
@@ -194,10 +212,11 @@ export const VehicleDetailPage = () => {
           onConfirm={async () => {
             try {
               await deleteVehicle(id);
-              message.success("Đã xóa mẫu xe.");
-              navigate(-1);
+              toast.success("Đã xóa mẫu xe.");
+              // Sau khi xóa, về list để tránh back 2 lần
+              navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
             } catch {
-              message.error("Xóa không thành công.");
+              toast.error("Xóa không thành công.");
             }
           }}
         >
@@ -216,7 +235,7 @@ export const VehicleDetailPage = () => {
           disabled={!priced}
           onClick={() =>
             navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`, {
-              state: { from: "detail" },
+              state: { from: "detail" }, // mở Bulk từ Detail
             })
           }
           className="rounded-md"
@@ -336,7 +355,7 @@ export const VehicleDetailPage = () => {
 
           {/* Ảnh chính */}
           <div
-            className="group w-full aspect-[4/3] overflow-hidden flex items-center justify-center bg-white rounded-xl border cursor-zoom-in"
+            className="group w-full aspect-[4/3] overflow-hidden flex items-center justify-center bg-white rounded-xl border cursor-zoom-in relative"
             onClick={() => {
               setPreviewIndex(0);
               setPreviewOpen(true);
