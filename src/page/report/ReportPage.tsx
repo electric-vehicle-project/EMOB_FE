@@ -19,7 +19,6 @@ import {
 } from "../../service/reportService";
 
 import { useDebounce } from "../../hook/useDebounce";
-import type { IReport } from "../../model/Report";
 import useGetParams from "../../hook/useGetParams";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";

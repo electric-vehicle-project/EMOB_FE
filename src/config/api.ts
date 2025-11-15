@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 const api = axios.create({
   // baseURL: "http://103.200.20.149/:8080/api/",
-  baseURL: import.meta.env.VITE_BASE_URL
+  baseURL: import.meta.env.VITE_BASE_URL,
 });
 
 api.interceptors.request.use(
@@ -31,7 +31,7 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response, 
+  (response) => response,
   async (error: AxiosError<any>) => {
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
@@ -60,7 +60,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const baseURL = import.meta.env.VITE_BASE_URL
+        const baseURL = import.meta.env.VITE_BASE_URL;
 
         const refreshToken = localStorage.getItem("refreshToken");
         if (!refreshToken) throw new Error("No refresh token found");

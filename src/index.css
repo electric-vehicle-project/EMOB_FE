@@ -3,7 +3,7 @@
   --primary-color: #627254;
   --secondary-color: #76885b;
   --default-color: #24282b;
-  --natural-color: #DDDDDD;
+  --natural-color: #dddddd;
 }
 
 /* Subtle focus glow using primary color */
@@ -265,3 +265,5 @@
   border-radius: 16px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.12);
 }
+
+
