@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useMemo } from "react";
-import { Result, Empty, Button } from "antd";
+import { Result, Empty, Button, Dropdown, Select, Space } from "antd";
+import { SlidersOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
+
 import { SearchBar } from "../../molecules/SearchBar";
 import { Button as EmobButton } from "../../atoms/Button";
 import { AccountTable } from "../../molecules/Account/AccountTable";
@@ -10,19 +14,23 @@ import { AccountModal } from "./AccountModal";
 import { AccountRoleSelectModal } from "../../molecules/Account/AccountRoleSelectModal";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useDebounce } from "../../../hook/useDebounce";
+
 import {
   useGetAccountsByAdmin,
   useGetAccountsByManager,
   useChangeAccountStatus,
   useBanAccount,
 } from "../../../service/accountService";
+
 import { useDealersQuery } from "../../../service/dealerService";
 import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
+
 import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
 import api from "../../../config/api";
+import { Card } from "../../atoms/Card";
 
-/* ===== Helper: xây URL đăng ký đúng theo baseURL từ api config, không hard-code host ===== */
+/* ======================= Helper ======================= */
 const getApiBaseUrl = () => api.defaults.baseURL ?? "";
 
 const getRegisterPathByRole = (creatorRole: Role) =>
@@ -50,20 +58,15 @@ const registerAccount = async (
   });
 
   const contentType = response.headers.get("content-type") || "";
-  let data: unknown;
+  let data;
 
   if (contentType.includes("application/json")) {
     data = await response.json();
   } else {
-    const text = await response.text();
-    data = text;
+    data = await response.text();
   }
 
   if (!response.ok) {
-    interface ApiError extends Error {
-      status: number;
-      data: unknown;
-    }
     const errorMessage =
       typeof data === "string"
         ? data || "Tạo tài khoản thất bại"
@@ -73,23 +76,35 @@ const registerAccount = async (
           typeof (data as { message: unknown }).message === "string"
         ? (data as { message: string }).message
         : "Tạo tài khoản thất bại";
-    const err = new Error(errorMessage) as ApiError;
-    err.status = response.status;
-    err.data = data;
+
+    const err = new Error(errorMessage);
     throw err;
   }
 
   return data;
 };
 
+/* ======================= MAIN COMPONENT ======================= */
 export const AccountList = () => {
   const user = useSelector((state: RootState) => state.user);
   const currentRole = user?.role as Role;
 
   const [search, setSearch] = useState("");
   const debounced = useDebounce(search, 300);
+
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const [filterRole, setFilterRole] = useState<string | undefined>();
+
+  /* MULTI FILTER STATUS */
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [creatingRole, setCreatingRole] = useState<Role | null>(null);
@@ -98,23 +113,28 @@ export const AccountList = () => {
     id: string;
     next: "ACTIVE" | "INACTIVE";
   } | null>(null);
+
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<IAccount | null>(null);
 
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
-  // ====== Queries ======
   const adminQuery = useGetAccountsByAdmin(page, pageSize, {
     enabled: isAdmin,
-    queryKey: ["accounts-by-admin", page, pageSize],
-  });
-  const managerQuery = useGetAccountsByManager(page, pageSize, {
-    enabled: isManager,
-    queryKey: ["accounts-by-manager", page, pageSize],
+    queryKey: ["accounts-by-admin", page, pageSize, sortField, sortDir],
+    sortField,
+    sortDir,
   });
 
-  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
+  const managerQuery = useGetAccountsByManager(page, pageSize, {
+    enabled: isManager,
+    queryKey: ["accounts-by-manager", page, pageSize, sortField, sortDir],
+    sortField,
+    sortDir,
+  });
+
+  const { data: dealersData } = useDealersQuery(0, 1000);
 
   const dealerMap = useMemo(() => {
     const dealers = dealersData?.result?.data ?? [];
@@ -126,8 +146,8 @@ export const AccountList = () => {
   }, [dealersData]);
 
   const dealerOptions = useMemo(() => {
-    const list = dealersData?.result?.data ?? dealersData?.data ?? [];
-    return (list as { id: string; name: string }[]).map((d) => ({
+    const dealers = dealersData?.result?.data ?? [];
+    return (dealers as { id: string; name: string }[]).map((d) => ({
       label: d.name,
       value: d.id,
     }));
@@ -138,22 +158,39 @@ export const AccountList = () => {
 
   const isLoading = isAdmin ? adminQuery.isLoading : managerQuery.isLoading;
   const refetch = isAdmin ? adminQuery.refetch : managerQuery.refetch;
+
   const accounts: IAccount[] = useMemo(
     () => (isAdmin ? adminQuery.data : managerQuery.data) ?? [],
     [isAdmin, adminQuery.data, managerQuery.data]
   );
+
   const meta = (isAdmin ? adminQuery.meta : managerQuery.meta) ?? null;
 
+  /* ======================= SEARCH + FILTER ======================= */
   const filteredAccounts: IAccount[] = useMemo(() => {
+    let list = accounts;
+
     const keyword = debounced.trim().toLowerCase();
-    if (!keyword) return accounts;
-    return accounts.filter(
-      (acc) =>
-        acc.fullName?.toLowerCase().includes(keyword) ||
-        acc.email?.toLowerCase().includes(keyword) ||
-        acc.phone?.includes(keyword)
-    );
-  }, [accounts, debounced]);
+    if (keyword) {
+      list = list.filter(
+        (acc) =>
+          acc.fullName?.toLowerCase().includes(keyword) ||
+          acc.email?.toLowerCase().includes(keyword) ||
+          acc.phone?.includes(keyword)
+      );
+    }
+
+    if (isAdmin && filterRole) {
+      list = list.filter((acc) => acc.role === filterRole);
+    }
+
+    /* MULTI STATUS FILTER */
+    if (filterStatus.length > 0) {
+      list = list.filter((acc) => filterStatus.includes(acc.status));
+    }
+
+    return list;
+  }, [accounts, debounced, filterRole, filterStatus, isAdmin]);
 
   if (!isAdmin && !isManager) {
     return (
@@ -170,21 +207,17 @@ export const AccountList = () => {
     );
   }
 
-  /* ======================== CREATE ACCOUNT ======================== */
   const handleCreate = async (values: AccountCreatePayload) => {
     await registerAccount(currentRole, values);
-    toast.success("✅ Tạo tài khoản thành công!");
+    toast.success("Tạo tài khoản thành công!");
     setAccountModalOpen(false);
     setCreatingRole(null);
     await refetch();
   };
 
-  /* ======================== STATUS & BAN ======================== */
   const doChangeStatus = async (id: string, next: "ACTIVE" | "INACTIVE") => {
     await changeStatus.mutateAsync({ id, data: { status: next } });
-    toast.success(
-      next === "ACTIVE" ? "Đã mở lại tài khoản" : "Đã tạm ngưng tài khoản"
-    );
+    toast.success(next === "ACTIVE" ? "Đã mở lại tài khoản" : "Đã tạm ngưng");
     await refetch();
   };
 
@@ -216,16 +249,108 @@ export const AccountList = () => {
       ? dealerMap[selectedAccount.dealerId]
       : undefined;
 
+  /* ======================= FILTER PANEL ======================= */
+  const FilterContent = () => (
+    <Card
+      {...({ onClick: (e: any) => e.stopPropagation() } as any)}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      <Space direction="vertical" style={{ width: "100%" }}>
+        {isAdmin && (
+          <div>
+            <b className="text-gray-700">Vai trò</b>
+            <Select
+              allowClear
+              className="w-full mt-2"
+              value={filterRole}
+              onChange={(v) => {
+                setFilterRole(v);
+                setPage(0);
+              }}
+            >
+              <Select.Option value="MANAGER">Quản lý đại lý</Select.Option>
+              <Select.Option value="EVM_STAFF">Nhân viên EVM</Select.Option>
+            </Select>
+          </div>
+        )}
+
+        <div>
+          <b className="text-gray-700">Trạng thái</b>
+          <Select
+            mode="multiple"
+            allowClear
+            className="w-full mt-2"
+            value={filterStatus}
+            onChange={(v) => {
+              setFilterStatus(v);
+              setPage(0);
+            }}
+          >
+            <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+            <Select.Option value="INACTIVE">Ngừng hoạt động</Select.Option>
+            <Select.Option value="BANNED">Đã cấm</Select.Option>
+          </Select>
+        </div>
+
+        <div>
+          <b className="text-gray-700">Sắp xếp theo</b>
+          <Select
+            className="w-full mt-2"
+            value={sortField}
+            onChange={(v) => {
+              setSortField(v);
+              setPage(0);
+            }}
+          >
+            <Select.Option value="createdAt">Ngày tạo</Select.Option>
+            <Select.Option value="fullName">Tên người dùng</Select.Option>
+            <Select.Option value="email">Email</Select.Option>
+          </Select>
+        </div>
+
+        <div>
+          <b className="text-gray-700">Thứ tự</b>
+          <Select
+            className="w-full mt-2"
+            value={sortDir}
+            onChange={(v) => {
+              setSortDir(v);
+              setPage(0);
+            }}
+          >
+            <Select.Option value="asc">Tăng dần</Select.Option>
+            <Select.Option value="desc">Giảm dần</Select.Option>
+          </Select>
+        </div>
+      </Space>
+    </Card>
+  );
+
+  /* ======================= UI ======================= */
   return (
     <div className="space-y-4">
-      {/* Search & Add */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Tìm kiếm tài khoản..."
-          className="w-full sm:max-w-[420px]"
-        />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm kiếm tài khoản..."
+            className="w-full sm:max-w-[420px]"
+          />
+
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+          >
+            <Button
+              type="text"
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+              className="text-gray-600 hover:text-black"
+            />
+          </Dropdown>
+        </div>
 
         {isAdmin ? (
           <EmobButton
@@ -249,7 +374,6 @@ export const AccountList = () => {
         )}
       </div>
 
-      {/* Table (đồng bộ UI với DealerTable, không scroll ngang/dọc) */}
       {filteredAccounts.length > 0 ? (
         <AccountTable
           data={filteredAccounts}
@@ -271,7 +395,6 @@ export const AccountList = () => {
         </div>
       )}
 
-      {/* Role select (Admin) */}
       {isAdmin && (
         <AccountRoleSelectModal
           open={roleModalOpen}
@@ -284,7 +407,6 @@ export const AccountList = () => {
         />
       )}
 
-      {/* Create modal */}
       <AccountModal
         open={accountModalOpen}
         onClose={() => {
@@ -298,7 +420,6 @@ export const AccountList = () => {
         dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 
-      {/* Confirm đổi trạng thái */}
       <DeleteConfirm
         open={!!confirmStatus}
         onConfirm={async () => {
@@ -316,7 +437,6 @@ export const AccountList = () => {
         }
       />
 
-      {/* Confirm cấm vĩnh viễn */}
       <DeleteConfirm
         open={!!confirmBanId}
         onConfirm={async () => {
@@ -329,7 +449,6 @@ export const AccountList = () => {
         message="Bạn có chắc chắn muốn cấm vĩnh viễn tài khoản này?"
       />
 
-      {/* Detail modal */}
       <AccountDetailModal
         open={detailModalOpen}
         account={selectedAccount}

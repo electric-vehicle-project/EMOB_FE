@@ -83,7 +83,7 @@ export const DealerModal = ({
     try {
       const payload = buildDealerPayloadFromForm(current);
       await onSubmit(payload as unknown as IDealer);
-    } catch (err: any) {
+    } catch {
       const action = initialValues ? "cập nhật" : "tạo";
 
       toast.error(`Không thể ${action} đại lý.`);

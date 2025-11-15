@@ -3,6 +3,7 @@ import { Modal, Form } from "antd";
 import { AccountForm } from "../../molecules/Account/AccountForm";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 import { Role } from "../../../model/Account";
+import { useEffect } from "react";
 
 interface Props {
   open: boolean;
@@ -12,6 +13,15 @@ interface Props {
   onSubmit: (values: AccountCreatePayload) => Promise<void>;
   loading?: boolean;
   dealerOptions?: { label: string; value: string }[];
+}
+
+/* Typing lỗi BE – đưa ra ngoài để tránh recreate mỗi render */
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
 }
 
 export const AccountModal = ({
@@ -25,30 +35,32 @@ export const AccountModal = ({
 }: Props) => {
   const [form] = Form.useForm();
 
+  /* Reset form mỗi khi modal mở */
+  useEffect(() => {
+    if (open) form.resetFields();
+  }, [open, form]);
+
   const handleSubmit = async (values: AccountCreatePayload) => {
     try {
       await onSubmit(values);
     } catch (err: unknown) {
-      interface ApiError {
-        response?: {
-          data?: {
-            message?: string;
-          };
-        };
-      }
       const apiError = err as ApiError;
-      const msg = apiError?.response?.data?.message ?? "";
+      const msg = apiError?.response?.data?.message;
 
-      if (msg.toLowerCase().includes("email")) {
-        form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }]);
-        return;
-      }
+      if (typeof msg === "string") {
+        const normalized = msg.toLowerCase();
 
-      if (msg.toLowerCase().includes("phone")) {
-        form.setFields([
-          { name: "phone", errors: ["Số điện thoại đã tồn tại"] },
-        ]);
-        return;
+        if (normalized.includes("email")) {
+          form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }]);
+          return;
+        }
+
+        if (normalized.includes("phone")) {
+          form.setFields([
+            { name: "phone", errors: ["Số điện thoại đã tồn tại"] },
+          ]);
+          return;
+        }
       }
     }
   };
@@ -61,6 +73,7 @@ export const AccountModal = ({
       title="Tạo tài khoản mới"
       width={600}
       destroyOnClose
+      maskClosable={false} // tránh mất dữ liệu khi click ra ngoài
     >
       <AccountForm
         role={creatorRole}

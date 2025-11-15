@@ -54,6 +54,12 @@ export const AccountForm: React.FC<Props> = ({
   const [innerForm] = Form.useForm<AccountFormValues>();
   const form = outerForm ?? innerForm;
 
+  /* Reset form khi thay đổi role/modal truyền form từ ngoài */
+  if (!outerForm) {
+    // Nếu không dùng form từ modal, dùng form nội bộ, reset khi mount
+    form.resetFields();
+  }
+
   const handleFinish = (values: AccountFormValues) => {
     const base: AccountCreatePayload = {
       fullName: trimEdges(values.fullName),
@@ -61,13 +67,16 @@ export const AccountForm: React.FC<Props> = ({
       phone: toLocalPhone(values.phone),
       address: trimEdges(values.address),
       dateOfBirth: dayjs(values.dateOfBirth).format("YYYY-MM-DD"),
-      password: values.password,
+      password: trimEdges(values.password),
       gender: values.gender!,
     };
 
-    if (role === Role.MANAGER) return onSubmit(base);
+    if (role === Role.MANAGER) {
+      return onSubmit(base); // Manager luôn tạo DEALER_STAFF (logic giữ nguyên)
+    }
 
     const finalRole = defaultCreatingRole ?? values.role;
+
     onSubmit({
       ...base,
       ...(finalRole ? { role: finalRole } : {}),
@@ -87,9 +96,10 @@ export const AccountForm: React.FC<Props> = ({
       onFinish={handleFinish}
       autoComplete="off"
       requiredMark="optional"
-      validateTrigger="onSubmit"
+      validateTrigger={["onBlur", "onSubmit"]} // improved
       className="space-y-2"
     >
+      {/* Full name */}
       <Form.Item
         name="fullName"
         label="Họ và tên"
@@ -106,6 +116,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input allowClear placeholder="VD: Nguyễn Văn A" />
       </Form.Item>
 
+      {/* Role (Admin) */}
       {role === Role.ADMIN && !defaultCreatingRole && (
         <Form.Item
           name="role"
@@ -122,6 +133,7 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
+      {/* Dealer select (Admin creating Manager) */}
       {showDealer() && (
         <Form.Item
           name="dealerId"
@@ -137,6 +149,7 @@ export const AccountForm: React.FC<Props> = ({
         </Form.Item>
       )}
 
+      {/* Email */}
       <Form.Item
         name="email"
         label="Email"
@@ -158,6 +171,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input allowClear placeholder="VD: nhanvien@emob.vn" />
       </Form.Item>
 
+      {/* Phone */}
       <Form.Item
         name="phone"
         label="Số điện thoại"
@@ -176,6 +190,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input allowClear placeholder="VD: 0901234567" />
       </Form.Item>
 
+      {/* Address */}
       <Form.Item
         name="address"
         label="Địa chỉ"
@@ -188,6 +203,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input allowClear placeholder="VD: 123 Nguyễn Trãi, Quận 5" />
       </Form.Item>
 
+      {/* Gender + DOB */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Form.Item
           name="gender"
@@ -209,8 +225,6 @@ export const AccountForm: React.FC<Props> = ({
           label="Ngày sinh"
           rules={[
             { required: true, message: "Vui lòng chọn ngày sinh" },
-
-            /* ✅ Sửa: tuổi tối thiểu 18 */
             {
               validator(_, value: Dayjs) {
                 if (!value) return Promise.resolve();
@@ -234,11 +248,13 @@ export const AccountForm: React.FC<Props> = ({
           <DatePicker
             className="w-full"
             format="DD/MM/YYYY"
+            disabledDate={(d) => d && d > dayjs()}
             placeholder="Chọn ngày sinh"
           />
         </Form.Item>
       </div>
 
+      {/* Password */}
       <Form.Item
         name="password"
         label="Mật khẩu"
@@ -255,6 +271,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input.Password autoComplete="new-password" />
       </Form.Item>
 
+      {/* Confirm password */}
       <Form.Item
         name="confirmPassword"
         label="Xác nhận mật khẩu"
@@ -272,6 +289,7 @@ export const AccountForm: React.FC<Props> = ({
         <Input.Password autoComplete="new-password" />
       </Form.Item>
 
+      {/* Submit */}
       <div className="flex justify-center mt-5">
         <Button
           type="primary"

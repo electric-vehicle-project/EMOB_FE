@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { Result, Button, Empty, Dropdown, Select, Space } from "antd";
 import { SlidersOutlined, PlusOutlined } from "@ant-design/icons";
