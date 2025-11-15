@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { Button, Select } from "antd";
-import { toast } from "react-toastify";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 import type { RootState } from "../../redux/store";
 import type { Promotion } from "../../model/Promotion";
+
 import {
   usePromotionList,
   usePromotionDelete,
@@ -17,45 +18,41 @@ import { PromotionDeleteConfirm } from "../../components/organisms/promotion/Pro
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 
-export const DealerPromotionsPage: React.FC = () => {
+const DealerPromotionsPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.user);
 
   const role: "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF" =
-    user?.role === "ADMIN" ||
-    user?.role === "EVM_STAFF" ||
-    user?.role === "MANAGER" ||
-    user?.role === "DEALER_STAFF"
-      ? user.role
-      : "DEALER_STAFF";
+    user?.role ?? "DEALER_STAFF";
 
+  /* FILTER STATE */
   const [scope, setScope] = useState<string[]>(["LOCAL"]);
 
+  /* PAGINATION + SORT */
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  /* API */
   const { data, isLoading, isFetching, refetch } = usePromotionList(
     scope,
     page,
     size,
-    "", // không search
-    undefined, // không filter trạng thái
+    undefined,
+    undefined,
     sortField,
     sortDir
   );
 
   const promotions: Promotion[] = useMemo(
-    () => (data?.result?.data as Promotion[]) ?? [],
+    () => data?.result?.data ?? [],
     [data]
   );
 
-  const totalElements = useMemo(
-    () => data?.result?.metadata?.totalElements ?? 0,
-    [data]
-  );
+  const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
+  /* DELETE LOGIC */
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
@@ -63,23 +60,16 @@ export const DealerPromotionsPage: React.FC = () => {
 
   const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
 
-  const handleCreate = () => {
-    navigate(`/${role.toLowerCase()}/promotions/create`);
-  };
-
-  const handleEdit = (id: string) => {
-    navigate(`/${role.toLowerCase()}/promotions/edit/${id}`);
-  };
-
   const handleDeleteClick = (id: string) => {
-    const target = promotions.find((p) => p.id === id);
-    if (!target) return;
-    setSelectedPromotion(target);
+    const found = promotions.find((p) => p.id === id);
+    if (!found) return;
+    setSelectedPromotion(found);
     setConfirmOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!selectedPromotion) return;
+
     try {
       await deletePromotion(selectedPromotion.id);
       toast.success("Đã xoá khuyến mãi thành công");
@@ -91,6 +81,7 @@ export const DealerPromotionsPage: React.FC = () => {
     }
   };
 
+  /* RESET */
   const resetFilters = () => {
     setScope(["LOCAL"]);
     setSortField("createAt");
@@ -102,6 +93,7 @@ export const DealerPromotionsPage: React.FC = () => {
 
   return (
     <CardWrapper>
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi của đại lý
@@ -110,41 +102,48 @@ export const DealerPromotionsPage: React.FC = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={handleCreate}
+          onClick={() => navigate(`/${role.toLowerCase()}/promotions/create`)}
           className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
         >
           Tạo khuyến mãi
         </Button>
       </div>
 
+      {/* FILTER */}
       <EMOBFilterBar
         onReset={resetFilters}
         filterDropdown={
           <div className="flex flex-col gap-4">
-            <Select
-              mode="multiple"
-              allowClear
-              className="w-full"
-              placeholder="Phạm vi áp dụng"
-              value={scope}
-              options={[
-                { label: "Toàn hệ thống", value: "GLOBAL" },
-                { label: "Đại lý", value: "LOCAL" },
-              ]}
-              onChange={(val) => {
-                setScope(val.length ? val : ["LOCAL"]);
-                setPage(0);
-              }}
-            />
+            <div>
+              <b className="text-gray-700">Phạm vi áp dụng</b>
+              <Select
+                mode="multiple"
+                allowClear
+                className="w-full mt-2"
+                placeholder="Phạm vi áp dụng"
+                value={scope}
+                options={[
+                  { label: "Toàn hệ thống", value: "GLOBAL" },
+                  { label: "Đại lý", value: "LOCAL" },
+                ]}
+                onChange={(v) => {
+                  setScope(v.length ? v : ["LOCAL"]);
+                  setPage(0);
+                }}
+              />
+            </div>
           </div>
         }
       />
 
+      {/* TABLE */}
       <PromotionTable
         data={promotions}
         loading={isLoading || isFetching}
         role={role}
-        onEdit={handleEdit}
+        onEdit={(id) =>
+          navigate(`/${role.toLowerCase()}/promotions/edit/${id}`)
+        }
         onDelete={handleDeleteClick}
         sortField={sortField}
         sortDir={sortDir}
@@ -179,3 +178,4 @@ export const DealerPromotionsPage: React.FC = () => {
 };
 
 export default DealerPromotionsPage;
+export { DealerPromotionsPage };

@@ -26,9 +26,24 @@ export const DealerPointRuleTable: React.FC<Props> = ({
     setEditableData(data);
   }, [data]);
 
+  const getLevelColor = (level: string): string => {
+    switch (level) {
+      case "BRONZE":
+        return "volcano";
+      case "SILVER":
+        return "gray";
+      case "GOLD":
+        return "gold";
+      case "PLATINUM":
+        return "geekblue";
+      default:
+        return "default";
+    }
+  };
+
   const handleValueChange = (
     level: string,
-    field: keyof Pick<IDealerPointRule, "minPoints" | "price">,
+    field: "minPoints" | "price",
     value: number | null
   ) => {
     setEditableData((prev) =>
@@ -40,10 +55,9 @@ export const DealerPointRuleTable: React.FC<Props> = ({
 
   const handleSave = () => {
     if (!onUpdate) {
-      toast.error("Không thể cập nhật quyền này");
+      toast.error("Không thể cập nhật");
       return;
     }
-
     onUpdate(editableData);
     toast.success("Cập nhật thành công");
   };
@@ -55,22 +69,18 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       key: "membershipLevel",
       align: "center",
       width: 160,
-      render: (level: string) => {
-        const mapColor: Record<string, string> = {
-          BRONZE: "volcano",
-          SILVER: "gray",
-          GOLD: "gold",
-          PLATINUM: "geekblue",
-        };
-        return <Tag color={mapColor[level] || "default"}>{level}</Tag>;
-      },
+      render: (level: string) => (
+        <Tag color={getLevelColor(level)} className="font-medium">
+          {level}
+        </Tag>
+      ),
     },
     {
       title: "Điểm tối thiểu",
       dataIndex: "minPoints",
       key: "minPoints",
       align: "center",
-      width: 160,
+      width: 170,
       render: (val: number, record) =>
         editable ? (
           <InputNumber
@@ -108,13 +118,12 @@ export const DealerPointRuleTable: React.FC<Props> = ({
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md">
-      <EMOBTable
+      <EMOBTable<IDealerPointRule>
         rowKey="membershipLevel"
         columns={columns}
         dataSource={editableData}
         loading={loading}
         pagination={false}
-        scroll={{ x: "max-content" }}
       />
 
       {editable && (
@@ -122,7 +131,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
           <Button
             type="primary"
             onClick={handleSave}
-            className="!bg-[#627254] !border-[#627254] !text-white hover:!bg-[#4f6f52]"
+            className="!bg-[#627254] hover:!bg-[#4f6f52]"
           >
             Cập nhật
           </Button>

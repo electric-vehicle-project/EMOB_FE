@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import { Button } from "antd";
-import { toast } from "react-toastify";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 import type { RootState } from "../../redux/store";
 import type { Promotion } from "../../model/Promotion";
@@ -17,38 +17,38 @@ import { PromotionTable } from "../../components/organisms/promotion/PromotionTa
 import { PromotionDeleteConfirm } from "../../components/organisms/promotion/PromotionDeleteConfirm";
 import { CardWrapper } from "../../components/template/CardWrapper";
 
-export const EvmPromotionsPage: React.FC = () => {
+const EvmPromotionsPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.user);
 
   const role: "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF" =
     user?.role ?? "EVM_STAFF";
 
+  /* PAGINATION + SORT */
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [sortField, setSortField] = useState("createAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  /* API */
   const { data, isLoading, isFetching, refetch } = usePromotionList(
     "GLOBAL",
     page,
     size,
-    undefined, // no keyword
-    undefined, // no status filter
+    undefined,
+    undefined,
     sortField,
     sortDir
   );
 
   const promotions: Promotion[] = useMemo(
-    () => (data?.result?.data as Promotion[]) ?? [],
+    () => data?.result?.data ?? [],
     [data]
   );
 
-  const totalElements = useMemo(
-    () => data?.result?.metadata?.totalElements ?? 0,
-    [data]
-  );
+  const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
+  /* DELETE LOGIC */
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
@@ -56,23 +56,16 @@ export const EvmPromotionsPage: React.FC = () => {
 
   const { mutateAsync: deletePromotion, isPending } = usePromotionDelete();
 
-  const handleCreate = () => {
-    navigate(`/${role.toLowerCase()}/promotions/create`);
-  };
-
-  const handleEdit = (id: string) => {
-    navigate(`/${role.toLowerCase()}/promotions/edit/${id}`);
-  };
-
   const handleDeleteClick = (id: string) => {
-    const target = promotions.find((p) => p.id === id);
-    if (!target) return;
-    setSelectedPromotion(target);
+    const found = promotions.find((p) => p.id === id);
+    if (!found) return;
+    setSelectedPromotion(found);
     setConfirmOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!selectedPromotion) return;
+
     try {
       await deletePromotion(selectedPromotion.id);
       toast.success("Đã xoá khuyến mãi thành công");
@@ -86,6 +79,7 @@ export const EvmPromotionsPage: React.FC = () => {
 
   return (
     <CardWrapper>
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khuyến mãi toàn hệ thống
@@ -95,7 +89,7 @@ export const EvmPromotionsPage: React.FC = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={handleCreate}
+            onClick={() => navigate(`/${role.toLowerCase()}/promotions/create`)}
             className="!bg-[#627254] !border-[#627254] text-white hover:!bg-[#4f6f52]"
           >
             Tạo khuyến mãi
@@ -103,11 +97,14 @@ export const EvmPromotionsPage: React.FC = () => {
         )}
       </div>
 
+      {/* TABLE */}
       <PromotionTable
         data={promotions}
         loading={isLoading || isFetching}
         role={role}
-        onEdit={handleEdit}
+        onEdit={(id) =>
+          navigate(`/${role.toLowerCase()}/promotions/edit/${id}`)
+        }
         onDelete={handleDeleteClick}
         sortField={sortField}
         sortDir={sortDir}
@@ -142,3 +139,4 @@ export const EvmPromotionsPage: React.FC = () => {
 };
 
 export default EvmPromotionsPage;
+export { EvmPromotionsPage };

@@ -23,6 +23,7 @@ import useGetParams from "../../hook/useGetParams";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import type { RootState } from "../../redux/store";
+import type { IReport } from "../../model/Report";
 
 interface ReportFormValues {
   title: string;
@@ -95,13 +96,16 @@ export const ReportPage = () => {
 
   const [deleting, setDeleting] = useState<IReport | null>(null);
 
-  /** CREATE / UPDATE REPORT */
+  /** CREATE / UPDATE */
   const handleSubmit = async (values: ReportFormValues) => {
     try {
       if (editing) {
         await updateReport.mutateAsync({
           id: editing.reportId,
-          data: values,
+          data: {
+            ...values,
+            status: editing.status, // giữ nguyên trạng thái hiện tại
+          },
         });
         toast.success("Cập nhật báo cáo thành công!");
       } else {
@@ -117,7 +121,7 @@ export const ReportPage = () => {
     }
   };
 
-  /** DELETE REPORT */
+  /** DELETE */
   const handleDelete = async (id: string) => {
     try {
       await deleteReport.mutateAsync(id);
@@ -129,7 +133,7 @@ export const ReportPage = () => {
     }
   };
 
-  /** PROCESS REPORT */
+  /** PROCESS */
   const handleProcess = async (next: IReport["status"], solution?: string) => {
     if (!processing) return;
 
@@ -158,9 +162,62 @@ export const ReportPage = () => {
     setSize(10);
   };
 
+  /** RENDER FILTER UI */
+  const filterContent = (
+    <div className="flex flex-col gap-4">
+      {/* STATUS */}
+      <div>
+        <b className="text-gray-700">Trạng thái</b>
+        <Select
+          allowClear
+          className="w-full mt-2"
+          placeholder="Trạng thái"
+          value={status}
+          options={STATUS_OPTIONS}
+          onChange={(val) => {
+            setStatus(val);
+            setPage(0);
+          }}
+        />
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          className="w-full mt-2"
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+        >
+          <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="title">Tên báo cáo</Select.Option>
+        </Select>
+      </div>
+
+      {/* SORT DIRECTION */}
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          className="w-full mt-2"
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+        >
+          <Select.Option value="asc">Tăng dần</Select.Option>
+          <Select.Option value="desc">Giảm dần</Select.Option>
+        </Select>
+      </div>
+    </div>
+  );
+
   return (
     <CardWrapper>
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Quản lý Báo cáo
@@ -176,29 +233,15 @@ export const ReportPage = () => {
         </Button>
       </div>
 
-      {/* EMOB Filter Bar */}
+      {/* FILTER BAR */}
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}
         onReset={resetFilters}
-        filterDropdown={
-          <div className="flex flex-col gap-3">
-            <Select
-              allowClear
-              className="w-full"
-              placeholder="Trạng thái"
-              value={status}
-              options={STATUS_OPTIONS}
-              onChange={(val) => {
-                setStatus(val);
-                setPage(0);
-              }}
-            />
-          </div>
-        }
+        filterDropdown={filterContent}
       />
 
-      {/* Table */}
+      {/* TABLE */}
       <ReportTable
         data={reports}
         loading={isLoading}
@@ -233,7 +276,7 @@ export const ReportPage = () => {
         onViewDetail={(id) => navigate(`/${role.toLowerCase()}/report/${id}`)}
       />
 
-      {/* Create / Edit Modal */}
+      {/* CREATE / EDIT */}
       <ReportFormModal
         open={openForm}
         initialValues={editing}
@@ -244,7 +287,7 @@ export const ReportPage = () => {
         onSubmit={handleSubmit}
       />
 
-      {/* Process Modal */}
+      {/* PROCESS */}
       <ProcessReportModal
         open={openProcess}
         onCancel={() => {
@@ -254,7 +297,7 @@ export const ReportPage = () => {
         onSubmit={handleProcess}
       />
 
-      {/* Delete Confirmation */}
+      {/* DELETE */}
       <ReportDeleteConfirm
         open={!!deleting}
         onCancel={() => setDeleting(null)}

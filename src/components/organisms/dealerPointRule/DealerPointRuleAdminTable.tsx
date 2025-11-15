@@ -33,8 +33,8 @@ export const DealerPointRuleAdminTable: React.FC<Props> = ({
       dataIndex: "dealerName",
       key: "dealerName",
       align: "center",
-      render: (val: string | undefined) => val ?? "Không xác định",
       width: 220,
+      render: (v) => v ?? "Không xác định",
     },
     {
       title: "Cấp độ hội viên",
@@ -42,7 +42,7 @@ export const DealerPointRuleAdminTable: React.FC<Props> = ({
       key: "membershipLevel",
       align: "center",
       width: 160,
-      render: (level: string) => (
+      render: (level) => (
         <Tag color={getLevelColor(level)} className="font-medium">
           {level}
         </Tag>
@@ -52,28 +52,27 @@ export const DealerPointRuleAdminTable: React.FC<Props> = ({
       title: "Điểm tối thiểu",
       dataIndex: "minPoints",
       key: "minPoints",
-      align: "center",
       width: 160,
-      render: (value: number) => value.toLocaleString("vi-VN"),
+      align: "center",
+      render: (v: number) => v.toLocaleString("vi-VN"),
     },
     {
       title: "Giá quy đổi (₫)",
       dataIndex: "price",
       key: "price",
-      align: "center",
       width: 180,
-      render: (value: number) => `${value.toLocaleString("vi-VN")} ₫`,
+      align: "center",
+      render: (v: number) => `${v.toLocaleString("vi-VN")} ₫`,
     },
   ];
 
   return (
     <EMOBTable
       rowKey={(r) => `${r.dealerId}-${r.membershipLevel}`}
-      dataSource={data}
       columns={columns}
+      dataSource={data}
       loading={loading}
       pagination={false}
-      scroll={{ x: "max-content" }}
     />
   );
 };

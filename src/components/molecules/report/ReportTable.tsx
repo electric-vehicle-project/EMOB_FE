@@ -1,4 +1,4 @@
-import { Tag, Button } from "antd";
+import { Tag } from "antd";
 import type {
   ColumnsType,
   TablePaginationConfig,
@@ -9,22 +9,17 @@ import type { FilterValue } from "antd/es/table/interface";
 import { EMOBTable } from "../../molecules/EMOBTable";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
-import {
-  EyeOutlined,
-  EditOutlined,
-  ToolOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import type { JSX } from "react";
 
 interface ReportTableProps {
   data: IReport[];
   loading?: boolean;
   pagination?: TablePaginationConfig;
+
   sortField?: keyof IReport;
   sortDir?: "asc" | "desc";
   onSortChange?: (field: keyof IReport, order: "asc" | "desc") => void;
 
-  /** Actions */
   onEdit?: (record: IReport) => void;
   onProcess?: (record: IReport) => void;
   onDelete?: (record: IReport) => void;
@@ -59,13 +54,15 @@ export const ReportTable = ({
       sortOrder: sortField === "title" ? order : null,
       render: (text: string, record) => (
         <span
-          className="text-[#3b6e58] font-medium hover:underline cursor-pointer"
+          className="text-black font-medium hover:underline cursor-pointer"
           onClick={() => onViewDetail?.(record.reportId)}
         >
           {text}
         </span>
       ),
     },
+
+    /** ========== TYPE ========== */
     {
       title: "Loại",
       dataIndex: "type",
@@ -82,9 +79,16 @@ export const ReportTable = ({
         } as const;
 
         const item = map[type];
+
+        if (!item) {
+          return <Tag color="default">{type || "Không xác định"}</Tag>;
+        }
+
         return <Tag color={item.color}>{item.label}</Tag>;
       },
     },
+
+    /** ========== STATUS ========== */
     {
       title: "Trạng thái",
       dataIndex: "status",
@@ -100,9 +104,15 @@ export const ReportTable = ({
         } as const;
 
         const item = map[status];
+
+        if (!item) {
+          return <Tag color="default">{status || "Không xác định"}</Tag>;
+        }
+
         return <Tag color={item.color}>{item.label}</Tag>;
       },
     },
+
     {
       title: "Người tạo",
       dataIndex: "fullName",
@@ -111,6 +121,7 @@ export const ReportTable = ({
       align: "center",
       render: (value: string) => value || "--",
     },
+
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
@@ -130,67 +141,61 @@ export const ReportTable = ({
     },
   ];
 
-  /** ==== Actions in Dropdown ==== */
+  /** ==== Actions ==== */
   const actions = (record: IReport) => {
-    const items = [
-      {
-        key: "view",
-        label: (
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            className="!text-[#627254]"
-            onClick={() => onViewDetail?.(record.reportId)}
-          >
-            Xem chi tiết
-          </Button>
-        ),
-      },
-    ];
+    const items: { key: string; label: JSX.Element }[] = [];
+
+    items.push({
+      key: "view",
+      label: (
+        <div
+          className="text-black cursor-pointer hover:text-[#4f6f52]"
+          onClick={() => onViewDetail?.(record.reportId)}
+        >
+          Chi tiết
+        </div>
+      ),
+    });
 
     if (role === "DEALER_STAFF") {
       items.push({
         key: "edit",
         label: (
-          <Button
-            type="link"
-            icon={<EditOutlined />}
+          <div
+            className="text-black cursor-pointer hover:text-[#4f6f52]"
             onClick={() => onEdit?.(record)}
-            className="!text-[#627254]"
           >
             Chỉnh sửa
-          </Button>
+          </div>
         ),
       });
     }
 
+    // 👉 Manager xử lý
     if (role === "MANAGER") {
       items.push({
         key: "process",
         label: (
-          <Button
-            type="link"
-            icon={<ToolOutlined />}
+          <div
+            className="text-black cursor-pointer hover:text-[#4f6f52]"
             onClick={() => onProcess?.(record)}
-            className="!text-[#627254]"
           >
             Xử lý
-          </Button>
+          </div>
         ),
       });
     }
 
+    // 👉 Xóa (ĐỎ)
     items.push({
       key: "delete",
       label: (
-        <Button
-          type="link"
-          icon={<DeleteOutlined />}
+        <div
+          className="text-red-600 cursor-pointer hover:text-red-700"
           onClick={() => onDelete?.(record)}
-          className="!text-red-600"
         >
           Xóa
-        </Button>
+        </div>
       ),
     });
 

@@ -64,13 +64,14 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       align: "center",
       width: 100,
       sorter: (a, b) => a.quantity - b.quantity,
+      render: (v) => <span className="font-medium">{v}</span>,
     },
     {
       title: "Đơn giá (VNĐ)",
       dataIndex: "unitPrice",
       key: "unitPrice",
       align: "center",
-      width: 140,
+      width: 150,
       sorter: (a, b) => a.unitPrice - b.unitPrice,
       render: (price?: number) => (price ? price.toLocaleString("vi-VN") : "0"),
     },
@@ -79,7 +80,7 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       dataIndex: "discountPrice",
       key: "discountPrice",
       align: "center",
-      width: 140,
+      width: 150,
       render: (discount?: number) =>
         discount ? discount.toLocaleString("vi-VN") : "0",
     },
@@ -104,7 +105,7 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       dataIndex: "promotionName",
       key: "promotionName",
       align: "center",
-      width: 120,
+      width: 150,
       render: (text?: string) => text ?? "-",
     },
   ];
@@ -118,7 +119,7 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       }))}
       pagination={false}
       bordered
-      className="rounded-xl overflow-hidden shadow-sm"
+      className="rounded-xl shadow-sm bg-white"
       locale={{
         emptyText: "Không có sản phẩm nào trong đơn hàng",
       }}
