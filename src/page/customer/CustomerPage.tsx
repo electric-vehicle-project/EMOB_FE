@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Button, Select, Space } from "antd";
+import { Button, Select } from "antd";
 import { toast } from "react-toastify";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -34,19 +34,19 @@ export const CustomerPage: React.FC = () => {
   const role: "MANAGER" | "DEALER_STAFF" =
     (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
 
-  // ---- FILTERS & SORTING ----
+  // ========================== FILTERS + SORT ==========================
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
 
   const [status, setStatus] = useState<CustomerStatus[] | undefined>(undefined);
 
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
-
   const [sortField, setSortField] = useState("fullName");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // ---- API HOOK ----
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
+  // ========================== API ==========================
   const { data, isLoading, isFetching, refetch } = useCustomerList({
     page,
     size,
@@ -56,23 +56,20 @@ export const CustomerPage: React.FC = () => {
     sortDir,
   });
 
-  // ---- DATA MAPPING ----
   const customers: ICustomer[] = useMemo(
     () => data?.result?.data ?? [],
     [data]
   );
 
-  const totalElements = useMemo(
-    () => data?.result?.metadata?.totalElements ?? 0,
-    [data]
-  );
+  const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
-  // ---- PERMISSIONS ----
-  const canCreate = role === "DEALER_STAFF";
-  const canEdit = role === "DEALER_STAFF";
-  const canDelete = role === "DEALER_STAFF";
+  // ========================== PERMISSIONS ==========================
+  const isDealerStaff = role === "DEALER_STAFF";
+  const canCreate = isDealerStaff;
+  const canEdit = isDealerStaff;
+  const canDelete = isDealerStaff;
 
-  // ---- MODAL DELETE ----
+  // ========================== DELETE ==========================
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
     null
@@ -81,17 +78,14 @@ export const CustomerPage: React.FC = () => {
   const { mutateAsync: deleteCustomer, isPending } = useCustomerDelete();
 
   const handleCreate = () => {
-    if (!canCreate) return;
-    navigate(`/dealer_staff/customers/create`);
+    navigate("/dealer_staff/customers/create");
   };
 
   const handleEdit = (id: string) => {
-    if (!canEdit) return;
     navigate(`/dealer_staff/customers/edit/${id}`);
   };
 
   const handleDeleteClick = (id: string) => {
-    if (!canDelete) return;
     const target = customers.find((c) => c.id === id);
     if (!target) return;
 
@@ -101,12 +95,13 @@ export const CustomerPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!selectedCustomer) return;
+
     try {
       await deleteCustomer(selectedCustomer.id);
       toast.success("Đã xoá khách hàng thành công!");
       refetch();
     } catch {
-      toast.error("Không thể xoá khách hàng này!");
+      toast.error("Không thể xoá khách hàng!");
     } finally {
       setConfirmOpen(false);
     }
@@ -114,7 +109,7 @@ export const CustomerPage: React.FC = () => {
 
   return (
     <CardWrapper>
-      {/* PAGE HEADER */}
+      {/* ========================== HEADER ========================== */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-[#627254]">
           Danh sách khách hàng của đại lý
@@ -135,27 +130,73 @@ export const CustomerPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* FILTER BAR */}
+      {/* ========================== FILTER BAR ========================== */}
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={(v) => setKeyword(v)}
+        onReset={() => {
+          setKeyword("");
+          setStatus(undefined);
+          setSortField("fullName");
+          setSortDir("desc");
+          setPage(0);
+          setSize(10);
+        }}
         filterDropdown={
-          <Space direction="vertical" style={{ width: "100%" }}>
-            <div className="font-medium">Trạng thái</div>
-            <Select
-              mode="multiple"
-              allowClear
-              value={status}
-              options={STATUS_OPTIONS}
-              className="w-full"
-              placeholder="Chọn trạng thái"
-              onChange={(vals) => setStatus(vals.length ? vals : undefined)}
-            />
-          </Space>
+          <div className="flex flex-col gap-4 w-full">
+            {/* TRẠNG THÁI */}
+            <div>
+              <div className="font-medium mb-1">Trạng thái</div>
+              <Select
+                mode="multiple"
+                allowClear
+                value={status}
+                className="w-full"
+                placeholder="Chọn trạng thái"
+                options={STATUS_OPTIONS}
+                onChange={(vals) => setStatus(vals.length ? vals : undefined)}
+              />
+            </div>
+
+            {/* SẮP XẾP THEO */}
+            <div>
+              <div className="font-medium mb-1">Sắp xếp theo</div>
+              <Select
+                className="w-full"
+                value={sortField}
+                onChange={(v) => {
+                  setSortField(v);
+                  setPage(0);
+                }}
+              >
+                <Select.Option value="fullName">Họ và tên</Select.Option>
+                <Select.Option value="email">Email</Select.Option>
+                <Select.Option value="phoneNumber">Số điện thoại</Select.Option>
+                <Select.Option value="dateOfBirth">Ngày sinh</Select.Option>
+                <Select.Option value="memberShipLevel">Cấp độ</Select.Option>
+              </Select>
+            </div>
+
+            {/* THỨ TỰ */}
+            <div>
+              <div className="font-medium mb-1">Thứ tự</div>
+              <Select
+                className="w-full"
+                value={sortDir}
+                onChange={(v) => {
+                  setSortDir(v);
+                  setPage(0);
+                }}
+              >
+                <Select.Option value="asc">Tăng dần</Select.Option>
+                <Select.Option value="desc">Giảm dần</Select.Option>
+              </Select>
+            </div>
+          </div>
         }
       />
 
-      {/* CUSTOMER TABLE */}
+      {/* ========================== TABLE ========================== */}
       <CustomerTable
         data={customers}
         loading={isLoading || isFetching}
@@ -175,7 +216,7 @@ export const CustomerPage: React.FC = () => {
           pageSize: size,
           total: totalElements,
           showSizeChanger: true,
-          onChange: (p: number, s?: number) => {
+          onChange: (p, s) => {
             setPage(p - 1);
             setSize(s ?? 10);
           },
@@ -184,7 +225,7 @@ export const CustomerPage: React.FC = () => {
         }}
       />
 
-      {/* DELETE MODAL */}
+      {/* ========================== DELETE MODAL ========================== */}
       <CustomerDeleteConfirm
         open={confirmOpen}
         customerName={selectedCustomer?.fullName}

@@ -35,12 +35,14 @@ const SaleOrderEvmPage: React.FC = () => {
     undefined
   );
 
-  // Pagination + Sort
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  // Sort
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
 
   // API
   const { data, isLoading, isFetching, refetch } = useSaleOrderListDealers({
@@ -67,13 +69,14 @@ const SaleOrderEvmPage: React.FC = () => {
       await completeOrder(id);
       refetch();
     } catch {
-      /* onError handled in hook */
+      /* handled in hook */
     }
   };
 
   const handleViewDetail = (id: string) =>
     navigate(`/${role.toLowerCase()}/sale-order/${id}`);
 
+  // Reset Filter
   const resetFilters = () => {
     setKeyword("");
     setStatuses(undefined);
@@ -82,6 +85,58 @@ const SaleOrderEvmPage: React.FC = () => {
     setPage(0);
     setSize(10);
   };
+
+  // Render Filter UI theo mẫu Dealer Discount Policy
+  const filterContent = (
+    <div className="flex flex-col gap-4">
+      {/* STATUS FILTER */}
+      <div>
+        <b className="text-gray-700">Trạng thái</b>
+        <Select<OrderStatus[]>
+          mode="multiple"
+          allowClear
+          className="w-full mt-2"
+          placeholder="Trạng thái"
+          value={statuses}
+          options={STATUS_OPTIONS}
+          onChange={(vals) => setStatuses(vals.length ? vals : undefined)}
+        />
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          className="w-full mt-2"
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+        >
+          <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="totalPrice">Tổng tiền</Select.Option>
+          <Select.Option value="totalQuantity">Tổng số lượng</Select.Option>
+        </Select>
+      </div>
+
+      {/* SORT DIRECTION */}
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          className="w-full mt-2"
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+        >
+          <Select.Option value="asc">Tăng dần</Select.Option>
+          <Select.Option value="desc">Giảm dần</Select.Option>
+        </Select>
+      </div>
+    </div>
+  );
 
   return (
     <CardWrapper>
@@ -92,24 +147,12 @@ const SaleOrderEvmPage: React.FC = () => {
         </h2>
       </div>
 
-      {/* EMOB Filter Bar */}
+      {/* Filter Bar */}
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}
         onReset={resetFilters}
-        filterDropdown={
-          <div className="flex flex-col gap-4">
-            <Select<OrderStatus[]>
-              mode="multiple"
-              allowClear
-              className="w-full"
-              placeholder="Trạng thái"
-              value={statuses}
-              options={STATUS_OPTIONS}
-              onChange={(vals) => setStatuses(vals.length ? vals : undefined)}
-            />
-          </div>
-        }
+        filterDropdown={filterContent}
       />
 
       {/* Table */}

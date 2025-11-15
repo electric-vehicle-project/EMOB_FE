@@ -82,8 +82,13 @@ export default function PromotionEditPage() {
     usePromotionUpdateValue();
 
   const { data: dealersData, isLoading: loadingDealers } = useDealersQuery(
-    {},
-    { enabled: canPickDealers }
+    0,
+    1000,
+    "",
+    "createdAt",
+    "desc",
+    undefined,
+    canPickDealers
   );
 
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({

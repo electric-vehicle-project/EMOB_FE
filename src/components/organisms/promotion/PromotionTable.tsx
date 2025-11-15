@@ -1,12 +1,15 @@
 import { Tag, Button } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import type { TablePaginationConfig } from "antd";
-import type { TableProps } from "antd/es/table";
+import type { TablePaginationConfig, TableProps } from "antd";
 import type { SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
 
-import type { Promotion, PromotionStatus } from "../../../model/Promotion";
+import type {
+  Promotion,
+  PromotionStatus,
+  PromotionType,
+  PromotionScope,
+} from "../../../model/Promotion";
 import { EMOBTable } from "../../molecules/EMOBTable";
 import type { JSX } from "react";
 
@@ -14,13 +17,20 @@ interface Props {
   data: Promotion[];
   loading?: boolean;
   role: "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF";
+
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+
   sortField: string;
   sortDir: "asc" | "desc";
   onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
+
   pagination?: TablePaginationConfig;
 }
+
+/* ======================
+   LABELS
+====================== */
 
 const STATUS_LABELS: Record<PromotionStatus, string> = {
   ACTIVE: "Đang hiệu lực",
@@ -29,15 +39,15 @@ const STATUS_LABELS: Record<PromotionStatus, string> = {
   INACTIVE: "Không hoạt động",
 };
 
-const SCOPE_LABELS: Record<string, string> = {
+const SCOPE_LABELS: Record<PromotionScope, string> = {
   GLOBAL: "Toàn hệ thống",
   LOCAL: "Đại lý",
 };
 
-const TYPE_LABELS: Record<string, string> = {
+const TYPE_LABELS: Record<PromotionType, string> = {
   PERCENTAGE: "Giảm theo %",
-  FIXED: "Giảm số tiền",
-  FIXED_AMOUNT: "Giảm số tiền",
+  FIXED_AMOUNT: "Giảm số tiền cố định",
+  POINT: "Tặng điểm thưởng",
 };
 
 const getStatusColor = (status: PromotionStatus): string => {
@@ -55,10 +65,14 @@ const getStatusColor = (status: PromotionStatus): string => {
   }
 };
 
-const canEditPromotion = (role: Props["role"]): boolean =>
+const canEditPromotion = (role: Props["role"]) =>
   role === "ADMIN" || role === "EVM_STAFF";
 
-const canDeletePromotion = (role: Props["role"]): boolean => role === "ADMIN";
+const canDeletePromotion = (role: Props["role"]) => role === "ADMIN";
+
+/* ======================
+   COMPONENT
+====================== */
 
 export const PromotionTable = ({
   data,
@@ -73,6 +87,9 @@ export const PromotionTable = ({
 }: Props) => {
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
+  /* ======================
+      COLUMNS
+  ====================== */
   const columns: ColumnsType<Promotion> = [
     {
       title: "Tên chương trình",
@@ -80,16 +97,18 @@ export const PromotionTable = ({
       key: "name",
       sorter: true,
       sortOrder: sortField === "name" ? order : null,
-      render: (text: string) => <span className="font-medium">{text}</span>,
+      render: (text: string) => (
+        <span className="font-medium text-gray-800">{text}</span>
+      ),
     },
     {
       title: "Loại",
       dataIndex: "type",
       key: "type",
       align: "center",
-      render: (type?: string) =>
+      render: (type?: PromotionType) =>
         type ? (
-          <Tag color="purple">{TYPE_LABELS[type] ?? type}</Tag>
+          <Tag color="purple">{TYPE_LABELS[type]}</Tag>
         ) : (
           <span className="text-gray-400">—</span>
         ),
@@ -101,12 +120,17 @@ export const PromotionTable = ({
       align: "center",
       sorter: true,
       sortOrder: sortField === "value" ? order : null,
-      render: (val?: number) =>
-        typeof val === "number" ? (
-          `${val}%`
-        ) : (
-          <span className="text-gray-400">—</span>
-        ),
+      render: (val: Promotion["value"], record: Promotion) => {
+        if (val == null) {
+          return <span className="text-gray-400">—</span>;
+        }
+
+        if (record.type === "PERCENTAGE") {
+          return `${val}%`;
+        }
+
+        return `${val.toLocaleString("vi-VN")} ₫`;
+      },
     },
     {
       title: "Thời gian áp dụng",
@@ -114,7 +138,7 @@ export const PromotionTable = ({
       align: "center",
       sorter: true,
       sortOrder: sortField === "startDate" ? order : null,
-      render: (_, record) => {
+      render: (_: unknown, record: Promotion) => {
         const start = dayjs(record.startDate);
         const end = dayjs(record.endDate);
 
@@ -130,7 +154,7 @@ export const PromotionTable = ({
       dataIndex: "scope",
       key: "scope",
       align: "center",
-      render: (scope: string) => (
+      render: (scope: PromotionScope) => (
         <Tag color={scope === "GLOBAL" ? "geekblue" : "success"}>
           {SCOPE_LABELS[scope]}
         </Tag>
@@ -150,21 +174,26 @@ export const PromotionTable = ({
     },
   ];
 
+  /* ======================
+      SORT EVENT
+  ====================== */
   const handleChange: TableProps<Promotion>["onChange"] = (
     _pagination,
     _filters,
     sorter
   ) => {
     const s = Array.isArray(sorter)
-      ? sorter[0]
+      ? (sorter[0] as SorterResult<Promotion>)
       : (sorter as SorterResult<Promotion>);
 
-    if (!s?.field || !s.order) return;
+    if (!s?.field) return;
 
-    onChangeSort(s.field as string, s.order as "ascend" | "descend");
+    onChangeSort(s.field as string, s.order ?? undefined);
   };
 
-  /** dropdown thao tác */
+  /* ======================
+      ACTION MENU
+  ====================== */
   const actions =
     role === "DEALER_STAFF" || role === "MANAGER"
       ? undefined
@@ -178,7 +207,6 @@ export const PromotionTable = ({
                 <Button
                   type="link"
                   className="!text-[#627254]"
-                  icon={<EditOutlined />}
                   onClick={() => onEdit?.(record.id)}
                 >
                   Chỉnh sửa
@@ -194,7 +222,6 @@ export const PromotionTable = ({
                 <Button
                   type="link"
                   className="!text-red-600"
-                  icon={<DeleteOutlined />}
                   onClick={() => onDelete?.(record.id)}
                 >
                   Xoá

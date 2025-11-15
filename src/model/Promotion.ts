@@ -1,11 +1,8 @@
 // ===== Enums theo BE =====
-export type PromotionType =
-  | "PERCENTAGE"
-  | "AMOUNT"
-  | "ACCESSORY"
-  | "INSTALLMENT_SUPPORT";
+export type PromotionType = "PERCENTAGE" | "FIXED_AMOUNT" | "POINT";
 
 export type PromotionScope = "GLOBAL" | "LOCAL";
+
 export type PromotionStatus = "UPCOMING" | "ACTIVE" | "INACTIVE" | "EXPIRED";
 
 // ===== Entity theo Swagger =====
@@ -23,7 +20,7 @@ export interface Promotion {
   createAt: string; // ISO
 }
 
-// ===== Trang hóa theo Swagger =====
+// ===== Page theo Swagger =====
 export interface PageMeta {
   page: number;
   size: number;

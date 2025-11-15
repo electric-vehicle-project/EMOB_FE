@@ -1,4 +1,5 @@
 import { Modal, Form, Input, Select, Row, Col, Button } from "antd";
+import { useEffect } from "react";
 import { useCustomerList } from "../../../service/customerService";
 import { mapCustomerOptions } from "../../../utils/mapToSelectOptions";
 import type { IReport } from "../../../model/Report";
@@ -27,21 +28,39 @@ export const ReportFormModal = ({
   const [form] = Form.useForm<FormValues>();
   const isEdit = Boolean(initialValues);
 
-  // Hook lấy danh sách khách hàng
   const { data: customers, isLoading } = useCustomerList();
   const customerOptions = mapCustomerOptions(customers);
+
+  // Đồng bộ form theo initialValues mỗi lần mở modal
+  useEffect(() => {
+    if (!open) {
+      form.resetFields();
+      return;
+    }
+
+    if (isEdit && initialValues) {
+      form.setFieldsValue({
+        title: initialValues.title,
+        description: initialValues.description,
+        type: initialValues.type,
+        customerId: initialValues.customerId,
+        vinNumber: undefined,
+      });
+    } else {
+      form.resetFields();
+      form.setFieldsValue({
+        type: "FEEDBACK",
+      });
+    }
+  }, [open, isEdit, initialValues, form]);
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      if (isEdit) {
-        delete (values as Partial<FormValues>).customerId;
-        delete (values as Partial<FormValues>).vinNumber;
-      }
       onSubmit(values);
       form.resetFields();
     } catch {
-      // no-op
+      // bỏ qua
     }
   };
 
@@ -58,17 +77,7 @@ export const ReportFormModal = ({
         </span>
       }
     >
-      <Form
-        layout="vertical"
-        form={form}
-        initialValues={
-          isEdit
-            ? initialValues!
-            : {
-                type: "FEEDBACK",
-              }
-        }
-      >
+      <Form layout="vertical" form={form}>
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
@@ -117,31 +126,34 @@ export const ReportFormModal = ({
         >
           <Input.TextArea
             rows={4}
-            placeholder="Nhập mô tả chi tiết về vấn đề hoặc phản hồi..."
+            placeholder="Nhập mô tả chi tiết..."
             className="!resize-none !rounded-lg"
           />
         </Form.Item>
 
-        <Row gutter={16}>
-          <Col xs={24} md={12}>
-            <Form.Item
-              label="Khách hàng"
-              name="customerId"
-              rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
-            >
-              <Select
-                showSearch
-                loading={isLoading}
-                placeholder="Chọn khách hàng"
-                optionFilterProp="label"
-                options={customerOptions}
-                disabled={isEdit}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+        {!isEdit && (
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Khách hàng"
+                name="customerId"
+                rules={[
+                  { required: true, message: "Vui lòng chọn khách hàng" },
+                ]}
+              >
+                <Select
+                  showSearch
+                  loading={isLoading}
+                  placeholder="Chọn khách hàng"
+                  optionFilterProp="label"
+                  options={customerOptions}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
 
-        <div className="flex justify-end mt-6 gap-3">
+        <div className="flex justify-end gap-3 mt-6">
           <Button onClick={onCancel}>Hủy</Button>
           <Button
             type="primary"

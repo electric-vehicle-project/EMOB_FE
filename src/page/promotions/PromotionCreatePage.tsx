@@ -43,9 +43,16 @@ export default function PromotionCreatePage() {
 
   // API HOOKS
   const { mutateAsync: createPromotion, isPending } = usePromotionCreate();
-  const { data: dealersData, isLoading: loadingDealers } = useDealersQuery({
-    enabled: canFetchDealers,
-  });
+  const { data: dealersData, isLoading: loadingDealers } = useDealersQuery(
+    0,
+    1000,
+    "",
+    "createdAt",
+    "desc",
+    undefined,
+    canFetchDealers
+  );
+
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles({
     enabled: true,
   });

@@ -5,9 +5,8 @@ import {
   type MenuProps,
   type TableProps,
 } from "antd";
-import { EllipsisButton } from "../atoms/EllipsisButton";
+import { EllipsisOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { TableWrapper } from "../atoms/TableWrapper";
 
 export interface EMOBTableProps<T> extends Omit<TableProps<T>, "title"> {
   actions?: (record: T) => MenuProps["items"];
@@ -25,27 +24,31 @@ export function EMOBTable<T extends object>({
     ? ({
         title: "Thao tác",
         key: "actions",
-        width: 110,
+        width: 80,
         align: "center",
         render: (_: unknown, record: T) => (
-          <div className="flex justify-center items-center w-full">
-            <Dropdown menu={{ items: actions(record) }} trigger={["click"]}>
-              <div>
-                <EllipsisButton size={26} />
-              </div>
-            </Dropdown>
-          </div>
+          <Dropdown
+            trigger={["click"]}
+            menu={{ items: actions(record) }}
+            placement="bottomRight"
+          >
+            <EllipsisOutlined className="text-xl cursor-pointer text-gray-600 hover:text-black" />
+          </Dropdown>
         ),
       } as ColumnsType<T>[number])
     : null;
 
   return (
-    <ConfigProvider theme={{ components: { Table: { headerBg: "#414d38" } } }}>
-      <TableWrapper>
-        {filterBar && <div className="p-4">{filterBar}</div>}
+    <ConfigProvider>
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        {/* FILTER BAR */}
+        {filterBar && <div className="mb-2">{filterBar}</div>}
 
         <Table<T>
           {...props}
+          bordered
+          className="bg-white rounded-lg shadow-sm"
+          tableLayout="auto"
           columns={
             [...(columns || []), actionColumn].filter(Boolean) as ColumnsType<T>
           }
@@ -55,9 +58,8 @@ export function EMOBTable<T extends object>({
             showTotal: (t) => `Tổng cộng ${t} mục`,
             ...pagination,
           }}
-          scroll={{ x: "max-content" }}
         />
-      </TableWrapper>
+      </div>
     </ConfigProvider>
   );
 }

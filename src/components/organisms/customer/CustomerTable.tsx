@@ -1,7 +1,6 @@
 import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { TablePaginationConfig } from "antd";
-import type { TableProps } from "antd/es/table";
+import type { TablePaginationConfig, TableProps } from "antd";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 
@@ -11,6 +10,7 @@ import type {
   CustomerStatus,
   MembershipLevel,
 } from "../../../model/Customer";
+
 import { EMOBTable } from "../../molecules/EMOBTable";
 import type { SorterResult } from "antd/es/table/interface";
 import type { JSX } from "react";
@@ -23,15 +23,10 @@ interface Props {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 
-  // --- Server sort
   sortField: string;
   sortDir: "asc" | "desc";
-  onChangeSort: (
-    field?: string,
-    order?: "ascend" | "ascend" | "descend"
-  ) => void;
+  onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
 
-  // --- Server pagination
   pagination?: TablePaginationConfig;
 }
 
@@ -76,7 +71,6 @@ export const CustomerTable = ({
     (user?.role as "MANAGER" | "DEALER_STAFF" | null) ?? "DEALER_STAFF";
 
   const rolePrefix = role === "MANAGER" ? "/manager" : "/dealer_staff";
-
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
   const columns: ColumnsType<ICustomer> = [
@@ -159,6 +153,7 @@ export const CustomerTable = ({
 
     const field = s?.field as string | undefined;
     const orderValue = s?.order as "ascend" | "descend" | undefined;
+
     onChangeSort(field, orderValue);
   };
 
@@ -169,12 +164,28 @@ export const CustomerTable = ({
     : (record: ICustomer): { key: string; label: JSX.Element }[] => {
         const menu: { key: string; label: JSX.Element }[] = [];
 
+        // CHI TIẾT (màu đen)
+        menu.push({
+          key: "detail",
+          label: (
+            <div
+              className="text-black cursor-pointer hover:text-[#4f6f52]"
+              onClick={() =>
+                window.open(`${rolePrefix}/customers/${record.id}`, "_self")
+              }
+            >
+              Chi tiết
+            </div>
+          ),
+        });
+
+        // CHỈNH SỬA (màu đen)
         if (canEdit) {
           menu.push({
             key: "edit",
             label: (
               <div
-                className="text-[#627254] cursor-pointer"
+                className="text-black cursor-pointer hover:text-[#4f6f52]"
                 onClick={() => onEdit?.(record.id)}
               >
                 Chỉnh sửa
@@ -183,12 +194,13 @@ export const CustomerTable = ({
           });
         }
 
+        // XOÁ (giữ đỏ)
         if (canDelete) {
           menu.push({
             key: "delete",
             label: (
               <div
-                className="text-red-600 cursor-pointer"
+                className="text-red-600 cursor-pointer hover:text-red-700"
                 onClick={() => onDelete?.(record.id)}
               >
                 Xoá

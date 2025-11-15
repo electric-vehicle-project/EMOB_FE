@@ -1,3 +1,4 @@
+// src/page/saleOrder/SaleOrderStaffPage.tsx
 import { useMemo, useState } from "react";
 import { Button, Select } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
@@ -105,6 +106,57 @@ const SaleOrderStaffPage: React.FC = () => {
     setSize(10);
   };
 
+  const filterContent = (
+    <div className="flex flex-col gap-4">
+      {/* STATUS FILTER */}
+      <div>
+        <b className="text-gray-700">Trạng thái</b>
+        <Select<OrderStatus[]>
+          mode="multiple"
+          allowClear
+          className="w-full mt-2"
+          placeholder="Trạng thái"
+          options={STATUS_OPTIONS}
+          value={statuses}
+          onChange={(v) => setStatuses(v.length ? v : undefined)}
+        />
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          className="w-full mt-2"
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(0);
+          }}
+        >
+          <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="totalPrice">Tổng tiền</Select.Option>
+          <Select.Option value="totalQuantity">Tổng số lượng</Select.Option>
+        </Select>
+      </div>
+
+      {/* SORT DIRECTION */}
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          className="w-full mt-2"
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(0);
+          }}
+        >
+          <Select.Option value="asc">Tăng dần</Select.Option>
+          <Select.Option value="desc">Giảm dần</Select.Option>
+        </Select>
+      </div>
+    </div>
+  );
+
   return (
     <CardWrapper>
       {/* Header */}
@@ -126,19 +178,7 @@ const SaleOrderStaffPage: React.FC = () => {
         keyword={keyword}
         onKeywordChange={setKeyword}
         onReset={resetFilters}
-        filterDropdown={
-          <div className="flex flex-col gap-4">
-            <Select<OrderStatus[]>
-              mode="multiple"
-              allowClear
-              className="w-full"
-              placeholder="Trạng thái"
-              options={STATUS_OPTIONS}
-              value={statuses}
-              onChange={(v) => setStatuses(v.length ? v : undefined)}
-            />
-          </div>
-        }
+        filterDropdown={filterContent}
       />
 
       {/* Table */}

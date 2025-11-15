@@ -31,9 +31,8 @@ export const SaleOrderByStaffTable = ({
       title: "Nhân viên",
       dataIndex: "staffName",
       key: "staffName",
-      ellipsis: { showTitle: false },
       render: (text: string) => (
-        <span className="font-medium text-gray-700">{text}</span>
+        <span className="font-medium text-gray-800">{text}</span>
       ),
     },
     {
@@ -44,7 +43,7 @@ export const SaleOrderByStaffTable = ({
       sorter: true,
       sortOrder: sortField === "orderCount" ? order : null,
       render: (value: number) => (
-        <span className="text-gray-900 font-semibold">{value}</span>
+        <span className="font-medium text-gray-900">{value}</span>
       ),
     },
     {
@@ -55,7 +54,7 @@ export const SaleOrderByStaffTable = ({
       sorter: true,
       sortOrder: sortField === "amount" ? order : null,
       render: (value: number) => (
-        <span className="text-[#2563eb] font-semibold whitespace-nowrap">
+        <span className="font-semibold text-[#2563eb] whitespace-nowrap">
           {value?.toLocaleString("vi-VN")}
         </span>
       ),
@@ -69,12 +68,16 @@ export const SaleOrderByStaffTable = ({
       | SorterResult<SalesByStaffResponse>
       | SorterResult<SalesByStaffResponse>[]
   ) => {
+    if (!onSortChange) return;
+
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
 
-    if (s?.field && s.order) {
-      const field = s.field as keyof SalesByStaffResponse;
+    if (s?.order) {
       const direction = s.order === "ascend" ? "asc" : "desc";
-      onSortChange?.(field, direction);
+      onSortChange(s.field as keyof SalesByStaffResponse, direction);
+    } else {
+      // Reset sort về mặc định giống UI Dealer Discount Policy
+      onSortChange("orderCount", "desc");
     }
   };
 

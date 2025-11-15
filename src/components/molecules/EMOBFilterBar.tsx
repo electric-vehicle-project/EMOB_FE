@@ -1,9 +1,9 @@
 import { Input, Dropdown, Button } from "antd";
-import { SearchOutlined, FilterOutlined } from "@ant-design/icons";
+import { SearchOutlined, SlidersOutlined } from "@ant-design/icons";
 
 interface EMOBFilterBarProps {
-  keyword?: string; // optional
-  onKeywordChange?: (value: string) => void; // optional
+  keyword?: string;
+  onKeywordChange?: (value: string) => void;
   filterDropdown: React.ReactNode;
   onReset?: () => void;
 }
@@ -18,31 +18,31 @@ export const EMOBFilterBar = ({
     typeof keyword === "string" && typeof onKeywordChange === "function";
 
   return (
-    <div className="flex items-center gap-4 mb-4">
-      {/* Search Box (optional) */}
+    <div className="flex items-center gap-3 mb-4">
+      {/* Search */}
       {showSearch && (
         <Input
-          allowClear
-          size="large"
           placeholder="Tìm kiếm..."
+          allowClear
           prefix={<SearchOutlined className="text-gray-400" />}
           value={keyword}
           onChange={(e) => onKeywordChange?.(e.target.value)}
-          className="rounded-full h-11 max-w-md px-4"
-          style={{
-            borderRadius: 9999,
-            height: 34,
-          }}
+          style={{ width: 320 }}
+          className="rounded-md shadow-sm border-gray-300 focus:border-[#627254] focus:ring-[#627254]"
         />
       )}
 
-      {/* Filter Button */}
+      {/* Filter Dropdown */}
       <Dropdown
         trigger={["click"]}
         dropdownRender={() => (
-          <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-200 w-72">
+          <div
+            className="p-4 bg-white rounded-xl shadow-lg border border-gray-200 w-[260px]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {filterDropdown}
 
+            {/* Reset Button */}
             <div className="flex justify-end mt-4">
               <Button type="primary" onClick={onReset}>
                 Đặt lại
@@ -51,16 +51,11 @@ export const EMOBFilterBar = ({
           </div>
         )}
       >
-        <div
-          className="cursor-pointer flex items-center justify-center hover:bg-gray-100"
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-          }}
-        >
-          <FilterOutlined style={{ fontSize: 26, color: "#000" }} />
-        </div>
+        <Button
+          type="text"
+          icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+          className="text-gray-600 hover:text-black"
+        />
       </Dropdown>
     </div>
   );
