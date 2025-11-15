@@ -9,6 +9,7 @@ import { useCustomerList } from "../../service/customerService";
 import { usePromotionList } from "../../service/promotionService";
 import { useGetVehicles } from "../../service/vehicleService";
 import { toast } from "react-toastify";
+import type { NamePath } from "antd/es/form/interface";
 
 export interface CreateQuotationPayload {
   items: IQuotationItem[];
@@ -22,7 +23,7 @@ export interface CreateQuotationPageProps {
   onSuccess?: () => void;
 }
 
-const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
+const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
   open,
   onClose,
   onSuccess,
@@ -114,7 +115,9 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
           loading={loadingCustomers}
           showSearch
           filterOption={(input, option) =>
-            (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            String(option?.label ?? "")
+              .toLowerCase()
+              .includes(input.toLowerCase())
           }
           rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
         />
@@ -138,7 +141,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
                   >
                     <SelectInput
                       label="Xe"
-                      name={[name, "vehicleId"]}
+                      name={[name, "vehicleId"] as NamePath}
                       placeholder="Chọn xe"
                       options={vehicleOptions}
                       loading={loadingVehicles}
@@ -148,15 +151,15 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
 
                     <SelectInput
                       label="Khuyến mãi"
-                      name={[name, "promotionId"]}
-                      placeholder="Chọn khuyến mãi (nếu có)"
+                      name={[name, "promotionId"] as NamePath}
+                      placeholder="Chọn khuyến mãi"
                       options={promotionOptions}
                       loading={loadingPromotions}
                     />
 
                     <SelectInput
                       label="Trạng thái xe"
-                      name={[name, "vehicleStatus"]}
+                      name={[name, "vehicleStatus"] as NamePath}
                       options={[
                         { label: "Bình thường", value: "NORMAL" },
                         { label: "Đặc biệt", value: "SPECIAL" },
@@ -181,7 +184,7 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
 
                     <NumberInput
                       label="Số lượng"
-                      name={[name, "quantity"]}
+                      name={[name, "quantity"] as NamePath}
                       min={1}
                       placeholder="Nhập số lượng"
                       rules={[{ required: true, message: "Nhập số lượng" }]}
@@ -233,4 +236,4 @@ const CreateQuotationPage: React.FC<CreateQuotationPageProps> = ({
   );
 };
 
-export default CreateQuotationPage;
+export default CreateQuotationModal;

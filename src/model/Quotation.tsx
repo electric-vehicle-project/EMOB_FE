@@ -1,8 +1,8 @@
 export interface IQuotationItem {
-  id?: string;
+  id?: string | null;
   vehicleId?: string;
-  promotionId?: string;
-  vehicleStatus?: string;
+  promotionId?: string | null;
+  vehicleStatus: string;
   color?: string;
   quantity?: number;
   unitPrice?: number;
@@ -15,11 +15,12 @@ export interface IQuotation {
   id: string;
   items: IQuotationItem[];
   customerId: string;
-  dealerId?: string; // 🔥 dealerId ở đây, không phải trong items
+  dealerId?: string;
   accountId?: string;
   totalPrice: number;
   totalQuantity: number;
   validUntil: number;
   status: string;
   createdAt: string;
+  vatAmount: number;
 }

@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Table, Button, Popconfirm, Tag, Input, Tooltip, Modal } from "antd";
+import { Table, Button, Tag, Input, Modal, Menu, Dropdown, Select } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { SearchOutlined } from "@ant-design/icons";
+import {
+  EllipsisOutlined,
+  SearchOutlined,
+  SlidersOutlined,
+} from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useCustomerById } from "../../../service/customerService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
@@ -14,9 +18,9 @@ import {
   useQuotationsList,
   useRejectQuotation,
 } from "../../../service/quotationService";
+import CreateQuotationModal from "../../../page/quotation/CreateQuotationModal";
 import UpdateQuotationModal from "../../../page/quotation/UpdateQuotationModal";
 import ViewQuotationDetailModal from "../../../page/quotation/ViewQuotationDetailModal";
-import CreateQuotationModal from "../../../page/quotation/CreateQuotationModal";
 import ApproveQuotationModal from "../../../page/quotation/ApproveQuotationModal";
 import { useDebounce } from "../../../hook/useDebounce";
 
@@ -32,7 +36,7 @@ const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
   return <span>{data?.result?.name || "-"}</span>;
 };
 
-const QuotaionList: React.FC = () => {
+const QuotationList: React.FC = () => {
   const queryClient = useQueryClient();
   const account = useCurrentUser();
   const role = account?.role;
@@ -49,6 +53,11 @@ const QuotaionList: React.FC = () => {
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ADDED: Filter States
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [sortField, setSortField] = useState("totalQuantity");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   // duyệt
   const handleOpenApproveModal = (record: IQuotation) => {
     setSelectedRecord(record);
@@ -78,14 +87,82 @@ const QuotaionList: React.FC = () => {
       },
     });
   };
-
-  const { data, isLoading, refetch } = useQuotationsList(
-    page - 1,
-    pageSize,
-    searchTerm
-  );
+  const { data, isLoading, refetch } = useQuotationsList({
+    page: page - 1,
+    size: pageSize,
+    search: searchTerm,
+    statuses: statusFilter,
+    sortField,
+    sortDir,
+  });
   const deleteQuotation = useDeleteQuotation();
 
+  // ===============================
+  //    FILTER DROPDOWN CONTENT
+  // ===============================
+
+  const FilterContent = () => (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      {/* STATUS */}
+      <div>
+        <b className="text-gray-700">Trạng thái báo giá</b>
+        <Select
+          mode="multiple"
+          allowClear
+          className="w-full mt-2"
+          value={statusFilter}
+          onChange={(val) => {
+            setStatusFilter(val);
+            setPage(1);
+          }}
+          placeholder="Chọn trạng thái"
+        >
+          <Select.Option value="PENDING">Chờ duyệt</Select.Option>
+          <Select.Option value="APPROVED">Đã duyệt</Select.Option>
+          <Select.Option value="REJECTED">Từ chối</Select.Option>
+          <Select.Option value="EXPIRED">Hết hạn</Select.Option>
+        </Select>
+      </div>
+
+      {/* SORT FIELD */}
+      <div>
+        <b className="text-gray-700">Sắp xếp theo</b>
+        <Select
+          className="w-full mt-2"
+          value={sortField}
+          onChange={(v) => {
+            setSortField(v);
+            setPage(1);
+          }}
+        >
+          <Select.Option value="totalPrice">Giá trị báo giá</Select.Option>
+          <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="totalQuantity">Số lượng</Select.Option>
+        </Select>
+      </div>
+
+      {/* SORT DIRECTION */}
+      <div>
+        <b className="text-gray-700">Thứ tự</b>
+        <Select
+          className="w-full mt-2"
+          value={sortDir}
+          onChange={(v) => {
+            setSortDir(v);
+            setPage(1);
+          }}
+        >
+          <Select.Option value="asc">Tăng dần</Select.Option>
+          <Select.Option value="desc">Giảm dần</Select.Option>
+        </Select>
+      </div>
+    </div>
+  );
+
+  // xử lý delete
   const handleDelete = (id: string) => {
     deleteQuotation.mutate(id, {
       onSuccess: async () => {
@@ -152,142 +229,99 @@ const QuotaionList: React.FC = () => {
           "-"
         ),
     },
+
     {
       title: "Trạng thái",
       dataIndex: "status",
       align: "center",
       render: (status: string) => {
-        let color = "default";
-        let label = status;
+        const config: Record<string, { color: string; text: string }> = {
+          PENDING: { color: "gold", text: "Chờ duyệt" },
+          APPROVED: { color: "green", text: "Đã duyệt" },
+          REJECTED: { color: "red", text: "Từ chối" },
+          EXPIRED: { color: "volcano", text: "Hết hạn" },
+        };
 
-        switch (status) {
-          case "PENDING":
-            color = "gold";
-            label = "Chờ duyệt";
-            break;
-          case "APPROVED":
-            color = "green";
-            label = "Đã duyệt";
-            break;
-          case "REJECTED":
-            color = "red";
-            label = "Từ chối";
-            break;
-        }
-
-        return <Tag color={color}>{label}</Tag>;
+        const st = config[status] || { color: "default", text: status };
+        return <Tag color={st.color}>{st.text}</Tag>;
       },
     },
     {
       title: "Thao tác",
       key: "actions",
       align: "center",
+      minWidth: 100,
+      width: "6%",
       render: (_, record) => {
         const isDealerStaff = role === "DEALER_STAFF";
         const isFinalStatus =
           record.status === "APPROVED" || record.status === "REJECTED";
 
+        // MENU ITEMS (dynamic)
+        const menuItems = [
+          {
+            key: "detail",
+            label: <span className="text-[14px] px-10">Chi tiết</span>,
+            onClick: () => {
+              setSelectedQuotationId(record.id);
+              setIsViewModalOpen(true);
+            },
+          },
+        ];
+
+        // dealer staff làm hết
+        if (isDealerStaff && !isFinalStatus) {
+          menuItems.push(
+            {
+              key: "edit",
+              label: <span className="text-[14px] px-10">Sửa báo giá</span>,
+              onClick: () => {
+                setSelectedQuotationId(record.id);
+                setIsUpdateModalOpen(true);
+              },
+            },
+            {
+              key: "approve",
+              label: <span className="text-[14px] px-10">Duyệt báo giá</span>,
+              onClick: () => handleOpenApproveModal(record),
+            },
+            {
+              key: "reject",
+              label: <span className="text-[14px] px-10">Từ chối báo giá</span>,
+              onClick: () => handleRejectQuotation(record),
+            },
+            {
+              key: "delete",
+              label: (
+                <span className="text-[14px] px-10 text-red-500">
+                  Xóa báo giá
+                </span>
+              ),
+              onClick: () =>
+                Modal.confirm({
+                  title: "Bạn có chắc muốn xóa báo giá này?",
+                  content: "Hành động này không thể hoàn tác.",
+                  okText: "Xóa",
+                  okButtonProps: { danger: true },
+                  cancelText: "Hủy",
+                  onOk: () => handleDelete(record.id),
+                }),
+            }
+          );
+        }
+
+        const menu = <Menu items={menuItems} />;
+
         return (
-          <div className="flex justify-center gap-2">
-            {/* Xem chi tiết - luôn hiển thị */}
-            <Tooltip title="Xem chi tiết">
-              <Button
-                size="small"
-                className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700"
-                onClick={() => {
-                  setSelectedQuotationId(record.id);
-                  setIsViewModalOpen(true);
-                }}
-              >
-                Chi tiết
-              </Button>
-            </Tooltip>
-
-            {/* Các nút chỉ xuất hiện khi CHƯA approved & CHƯA rejected (tức là PENDING) */}
-            {isDealerStaff && !isFinalStatus && (
-              <>
-                {/* Sửa */}
-                <Tooltip title="Sửa báo giá">
-                  <Button
-                    size="small"
-                    style={{
-                      backgroundColor: "#627254",
-                      color: "white",
-                      border: "none",
-                    }}
-                    className="bg-green-600 hover:bg-green-700 border-green-600"
-                    onClick={() => {
-                      setSelectedQuotationId(record.id);
-                      setIsUpdateModalOpen(true);
-                    }}
-                  >
-                    Sửa
-                  </Button>
-                </Tooltip>
-
-                {/* Duyệt */}
-                <Tooltip title="Duyệt báo giá">
-                  <Button
-                    size="small"
-                    style={{
-                      backgroundColor: "#16a34a",
-                      color: "white",
-                      border: "none",
-                    }}
-                    onClick={() => handleOpenApproveModal(record)}
-                    disabled={record.status !== "PENDING"}
-                  >
-                    Duyệt
-                  </Button>
-                </Tooltip>
-
-                {/* Từ chối */}
-                <Tooltip title="Từ chối báo giá">
-                  <Button
-                    size="small"
-                    style={{
-                      backgroundColor: "#9ca3af",
-                      color: "white",
-                      border: "none",
-                    }}
-                    onClick={() => handleRejectQuotation(record)}
-                    disabled={record.status !== "PENDING"}
-                    loading={rejectQuotation.isPending}
-                  >
-                    Từ chối
-                  </Button>
-                </Tooltip>
-
-                {/* Xóa */}
-                <Popconfirm
-                  title="Bạn có chắc muốn xóa báo giá này?"
-                  description="Hành động này không thể hoàn tác."
-                  onConfirm={() => handleDelete(record.id)}
-                  okText="Xóa"
-                  cancelText="Hủy"
-                >
-                  <Tooltip title="Xóa báo giá">
-                    <Button
-                      size="small"
-                      style={{
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        border: "none",
-                      }}
-                    >
-                      Xóa
-                    </Button>
-                  </Tooltip>
-                </Popconfirm>
-              </>
-            )}
-          </div>
+          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+            <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
+          </Dropdown>
         );
       },
     },
   ];
 
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  useDebounce(searchTerm, 300);
   const quotationData = data?.result?.data ?? [];
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
@@ -306,11 +340,25 @@ const QuotaionList: React.FC = () => {
             style={{ width: 320 }}
             className="rounded-md shadow-sm border-gray-300 focus:border-green-600 focus:ring-green-600"
           />
+          {/* dropdown list */}
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+          >
+            <Button
+              type="text"
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+              className="text-gray-600 hover:text-black"
+            />
+          </Dropdown>
         </div>
+
         {role === "DEALER_STAFF" && (
           <Button
             type="primary"
-            className="bg-[#627254] hover:bg-[#4e5b45] text-white border-none"
+            className="bg-[#627254] hover:bg-[#4e5b45]"
             onClick={() => setIsCreateModalOpen(true)}
           >
             + Tạo báo giá mới
@@ -381,4 +429,4 @@ const QuotaionList: React.FC = () => {
   );
 };
 
-export default QuotaionList;
+export default QuotationList;

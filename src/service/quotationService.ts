@@ -29,10 +29,25 @@ export const useGetQuotationById = createQueryWithPathParamHook(
   BASE_URL
 );
 
-export const useQuotationsList = (page = 0, size = 10, search = "") => {
-  return createQueryHook(["quotations", page, size, search], "/quotation")(
+// get-all
+export const useQuotationsList = (params?: {
+  page?: number;
+  size?: number;
+  search?: string;
+  statuses?: string[];
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+}) => {
+  return createQueryHook("quotations", "/quotation")(
     {},
-    { page, size, search }
+    {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      search: params?.search ?? "",
+      status: params?.statuses?.length ? params.statuses.join(",") : undefined,
+      sortField: params?.sortField ?? "createdAt",
+      sortDir: params?.sortDir ?? "desc",
+    }
   );
 };
 

@@ -68,7 +68,7 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   const quotation = data?.result;
   const is401Error = error?.response?.status === 401;
 
-  const { data: customersData } = useCustomerList(0, 100);
+  const { data: customersData } = useCustomerList({ page: 0, size: 100 });
   const { data: vehiclesData } = useGetVehicles(0, 100);
   const { data: promotionsData } = usePromotionList("", 0, 100);
 
@@ -97,7 +97,15 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
   }, [promotionsData]);
 
   // Trạng thái màu + icon
-  const getStatusTag = (status: string) => {
+  const getStatusTag = (status: string | null | undefined) => {
+    if (!status) {
+      return (
+        <Tag icon={<ClockCircleOutlined />} color="default">
+          Không rõ
+        </Tag>
+      );
+    }
+
     switch (status) {
       case "APPROVED":
         return (
@@ -105,19 +113,53 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
             Đã duyệt
           </Tag>
         );
+
       case "PENDING":
         return (
           <Tag icon={<ClockCircleOutlined />} color="gold">
             Đang chờ
           </Tag>
         );
-      default:
+
+      case "REJECTED":
         return (
           <Tag icon={<CloseCircleOutlined />} color="error">
             Từ chối
           </Tag>
         );
+
+      case "EXPIRED":
+        return (
+          <Tag icon={<CloseCircleOutlined />} color="volcano">
+            Hết hạn
+          </Tag>
+        );
+
+      default:
+        return (
+          <Tag icon={<ClockCircleOutlined />} color="default">
+            {status}
+          </Tag>
+        );
     }
+  };
+  // get status vehicle
+  const getVehicleStatusTag = (status: string | null) => {
+    const config: Record<string, { color: string; text: string }> = {
+      NORMAL: { color: "blue", text: "Bình thường" },
+      SPECIAL: { color: "purple", text: "Đặc biệt" },
+      TEST_DRIVE: { color: "geekblue", text: "Xe lái thử" },
+      RESERVED: { color: "orange", text: "Đã đặt trước" },
+      OLD_STOCK: { color: "volcano", text: "Tồn kho cũ" },
+      SOLD: { color: "red", text: "Đã bán" },
+    };
+
+    // lấy màu status
+    const st =
+      status && config[status]
+        ? config[status]
+        : { color: "default", text: status ?? "Không rõ" };
+    return <Tag color={st.color}>{st.text}</Tag>;
   };
 
   return (
@@ -220,6 +262,14 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                 </span>
               </Descriptions.Item>
 
+              <Descriptions.Item label="Giảm giá">
+                <span className="font-semibold text-[#627254]">
+                  {quotation.vatAmount != null
+                    ? `${quotation.vatAmount.toLocaleString("vi-VN")} ₫`
+                    : "-"}
+                </span>
+              </Descriptions.Item>
+
               <Descriptions.Item label="Tổng giá trị">
                 <span className="font-semibold text-emerald-600">
                   {quotation.totalPrice != null
@@ -274,7 +324,7 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                         : "Không áp dụng"}
                     </Descriptions.Item>
                     <Descriptions.Item label="Trạng thái xe">
-                      <Tag color="blue">{item.vehicleStatus}</Tag>
+                      {getVehicleStatusTag(item.vehicleStatus)}
                     </Descriptions.Item>
                     <Descriptions.Item label="Màu sắc">
                       {item.color}

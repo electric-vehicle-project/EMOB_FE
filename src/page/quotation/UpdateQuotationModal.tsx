@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import { Form, Button, message, Modal, Spin, Input } from "antd";
+import { Form, Button, Modal, Spin, Input } from "antd";
+import type { NamePath } from "antd/es/form/interface";
 import type { IQuotationItem } from "../../model/Quotation";
+
 import SelectInput from "../../components/atoms/SelectInput";
 import NumberInput from "../../components/atoms/NumberInput";
+
 import {
   useGetQuotationById,
   useUpdateQuotation,
@@ -18,9 +21,22 @@ export interface UpdateQuotationPayload {
   validUntil: number;
 }
 
+export interface UpdateQuotationFormValues {
+  customerId: string;
+  validUntil: number;
+  items: {
+    id: string;
+    vehicleId: string;
+    promotionId: string | null;
+    vehicleStatus: string;
+    color: string;
+    quantity: number;
+  }[];
+}
+
 export interface UpdateQuotationModalProps {
-  open?: boolean;
-  quotationId?: string;
+  open: boolean;
+  quotationId: string;
   onClose?: () => void;
   onSuccess?: () => void;
 }
@@ -31,65 +47,59 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<UpdateQuotationFormValues>();
 
-  /** Hook lấy chi tiết báo giá */
   const { data: quotationData, isLoading: isFetching } = useGetQuotationById(
-    quotationId!,
+    quotationId,
     { enabled: !!quotationId && open }
   );
-
-  /** Hook cập nhật báo giá */
+  // call api update
   const { mutateAsync: updateQuotation, isPending } = useUpdateQuotation();
 
-  /** Fetch danh sách từ API */
-  const { data: customersData, isLoading: loadingCustomers } = useCustomerList(
-    0,
-    100
-  );
+  const { data: customersData, isLoading: loadingCustomers } = useCustomerList({
+    page: 0,
+    size: 100,
+  });
   const { data: vehiclesData, isLoading: loadingVehicles } = useGetVehicles(
     0,
     100
   );
   const { data: promotionsData, isLoading: loadingPromotions } =
     usePromotionList("", 0, 100);
-
-  /** Chuyển đổi data thành options cho Select */
+  // select list
   const customerOptions = useMemo(() => {
-    const customers = customersData?.result?.data || [];
-    return customers.map((customer: any) => ({
-      label: `${customer.fullName} - ${customer.phoneNumber || customer.email}`,
-      value: customer.id,
+    return (customersData?.result?.data || []).map((c: any) => ({
+      label: `${c.fullName} - ${c.phoneNumber || c.email}`,
+      value: c.id,
     }));
   }, [customersData]);
 
   const vehicleOptions = useMemo(() => {
-    const vehicles = vehiclesData?.result?.data || [];
-    return vehicles.map((vehicle: any) => ({
-      label: `${vehicle.model} (${vehicle.type})`,
-      value: vehicle.id,
+    return (vehiclesData?.result?.data || []).map((v: any) => ({
+      label: `${v.model} (${v.type})`,
+      value: v.id,
     }));
   }, [vehiclesData]);
 
   const promotionOptions = useMemo(() => {
-    const promotions = promotionsData?.result?.data || [];
     return [
       { label: "Không áp dụng", value: "" },
-      ...promotions.map((promo: any) => ({
-        label: `${promo.name} - Giảm ${promo.value}`,
-        value: promo.id,
+      ...(promotionsData?.result?.data || []).map((p: any) => ({
+        label: `${p.name} - Giảm ${p.value}`,
+        value: p.id,
       })),
     ];
   }, [promotionsData]);
 
-  /** Khi dữ liệu có, fill vào form */
+  /** Fill form */
   useEffect(() => {
     if (quotationData?.result) {
-      const quotation = quotationData.result;
+      const q = quotationData.result;
+
       form.setFieldsValue({
-        customerId: quotation.customerId,
-        validUntil: quotation.validUntil,
-        items: quotation.items?.map((item: any) => ({
+        customerId: q.customerId,
+        validUntil: q.validUntil,
+        items: q.items?.map((item: IQuotationItem) => ({
           id: item.id,
           vehicleId: item.vehicleId,
           promotionId: item.promotionId || "",
@@ -101,16 +111,12 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
     }
   }, [quotationData, form]);
 
-  /** 🔹 Submit form */
-  const handleSubmit = async (values: any) => {
+  /** Submit */
+  const handleSubmit = async (values: UpdateQuotationFormValues) => {
     const payload: UpdateQuotationPayload = {
-      items: values.items.map((item: any) => ({
-        id: item.id,
-        vehicleId: item.vehicleId,
+      items: values.items.map((item) => ({
+        ...item,
         promotionId: item.promotionId || null,
-        vehicleStatus: item.vehicleStatus,
-        color: item.color,
-        quantity: item.quantity,
       })),
       customerId: values.customerId,
       validUntil: values.validUntil,
@@ -123,7 +129,6 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
       onSuccess?.();
       onClose?.();
     } catch (error: any) {
-      console.error("Update quotation error:", error);
       toast.error(
         error?.response?.data?.message || "Cập nhật báo giá thất bại."
       );
@@ -151,7 +156,7 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
           onFinish={handleSubmit}
           className="max-w-3xl"
         >
-          {/* 🔹 Khách hàng & thời hạn */}
+          {/* CUSTOMER & VALID UNTIL */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectInput
               label="Khách hàng"
@@ -161,7 +166,7 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
               loading={loadingCustomers}
               showSearch
               filterOption={(input, option) =>
-                (option?.label ?? "")
+                String(option?.label ?? "")
                   .toLowerCase()
                   .includes(input.toLowerCase())
               }
@@ -173,24 +178,21 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
               name="validUntil"
               min={0}
               placeholder="Nhập số ngày hiệu lực"
-              rules={[
-                { required: true, message: "Thời hạn hiệu lực là bắt buộc" },
-              ]}
+              rules={[{ required: true, message: "Thời hạn là bắt buộc" }]}
             />
           </div>
 
-          {/* Danh sách các item */}
+          {/* ITEMS */}
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, ...restField }) => (
+                {fields.map(({ key, name }) => (
                   <div
                     key={key}
                     className="grid grid-cols-1 md:grid-cols-6 gap-3 p-4 border rounded-lg bg-gray-50 mt-4"
                   >
                     <SelectInput
-                      {...restField}
-                      name={[name, "vehicleId"]}
+                      name={[name, "vehicleId"] as NamePath}
                       label="Xe"
                       placeholder="Chọn xe"
                       options={vehicleOptions}
@@ -199,17 +201,15 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
                     />
 
                     <SelectInput
-                      {...restField}
-                      name={[name, "promotionId"]}
+                      name={[name, "promotionId"] as NamePath}
                       label="Khuyến mãi"
-                      placeholder="Chọn khuyến mãi (nếu có)"
+                      placeholder="Chọn khuyến mãi"
                       options={promotionOptions}
                       loading={loadingPromotions}
                     />
 
                     <SelectInput
-                      {...restField}
-                      name={[name, "vehicleStatus"]}
+                      name={[name, "vehicleStatus"] as NamePath}
                       label="Trạng thái"
                       placeholder="Chọn trạng thái"
                       options={[
@@ -220,14 +220,11 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
                         { label: "Tồn kho cũ", value: "OLD_STOCK" },
                         { label: "Đã bán", value: "SOLD" },
                       ]}
-                      rules={[
-                        { required: true, message: "Chọn trạng thái xe" },
-                      ]}
+                      rules={[{ required: true, message: "Chọn trạng thái" }]}
                     />
 
                     <Form.Item
-                      {...restField}
-                      name={[name, "color"]}
+                      name={[name, "color"] as NamePath}
                       label="Màu sắc"
                       rules={[{ required: true, message: "Nhập màu xe" }]}
                     >
@@ -235,8 +232,7 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
                     </Form.Item>
 
                     <NumberInput
-                      {...restField}
-                      name={[name, "quantity"]}
+                      name={[name, "quantity"] as NamePath}
                       label="Số lượng"
                       min={1}
                       rules={[{ required: true, message: "Nhập số lượng" }]}
@@ -244,7 +240,14 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
 
                     <div className="flex items-end justify-end">
                       {fields.length > 1 && (
-                        <Button danger onClick={() => remove(name)}>
+                        <Button
+                          style={{
+                            backgroundColor: "#ef4444",
+                            color: "white",
+                            border: "none",
+                          }}
+                          onClick={() => remove(name)}
+                        >
                           Xóa
                         </Button>
                       )}
@@ -252,7 +255,6 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
                   </div>
                 ))}
 
-                {/* Nút thêm item */}
                 <Button
                   type="dashed"
                   onClick={() => add()}
@@ -265,7 +267,7 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
             )}
           </Form.List>
 
-          {/* 🔹 Footer */}
+          {/* ACTIONS */}
           <div className="flex justify-end gap-3 mt-6">
             <Button onClick={onClose}>Hủy</Button>
             <Button type="primary" htmlType="submit" loading={isPending}>
