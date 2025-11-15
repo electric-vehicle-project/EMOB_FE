@@ -191,38 +191,48 @@ export const useDeleteVehicleUnitsBulk = () => {
   });
 };
 
-// ========= AI Demand Forecast (Brand-side) =========
-// GET /api/vehicle/demandForecastFromAI
-export const useGetAIDemandForecast = (options?: unknown) => {
-  const hook = createQueryHook(
-    "ai-demand-forecast",
-    "/vehicle/demandForecastFromAI"
-  );
-  // API này không có params
-  const query = hook(options);
+export const useGetAIDemandForecast = (vehicleId?: string) => {
+  return {
+    refetch: async () => {
+      if (!vehicleId) return null;
 
-  // Chuẩn hoá: đảm bảo trả về mảng object
-  const raw = (query.data?.result ?? query.data) as unknown;
-  const forecasts = Array.isArray(raw)
-    ? (raw as unknown[])
-    : Array.isArray((raw as { data?: unknown[] })?.data)
-    ? ((raw as { data?: unknown[] }).data as unknown[])
-    : []; // nếu BE trả {}, vẫn an toàn
+      const token = localStorage.getItem("token") ?? "";
+      const url = `${
+        import.meta.env.VITE_BASE_URL
+      }/vehicle/demandForecastFromAI?model=${vehicleId}`;
 
-  return { ...query, forecasts };
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return await res.json();
+    },
+  };
 };
 
-// GET /api/vehicle/createDemandForecasts  (trigger tạo/refresh phía AI)
-export const useCreateAIDemandForecasts = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      // Swagger ghi GET nên mình giữ đúng GET
-      const res = await api.get("/vehicle/createDemandForecasts");
-      return res.data;
+export const useCreateAIDemandForecasts = (vehicleId?: string) => {
+  return {
+    refetch: async () => {
+      if (!vehicleId) return null;
+
+      const token = localStorage.getItem("token") ?? "";
+      const url = `${
+        import.meta.env.VITE_BASE_URL
+      }/vehicle/createDemandForecasts?model=${vehicleId}`;
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ai-demand-forecast"] });
-    },
-  });
+  };
 };
