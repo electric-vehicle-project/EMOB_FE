@@ -1,6 +1,16 @@
 // src/components/molecules/Account/AccountTable.tsx
-import { Table, Tag, Tooltip, Typography, Pagination, Button } from "antd";
+import {
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  Pagination,
+  Dropdown,
+  Menu,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { EllipsisOutlined } from "@ant-design/icons";
+
 import {
   AccountStatus as AccountStatusConst,
   Role as RoleConst,
@@ -152,11 +162,13 @@ export const AccountTable: React.FC<Props> = ({
     },
   ];
 
+  /* ======================= ACTION MENU ======================= */
   if (canModify) {
     columns.push({
       title: "Thao tác",
       key: "actions",
       align: "center",
+      width: 80,
       render: (_, record) => {
         if (record.status === AccountStatusConst.BANNED) {
           return <Tag color="red">Đã cấm vĩnh viễn</Tag>;
@@ -165,23 +177,33 @@ export const AccountTable: React.FC<Props> = ({
         const isInactive = record.status === AccountStatusConst.INACTIVE;
         const next = isInactive ? "ACTIVE" : "INACTIVE";
 
-        return (
-          <div className="flex justify-center gap-2">
-            <Button
-              size="small"
-              type={isInactive ? "primary" : "default"}
-              className={
-                isInactive ? "!bg-[#627254] hover:!bg-[#525e46] text-white" : ""
-              }
-              onClick={() => onChangeStatus(record.id, next)}
-            >
-              {isInactive ? "Mở lại" : "Tạm ngưng"}
-            </Button>
+        const menuItems = [
+          {
+            key: "toggle",
+            label: (
+              <span className="text-[14px] pl-10 pr-10">
+                {isInactive ? "Mở lại" : "Tạm ngưng"}
+              </span>
+            ),
+            onClick: () => onChangeStatus(record.id, next),
+          },
+          {
+            key: "ban",
+            label: (
+              <span className="text-[14px] pl-10 pr-10 text-red-500">
+                Cấm vĩnh viễn
+              </span>
+            ),
+            onClick: () => onBan(record.id),
+          },
+        ];
 
-            <Button size="small" danger onClick={() => onBan(record.id)}>
-              Cấm vĩnh viễn
-            </Button>
-          </div>
+        const menu = <Menu items={menuItems} />;
+
+        return (
+          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+            <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
+          </Dropdown>
         );
       },
     });
