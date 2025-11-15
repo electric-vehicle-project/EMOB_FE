@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Modal, Form, Button, message } from "antd";
 import TextInput from "../../components/atoms/TextInput";
 import NumberInput from "../../components/atoms/NumberInput";
 import SelectInput from "../../components/atoms/SelectInput";
 import { useCreateVehicleRequest } from "../../service/vehicleRequestService";
 import { useGetVehicles } from "../../service/vehicleService";
+import type { NamePath } from "antd/es/form/interface";
 
 /**
  * Modal tạo yêu cầu xe (hỗ trợ thêm nhiều xe trong 1 request)
@@ -71,14 +72,14 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
                 >
                   <SelectInput
                     {...restField}
-                    name={[name, "vehicleId"]}
+                    name={[name, "vehicleId"] as NamePath}
                     label="Xe"
                     placeholder="Chọn xe"
                     options={vehicleOptions}
                     loading={loadingVehicles}
                     showSearch
                     filterOption={(input, option) =>
-                      (option?.label ?? "")
+                      String(option?.label ?? "")
                         .toLowerCase()
                         .includes(input.toLowerCase())
                     }
@@ -87,16 +88,15 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
 
                   <SelectInput
                     {...restField}
-                    name={[name, "vehicleStatus"]}
+                    name={[name, "vehicleStatus"] as NamePath}
                     label="Trạng thái xe"
                     placeholder="Chọn trạng thái"
                     options={[
-                      { label: "NORMAL", value: "NORMAL" },
-                      { label: "SPECIAL", value: "SPECIAL" },
-                      { label: "TEST_DRIVE", value: "TEST_DRIVE" },
-                      { label: "RESERVED", value: "RESERVED" },
-                      { label: "OLD_STOCK", value: "OLD_STOCK" },
-                      { label: "SOLD", value: "SOLD" },
+                      { label: "Bình thường", value: "NORMAL" },
+                      { label: "Đặc biệt", value: "SPECIAL" },
+                      { label: "Tồn kho cũ", value: "OLD_STOCK" },
+                      { label: "Đã đặt trước", value: "RESERVED" },
+                      { label: "Xe lái thử", value: "TEST_DRIVE" },
                     ]}
                     rules={[
                       { required: true, message: "Vui lòng chọn trạng thái" },
@@ -105,7 +105,7 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
 
                   <TextInput
                     {...restField}
-                    name={[name, "color"]}
+                    name={[name, "color"] as NamePath}
                     label="Màu sắc"
                     placeholder="Nhập màu xe"
                     rules={[
@@ -115,7 +115,7 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
 
                   <NumberInput
                     {...restField}
-                    name={[name, "quantity"]}
+                    name={[name, "quantity"] as NamePath}
                     label="Số lượng"
                     min={1}
                     placeholder="Nhập số lượng"
