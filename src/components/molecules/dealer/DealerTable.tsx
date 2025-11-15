@@ -1,6 +1,6 @@
-import { Table, Button, Pagination, Tag } from "antd";
+import { Table, Pagination, Tag, Menu, Dropdown } from "antd";
 import type { ColumnsType, TableProps } from "antd/es/table";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EllipsisOutlined } from "@ant-design/icons";
 import type { IDealer } from "../../../model/Dealer";
 import { formatDateTimeVietnam } from "../../../utils/timeFeature";
 
@@ -24,7 +24,6 @@ interface Props {
 
   countryOptions: string[];
   activeCountry?: string;
-
   onFilterCountry: (country: string | undefined) => void;
 
   canModify?: boolean;
@@ -52,7 +51,7 @@ export const DealerTable = ({
     SOUTH: "volcano",
   };
 
-  // FIX: toggle đúng hành vi AntD
+  // Toggle sort giống behavior mặc định AntD
   const toggleSort = (field: string) => {
     if (sortField !== field) {
       onSortChange(field, "asc");
@@ -63,7 +62,7 @@ export const DealerTable = ({
       return;
     }
     if (sortDir === "desc") {
-      onSortChange(null, null); // back to default
+      onSortChange(null, null);
       return;
     }
     onSortChange(field, "asc");
@@ -75,7 +74,7 @@ export const DealerTable = ({
       dataIndex: "name",
       key: "name",
       align: "center",
-      sorter: { multiple: 1 }, // ⭐ bắt buộc
+      sorter: true,
       sortOrder:
         sortField === "name"
           ? sortDir === "asc"
@@ -111,7 +110,7 @@ export const DealerTable = ({
       filteredValue: activeCountry ? [activeCountry] : null,
       onFilter: () => true,
       onHeaderCell: () => ({
-        onClick: (e: React.MouseEvent) => e.stopPropagation(),
+        onClick: (e: React.MouseEvent) => e.stopPropagation(), // chặn sort khi bấm filter
       }),
     },
 
@@ -146,7 +145,7 @@ export const DealerTable = ({
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
-      sorter: { multiple: 1 }, // ⭐ bắt buộc
+      sorter: true,
       sortOrder:
         sortField === "createdAt"
           ? sortDir === "asc"
@@ -165,24 +164,32 @@ export const DealerTable = ({
       title: "Thao tác",
       key: "actions",
       align: "center",
-      render: (_, record) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(record)}
-          >
-            Sửa
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete(record.id!)}
-          >
-            Xóa
-          </Button>
-        </div>
-      ),
+      minWidth: 100,
+      width: "6%",
+      render: (_, record) => {
+        const menuItems = [
+          {
+            key: "edit",
+            label: <span className="text-[14px] pl-10 pr-10">Sửa</span>,
+            onClick: () => onEdit(record),
+          },
+          {
+            key: "delete",
+            label: (
+              <span className="text-[14px] pl-10 pr-10 text-red-500">Xóa</span>
+            ),
+            onClick: () => onDelete(record.id!),
+          },
+        ];
+
+        const menu = <Menu items={menuItems} />;
+
+        return (
+          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+            <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
+          </Dropdown>
+        );
+      },
     });
   }
 
@@ -200,7 +207,7 @@ export const DealerTable = ({
         loading={isLoading}
         pagination={false}
         onChange={handleChange}
-        sortDirections={["ascend", "descend"]} // ⭐ bắt buộc, KHÔNG dùng null
+        sortDirections={["ascend", "descend"]}
       />
 
       {pagination && (

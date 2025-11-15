@@ -22,6 +22,7 @@ interface Props {
   isLoading?: boolean;
   pagination?: PaginationProps;
   onMarkAsPaid?: (id: string) => void;
+  onViewDetail?: (id: string) => void;
 }
 
 export const InstallmentPlanTable = ({
@@ -36,8 +37,6 @@ export const InstallmentPlanTable = ({
     OVERDUE: "red",
     CANCELLED: "default",
   };
-  
-
 
   const statusMap: Record<string, string> = {
     PAID: "Đã thanh toán",

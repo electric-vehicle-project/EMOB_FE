@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Result, Button, Empty, Input } from "antd";
 import { useDebounce } from "../../hook/useDebounce";
 import { useCurrentUser } from "../../utils/getCurrentUser";
@@ -72,10 +72,10 @@ export const InstallmentPlanCustomersPage = () => {
 
   const total = data?.result?.metadata?.totalElements ?? 0;
 
-  const handleViewDetail = (id: string) => {
+  const handleViewDetail = useCallback((id: string) => {
     setSelectedId(id);
     setIsModalOpen(true);
-  };
+  }, []);
 
   if (!canView)
     return (
@@ -125,7 +125,6 @@ export const InstallmentPlanCustomersPage = () => {
       subtitle="Theo dõi, tìm kiếm và xem chi tiết kế hoạch trả góp của khách hàng"
       variant="dashboard"
     >
-      {/* Thanh tìm kiếm realtime */}
       <div className="flex justify-end mb-4">
         <Input
           placeholder="Tìm kiếm kế hoạch trả góp..."
@@ -137,7 +136,6 @@ export const InstallmentPlanCustomersPage = () => {
         />
       </div>
 
-      {/* Bảng danh sách */}
       {installmentPlans.length > 0 ? (
         <InstallmentPlanTable
           data={installmentPlans}
@@ -159,7 +157,6 @@ export const InstallmentPlanCustomersPage = () => {
         <Empty description="Không có dữ liệu" />
       )}
 
-      {/* Modal chi tiết */}
       <InstallmentPlanDetailModal
         id={selectedId}
         open={isModalOpen}

@@ -12,9 +12,13 @@ export const InstallmentPlanDetailModal = ({
   open,
   onClose,
 }: InstallmentPlanDetailModalProps) => {
+  const validId = id ?? undefined;
+
   const { data, isLoading, isError } = useInstallmetnPlanByCustomersByIdQuery(
-    id,
-    { enabled: !!id }
+    validId,
+    {
+      enabled: !!validId, // also safe
+    }
   );
 
   return (
