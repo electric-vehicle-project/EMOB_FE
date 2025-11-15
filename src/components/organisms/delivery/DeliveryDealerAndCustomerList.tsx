@@ -12,7 +12,7 @@ import {
   Input,
   Dropdown,
 } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { SlidersOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
   useDeliveryQueryByCustomers,
@@ -184,7 +184,7 @@ export const DeliveryDealerAndCustomerList = () => {
               onOpenChange={setFilterOpen}
               dropdownRender={() => <FilterContent />}
             >
-              <Button type="text" icon={<FilterOutlined style={{ fontSize: 20 }} />} />
+              <Button type="text" icon={<SlidersOutlined style={{ fontSize: 20 }} />} />
             </Dropdown>
           </div>
 

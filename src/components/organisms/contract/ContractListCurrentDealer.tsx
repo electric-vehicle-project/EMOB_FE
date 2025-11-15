@@ -8,7 +8,7 @@ import {
   Dropdown,
   Button,
 } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { SlidersOutlined } from "@ant-design/icons";
 import {
   useContractQueryByCurrentDealer,
 } from "../../../service/contractService";
@@ -149,7 +149,7 @@ export const ContractListCurrentDealer = () => {
           >
             <Button
               type="text"
-              icon={<FilterOutlined style={{ fontSize: 20 }} />}
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
               className="text-gray-600 hover:text-black"
             />
           </Dropdown>

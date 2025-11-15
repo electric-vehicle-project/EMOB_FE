@@ -9,7 +9,7 @@ import {
   Dropdown,
   Button,
 } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { SlidersOutlined } from "@ant-design/icons";
 import {
   useDeliveryDeleteMutation,
   useDeliveryCompleteMutation,
@@ -169,7 +169,7 @@ export const DeliveryEVMAndDealerListCurrent = () => {
             onOpenChange={setFilterOpen}
             dropdownRender={() => <FilterContent />}
           >
-            <Button type="text" icon={<FilterOutlined style={{ fontSize: 20 }} />} />
+            <Button type="text" icon={<SlidersOutlined style={{ fontSize: 20 }} />} />
           </Dropdown>
         </Space>
 
