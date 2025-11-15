@@ -1,18 +1,28 @@
 import { useState, useMemo, useEffect } from "react";
-import { Result, Button, Empty } from "antd";
+import { Result, Button, Empty, Input, Select, Space, Dropdown } from "antd";
 import type { IInstallmentPlan } from "../../../model/InstallmentPlan";
-import { SearchBar } from "../../molecules/SearchBar";
 import { useDebounce } from "../../../hook/useDebounce";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { useInstallmetnPlanByCustomersQuery } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
 import type { InstallmentPlanApiModel } from "../../../model/InstallmentPlan";
+import { Card } from "../../atoms/Card";
+import { SlidersOutlined } from "@ant-design/icons";
 
 export const InstallmentPlanCustomerList = () => {
+  // Search
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+
+  // Pagination
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [sortField, setSortField] = useState("downDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
@@ -23,26 +33,25 @@ export const InstallmentPlanCustomerList = () => {
     setCurrent(1);
   }, [debouncedSearch]);
 
+  // API params
   const params = useMemo(
     () => ({
       page: current - 1,
       size: pageSize,
       keyword: debouncedSearch || undefined,
-      sortField: "downDate",
-      sortDir: "desc",
+      sortField,
+      sortDir,
+      statuses: statusFilter,
     }),
-    [current, pageSize, debouncedSearch]
+    [current, pageSize, debouncedSearch, sortField, sortDir, statusFilter]
   );
 
-  // Logic: DEALER_STAFF và MANAGER xem kế hoạch của dealer hiện tại
-  // ADMIN và EVM_STAFF xem tất cả kế hoạch
-  const isDealerRole = role === "DEALER_STAFF" || role === "MANAGER";
+  const isDealerRole = canView;
   const customerPlansQuery = useInstallmetnPlanByCustomersQuery(
     { enabled: canView && isDealerRole },
     params
   );
 
-  // Chọn query result dựa trên role
   const { data, refetch, isLoading, isError, error } = isDealerRole
     ? customerPlansQuery
     : {
@@ -71,11 +80,76 @@ export const InstallmentPlanCustomerList = () => {
   const total = data?.result?.metadata?.totalElements ?? 0;
 
   const handleMarkAsPaid = (id: string) => {
-    // TODO: Implement API call to mark installment plan as paid
     console.log("Mark as paid:", id);
-    // Sau khi implement API, gọi refetch() để cập nhật dữ liệu
-    // refetch();
   };
+
+  // =============== FILTER DROPDOWN PANEL ===============
+  const FilterContent = () => (
+    <Card
+      {...({ onClick: (e: any) => e.stopPropagation() } as any)}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      <Space direction="vertical" style={{ width: "100%" }}>
+        {/* STATUS FILTER */}
+        <div>
+          <b className="text-gray-700">Trạng thái</b>
+          <Select
+            mode="multiple"
+            allowClear
+            className="w-full mt-2"
+            value={statusFilter}
+            onChange={(values) => {
+              setStatusFilter(values);
+              setCurrent(1);
+            }}
+            placeholder="Chọn trạng thái"
+          >
+            <Select.Option value="PAID">Đã thanh toán hết</Select.Option>
+            <Select.Option value="NOT_PAID">Chưa thanh toán</Select.Option>
+            <Select.Option value="OVERDUE">Trễ hẹn</Select.Option>
+            <Select.Option value="CANCELLED">Hủy thanh toán</Select.Option>
+          </Select>
+        </div>
+
+        {/* SORT FIELD */}
+        <div>
+          <b className="text-gray-700">Sắp xếp theo</b>
+          <Select
+            className="w-full mt-2"
+            value={sortField}
+            onChange={(v) => {
+              setSortField(v);
+              setCurrent(1);
+            }}
+          >
+            <Select.Option value="effectiveDate">Ngày hiệu lực</Select.Option>
+            <Select.Option value="downDate">Ngày đặt cọc</Select.Option>
+            <Select.Option value="nextDueDate">
+              Ngày thanh toán tiếp theo
+            </Select.Option>
+          </Select>
+        </div>
+
+        {/* SORT DIR */}
+        <div>
+          <b className="text-gray-700">Thứ tự</b>
+          <Select
+            className="w-full mt-2"
+            value={sortDir}
+            onChange={(v) => {
+              setSortDir(v);
+              setCurrent(1);
+            }}
+          >
+            <Select.Option value="asc">Tăng dần</Select.Option>
+            <Select.Option value="desc">Giảm dần</Select.Option>
+          </Select>
+        </div>
+      </Space>
+    </Card>
+  );
+
+  // ================= UI RENDER =================
 
   if (!canView)
     return (
@@ -96,9 +170,7 @@ export const InstallmentPlanCustomerList = () => {
       <Result
         status="error"
         title="Không thể tải danh sách kế hoạch trả góp"
-        subTitle={
-          (error as { message?: string })?.message || "Vui lòng thử lại."
-        }
+        subTitle={error?.message || "Vui lòng thử lại."}
         extra={
           <Button type="primary" onClick={() => refetch()}>
             Thử lại
@@ -109,16 +181,32 @@ export const InstallmentPlanCustomerList = () => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-3">
-        <div className="w-full max-w-xs sm:max-w-sm">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm kiếm kế hoạch trả góp..."
+      {/* SEARCH + FILTER */}
+      <div className="flex justify-start mb-3 gap-3">
+        <Input
+          placeholder="Nhập từ khóa để tìm kế hoạch trả góp..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          allowClear
+          style={{ width: 320 }}
+        />
+
+        {/* FILTER DROPDOWN */}
+        <Dropdown
+          trigger={["click"]}
+          open={filterOpen}
+          onOpenChange={setFilterOpen}
+          dropdownRender={() => <FilterContent />}
+        >
+          <Button
+            type="text"
+            icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+            className="text-gray-600 hover:text-black"
           />
-        </div>
+        </Dropdown>
       </div>
 
+      {/* DATA TABLE */}
       {installmentPlans.length > 0 ? (
         <InstallmentPlanTable
           data={installmentPlans}

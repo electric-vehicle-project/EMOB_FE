@@ -46,14 +46,14 @@ const VehicleRequestForAdminList: React.FC = () => {
   });
 
   // fetch danh sách đại lý (để hiển thị tên)
-  const { data: dealerData, isLoading: dealerLoading } = useDealersQuery({
-    page: 0,
-    size: 200,
-    keyword: "",
-    country: "",
-    sortField: "name",
-    sortDir: "ASC",
-  });
+  const { data: dealerData, isLoading: dealerLoading } = useDealersQuery(
+    0,
+    200,
+    "",
+    "name",
+    "desc",
+    undefined
+  );
 
   // tạo map từ dealerId -> dealerName
   const dealerMap = useMemo(() => {
@@ -121,6 +121,8 @@ const VehicleRequestForAdminList: React.FC = () => {
           className="w-full mt-2"
         >
           <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="totalQuantity">Số lượng</Select.Option>
+          <Select.Option value="totalPrice">Tổng giá trị</Select.Option>
         </Select>
       </div>
 

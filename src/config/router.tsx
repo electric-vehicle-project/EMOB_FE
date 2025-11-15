@@ -283,7 +283,10 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROMOTION_CREATE, element: <PromotionCreatePage /> },
       { path: ROUTES.VEHICLE_REQUEST, element: <VehicleRequestPage /> },
       { path: ROUTES.TEST_DRIVE, element: <TestDrivePage /> },
-      { path: ROUTES.TEST_DRIVE_BY_CURRENT_STAFF, element: <TestDriveByCurrentStaffPage /> },
+      {
+        path: ROUTES.TEST_DRIVE_BY_CURRENT_STAFF,
+        element: <TestDriveByCurrentStaffPage />,
+      },
       { path: ROUTES.SALE_ORDER, element: <SaleOrderDealerPage /> },
       { path: ROUTES.SALE_ORDER_STAFF, element: <SaleOrderStaffPage /> },
       { path: ROUTES.SALE_ORDER_DETAIL, element: <SaleOrderDetailPage /> },
