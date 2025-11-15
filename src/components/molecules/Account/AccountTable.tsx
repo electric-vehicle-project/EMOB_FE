@@ -78,12 +78,6 @@ export const AccountTable: React.FC<Props> = ({
       dataIndex: "fullName",
       key: "fullName",
       align: "center",
-      sorter: (a, b) =>
-        (a.fullName || "").localeCompare(b.fullName || "", "vi", {
-          sensitivity: "base",
-        }),
-      sortDirections: ["ascend", "descend"],
-      showSorterTooltip: true,
       render: (text: string, record) => (
         <Tooltip title={text}>
           <Link
@@ -116,19 +110,6 @@ export const AccountTable: React.FC<Props> = ({
       dataIndex: "role",
       key: "role",
       align: "center",
-
-      filters: isAdmin
-        ? [
-            { text: ROLE_LABEL[RoleConst.MANAGER], value: RoleConst.MANAGER },
-            {
-              text: ROLE_LABEL[RoleConst.EVM_STAFF],
-              value: RoleConst.EVM_STAFF,
-            },
-          ]
-        : undefined,
-
-      onFilter: isAdmin ? (value, record) => record.role === value : undefined,
-
       render: (_, record) => {
         const dealerName =
           record.dealerId && dealerMap[record.dealerId]
@@ -144,14 +125,12 @@ export const AccountTable: React.FC<Props> = ({
               {ROLE_LABEL[role]}
             </Tag>
 
-            {/* ADMIN quản lý MANAGER + EVM_STAFF → ghi “của đại lý …” */}
             {isAdmin && isManaged ? (
               <span className="text-xs text-gray-700">
                 của đại lý: {dealerName}
               </span>
             ) : null}
 
-            {/* MANAGER quản lý DEALER_STAFF → ghi “của đại lý …” */}
             {isManager && role === RoleConst.DEALER_STAFF && dealerName ? (
               <span className="text-xs text-gray-700">
                 của đại lý: {dealerName}
@@ -167,12 +146,6 @@ export const AccountTable: React.FC<Props> = ({
       dataIndex: "status",
       key: "status",
       align: "center",
-      filters: [
-        { text: STATUS_LABEL.ACTIVE, value: AccountStatusConst.ACTIVE },
-        { text: STATUS_LABEL.INACTIVE, value: AccountStatusConst.INACTIVE },
-        { text: STATUS_LABEL.BANNED, value: AccountStatusConst.BANNED },
-      ],
-      onFilter: (value, record) => record.status === value,
       render: (status: AccountStatusType) => (
         <Tag color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Tag>
       ),
@@ -205,12 +178,7 @@ export const AccountTable: React.FC<Props> = ({
               {isInactive ? "Mở lại" : "Tạm ngưng"}
             </Button>
 
-            <Button
-              size="small"
-              danger
-              onClick={() => onBan(record.id)}
-              className="px-3"
-            >
+            <Button size="small" danger onClick={() => onBan(record.id)}>
               Cấm vĩnh viễn
             </Button>
           </div>
