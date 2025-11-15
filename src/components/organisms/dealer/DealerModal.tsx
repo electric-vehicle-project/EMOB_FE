@@ -1,5 +1,5 @@
 import { Modal, Button } from "antd";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "antd/es/form/Form";
 import type { IDealer, Region } from "../../../model/Dealer";
 import { DealerForm } from "../../molecules/dealer/DealerForm";
@@ -28,12 +28,20 @@ export const DealerModal = ({
   const [form] = useForm<DealerFormValues>();
   const baselineRef = useRef<DealerFormValues | null>(null);
 
-  const { data: allDealersResp, refetch: refetchAllDealers } = useDealersQuery(
-    { enabled: open },
-    { page: 0, size: 1000, sortField: "createdAt", sortDir: "desc" }
+  // FIX: Add enabled = true
+  const { data: allDealerResp, refetch: refetchAllDealers } = useDealersQuery(
+    0,
+    9999,
+    "",
+    "createdAt",
+    "desc",
+    undefined
   );
 
-  const allDealers: IDealer[] = allDealersResp?.result?.data ?? [];
+  // SAFE MAP
+  const allDealers: IDealer[] = Array.isArray(allDealerResp?.result?.data)
+    ? allDealerResp!.result!.data
+    : [];
 
   useEffect(() => {
     if (!open) return;
@@ -75,35 +83,10 @@ export const DealerModal = ({
     try {
       const payload = buildDealerPayloadFromForm(current);
       await onSubmit(payload as unknown as IDealer);
-    } catch (err: unknown) {
-      interface ApiError {
-        response?: { data?: { message?: string } };
-        message?: string;
-      }
-      const e = err as ApiError;
+    } catch (err: any) {
+      const action = initialValues ? "cập nhật" : "tạo";
 
-      const backendMsg = e?.response?.data?.message;
-
-      // trường hợp đang sửa
-      if (initialValues) {
-        if (backendMsg) {
-          toast.error(`Không thể cập nhật thông tin đại lý.`);
-        } else if (e.message) {
-          toast.error(`Không thể cập nhật thông tin đại lý.`);
-        } else {
-          toast.error("Không thể cập nhật thông tin đại lý.");
-        }
-        return;
-      }
-
-      // trường hợp đang tạo mới
-      if (backendMsg) {
-        toast.error(`Không thể tạo đại lý.`);
-      } else if (e.message) {
-        toast.error(`Không thể tạo đại lý.`);
-      } else {
-        toast.error("Không thể tạo đại lý.");
-      }
+      toast.error(`Không thể ${action} đại lý.`);
     }
   };
 
@@ -112,7 +95,7 @@ export const DealerModal = ({
       <Button
         type="primary"
         className="px-6 py-2 rounded-md w-full sm:w-auto bg-evm-green hover:!bg-[#4f6f52]"
-        onClick={() => form.submit()} // bấm mới validate
+        onClick={() => form.submit()}
       >
         {initialValues ? "Lưu thay đổi" : "Tạo đại lý"}
       </Button>

@@ -58,9 +58,9 @@ import VehiclePriceRulePage from "../page/EVM/VehiclePriceRulePage";
 import { VehiclePriceUpdatePage } from "../page/EVM/VehiclePriceUpdatePage";
 import DealerPointRulePage from "../page/dealer-point-rule/DealerPointRulePage";
 import { TestDriveByCurrentStaffPage } from "../page/test-drive/TestDriveByCurrentStaffPage";
-import { DealerDiscountPolicyPage } from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
-import ReportDetailPage from "../page/report/ReportDetailPage";
 import { InstallmentPlanCustomersPage } from "../page/installmentPlan/InstallmentPlanCustomerPage";
+import ReportDetailPage from "../page/report/ReportDetailPage";
+import { DealerDiscountPolicyPage } from "../page/dealer-discount-policy/DealerDiscountPolicyPage";
 // -------------------- ROUTER --------------------
 export const router = createBrowserRouter([
   // ==== HOME ====

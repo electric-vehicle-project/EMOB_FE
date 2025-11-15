@@ -1,24 +1,29 @@
 import { useState, useMemo } from "react";
-import { Result, Button, Empty } from "antd";
+import { Result, Button, Empty, Dropdown, Select, Space } from "antd";
+import { SlidersOutlined, PlusOutlined } from "@ant-design/icons";
 import type { IDealer } from "../../../model/Dealer";
 import { SearchBar } from "../../molecules/SearchBar";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useDebounce } from "../../../hook/useDebounce";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
+
 import {
   useDealersQuery,
   useCreateDealerMutation,
   useUpdateDealerMutation,
   useDeleteDealerMutation,
 } from "../../../service/dealerService";
+
 import { DealerTable } from "../../molecules/dealer/DealerTable";
 import {
   buildDealerPayloadFromForm,
   normalizeDealerValues,
 } from "../../molecules/dealer/dealerUtils";
+
 import type { DealerApiModel } from "../../../model/Dealer";
 import { toast } from "react-toastify";
 import { DealerModal } from "./DealerModal";
+import { Card } from "../../atoms/Card";
 
 export const DealerList = () => {
   const [search, setSearch] = useState("");
@@ -31,40 +36,31 @@ export const DealerList = () => {
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // === SORT ===
+  // FILTER STATE
   const [sortField, setSortField] = useState("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [country, setCountry] = useState<string | undefined>();
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  // === FILTER COUNTRY ===
-  const [country, setCountry] = useState<string | undefined>(undefined);
-
+  // ROLE
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
   const canView = role === "ADMIN" || role === "EVM_STAFF";
   const canModify = role === "ADMIN";
 
-  // === MAIN QUERY PARAMS ===
-  const params = useMemo(
-    () => ({
-      page: current - 1,
-      size: pageSize,
-      keyword: debouncedSearch || undefined,
-      sortField,
-      sortDir,
-      country,
-    }),
-    [current, pageSize, debouncedSearch, sortField, sortDir, country]
-  );
-
-  // === MAIN DEALER QUERY ===
+  // MAIN DEALER QUERY
   const { data, refetch, isLoading, isError, error } = useDealersQuery(
-    { enabled: canView },
-    params
+    current - 1,
+    pageSize,
+    debouncedSearch,
+    sortField,
+    sortDir,
+    country
   );
 
   const dealers: IDealer[] = useMemo(() => {
-    const raw: DealerApiModel[] = data?.result?.data ?? [];
-    return raw.map((d) => ({
+    const raw = Array.isArray(data?.result?.data) ? data.result.data : [];
+    return raw.map((d: DealerApiModel) => ({
       id: d.id,
       name: d.name,
       emailContact: d.emailContact,
@@ -78,21 +74,26 @@ export const DealerList = () => {
 
   const total = data?.result?.metadata?.totalElements ?? 0;
 
-  // === FIX FILTER ISSUE: ALWAYS LOAD ALL COUNTRIES ===
+  // LOAD ALL COUNTRIES FOR DROPDOWN
   const { data: allDealerResp } = useDealersQuery(
-    { enabled: true },
-    { page: 0, size: 9999, sortField: "createdAt", sortDir: "desc" }
+    0,
+    9999,
+    "",
+    "createdAt",
+    "desc",
+    undefined
   );
 
   const countryOptions = useMemo<string[]>(() => {
-    const list =
-      allDealerResp?.result?.data
-        ?.map((d: DealerApiModel) => d.country)
-        .filter((c: string | undefined): c is string => Boolean(c)) ?? [];
+    const list = Array.isArray(allDealerResp?.result?.data)
+      ? allDealerResp.result.data
+          .map((d: DealerApiModel) => d.country)
+          .filter(Boolean)
+      : [];
     return Array.from(new Set(list));
   }, [allDealerResp]);
 
-  // === MUTATIONS ===
+  // MUTATIONS
   const createDealer = useCreateDealerMutation();
   const updateDealer = useUpdateDealerMutation();
   const deleteDealer = useDeleteDealerMutation();
@@ -122,18 +123,77 @@ export const DealerList = () => {
     refetch();
   };
 
-  // === PERMISSION ===
+  // FILTER DROPDOWN CONTENT
+  const FilterContent = () => (
+    <Card
+      {...({ onClick: (e: any) => e.stopPropagation() } as any)}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      <Space direction="vertical" style={{ width: "100%" }}>
+        {/* COUNTRY FILTER */}
+        <div>
+          <b className="text-gray-700">Quốc gia</b>
+          <Select
+            allowClear
+            className="w-full mt-2"
+            value={country}
+            onChange={(val) => {
+              setCountry(val);
+              setCurrent(1);
+            }}
+          >
+            {countryOptions?.map((c) => (
+              <Select.Option key={c} value={c}>
+                {c}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        {/* SORT FIELD */}
+        <div>
+          <b className="text-gray-700">Sắp xếp theo</b>
+          <Select
+            className="w-full mt-2"
+            value={sortField}
+            onChange={(v) => {
+              setSortField(v);
+              setCurrent(1);
+            }}
+          >
+            <Select.Option value="createdAt">Ngày tạo</Select.Option>
+            <Select.Option value="name">Tên đại lý</Select.Option>
+            <Select.Option value="country">Quốc gia</Select.Option>
+          </Select>
+        </div>
+
+        {/* SORT DIR */}
+        <div>
+          <b className="text-gray-700">Thứ tự</b>
+          <Select
+            className="w-full mt-2"
+            value={sortDir}
+            onChange={(v) => {
+              setSortDir(v);
+              setCurrent(1);
+            }}
+          >
+            <Select.Option value="asc">Tăng dần</Select.Option>
+            <Select.Option value="desc">Giảm dần</Select.Option>
+          </Select>
+        </div>
+      </Space>
+    </Card>
+  );
+
+  // PERMISSIONS
   if (!canView)
     return (
       <Result
         status="403"
         title="403"
         subTitle="Bạn không có quyền truy cập trang này."
-        extra={
-          <Button type="primary" href="/dashboard">
-            Về trang tổng quan
-          </Button>
-        }
+        extra={<Button href="/dashboard">Về trang tổng quan</Button>}
       />
     );
 
@@ -142,32 +202,41 @@ export const DealerList = () => {
       <Result
         status="error"
         title="Không thể tải danh sách đại lý"
-        subTitle={
-          (error as { message?: string })?.message || "Vui lòng thử lại."
-        }
-        extra={
-          <Button type="primary" onClick={() => refetch()}>
-            Thử lại
-          </Button>
-        }
+        subTitle={error?.message || "Vui lòng thử lại."}
+        extra={<Button onClick={() => refetch()}>Thử lại</Button>}
       />
     );
 
   return (
-    <>
-      <div className="flex justify-between items-center mb-3">
-        <div className="w-full max-w-xs sm:max-w-sm">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* SEARCH + FILTER */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-3">
           <SearchBar
             value={search}
             onChange={setSearch}
             placeholder="Tìm kiếm đại lý..."
           />
+
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+          >
+            <Button
+              type="text"
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+              className="text-gray-600 hover:text-black"
+            />
+          </Dropdown>
         </div>
 
         {canModify && (
           <Button
             type="primary"
-            className="!bg-[#627254] hover:!bg-[#525e46]"
+            icon={<PlusOutlined />}
+            className="bg-green-700"
             onClick={() => {
               setEditDealer(undefined);
               setModalOpen(true);
@@ -186,7 +255,7 @@ export const DealerList = () => {
             setEditDealer(d);
             setModalOpen(true);
           }}
-          onDelete={setDeleteId}
+          onDelete={(id) => setDeleteId(id)}
           canModify={canModify}
           pagination={{
             current,
@@ -197,7 +266,6 @@ export const DealerList = () => {
               setCurrent(p);
               setPageSize(s || pageSize);
             },
-            showTotal: (t) => `Tổng ${t} đại lý`,
           }}
           sortField={sortField}
           sortDir={sortDir}
@@ -230,10 +298,10 @@ export const DealerList = () => {
             open={!!deleteId}
             onConfirm={handleDelete}
             onCancel={() => setDeleteId(null)}
-            message="Bạn có chắc chắn muốn xóa đại lý này?"
+            message="Bạn có chắc chắn muốn xoá đại lý này?"
           />
         </>
       )}
-    </>
+    </div>
   );
 };

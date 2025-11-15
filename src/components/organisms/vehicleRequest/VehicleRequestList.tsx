@@ -124,6 +124,8 @@ const VehicleRequestList: React.FC = () => {
           className="w-full mt-2"
         >
           <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="totalQuantity">Số lượng</Select.Option>
+          <Select.Option value="totalPrice">Tổng giá trị</Select.Option>
         </Select>
       </div>
 
