@@ -63,7 +63,16 @@ export const PromotionForm = ({
   loading,
 }: Props) => {
   const [form] = Form.useForm<PromotionFormValues>();
-  const { data: dealersData } = useDealersQuery({}, { size: 1000 });
+  const { data: dealersData } = useDealersQuery(
+    0,
+    1000,
+    "",
+    "createdAt",
+    "desc",
+    undefined,
+    true
+  );
+
   const { data: vehicles } = useGetVehicles();
 
   const dealers = dealersData?.result?.data ?? [];

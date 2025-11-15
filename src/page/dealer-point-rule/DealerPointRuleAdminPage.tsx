@@ -8,8 +8,13 @@ import type { IDealerPointRule } from "../../model/DealerPointRule";
 
 export const DealerPointRuleAdminPage: React.FC = () => {
   const { data: dealersData, isLoading: loadingDealers } = useDealersQuery(
-    {},
-    { size: 1000 }
+    0,
+    1000,
+    "",
+    "createdAt",
+    "desc",
+    undefined,
+    true
   );
 
   const { data: ruleData, isLoading: loadingRules } = useDealerPointRuleList();
