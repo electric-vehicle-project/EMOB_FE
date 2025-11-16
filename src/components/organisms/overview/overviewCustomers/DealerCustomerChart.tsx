@@ -76,76 +76,75 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
         <h2 className="text-xl font-bold text-gray-800">{chartTitle}</h2>
       </div>
       {/* Biểu đồ */}
-      <div className="bg-[#0f172a] rounded-2xl border-[14px] border-[#0f172a] p-3 shadow-inner">
-        <div className="bg-white rounded-xl p-3">
-          <div style={{ height: 380 }}>
-            <ResponsiveBar
-              data={data}
-              keys={["value"]}
-              indexBy="customer"
-              margin={{ top: 20, right: 40, bottom: 60, left: 90 }}
-              padding={0.35}
-              colors={["#10b981"]}
-              borderRadius={6}
-              enableLabel={false}
-              axisLeft={{
-                tickSize: 5,
-                tickPadding: 8,
-                legend:
-                  metric === "totalRevenue"
-                    ? "Doanh thu (VNĐ)"
-                    : "Số xe đã mua",
-                legendPosition: "middle",
-                legendOffset: -75,
-                tickValues,
-                format: (value) =>
-                  metric === "totalRevenue" && value >= 1_000_000
-                    ? `${(value / 1_000_000).toFixed(0)}M`
-                    : value,
-              }}
-              enableGridY
-              gridYValues={tickValues}
-              theme={{
-                textColor: "#0f172a",
-                fontSize: 11,
-                grid: { line: { stroke: "#e5e7eb", strokeWidth: 1 } },
-                axis: {
-                  ticks: { text: { fill: "#475569", fontSize: 11 } },
-                  legend: {
-                    text: { fill: "#1e293b", fontSize: 12, fontWeight: 600 },
-                  },
+
+      <div className="bg-white rounded-xl p-3">
+        <div style={{ height: 380 }}>
+          <ResponsiveBar
+            colors={["#5e6e51"]}
+            data={data}
+            keys={["value"]}
+            indexBy="customer"
+            margin={{ top: 20, right: 40, bottom: 60, left: 90 }}
+            padding={0.35}
+            borderRadius={6}
+            enableLabel={false}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 8,
+              legend:
+                metric === "totalRevenue" ? "Doanh thu (VNĐ)" : "Số xe đã mua",
+              legendPosition: "middle",
+              legendOffset: -75,
+              tickValues,
+              format: (value) =>
+                value >= 1000000
+                  ? `${(value / 1000000).toFixed(0)}M`
+                  : value >= 1000
+                  ? `${(value / 1000).toFixed(0)}K`
+                  : value,
+            }}
+            enableGridY
+            gridYValues={tickValues}
+            theme={{
+              textColor: "#0f172a",
+              fontSize: 11,
+              grid: { line: { stroke: "#e5e7eb", strokeWidth: 1 } },
+              axis: {
+                ticks: { text: { fill: "#475569", fontSize: 11 } },
+                legend: {
+                  text: { fill: "#1e293b", fontSize: 12, fontWeight: 600 },
                 },
-              }}
-              tooltip={({ indexValue, value, color }) => (
-                <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 shadow-xl">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div
-                      className="w-3 h-3 rounded-full ring-2 ring-white shadow"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="font-semibold text-gray-800 text-sm">
-                      {indexValue}
-                    </span>
-                  </div>
-                  <div className="font-bold text-gray-900 text-base">
-                    {metric === "totalRevenue"
-                      ? `${Number(value).toLocaleString("vi-VN")} VNĐ`
-                      : `${value} xe`}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {metric === "totalRevenue"
-                      ? "Tổng doanh thu"
-                      : "Tổng số xe đã mua"}
-                  </div>
+              },
+            }}
+            tooltip={({ indexValue, value, color }) => (
+              <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 shadow-xl">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div
+                    className="w-3 h-3 rounded-full ring-2 ring-white shadow"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="font-semibold text-gray-800 text-sm">
+                    {indexValue}
+                  </span>
                 </div>
-              )}
-              motionConfig="gentle"
-              animate
-              isInteractive
-              role="application"
-              ariaLabel="Biểu đồ khách hàng"
-            />
-          </div>
+                <div className="font-bold text-gray-900 text-base">
+                  {metric === "totalRevenue"
+                    ? `${Number(value).toLocaleString("vi-VN")} VNĐ`
+                    : `${value} xe`}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {metric === "totalRevenue"
+                    ? "Tổng doanh thu"
+                    : "Tổng số xe đã mua"}
+                </div>
+              </div>
+            )}
+            motionConfig="gentle"
+            animate
+            isInteractive
+            role="application"
+            ariaLabel="Biểu đồ khách hàng"
+          />
         </div>
       </div>
     </motion.div>
