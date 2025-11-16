@@ -18,7 +18,7 @@ import {
   ColumnWidthOutlined,
   ArrowUpOutlined,
 } from "@ant-design/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useGetVehicles,
   useGetVehicleById,
@@ -102,23 +102,6 @@ type MetricKey =
   | "importPrice"
   | "retailPrice";
 
-const METRIC_KEYS = new Set<MetricKey>([
-  "brand",
-  "model",
-  "type",
-  "batteryKwh",
-  "rangeKm",
-  "chargeTimeHr",
-  "powerKw",
-  "weightKg",
-  "topSpeedKmh",
-  "importPrice",
-  "retailPrice",
-]);
-
-const isMetricKey = (k: string): k is MetricKey =>
-  METRIC_KEYS.has(k as MetricKey);
-
 const canonicalKey = (keyName: string): string => {
   const k = keyName.toLowerCase();
   if (k.includes("battery") || k.includes("pin") || k.includes("kwh"))
@@ -145,14 +128,20 @@ const normBetter = (v: any): "left" | "right" | null => {
 
 const fmt = (key: string, value: any): string => {
   if (value === null || value === undefined || value === "") return "—";
+
+  // Nếu giá = 0 thì coi là chưa cập nhật
+  if (MONEY.has(key) && Number(value) === 0) return "Chưa cập nhật";
+
   if (MONEY.has(key) && isNum(value))
     return `${Number(value).toLocaleString("vi-VN")} VNĐ`;
+
   if (isNum(value)) {
     const unit = UNITS[key];
     return unit
       ? `${Number(value).toLocaleString("vi-VN")} ${unit}`
       : Number(value).toLocaleString("vi-VN");
   }
+
   return String(value);
 };
 
@@ -169,7 +158,6 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
 
   const options = useMemo(() => {
     const list = Array.isArray(vehicles) ? (vehicles as IVehicle[]) : [];
-
     return list
       .filter((v) => v.id !== leftId)
       .map((v) => ({
@@ -178,42 +166,11 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
       }));
   }, [vehicles, leftId]);
 
-  useEffect(() => {
-    if (!open) {
-      setRightId(undefined);
-      setRows(null);
-    }
-  }, [open]);
-
-  const leftName = leftInfo
-    ? `${leftInfo.brand ?? ""} ${leftInfo.model ?? ""}`.trim() || leftInfo.id
-    : "";
-  const rightName =
-    rightInfo && rightId
-      ? `${rightInfo.brand ?? ""} ${rightInfo.model ?? ""}`.trim() || rightId
-      : "";
-
-  const leftImg =
-    Array.isArray(leftInfo?.images) && leftInfo.images.length
-      ? leftInfo.images[0]
-      : PLACEHOLDER;
-
-  const rightImg =
-    Array.isArray(rightInfo?.images) && rightInfo?.images.length
-      ? rightInfo.images[0]
-      : PLACEHOLDER;
-
-  const isBackendFieldAArray = (v: any): v is any[] =>
-    Array.isArray(v) && v.every((e) => typeof e.keyName === "string");
-
-  const isBackendRespB = (v: any): v is { fields: any[] } =>
-    typeof v === "object" && v !== null && Array.isArray(v.fields);
-
-  function parsePayload(payload: any): CompareRow[] {
+  const parsePayload = useCallback((payload: any): CompareRow[] => {
     const maybe = payload?.result ?? payload;
 
-    if (isBackendRespB(maybe)) {
-      return maybe.fields.map((f) => {
+    if (maybe?.fields) {
+      return maybe.fields.map((f: any) => {
         const rawKey = f.key || f.label || "";
         const k = canonicalKey(rawKey);
         return {
@@ -225,8 +182,8 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
       });
     }
 
-    if (isBackendFieldAArray(maybe)) {
-      return maybe.map((x) => {
+    if (Array.isArray(maybe)) {
+      return maybe.map((x: any) => {
         const k = canonicalKey(x.keyName);
         return {
           key: k,
@@ -238,32 +195,31 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     }
 
     return [];
-  }
+  }, []);
 
-  const pickCellValue = (src: IVehicle | undefined, key: string) => {
-    if (!src || !isMetricKey(key)) return undefined;
-    const v = src[key];
-    return v ?? undefined;
-  };
+  const fillAbsoluteValues = useCallback(
+    (list: CompareRow[]): CompareRow[] => {
+      return list.map((r) => ({
+        ...r,
+        left: leftInfo ? leftInfo[r.key as MetricKey] : undefined,
+        right: rightInfo ? rightInfo[r.key as MetricKey] : undefined,
+        different: !!r.different,
+      }));
+    },
+    [leftInfo, rightInfo]
+  );
 
-  function fillAbsoluteValues(list: CompareRow[]): CompareRow[] {
-    return list.map((r) => ({
-      ...r,
-      left: pickCellValue(leftInfo!, r.key),
-      right: pickCellValue(rightInfo!, r.key),
-      different: !!r.different,
-    }));
-  }
+  const doCompare = useCallback(async () => {
+    if (!rightId || !rightInfo) return;
 
-  const handleCompare = async (id: string) => {
-    setRightId(id);
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await api.get(`/vehicle/${leftId}/vs/${id}`);
+      const res = await api.get(`/vehicle/${leftId}/vs/${rightId}`);
       const parsed = parsePayload(res.data);
+
       const completed = fillAbsoluteValues(parsed);
 
-      const sorted = [...completed].sort((a, b) => {
+      const sorted = completed.sort((a, b) => {
         if (a.different !== b.different) return a.different ? -1 : 1;
         const ia = ORDER.indexOf(a.key);
         const ib = ORDER.indexOf(b.key);
@@ -277,32 +233,97 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     } finally {
       setLoading(false);
     }
+  }, [rightId, rightInfo, leftId, parsePayload, fillAbsoluteValues]);
+
+  useEffect(() => {
+    doCompare();
+  }, [doCompare]);
+
+  const handleCompare = (id: string) => {
+    setRightId(id);
   };
+
+  const leftName = leftInfo
+    ? `${leftInfo.brand ?? ""} ${leftInfo.model ?? ""}`.trim() || leftInfo.id
+    : "";
+
+  const rightName =
+    rightInfo && rightId
+      ? `${rightInfo.brand ?? ""} ${rightInfo.model ?? ""}`.trim() || rightId
+      : "";
+
+  const leftImg =
+    Array.isArray(leftInfo?.images) && leftInfo.images.length
+      ? leftInfo.images[0]
+      : PLACEHOLDER;
+
+  const rightImg =
+    Array.isArray(rightInfo?.images) && rightInfo.images.length
+      ? rightInfo.images[0]
+      : PLACEHOLDER;
 
   const stats = useMemo(() => {
     const data = rows ?? [];
     let left = 0;
     let right = 0;
     let equal = 0;
+    let notComparable = 0;
+
     data.forEach((r) => {
-      if (!r.different || !r.betterFor) equal++;
-      else if (r.betterFor === "left") left++;
+      // Nếu là giá nhưng thiếu dữ liệu
+      const isPrice = r.key === "importPrice" || r.key === "retailPrice";
+      const invalidPrice =
+        Number(r.left) === 0 ||
+        Number(r.right) === 0 ||
+        !isNum(r.left) ||
+        !isNum(r.right);
+
+      if (isPrice && invalidPrice) {
+        notComparable++;
+        return;
+      }
+
+      // Không có chênh lệch
+      if (!r.different || !r.betterFor) {
+        equal++;
+        return;
+      }
+
+      // Có chênh lệch
+      if (r.betterFor === "left") left++;
       else if (r.betterFor === "right") right++;
     });
-    return { left, right, equal, total: data.length };
+
+    return { left, right, equal, notComparable, total: data.length };
   }, [rows]);
 
   const BG = {
     win: "rgba(34, 197, 94, 0.28)",
     lose: "rgba(220, 38, 38, 0.12)",
     equal: "rgba(148, 163, 184, 0.16)",
+    notComparable: "rgba(250, 204, 21, 0.25)",
   };
 
   const cellBg = (side: "left" | "right", r: CompareRow) => {
+    // Nếu là giá & 1 trong 2 mẫu chưa cập nhật → màu xám
+    // Nếu là giá & 1 trong 2 mẫu chưa cập nhật → màu "không thể so sánh"
+    if (
+      (r.key === "importPrice" || r.key === "retailPrice") &&
+      (Number(r.left) === 0 ||
+        Number(r.right) === 0 ||
+        !isNum(r.left) ||
+        !isNum(r.right))
+    ) {
+      return { background: BG.notComparable, borderRadius: 8, padding: 8 };
+    }
+
+    // Bình thường
     if (!r.different || !r.betterFor)
       return { background: BG.equal, borderRadius: 8, padding: 8 };
+
     if (r.betterFor === side)
       return { background: BG.win, borderRadius: 8, padding: 8 };
+
     return { background: BG.lose, borderRadius: 8, padding: 8 };
   };
 
@@ -395,7 +416,8 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
             <Tag color="green">Mẫu hiện tại tốt hơn: {stats.left}</Tag>
             <Tag color="blue">Mẫu so sánh tốt hơn: {stats.right}</Tag>
             <Tag>Tương đương: {stats.equal}</Tag>
-            <Tag color="gold">Tổng tiêu chí: {stats.total}</Tag>
+            <Tag color="gold">Không thể so sánh: {stats.notComparable}</Tag>
+            <Tag color="purple">Tổng tiêu chí: {stats.total}</Tag>
           </Space>
         </>
       )}
@@ -444,11 +466,30 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
                 title: "Nhận định",
                 dataIndex: "betterFor",
                 width: 260,
-                render: (v) => {
-                  if (!v) return <Tag>Không có chênh lệch</Tag>;
-                  const name = v === "left" ? leftName : rightName;
+                render: (_, r) => {
+                  // nếu là giá nhưng thiếu dữ liệu
+                  if (r.key === "importPrice" || r.key === "retailPrice") {
+                    const l = Number(r.left);
+                    const rgt = Number(r.right);
+
+                    if (!isNum(l) || l <= 0 || !isNum(rgt) || rgt <= 0) {
+                      return (
+                        <Tag color="gold">
+                          Không thể so sánh (thiếu dữ liệu giá)
+                        </Tag>
+                      );
+                    }
+                  }
+
+                  // dữ liệu đầy đủ nhưng không có chênh lệch
+                  if (!r.betterFor) {
+                    return <Tag>Không có chênh lệch</Tag>;
+                  }
+
+                  // có chênh lệch
+                  const name = r.betterFor === "left" ? leftName : rightName;
                   return (
-                    <Tag color={v === "left" ? "green" : "blue"}>
+                    <Tag color={r.betterFor === "left" ? "green" : "blue"}>
                       <ArrowUpOutlined /> Mẫu {name} tốt hơn
                     </Tag>
                   );

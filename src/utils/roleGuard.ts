@@ -68,7 +68,5 @@ export const hasVehiclePriced = (v?: {
   importPrice?: number | null;
   retailPrice?: number | null;
 }) =>
-  typeof v?.importPrice === "number" &&
-  v.importPrice > 0 &&
-  typeof v?.retailPrice === "number" &&
-  v.retailPrice > 0;
+  (typeof v?.importPrice === "number" && v.importPrice > 0) ||
+  (typeof v?.retailPrice === "number" && v.retailPrice > 0);

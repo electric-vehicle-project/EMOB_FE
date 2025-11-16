@@ -517,22 +517,33 @@ export const VehicleDetailPage = () => {
                     )}
                   </div>
 
-                  {priced && (
-                    <div className="text-right">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
-                        Giá nhập:
-                        <span className="text-[#414d38]">
-                          {viewVehicle.importPrice?.toLocaleString("vi-VN")} ₫
-                        </span>
-                      </div>
-                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
-                        Giá bán lẻ:
-                        <span className="text-[#414d38]">
-                          {viewVehicle.retailPrice?.toLocaleString("vi-VN")} ₫
-                        </span>
-                      </div>
+                  <div className="text-right">
+                    {/* Giá nhập */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
+                      Giá nhập:
+                      <span className="text-[#414d38]">
+                        {typeof viewVehicle.importPrice === "number" &&
+                        viewVehicle.importPrice > 0
+                          ? `${viewVehicle.importPrice.toLocaleString(
+                              "vi-VN"
+                            )} VNĐ`
+                          : "Chưa cập nhật"}
+                      </span>
                     </div>
-                  )}
+
+                    {/* Giá bán lẻ */}
+                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
+                      Giá bán lẻ:
+                      <span className="text-[#414d38]">
+                        {typeof viewVehicle.retailPrice === "number" &&
+                        viewVehicle.retailPrice > 0
+                          ? `${viewVehicle.retailPrice.toLocaleString(
+                              "vi-VN"
+                            )} VNĐ`
+                          : "Chưa cập nhật"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-6 border-t pt-4">
