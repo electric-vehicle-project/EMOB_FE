@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Modal,
   Select,
@@ -17,7 +18,7 @@ import {
   ColumnWidthOutlined,
   ArrowUpOutlined,
 } from "@ant-design/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useGetVehicles,
   useGetVehicleById,
@@ -84,7 +85,7 @@ const ORDER = [
 const PLACEHOLDER =
   "https://placehold.co/420x300?text=Ch%C6%B0a+c%C3%B3+%E1%BA%A3nh";
 
-const isNum = (v: unknown) =>
+const isNum = (v: any) =>
   typeof v === "number" ||
   (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v)));
 
@@ -100,23 +101,6 @@ type MetricKey =
   | "topSpeedKmh"
   | "importPrice"
   | "retailPrice";
-
-const METRIC_KEYS = new Set<MetricKey>([
-  "brand",
-  "model",
-  "type",
-  "batteryKwh",
-  "rangeKm",
-  "chargeTimeHr",
-  "powerKw",
-  "weightKg",
-  "topSpeedKmh",
-  "importPrice",
-  "retailPrice",
-]);
-
-const isMetricKey = (k: string): k is MetricKey =>
-  METRIC_KEYS.has(k as MetricKey);
 
 const canonicalKey = (keyName: string): string => {
   const k = keyName.toLowerCase();
@@ -135,23 +119,29 @@ const canonicalKey = (keyName: string): string => {
   return keyName;
 };
 
-const normBetter = (v: unknown): "left" | "right" | null => {
+const normBetter = (v: any): "left" | "right" | null => {
   const s = String(v ?? "").toLowerCase();
   if (s === "left") return "left";
   if (s === "right") return "right";
   return null;
 };
 
-const fmt = (key: string, value: unknown): string => {
+const fmt = (key: string, value: any): string => {
   if (value === null || value === undefined || value === "") return "—";
+
+  // Nếu giá = 0 thì coi là chưa cập nhật
+  if (MONEY.has(key) && Number(value) === 0) return "Chưa cập nhật";
+
   if (MONEY.has(key) && isNum(value))
-    return `${Number(value).toLocaleString("vi-VN")}₫`;
+    return `${Number(value).toLocaleString("vi-VN")} VNĐ`;
+
   if (isNum(value)) {
     const unit = UNITS[key];
     return unit
       ? `${Number(value).toLocaleString("vi-VN")} ${unit}`
       : Number(value).toLocaleString("vi-VN");
   }
+
   return String(value);
 };
 
@@ -166,105 +156,34 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     enabled: open && !!rightId,
   });
 
-  const options = useMemo(
-    () =>
-      (Array.isArray(vehicles) ? (vehicles as IVehicle[]) : [])
-        .filter((v) => v.id !== leftId)
-        .map((v) => ({
-          value: v.id!,
-          label: `${v.brand ?? ""} ${v.model ?? ""}`.trim() || v.id,
-        })),
-    [vehicles, leftId]
-  );
+  const options = useMemo(() => {
+    const list = Array.isArray(vehicles) ? (vehicles as IVehicle[]) : [];
+    return list
+      .filter((v) => v.id !== leftId)
+      .map((v) => ({
+        value: v.id!,
+        label: `${v.brand ?? ""} ${v.model ?? ""}`.trim() || v.id,
+      }));
+  }, [vehicles, leftId]);
 
-  useEffect(() => {
-    if (!open) {
-      setRightId(undefined);
-      setRows(null);
-    }
-  }, [open]);
+  const parsePayload = useCallback((payload: any): CompareRow[] => {
+    const maybe = payload?.result ?? payload;
 
-  const leftName = leftInfo
-    ? `${leftInfo.brand ?? ""} ${leftInfo.model ?? ""}`.trim() || leftInfo.id
-    : "";
-  const rightName =
-    rightInfo && rightId
-      ? `${rightInfo.brand ?? ""} ${rightInfo.model ?? ""}`.trim() || rightId
-      : "";
-
-  const leftImg =
-    Array.isArray(leftInfo?.images) && leftInfo?.images.length
-      ? (leftInfo!.images as string[])[0]
-      : PLACEHOLDER;
-  const rightImg =
-    Array.isArray(rightInfo?.images) && rightInfo?.images.length
-      ? (rightInfo!.images as string[])[0]
-      : PLACEHOLDER;
-
-  // =========================
-  // Parse payload từ BE
-  // =========================
-  type BackendFieldA = {
-    keyName: string;
-    vehicleValue?: number | string | null;
-    different?: boolean;
-    betterFor?: unknown;
-  };
-  type BackendFieldB = {
-    key?: string;
-    label?: string;
-    different?: boolean;
-    betterFor?: unknown;
-  };
-  type BackendRespB = { fields: BackendFieldB[] };
-
-  const isBackendFieldAArray = (v: unknown): v is BackendFieldA[] =>
-    Array.isArray(v) &&
-    v.every((e) => {
-      const rec = e as Record<string, unknown>;
-      return typeof rec.keyName === "string";
-    });
-
-  const isBackendRespB = (v: unknown): v is BackendRespB => {
-    if (typeof v !== "object" || v === null) return false;
-    const rec = v as Record<string, unknown>;
-    const fields = rec.fields;
-    return (
-      Array.isArray(fields) &&
-      fields.every((f) => {
-        const r = f as Record<string, unknown>;
-        return (
-          typeof r === "object" &&
-          r !== null &&
-          (typeof r.key === "string" || typeof r.label === "string")
-        );
-      })
-    );
-  };
-
-  function parsePayload(payload: unknown): CompareRow[] {
-    const maybe = (payload as { result?: unknown })?.result ?? payload;
-
-    if (isBackendRespB(maybe)) {
-      return maybe.fields.map((f) => {
-        const rawKey =
-          typeof f.key === "string"
-            ? f.key
-            : typeof f.label === "string"
-            ? f.label
-            : "";
+    if (maybe?.fields) {
+      return maybe.fields.map((f: any) => {
+        const rawKey = f.key || f.label || "";
         const k = canonicalKey(rawKey);
         return {
           key: k,
-          label: LABELS[k] ?? (typeof f.label === "string" ? f.label : rawKey),
+          label: LABELS[k] ?? rawKey,
           betterFor: normBetter(f.betterFor),
           different: !!f.different,
         };
       });
     }
 
-    if (isBackendFieldAArray(maybe)) {
-      return maybe.map((x) => {
+    if (Array.isArray(maybe)) {
+      return maybe.map((x: any) => {
         const k = canonicalKey(x.keyName);
         return {
           key: k,
@@ -276,34 +195,31 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     }
 
     return [];
-  }
+  }, []);
 
-  type Cell = string | number | null | undefined;
-  const pickCellValue = (src: IVehicle | undefined, key: string): Cell => {
-    if (!src || !isMetricKey(key)) return undefined;
-    const v = src[key];
-    if (v === null || v === undefined) return undefined;
-    return typeof v === "number" || typeof v === "string" ? v : undefined;
-  };
+  const fillAbsoluteValues = useCallback(
+    (list: CompareRow[]): CompareRow[] => {
+      return list.map((r) => ({
+        ...r,
+        left: leftInfo ? leftInfo[r.key as MetricKey] : undefined,
+        right: rightInfo ? rightInfo[r.key as MetricKey] : undefined,
+        different: !!r.different,
+      }));
+    },
+    [leftInfo, rightInfo]
+  );
 
-  function fillAbsoluteValues(list: CompareRow[]): CompareRow[] {
-    return list.map((r) => ({
-      ...r,
-      left: pickCellValue(leftInfo as IVehicle | undefined, r.key),
-      right: pickCellValue(rightInfo as IVehicle | undefined, r.key),
-      different: !!r.different,
-    }));
-  }
+  const doCompare = useCallback(async () => {
+    if (!rightId || !rightInfo) return;
 
-  const handleCompare = async () => {
-    if (!rightId) return;
+    setLoading(true);
     try {
-      setLoading(true);
       const res = await api.get(`/vehicle/${leftId}/vs/${rightId}`);
-      const parsed = parsePayload(res?.data as unknown);
+      const parsed = parsePayload(res.data);
+
       const completed = fillAbsoluteValues(parsed);
 
-      const sorted = [...completed].sort((a, b) => {
+      const sorted = completed.sort((a, b) => {
         if (a.different !== b.different) return a.different ? -1 : 1;
         const ia = ORDER.indexOf(a.key);
         const ib = ORDER.indexOf(b.key);
@@ -317,32 +233,97 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     } finally {
       setLoading(false);
     }
+  }, [rightId, rightInfo, leftId, parsePayload, fillAbsoluteValues]);
+
+  useEffect(() => {
+    doCompare();
+  }, [doCompare]);
+
+  const handleCompare = (id: string) => {
+    setRightId(id);
   };
+
+  const leftName = leftInfo
+    ? `${leftInfo.brand ?? ""} ${leftInfo.model ?? ""}`.trim() || leftInfo.id
+    : "";
+
+  const rightName =
+    rightInfo && rightId
+      ? `${rightInfo.brand ?? ""} ${rightInfo.model ?? ""}`.trim() || rightId
+      : "";
+
+  const leftImg =
+    Array.isArray(leftInfo?.images) && leftInfo.images.length
+      ? leftInfo.images[0]
+      : PLACEHOLDER;
+
+  const rightImg =
+    Array.isArray(rightInfo?.images) && rightInfo.images.length
+      ? rightInfo.images[0]
+      : PLACEHOLDER;
 
   const stats = useMemo(() => {
     const data = rows ?? [];
     let left = 0;
     let right = 0;
     let equal = 0;
+    let notComparable = 0;
+
     data.forEach((r) => {
-      if (!r.different || !r.betterFor) equal++;
-      else if (r.betterFor === "left") left++;
+      // Nếu là giá nhưng thiếu dữ liệu
+      const isPrice = r.key === "importPrice" || r.key === "retailPrice";
+      const invalidPrice =
+        Number(r.left) === 0 ||
+        Number(r.right) === 0 ||
+        !isNum(r.left) ||
+        !isNum(r.right);
+
+      if (isPrice && invalidPrice) {
+        notComparable++;
+        return;
+      }
+
+      // Không có chênh lệch
+      if (!r.different || !r.betterFor) {
+        equal++;
+        return;
+      }
+
+      // Có chênh lệch
+      if (r.betterFor === "left") left++;
       else if (r.betterFor === "right") right++;
     });
-    return { left, right, equal, total: data.length };
+
+    return { left, right, equal, notComparable, total: data.length };
   }, [rows]);
 
   const BG = {
     win: "rgba(34, 197, 94, 0.28)",
     lose: "rgba(220, 38, 38, 0.12)",
     equal: "rgba(148, 163, 184, 0.16)",
+    notComparable: "rgba(250, 204, 21, 0.25)",
   };
 
   const cellBg = (side: "left" | "right", r: CompareRow) => {
+    // Nếu là giá & 1 trong 2 mẫu chưa cập nhật → màu xám
+    // Nếu là giá & 1 trong 2 mẫu chưa cập nhật → màu "không thể so sánh"
+    if (
+      (r.key === "importPrice" || r.key === "retailPrice") &&
+      (Number(r.left) === 0 ||
+        Number(r.right) === 0 ||
+        !isNum(r.left) ||
+        !isNum(r.right))
+    ) {
+      return { background: BG.notComparable, borderRadius: 8, padding: 8 };
+    }
+
+    // Bình thường
     if (!r.different || !r.betterFor)
       return { background: BG.equal, borderRadius: 8, padding: 8 };
+
     if (r.betterFor === side)
       return { background: BG.win, borderRadius: 8, padding: 8 };
+
     return { background: BG.lose, borderRadius: 8, padding: 8 };
   };
 
@@ -350,110 +331,77 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
     <Modal
       open={open}
       onCancel={onClose}
-      okText="Bắt đầu so sánh"
-      cancelText="Hủy"
       width={1000}
       destroyOnClose
-      onOk={handleCompare}
-      okButtonProps={{
-        disabled: !rightId,
-        className:
-          "!bg-[#627254] !border-[#627254] hover:!bg-[#76885B] rounded-md",
-      }}
-      cancelButtonProps={{ className: "rounded-md" }}
+      footer={null}
       title={
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <ColumnWidthOutlined className="text-[#627254]" />
             <span className="font-semibold text-[15px]">So sánh mẫu xe</span>
-            <Tooltip title="So sánh nhanh thông số kỹ thuật và giá giữa hai mẫu xe điện. Màu nền: xanh (tốt hơn), đỏ (kém hơn), xám (tương đương).">
+            <Tooltip title="So sánh thông số và giá giữa hai mẫu xe">
               <InfoCircleOutlined className="text-gray-500" />
             </Tooltip>
           </div>
           <span className="text-xs text-gray-500">
-            Chọn một mẫu xe khác để so sánh với mẫu hiện tại.
+            Chọn mẫu xe để xem bảng so sánh.
           </span>
         </div>
       }
     >
-      {/* Chọn xe */}
       <div className="w-full mb-4">
-        <Text className="text-sm text-gray-700">
+        <Text className="text-sm text-gray-700 mb-2 block">
           Chọn mẫu xe để so sánh với “{leftName || leftId}”:
         </Text>
+
         <Select
-          className="w-full mt-2"
-          placeholder="Chọn mẫu xe để so sánh"
+          className="w-full mt-1"
+          placeholder="Chọn mẫu xe"
           value={rightId}
-          onChange={setRightId}
+          onChange={handleCompare}
           showSearch
           options={options}
           optionFilterProp="label"
         />
       </div>
 
-      {/* Header có ảnh */}
       <Divider className="my-6" />
+
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
-        {/* Mẫu hiện tại */}
         <div className="md:col-span-5 border rounded-2xl p-5 bg-white">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs text-gray-500">Mẫu hiện tại</div>
-          </div>
-          <div className="w-full h-48 overflow-hidden rounded-xl border flex items-center justify-center bg-white mb-3">
+          <div className="w-full h-48 overflow-hidden rounded-xl border flex items-center justify-center mb-3">
             <img
               src={leftImg}
-              alt={leftName || "Mẫu xe hiện tại"}
+              alt={leftName}
               className="object-contain h-full"
-              onError={(e) =>
-                ((e.currentTarget as HTMLImageElement).src = PLACEHOLDER)
-              }
             />
           </div>
-          <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>
-            {leftName || "—"}
-          </Title>
+          <Title level={4}>{leftName}</Title>
           {leftInfo?.retailPrice ? (
-            <Tag
-              className="rounded-full border-none"
-              style={{ background: "rgba(98,114,84,0.08)", color: "#414d38" }}
-            >
-              Giá bán lẻ: {leftInfo.retailPrice.toLocaleString("vi-VN")}₫
+            <Tag color="green">
+              Giá bán lẻ: {leftInfo.retailPrice.toLocaleString("vi-VN")} VNĐ
             </Tag>
           ) : (
             <Tag>Chưa có giá</Tag>
           )}
         </div>
 
-        {/* Mũi tên giữa */}
         <div className="hidden md:flex md:col-span-2 items-center justify-center">
           <ArrowRightOutlined style={{ fontSize: 24, color: "#999" }} />
         </div>
 
-        {/* Mẫu so sánh */}
         <div className="md:col-span-5 border rounded-2xl p-5 bg-white">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs text-gray-500">Mẫu so sánh</div>
-          </div>
-          <div className="w-full h-48 overflow-hidden rounded-xl border flex items-center justify-center bg-white mb-3">
+          <div className="w-full h-48 overflow-hidden rounded-xl border flex items-center justify-center mb-3">
             <img
               src={rightImg}
-              alt={rightName || "Mẫu xe so sánh"}
+              alt={rightName}
               className="object-contain h-full"
-              onError={(e) =>
-                ((e.currentTarget as HTMLImageElement).src = PLACEHOLDER)
-              }
             />
           </div>
-          <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>
-            {rightName || "Chưa chọn mẫu so sánh"}
-          </Title>
+          <Title level={4}>{rightName || "Chưa chọn mẫu"}</Title>
           {rightInfo?.retailPrice ? (
-            <Tag
-              className="rounded-full border-none"
-              style={{ background: "rgba(59,130,246,0.08)", color: "#1d4ed8" }}
-            >
-              Giá bán lẻ: {rightInfo.retailPrice.toLocaleString("vi-VN")}₫
+            <Tag color="blue">
+              Giá bán lẻ: {rightInfo.retailPrice.toLocaleString("vi-VN")} VNĐ
             </Tag>
           ) : (
             <Tag>Chưa có giá</Tag>
@@ -461,71 +409,45 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
         </div>
       </div>
 
-      {/* Tóm tắt */}
       {rows && (
         <>
           <Divider className="my-6" />
-          <Space
-            wrap
-            size={[8, 8]}
-            aria-label="Tóm tắt kết quả so sánh"
-            className="mb-3"
-          >
-            <Tag
-              className="rounded-full border-none"
-              style={{ background: "rgba(98,114,84,0.12)", color: "#414d38" }}
-            >
-              Mẫu hiện tại tốt hơn: {stats.left}
-            </Tag>
-            <Tag
-              className="rounded-full border-none"
-              style={{ background: "rgba(59,130,246,0.12)", color: "#1d4ed8" }}
-            >
-              Mẫu so sánh tốt hơn: {stats.right}
-            </Tag>
-            <Tag className="rounded-full border-none">
-              Tương đương: {stats.equal}
-            </Tag>
-            <Tag className="rounded-full border-none" color="gold">
-              Tổng số tiêu chí: {stats.total}
-            </Tag>
+          <Space wrap size={[8, 8]} className="mb-3">
+            <Tag color="green">Mẫu hiện tại tốt hơn: {stats.left}</Tag>
+            <Tag color="blue">Mẫu so sánh tốt hơn: {stats.right}</Tag>
+            <Tag>Tương đương: {stats.equal}</Tag>
+            <Tag color="gold">Không thể so sánh: {stats.notComparable}</Tag>
+            <Tag color="purple">Tổng tiêu chí: {stats.total}</Tag>
           </Space>
         </>
       )}
 
-      {/* Bảng so sánh */}
       <div className="mt-2">
         {loading ? (
           <div className="flex justify-center py-8">
             <Spin />
           </div>
         ) : !rows ? (
-          <Alert
-            className="mt-3"
-            type="info"
-            showIcon
-            message="Hãy chọn mẫu xe rồi nhấn “Bắt đầu so sánh” để xem kết quả."
-          />
+          <Alert type="info" showIcon message="Hãy chọn một mẫu xe." />
         ) : rows.length === 0 ? (
-          <Empty description="Chưa có dữ liệu so sánh cho hai mẫu xe này." />
+          <Empty description="Không có dữ liệu so sánh." />
         ) : (
           <Table<CompareRow>
             pagination={false}
             size="middle"
             rowKey={(r) => r.key}
             dataSource={rows}
-            className="rounded-xl overflow-hidden"
             columns={[
               {
                 title: "Tiêu chí",
                 dataIndex: "label",
                 width: 240,
-                render: (v: string) => <Text strong>{v}</Text>,
+                render: (v) => <Text strong>{v}</Text>,
               },
               {
                 title: "Mẫu hiện tại",
                 dataIndex: "left",
-                render: (_: unknown, r) => (
+                render: (_, r) => (
                   <div style={cellBg("left", r)}>
                     <Text>{fmt(r.key, r.left)}</Text>
                   </div>
@@ -534,7 +456,7 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
               {
                 title: "Mẫu so sánh",
                 dataIndex: "right",
-                render: (_: unknown, r) => (
+                render: (_, r) => (
                   <div style={cellBg("right", r)}>
                     <Text>{fmt(r.key, r.right)}</Text>
                   </div>
@@ -544,18 +466,31 @@ export const VehicleCompareModal = ({ open, onClose, leftId }: Props) => {
                 title: "Nhận định",
                 dataIndex: "betterFor",
                 width: 260,
-                render: (v: CompareRow["betterFor"]) => {
-                  if (!v) return <Tag>Không có chênh lệch rõ ràng</Tag>;
-                  const name =
-                    v === "left"
-                      ? leftName || "Mẫu hiện tại"
-                      : rightName || "Mẫu so sánh";
+                render: (_, r) => {
+                  // nếu là giá nhưng thiếu dữ liệu
+                  if (r.key === "importPrice" || r.key === "retailPrice") {
+                    const l = Number(r.left);
+                    const rgt = Number(r.right);
+
+                    if (!isNum(l) || l <= 0 || !isNum(rgt) || rgt <= 0) {
+                      return (
+                        <Tag color="gold">
+                          Không thể so sánh (thiếu dữ liệu giá)
+                        </Tag>
+                      );
+                    }
+                  }
+
+                  // dữ liệu đầy đủ nhưng không có chênh lệch
+                  if (!r.betterFor) {
+                    return <Tag>Không có chênh lệch</Tag>;
+                  }
+
+                  // có chênh lệch
+                  const name = r.betterFor === "left" ? leftName : rightName;
                   return (
-                    <Tag
-                      className="rounded-full border-none"
-                      color={v === "left" ? "green" : "blue"}
-                    >
-                      <ArrowUpOutlined /> Nghiêng về “{name}”
+                    <Tag color={r.betterFor === "left" ? "green" : "blue"}>
+                      <ArrowUpOutlined /> Mẫu {name} tốt hơn
                     </Tag>
                   );
                 },
