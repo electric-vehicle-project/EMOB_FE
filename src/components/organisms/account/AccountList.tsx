@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Result, Empty, Button, Dropdown, Select, Space } from "antd";
-import { SlidersOutlined } from "@ant-design/icons";
+import { PlusOutlined, SlidersOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
@@ -355,6 +355,7 @@ export const AccountList = () => {
         {isAdmin ? (
           <EmobButton
             type="primary"
+            icon={<PlusOutlined />}
             onClick={() => setRoleModalOpen(true)}
             className="!bg-[#627254] hover:!bg-[#525e46] text-white px-6 py-2 rounded-xl"
           >

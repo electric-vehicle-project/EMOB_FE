@@ -301,22 +301,35 @@
   animation: electricPulseBorderGreen 2.8s linear infinite;
 }
 
-/* Aura xanh đậm – rõ – to */
+/* Viền gradient xanh nổi bật – không xoay */
+.ai-border-static {
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #00ff95, #00e0ff, #00ffea, #00ff95);
+  opacity: 0.95;
+}
+
+/* Aura xanh đậm – mượt – không xoay */
 @keyframes electricAuraGreen {
   0% {
     transform: scale(1);
-    opacity: 0.55;
+    opacity: 0.45;
+    filter: blur(12px);
   }
   50% {
-    transform: scale(1.18);
-    opacity: 0.95;
+    transform: scale(1.15);
+    opacity: 0.9;
+    filter: blur(20px);
   }
   100% {
     transform: scale(1);
-    opacity: 0.55;
+    opacity: 0.45;
+    filter: blur(12px);
   }
 }
 
 .animate-electric-aura-green {
-  animation: electricAuraGreen 3.2s ease-in-out infinite;
+  animation: electricAuraGreen 2.8s ease-in-out infinite;
 }

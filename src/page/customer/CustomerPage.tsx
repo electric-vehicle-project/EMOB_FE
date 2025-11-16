@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { Button, Select } from "antd";
 import { toast } from "react-toastify";
 import { PlusOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import type { RootState } from "../../redux/store";
@@ -30,7 +29,6 @@ const STATUS_OPTIONS = [
 ];
 
 export const CustomerPage: React.FC = () => {
-  const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.user);
 
   const role: "MANAGER" | "DEALER_STAFF" =

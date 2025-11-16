@@ -1,5 +1,6 @@
 // src/components/molecules/Account/AccountForm.tsx
-import { Form, Input, Select, DatePicker, Button } from "antd";
+import { Form, Input, Select, DatePicker } from "antd";
+import { Button as EmobButton } from "../../atoms/Button";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { Gender, Role } from "../../../model/Account";
@@ -291,14 +292,14 @@ export const AccountForm: React.FC<Props> = ({
 
       {/* Submit */}
       <div className="flex justify-center mt-5">
-        <Button
+        <EmobButton
           type="primary"
           htmlType="submit"
           loading={loading}
           className="px-6 py-2 rounded-md w-full sm:w-auto bg-evm-green hover:!bg-[#4f6f52]"
         >
           Tạo tài khoản
-        </Button>
+        </EmobButton>
       </div>
     </Form>
   );

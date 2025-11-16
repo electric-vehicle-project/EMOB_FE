@@ -5,7 +5,7 @@ import { useCurrentUser } from "../../utils/getCurrentUser";
 export const DealerDiscountPolicyPage = () => {
   const user = useCurrentUser();
   const role = user?.role;
-  const canAccess = ["ADMIN", "MANAGER"].includes(role || "");
+  const canAccess = ["ADMIN", "MANAGER", "DEALER_STAFF"].includes(role || "");
 
   return (
     <CardWrapper

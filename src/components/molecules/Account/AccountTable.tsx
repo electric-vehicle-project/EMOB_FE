@@ -1,13 +1,5 @@
 // src/components/molecules/Account/AccountTable.tsx
-import {
-  Table,
-  Tag,
-  Tooltip,
-  Typography,
-  Pagination,
-  Dropdown,
-  Menu,
-} from "antd";
+import { Table, Tag, Pagination, Dropdown, Menu } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EllipsisOutlined } from "@ant-design/icons";
 
@@ -18,8 +10,6 @@ import {
   type AccountStatus as AccountStatusType,
   type Role as RoleType,
 } from "../../../model/Account";
-
-const { Link } = Typography;
 
 interface PaginationProps {
   current: number;
