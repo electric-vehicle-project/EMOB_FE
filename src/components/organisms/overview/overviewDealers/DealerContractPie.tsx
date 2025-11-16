@@ -47,7 +47,6 @@ export default function DealerContractPie({ data }: Props) {
               motionConfig="gentle"
               theme={{
                 background: "#ffffff",
-                textColor: "#374151",
                 tooltip: {
                   container: {
                     background: "#ffffff",
