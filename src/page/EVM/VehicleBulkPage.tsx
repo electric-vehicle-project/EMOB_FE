@@ -14,7 +14,7 @@ import {
   Empty,
 } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   useGetVehicleById,
   useCreateVehicleUnitsBulk,
@@ -26,6 +26,7 @@ import { toast } from "react-toastify";
 import { ReloadOutlined, CheckOutlined } from "@ant-design/icons";
 import { Button } from "../../components/atoms/Button";
 import { DeleteConfirm } from "../../components/organisms/DeleteConfirm";
+import api from "../../config/api";
 
 const { Option } = Select;
 
@@ -67,12 +68,18 @@ const topColorOf = (colors?: ApiColorForecast[]) => {
   )[0];
 };
 
-export const VehicleBulkPage = () => {
+type VehicleBulkPageProps = {
+  onClose?: () => void;
+  open: boolean;
+  vehicleId?: string;
+};
+export const VehicleBulkPage = ({
+  onClose,
+  open,
+  vehicleId,
+}: VehicleBulkPageProps) => {
   const [form] = Form.useForm<FormValues>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const vehicleId = new URLSearchParams(location.search).get("vehicleId");
-
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
@@ -122,9 +129,9 @@ export const VehicleBulkPage = () => {
   const fetchMultiplier = async (status: FormValues["status"]) => {
     setIsLoadingMultiplier(true);
     try {
-      const res = await fetch(
+      const res: any = await api.get(
         `${import.meta.env.VITE_BASE_URL}/vehicle-price-rules/${status}`
-      ).then((r) => r.json());
+      );
       const newMultiplier = res?.result?.multiplier;
       setMultiplier(typeof newMultiplier === "number" ? newMultiplier : 1);
     } catch {
@@ -247,16 +254,7 @@ export const VehicleBulkPage = () => {
         }) thành công — Giá/xe: ${previewPrice.toLocaleString("vi-VN")}₫`
       );
 
-      navigate(
-        `${basePath}/${ROUTES.EVM_VEHICLE_DETAIL}`.replace(":id", vehicleId),
-        {
-          replace: true,
-          state: {
-            from: "bulk",
-            backTo: `${basePath}/${ROUTES.EVM_VEHICLE}`,
-          },
-        }
-      );
+      onClose?.();
     } catch {
       toast.error("Không thể nhập đơn vị xe. Vui lòng thử lại.");
     }
@@ -278,18 +276,11 @@ export const VehicleBulkPage = () => {
     imageList[0] || "https://placehold.co/400x300?text=No+Image";
 
   useEffect(() => {
-    if (!vehicleId) {
-      toast.error("Thiếu vehicleId.");
-      navigate(-1);
-    }
-  }, [vehicleId, navigate]);
-
-  useEffect(() => {
     fetchMultiplier("NORMAL");
   }, []);
 
   return (
-    <div className="flex justify-center min-h-[90vh] bg-gray-50 py-10 px-4">
+    <Modal open={open} footer={null} width={800} onCancel={onClose}>
       <Card
         bordered={false}
         className="w-full max-w-5xl shadow-sm rounded-2xl border border-gray-100 overflow-hidden bg-white"
@@ -750,7 +741,7 @@ export const VehicleBulkPage = () => {
         okText="Hủy nhập"
         danger
       />
-    </div>
+    </Modal>
   );
 };
 

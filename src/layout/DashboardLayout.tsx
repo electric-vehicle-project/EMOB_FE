@@ -47,26 +47,27 @@ function DashboardLayout() {
       case "ADMIN":
         return [
           // Tổng quan & hồ sơ
-          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
+          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
+          // Đại lý & chính sách
+          getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
+          // Quản trị
+          getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
 
           // Sản phẩm & giá
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
           getItem(
             "Quy tắc giá xe",
             ROUTES.EVM_VEHICLE_RULE,
             <SlidersOutlined />
           ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
 
-          // Đại lý & chính sách
-          getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
           getItem(
             "Chính sách chiết khấu",
             ROUTES.DEALER_DISCOUNT_POLICY,
             <TagsOutlined />
           ),
-
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
           // Sales & vận hành
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
@@ -77,82 +78,80 @@ function DashboardLayout() {
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
-          // Quản trị
-          getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
         ];
 
       // ===================== EVM_STAFF =====================
       case "EVM_STAFF":
         return [
           getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
-
+          // Đại lý
+          getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
           // Sản phẩm & giá
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
           getItem(
             "Quy tắc giá xe",
             ROUTES.EVM_VEHICLE_RULE,
             <SlidersOutlined />
           ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
 
-          // Đại lý
-          getItem("Đại lý", ROUTES.DEALER, <ShopOutlined />),
-          getItem(
-            "Danh mục trả góp",
-            ROUTES.INSTALLMENT_PLAN,
-            <FileTextOutlined />
-          ),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
 
           // Sales & vận hành
           getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
           getItem("Giao hàng", ROUTES.DELIVERY_DEALERS, <SendOutlined />),
-        ];
-
-      // ===================== MANAGER =====================
-      case "MANAGER":
-        return [
-          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
-          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
-
-          // Sales & khách hàng
-          getItem("Khách hàng", ROUTES.CUSTOMERS, <ContactsOutlined />),
-          getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
-          getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
-          getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
-          getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
-          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
-
-          // Sản phẩm & giá
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
-          getItem(
-            "Quy tắc giá xe",
-            ROUTES.EVM_VEHICLE_RULE,
-            <SlidersOutlined />
-          ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
-
-          // Chính sách đại lý
-          getItem(
-            "Chính sách chiết khấu",
-            ROUTES.DEALER_DISCOUNT_POLICY,
-            <TagsOutlined />
-          ),
           getItem(
             "Danh mục trả góp",
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
+        ];
+
+      // ===================== MANAGER =====================
+      case "MANAGER":
+        return [
+          getItem("Hồ sơ cá nhân", ROUTES.PROFILE, <UserOutlined />),
+          getItem("Tổng quan", ROUTES.OVERVIEW, <DashboardOutlined />),
+          // Sales & khách hàng
+          getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
+          getItem("Khách hàng", ROUTES.CUSTOMERS, <ContactsOutlined />),
+          getItem(
+            "Quy tắc giá xe",
+            ROUTES.EVM_VEHICLE_RULE,
+            <SlidersOutlined />
+          ),
+          getItem(
+            "Chính sách chiết khấu",
+            ROUTES.DEALER_DISCOUNT_POLICY,
+            <TagsOutlined />
+          ),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
+          // Chính sách đại lý
+
+          // Yêu cầu & quản trị
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
+          getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
+          getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
+          getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
+          getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
+          // Sản phẩm & giá
+
+          getItem(
+            "Danh mục trả góp",
+            ROUTES.INSTALLMENT_PLAN,
+            <FileTextOutlined />
+          ),
+
           // danh sách trả góp của khách hàng
           getItem(
             "Danh mục trả góp khách hàng",
             ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
             <FileTextOutlined />
           ),
-          // Yêu cầu & quản trị
-          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
-          getItem("Tài khoản", ROUTES.ACCOUNT, <TeamOutlined />),
+          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
+
           getItem(
             "Quy tắc điểm đại lý",
             ROUTES.DEALER_POINT_RULE,
@@ -168,8 +167,21 @@ function DashboardLayout() {
 
           // Sales & khách hàng
           getItem("Khách hàng", ROUTES.CUSTOMERS, <ContactsOutlined />),
+          // Sản phẩm & giá
+          getItem(
+            "Quy tắc giá xe",
+            ROUTES.EVM_VEHICLE_RULE,
+            <SlidersOutlined />
+          ),
+          getItem(
+            "Chính sách chiết khấu",
+            ROUTES.DEALER_DISCOUNT_POLICY,
+            <TagsOutlined />
+          ),
+          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
+          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
+          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
           getItem("Báo giá", ROUTES.QUOTATION, <FileTextOutlined />),
-          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
           getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
@@ -184,22 +196,10 @@ function DashboardLayout() {
             ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
             <FileTextOutlined />
           ),
-          // Sản phẩm & giá
-          getItem("Xe điện", ROUTES.EVM_VEHICLE, <CarOutlined />),
-          getItem(
-            "Quy tắc giá xe",
-            ROUTES.EVM_VEHICLE_RULE,
-            <SlidersOutlined />
-          ),
-          getItem("Khuyến mãi", ROUTES.PROMOTIONS, <GiftOutlined />),
 
           // Chính sách đại lý & yêu cầu
-          getItem(
-            "Chính sách chiết khấu",
-            ROUTES.DEALER_DISCOUNT_POLICY,
-            <TagsOutlined />
-          ),
-          getItem("Yêu cầu xe", ROUTES.VEHICLE_REQUEST, <InboxOutlined />),
+
+          getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
           getItem(
             "Quy tắc điểm đại lý",
             ROUTES.DEALER_POINT_RULE,

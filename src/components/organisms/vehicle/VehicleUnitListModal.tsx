@@ -1,5 +1,14 @@
 // src/components/organisms/vehicle/VehicleUnitListModal.tsx
-import { Modal, Table, Tag, Pagination, Typography, Empty, Spin } from "antd";
+import {
+  Modal,
+  Table,
+  Tag,
+  Pagination,
+  Typography,
+  Empty,
+  Spin,
+  Select,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
 import type { Key } from "react";
@@ -55,12 +64,21 @@ const STATUS_COLORS: Record<VehicleUnitRow["status"], string> = {
   SOLD: "red",
 };
 
+const STATUS_OPTIONS = [
+  { label: "Xe mới (bình thường)", value: "NORMAL" },
+  { label: "Trưng bày / đặc biệt", value: "SPECIAL" },
+  { label: "Tồn kho cũ", value: "OLD_STOCK" },
+  { label: "Lái thử", value: "TEST_DRIVE" },
+];
+
 export default function VehicleUnitListModal({
   open,
   onClose,
   vehicleId,
 }: Props) {
   const [page, setPage] = useState(0);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
   const size = 10;
 
   const role = (useCurrentUser() as { role?: string } | null)?.role ?? "";
@@ -72,8 +90,15 @@ export default function VehicleUnitListModal({
 
   const query = useGetVehicleUnitsByVehicleIdPaged(
     vehicleId || "",
-    { page, size },
-    { enabled: open && !!vehicleId, keepPreviousData: true }
+    {
+      page,
+      size,
+      statuses: selectedStatuses, // truyền list status
+    },
+    {
+      enabled: open && !!vehicleId,
+      keepPreviousData: true,
+    }
   );
 
   const units = useMemo(
@@ -225,6 +250,21 @@ export default function VehicleUnitListModal({
                 Bỏ chọn trang này
               </Button>
             )}
+
+            <Select
+              mode="multiple"
+              allowClear
+              maxTagCount="responsive"
+              placeholder="Lọc theo trạng thái"
+              value={selectedStatuses}
+              onChange={(vals) => {
+                setSelectedStatuses(vals);
+                setPage(0);
+              }}
+              options={STATUS_OPTIONS}
+              style={{ width: 300 }}
+              className="whitespace-nowrap [&_.ant-select-selector]:!min-h-[36px] [&_.ant-select-selection-overflow]:flex-nowrap"
+            />
           </div>
 
           {selectedIds.length > 0 && (

@@ -50,11 +50,8 @@ export default function DealerSalesChart({ data, region }: Props) {
               defs={[
                 {
                   id: "gradient",
-                  type: "linearGradient",
-                  colors: [
-                    { offset: 0, color: "#9fb87a", opacity: 1 },
-                    { offset: 100, color: "#627254", opacity: 1 },
-                  ],
+                  type: "#9fb87a",
+                  // colors: [{ offset: 0, color: "#9fb87a", opacity: 1 }],
                 },
               ]}
               fill={[{ match: "*", id: "gradient" }] as any}

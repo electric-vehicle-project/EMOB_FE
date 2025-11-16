@@ -50,6 +50,7 @@ import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { toast } from "react-toastify";
+import VehicleBulkPage from "./VehicleBulkPage";
 
 type Sel = { auth?: { user?: { role?: Role | null } } };
 
@@ -141,6 +142,7 @@ export const VehicleDetailPage = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const [searchParams] = useSearchParams();
   const [unitsOpen, setUnitsOpen] = useState(false);
@@ -249,11 +251,7 @@ export const VehicleDetailPage = () => {
           key="add-batch"
           icon={<PlusOutlined />}
           disabled={!priced}
-          onClick={() =>
-            navigate(`${basePath}/${ROUTES.EVM_VEHICLE_BULK}?vehicleId=${id}`, {
-              state: { from: "detail" },
-            })
-          }
+          onClick={() => setBulkOpen(true)}
         >
           Nhập kho
         </Menu.Item>
@@ -297,349 +295,358 @@ export const VehicleDetailPage = () => {
   );
 
   return (
-    <CardWrapper
-      title="Chi tiết mẫu xe"
-      subtitle="Thông tin tổng quan & thông số kỹ thuật"
-      variant="dashboard"
-    >
-      <div className="flex items-center justify-between mb-4 gap-3">
-        <Button
-          key="back"
-          icon={<ArrowLeftOutlined />}
-          onClick={handleBack}
-          className="rounded-full border border-[#d3d7c3] bg-white px-3 h-9 text-[#414d38] hover:bg-[#f5f7f0] hover:border-[#c4c8b0]"
-        >
-          Quay lại
-        </Button>
-
-        <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
-          <Button className="rounded-full bg-[#f5f7f0] border border-[#d3d7c3] flex items-center gap-2 px-3 h-9 text-[#414d38] transition-colors duration-150 hover:bg-[#ecefe2] hover:border-[#c4c8b0]">
-            <span className="hidden sm:inline text-xs font-medium tracking-wide">
-              Thao tác
-            </span>
-            <EllipsisOutlined className="text-lg" />
-          </Button>
-        </Dropdown>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* ẢNH & GALLERY */}
-        <Card loading={isLoading} className="rounded-2xl lg:col-span-5">
-          <Image.PreviewGroup
-            items={safeImages as string[]}
-            preview={{
-              visible: previewOpen,
-              current: activeIndex,
-              onVisibleChange: (v) => setPreviewOpen(v),
-              onChange: (idx) => setActiveIndex(idx),
-              toolbarRender: (_node, info) => {
-                const { icons, actions } = info;
-                const { zoomInIcon, zoomOutIcon, prevIcon, nextIcon } = icons;
-                const { onZoomIn, onZoomOut, onActive } = actions;
-                return (
-                  <div className="ant-image-preview-operations">
-                    {prevIcon && (
-                      <div
-                        className="ant-image-preview-operations-operation"
-                        onClick={() => onActive?.(-1)}
-                      >
-                        {prevIcon}
-                      </div>
-                    )}
-                    {nextIcon && (
-                      <div
-                        className="ant-image-preview-operations-operation"
-                        onClick={() => onActive?.(1)}
-                      >
-                        {nextIcon}
-                      </div>
-                    )}
-                    <div
-                      className="ant-image-preview-operations-operation"
-                      onClick={onZoomIn}
-                    >
-                      {zoomInIcon}
-                    </div>
-                    <div
-                      className="ant-image-preview-operations-operation"
-                      onClick={onZoomOut}
-                    >
-                      {zoomOutIcon}
-                    </div>
-                  </div>
-                );
-              },
-            }}
-          />
-
-          <div
-            className="group w-full aspect-[4/3] overflow-hidden flex items-center justify-center bg-white rounded-xl border cursor-zoom-in relative"
-            onClick={() => {
-              setPreviewOpen(true);
-            }}
+    <>
+      <CardWrapper
+        title="Chi tiết mẫu xe"
+        subtitle="Thông tin tổng quan & thông số kỹ thuật"
+        variant="dashboard"
+      >
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <Button
+            key="back"
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBack}
+            className="rounded-full border border-[#d3d7c3] bg-white px-3 h-9 text-[#414d38] hover:bg-[#f5f7f0] hover:border-[#c4c8b0]"
           >
-            <img
-              src={mainImage}
-              alt={name || "vehicle"}
-              className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  "/images/vehicle-placeholder.png";
+            Quay lại
+          </Button>
+
+          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+            <Button className="rounded-full bg-[#f5f7f0] border border-[#d3d7c3] flex items-center gap-2 px-3 h-9 text-[#414d38] transition-colors duration-150 hover:bg-[#ecefe2] hover:border-[#c4c8b0]">
+              <span className="hidden sm:inline text-xs font-medium tracking-wide">
+                Thao tác
+              </span>
+              <EllipsisOutlined className="text-lg" />
+            </Button>
+          </Dropdown>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ẢNH & GALLERY */}
+          <Card loading={isLoading} className="rounded-2xl lg:col-span-5">
+            <Image.PreviewGroup
+              items={safeImages as string[]}
+              preview={{
+                visible: previewOpen,
+                current: activeIndex,
+                onVisibleChange: (v) => setPreviewOpen(v),
+                onChange: (idx) => setActiveIndex(idx),
+                toolbarRender: (_node, info) => {
+                  const { icons, actions } = info;
+                  const { zoomInIcon, zoomOutIcon, prevIcon, nextIcon } = icons;
+                  const { onZoomIn, onZoomOut, onActive } = actions;
+                  return (
+                    <div className="ant-image-preview-operations">
+                      {prevIcon && (
+                        <div
+                          className="ant-image-preview-operations-operation"
+                          onClick={() => onActive?.(-1)}
+                        >
+                          {prevIcon}
+                        </div>
+                      )}
+                      {nextIcon && (
+                        <div
+                          className="ant-image-preview-operations-operation"
+                          onClick={() => onActive?.(1)}
+                        >
+                          {nextIcon}
+                        </div>
+                      )}
+                      <div
+                        className="ant-image-preview-operations-operation"
+                        onClick={onZoomIn}
+                      >
+                        {zoomInIcon}
+                      </div>
+                      <div
+                        className="ant-image-preview-operations-operation"
+                        onClick={onZoomOut}
+                      >
+                        {zoomOutIcon}
+                      </div>
+                    </div>
+                  );
+                },
               }}
             />
 
-            {hasMultiple && (
-              <>
-                <button
-                  type="button"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-black/40 text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(ev) => {
-                    ev.stopPropagation();
-                    setActiveIndex((prev) =>
-                      prev === 0 ? safeImages.length - 1 : prev - 1
-                    );
-                  }}
-                  aria-label="Ảnh trước"
-                >
-                  <LeftOutlined />
-                </button>
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-black/40 text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(ev) => {
-                    ev.stopPropagation();
-                    setActiveIndex((prev) =>
-                      prev === safeImages.length - 1 ? 0 : prev + 1
-                    );
-                  }}
-                  aria-label="Ảnh tiếp theo"
-                >
-                  <RightOutlined />
-                </button>
-              </>
-            )}
+            <div
+              className="group w-full aspect-[4/3] overflow-hidden flex items-center justify-center bg-white rounded-xl border cursor-zoom-in relative"
+              onClick={() => {
+                setPreviewOpen(true);
+              }}
+            >
+              <img
+                src={mainImage}
+                alt={name || "vehicle"}
+                className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src =
+                    "/images/vehicle-placeholder.png";
+                }}
+              />
 
-            <div className="pointer-events-none absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1 rounded-md bg-black/50 text-white text-xs px-2 py-1">
-              <PictureOutlined />
-              Nhấn để phóng to
-            </div>
-          </div>
-
-          {safeImages.length > 1 && (
-            <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2">
-              {safeImages.slice(0, 6).map((url, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={`h-16 rounded-xl border overflow-hidden bg-white focus:outline-none focus:ring-2 focus:ring-[#627254] ${
-                    i === activeIndex
-                      ? "ring-2 ring-[#627254]"
-                      : "border-gray-300"
-                  }`}
-                  onClick={() => setActiveIndex(i)}
-                  title={`Xem ảnh ${i + 1}`}
-                >
-                  <img
-                    src={url}
-                    alt={`thumb-${i}`}
-                    className="object-cover w-full h-full"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src =
-                        "/images/vehicle-placeholder.png";
+              {hasMultiple && (
+                <>
+                  <button
+                    type="button"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-black/40 text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      setActiveIndex((prev) =>
+                        prev === 0 ? safeImages.length - 1 : prev - 1
+                      );
                     }}
-                  />
-                </button>
-              ))}
-
-              {safeImages.length > 6 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveIndex(0);
-                    setPreviewOpen(true);
-                  }}
-                  className="h-16 rounded-xl border border-dashed bg-gray-50 hover:bg-gray-100 transition text-sm text-gray-600"
-                  title="Xem tất cả ảnh"
-                >
-                  +{safeImages.length - 6} ảnh
-                </button>
+                    aria-label="Ảnh trước"
+                  >
+                    <LeftOutlined />
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-black/40 text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      setActiveIndex((prev) =>
+                        prev === safeImages.length - 1 ? 0 : prev + 1
+                      );
+                    }}
+                    aria-label="Ảnh tiếp theo"
+                  >
+                    <RightOutlined />
+                  </button>
+                </>
               )}
+
+              <div className="pointer-events-none absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1 rounded-md bg-black/50 text-white text-xs px-2 py-1">
+                <PictureOutlined />
+                Nhấn để phóng to
+              </div>
             </div>
-          )}
-        </Card>
 
-        {/* THÔNG TIN CHI TIẾT */}
-        <Card loading={isLoading} className="rounded-2xl lg:col-span-7">
-          {!isLoading && viewVehicle && (
-            <>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#414d38]">
-                    {name || viewVehicle.id}
-                  </h2>
-                  {viewVehicle.brand && (
-                    <div className="text-neutral-500 mt-0.5">
-                      {viewVehicle.brand}
-                    </div>
-                  )}
+            {safeImages.length > 1 && (
+              <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2">
+                {safeImages.slice(0, 6).map((url, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`h-16 rounded-xl border overflow-hidden bg-white focus:outline-none focus:ring-2 focus:ring-[#627254] ${
+                      i === activeIndex
+                        ? "ring-2 ring-[#627254]"
+                        : "border-gray-300"
+                    }`}
+                    onClick={() => setActiveIndex(i)}
+                    title={`Xem ảnh ${i + 1}`}
+                  >
+                    <img
+                      src={url}
+                      alt={`thumb-${i}`}
+                      className="object-cover w-full h-full"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          "/images/vehicle-placeholder.png";
+                      }}
+                    />
+                  </button>
+                ))}
 
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {viewVehicle.type && (
-                      <Tag className="rounded-full">{viewVehicle.type}</Tag>
-                    )}
-                    {typeof viewVehicle.rangeKm === "number" && (
-                      <Tag className="rounded-full">
-                        Tầm: {viewVehicle.rangeKm.toLocaleString("vi-VN")} km
-                      </Tag>
-                    )}
-                    {typeof viewVehicle.batteryKwh === "number" && (
-                      <Tag className="rounded-full">
-                        Pin: {viewVehicle.batteryKwh.toLocaleString("vi-VN")}{" "}
-                        kWh
-                      </Tag>
-                    )}
-                    {typeof viewVehicle.powerKw === "number" && (
-                      <Tag className="rounded-full">
-                        Công suất: {viewVehicle.powerKw.toLocaleString("vi-VN")}{" "}
-                        kW
-                      </Tag>
-                    )}
-                  </div>
-
-                  {isEvmStaff(role) && !priced && (
-                    <div className="mt-4">
-                      <Tag color="orange">
-                        Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật trước
-                        khi nhập lô.
-                      </Tag>
-                    </div>
-                  )}
-                </div>
-
-                {priced && (
-                  <div className="text-right">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
-                      Giá nhập:
-                      <span className="text-[#414d38]">
-                        {viewVehicle.importPrice?.toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
-                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
-                      Giá bán lẻ:
-                      <span className="text-[#414d38]">
-                        {viewVehicle.retailPrice?.toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
-                  </div>
+                {safeImages.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveIndex(0);
+                      setPreviewOpen(true);
+                    }}
+                    className="h-16 rounded-xl border border-dashed bg-gray-50 hover:bg-gray-100 transition text-sm text-gray-600"
+                    title="Xem tất cả ảnh"
+                  >
+                    +{safeImages.length - 6} ảnh
+                  </button>
                 )}
               </div>
+            )}
+          </Card>
 
-              <div className="mt-6 border-t pt-4">
-                <h3 className="text-base font-semibold mb-2">
-                  Thông số kỹ thuật
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                  <SpecItem label="Hãng" value={viewVehicle.brand} />
-                  <SpecItem label="Mẫu" value={viewVehicle.model} />
-                  <SpecItem label="Loại" value={viewVehicle.type} />
-                  <SpecItem
-                    label="Pin"
-                    value={viewVehicle.batteryKwh}
-                    unit="kWh"
-                  />
-                  <SpecItem
-                    label="Tầm hoạt động"
-                    value={viewVehicle.rangeKm}
-                    unit="km"
-                  />
-                  <SpecItem
-                    label="Công suất"
-                    value={viewVehicle.powerKw}
-                    unit="kW"
-                  />
-                  <SpecItem
-                    label="Tốc độ tối đa"
-                    value={viewVehicle.topSpeedKmh}
-                    unit="km/h"
-                  />
-                  <SpecItem
-                    label="Khối lượng"
-                    value={viewVehicle.weightKg}
-                    unit="kg"
-                  />
-                  <SpecItem
-                    label="Thời gian sạc"
-                    value={viewVehicle.chargeTimeHr}
-                    unit="giờ"
-                  />
-                  <SpecItem label="Ngày tạo" value={viewVehicle.createdAt} />
+          {/* THÔNG TIN CHI TIẾT */}
+          <Card loading={isLoading} className="rounded-2xl lg:col-span-7">
+            {!isLoading && viewVehicle && (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-[#414d38]">
+                      {name || viewVehicle.id}
+                    </h2>
+                    {viewVehicle.brand && (
+                      <div className="text-neutral-500 mt-0.5">
+                        {viewVehicle.brand}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {viewVehicle.type && (
+                        <Tag className="rounded-full">{viewVehicle.type}</Tag>
+                      )}
+                      {typeof viewVehicle.rangeKm === "number" && (
+                        <Tag className="rounded-full">
+                          Tầm: {viewVehicle.rangeKm.toLocaleString("vi-VN")} km
+                        </Tag>
+                      )}
+                      {typeof viewVehicle.batteryKwh === "number" && (
+                        <Tag className="rounded-full">
+                          Pin: {viewVehicle.batteryKwh.toLocaleString("vi-VN")}{" "}
+                          kWh
+                        </Tag>
+                      )}
+                      {typeof viewVehicle.powerKw === "number" && (
+                        <Tag className="rounded-full">
+                          Công suất:{" "}
+                          {viewVehicle.powerKw.toLocaleString("vi-VN")} kW
+                        </Tag>
+                      )}
+                    </div>
+
+                    {isEvmStaff(role) && !priced && (
+                      <div className="mt-4">
+                        <Tag color="orange">
+                          Mẫu xe chưa có giá. Vui lòng nhờ Admin cập nhật trước
+                          khi nhập lô.
+                        </Tag>
+                      </div>
+                    )}
+                  </div>
+
+                  {priced && (
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
+                        Giá nhập:
+                        <span className="text-[#414d38]">
+                          {viewVehicle.importPrice?.toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border text-sm font-semibold">
+                        Giá bán lẻ:
+                        <span className="text-[#414d38]">
+                          {viewVehicle.retailPrice?.toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </>
-          )}
-        </Card>
-      </div>
 
-      {id && (
-        <VehicleCompareModal
-          open={compareOpen}
-          onClose={() => setCompareOpen(false)}
-          leftId={id}
-        />
-      )}
+                <div className="mt-6 border-t pt-4">
+                  <h3 className="text-base font-semibold mb-2">
+                    Thông số kỹ thuật
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                    <SpecItem label="Hãng" value={viewVehicle.brand} />
+                    <SpecItem label="Mẫu" value={viewVehicle.model} />
+                    <SpecItem label="Loại" value={viewVehicle.type} />
+                    <SpecItem
+                      label="Pin"
+                      value={viewVehicle.batteryKwh}
+                      unit="kWh"
+                    />
+                    <SpecItem
+                      label="Tầm hoạt động"
+                      value={viewVehicle.rangeKm}
+                      unit="km"
+                    />
+                    <SpecItem
+                      label="Công suất"
+                      value={viewVehicle.powerKw}
+                      unit="kW"
+                    />
+                    <SpecItem
+                      label="Tốc độ tối đa"
+                      value={viewVehicle.topSpeedKmh}
+                      unit="km/h"
+                    />
+                    <SpecItem
+                      label="Khối lượng"
+                      value={viewVehicle.weightKg}
+                      unit="kg"
+                    />
+                    <SpecItem
+                      label="Thời gian sạc"
+                      value={viewVehicle.chargeTimeHr}
+                      unit="giờ"
+                    />
+                    <SpecItem label="Ngày tạo" value={viewVehicle.createdAt} />
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
 
-      {id && (
-        <VehicleUnitListModal
-          open={unitsOpen}
-          onClose={handleCloseUnits}
-          vehicleId={id}
-        />
-      )}
+        {id && (
+          <VehicleCompareModal
+            open={compareOpen}
+            onClose={() => setCompareOpen(false)}
+            leftId={id}
+          />
+        )}
 
-      {id && (
-        <VehicleEditModal
-          open={editOpen}
-          onClose={() => setEditOpen(false)}
-          vehicleId={id}
-          vehicle={viewVehicle ?? null}
-          loading={isLoading}
-          onUpdated={(next) => setViewVehicle(next)}
-        />
-      )}
+        {id && (
+          <VehicleUnitListModal
+            open={unitsOpen}
+            onClose={handleCloseUnits}
+            vehicleId={id}
+          />
+        )}
 
-      {id && (
-        <VehiclePriceUpdateModal
-          open={priceOpen}
-          onClose={() => setPriceOpen(false)}
-          vehicleId={id}
-          vehicle={viewVehicle}
-          onUpdated={(next) => setViewVehicle(next)}
-        />
-      )}
+        {id && (
+          <VehicleEditModal
+            open={editOpen}
+            onClose={() => setEditOpen(false)}
+            vehicleId={id}
+            vehicle={viewVehicle ?? null}
+            loading={isLoading}
+            onUpdated={(next) => setViewVehicle(next)}
+          />
+        )}
 
-      {id && (
-        <DeleteConfirm
-          open={deleteOpen}
-          onCancel={() => setDeleteOpen(false)}
-          onConfirm={async () => {
-            try {
-              await deleteVehicle(id);
-              toast.success("Đã xóa mẫu xe.");
-              setDeleteOpen(false);
-              navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, { replace: true });
-            } catch {
-              toast.error("Xóa không thành công.");
-            }
-          }}
-          title="Xóa mẫu xe?"
-          message="Hành động này không thể hoàn tác."
-          okText="Xóa"
-          danger
-        />
-      )}
-    </CardWrapper>
+        {id && (
+          <VehiclePriceUpdateModal
+            open={priceOpen}
+            onClose={() => setPriceOpen(false)}
+            vehicleId={id}
+            vehicle={viewVehicle}
+            onUpdated={(next) => setViewVehicle(next)}
+          />
+        )}
+
+        {id && (
+          <DeleteConfirm
+            open={deleteOpen}
+            onCancel={() => setDeleteOpen(false)}
+            onConfirm={async () => {
+              try {
+                await deleteVehicle(id);
+                toast.success("Đã xóa mẫu xe.");
+                setDeleteOpen(false);
+                navigate(`${basePath}/${ROUTES.EVM_VEHICLE}`, {
+                  replace: true,
+                });
+              } catch {
+                toast.error("Xóa không thành công.");
+              }
+            }}
+            title="Xóa mẫu xe?"
+            message="Hành động này không thể hoàn tác."
+            okText="Xóa"
+            danger
+          />
+        )}
+      </CardWrapper>
+      <VehicleBulkPage
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        vehicleId={id ?? undefined}
+      />
+    </>
   );
 };
 

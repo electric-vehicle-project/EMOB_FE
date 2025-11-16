@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { Skeleton, Card } from "antd";
+import { useNavigate } from "react-router-dom";
+import { Skeleton, Card, Modal } from "antd";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
@@ -23,8 +23,17 @@ interface CustomerFormData {
   note?: string;
 }
 
-export const CustomerEditPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+interface CustomerEditPageProps {
+  open?: boolean;
+  onClose?: () => void;
+  customerId?: string;
+}
+
+export const CustomerEditPage: React.FC<CustomerEditPageProps> = ({
+  open,
+  onClose,
+  customerId,
+}) => {
   const navigate = useNavigate();
 
   const user = useSelector((state: RootState) => state.user);
@@ -32,8 +41,9 @@ export const CustomerEditPage: React.FC = () => {
     (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
   const canEdit = role === "DEALER_STAFF";
 
-  const { data, isLoading } = useCustomerById(id || "");
-  const { mutateAsync: updateCustomer, isPending } = useCustomerUpdate(id);
+  const { data } = useCustomerById(customerId || "");
+  const { mutateAsync: updateCustomer, isPending } =
+    useCustomerUpdate(customerId);
 
   const customer: ICustomer | undefined = data?.result;
 
@@ -52,33 +62,32 @@ export const CustomerEditPage: React.FC = () => {
       return;
     }
 
-    if (!id) {
+    if (!customerId) {
       toast.error("Không thể xác định ID khách hàng để cập nhật!");
       return;
     }
 
     try {
-      await updateCustomer({ id, data: values });
+      await updateCustomer({ id: customerId, data: values });
       toast.success("Cập nhật khách hàng thành công!");
       navigate("/dealer_staff/customers");
     } catch {
       toast.error("Không thể cập nhật khách hàng, vui lòng thử lại!");
     }
+    onClose?.();
   };
 
-  if (isLoading || !transformedCustomer)
-    return (
-      <CardWrapper>
-        <Skeleton active />
-      </CardWrapper>
-    );
-
   return (
-    <CardWrapper>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      title={null}
+      width={600}
+    >
       <h2 className="text-xl font-semibold text-[#627254] mb-4">
         Cập nhật thông tin khách hàng
       </h2>
-
       <Card bordered>
         <CustomerForm
           initialValues={transformedCustomer}
@@ -86,7 +95,7 @@ export const CustomerEditPage: React.FC = () => {
           loading={isPending}
         />
       </Card>
-    </CardWrapper>
+    </Modal>
   );
 };
 
