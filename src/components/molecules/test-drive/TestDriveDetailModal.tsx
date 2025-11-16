@@ -1,14 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  Modal,
-  Tag,
-  Button,
-  Space,
-  Typography,
-  Divider,
-} from "antd";
+import { Modal, Tag, Space, Typography, Divider } from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
+import { Button as EmobButton } from "../../atoms/Button";
 
 import {
   useTestDriveDetailQuery,
@@ -44,7 +38,8 @@ export const TestDriveDetailModal = ({
 
   const detail = data?.result;
 
-  const { mutateAsync: updateStatusTestDrive, isPending } = useUpdateStatusTestDriveMutation();
+  const { mutateAsync: updateStatusTestDrive, isPending } =
+    useUpdateStatusTestDriveMutation();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -53,7 +48,8 @@ export const TestDriveDetailModal = ({
   const role = (user as { role?: string } | null)?.role || "";
 
   const customer = useCustomerById(detail?.customerId).data?.result;
-  const dealerStaff = useGetAccountById(detail?.salePersonId).data?.result.fullName;
+  const dealerStaff = useGetAccountById(detail?.salePersonId).data?.result
+    .fullName;
 
   const handleCancel = async () => {
     try {
@@ -73,13 +69,7 @@ export const TestDriveDetailModal = ({
 
   const status = detail?.status;
 
-  const RowItem = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: any;
-  }) => (
+  const RowItem = ({ label, value }: { label: string; value: any }) => (
     <div className="flex flex-col py-2">
       <Text className="text-gray-500 text-sm">{label}</Text>
       <Text className="text-[15px] font-medium text-gray-800 mt-1">
@@ -108,10 +98,10 @@ export const TestDriveDetailModal = ({
                 status === "CANCELLED"
                   ? "red"
                   : status === "COMPLETED"
-                    ? "green"
-                    : status === "CONFIRMED"
-                      ? "blue"
-                      : "gold"
+                  ? "green"
+                  : status === "CONFIRMED"
+                  ? "blue"
+                  : "gold"
               }
               className="font-semibold"
             >
@@ -133,7 +123,9 @@ export const TestDriveDetailModal = ({
               <span>
                 <p>Xe lái thử</p>
                 <br />
-                <VehicleUnitCard vehicleUnitId={detail.testDriveVehicleUnitId} />
+                <VehicleUnitCard
+                  vehicleUnitId={detail.testDriveVehicleUnitId}
+                />
               </span>
 
               <RowItem label="Mã lịch lái thử" value={detail.testDriveId} />
@@ -151,9 +143,7 @@ export const TestDriveDetailModal = ({
               <RowItem label="Thời lượng" value={`${detail.duration} phút`} />
               <RowItem
                 label="Thời gian lái thử"
-                value={dayjs(detail.scheduledAt).format(
-                  "DD/MM/YYYY HH:mm"
-                )}
+                value={dayjs(detail.scheduledAt).format("DD/MM/YYYY HH:mm")}
               />
             </div>
 
@@ -163,15 +153,11 @@ export const TestDriveDetailModal = ({
             <div className="grid grid-cols-2 gap-x-10">
               <RowItem
                 label="Ngày tạo"
-                value={dayjs(detail.createAt).format(
-                  "DD/MM/YYYY HH:mm"
-                )}
+                value={dayjs(detail.createAt).format("DD/MM/YYYY HH:mm")}
               />
               <RowItem
                 label="Cập nhật lần cuối"
-                value={dayjs(detail.updateAt).format(
-                  "DD/MM/YYYY HH:mm"
-                )}
+                value={dayjs(detail.updateAt).format("DD/MM/YYYY HH:mm")}
               />
             </div>
           </div>
@@ -179,10 +165,9 @@ export const TestDriveDetailModal = ({
 
         {/* {role === "DEALER_STAFF" && role === "ADMIN" &&( */}
         <div className="flex justify-end mt-6 gap-2">
-
           {/* === CASE 1: PENDING → hiển thị nút DUYỆT === */}
           {status === "PENDING" && (
-            <Button
+            <EmobButton
               type="primary"
               loading={isPending}
               onClick={async () => {
@@ -201,13 +186,13 @@ export const TestDriveDetailModal = ({
               }}
             >
               Duyệt lịch
-            </Button>
+            </EmobButton>
           )}
 
           {/* === CASE 2: CONFIRMED → hiển thị hoàn thành + hủy === */}
           {status === "CONFIRMED" && (
             <>
-              <Button
+              <EmobButton
                 type="primary"
                 loading={isPending}
                 onClick={async () => {
@@ -227,15 +212,15 @@ export const TestDriveDetailModal = ({
                 className="!bg-[#4b7d3e]"
               >
                 Hoàn thành
-              </Button>
+              </EmobButton>
 
-              <Button
+              <EmobButton
                 danger
                 loading={isPending}
                 onClick={() => setConfirmOpen(true)}
               >
                 Hủy
-              </Button>
+              </EmobButton>
             </>
           )}
 

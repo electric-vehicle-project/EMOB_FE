@@ -1,5 +1,6 @@
 import React from "react";
-import { Table, Button, Tooltip, Typography } from "antd";
+import { Table, Tooltip, Typography } from "antd";
+import { Button as EmobButton } from "../../atoms/Button";
 import type { ColumnsType } from "antd/es/table";
 import {
   EditOutlined,
@@ -42,8 +43,7 @@ export const VehicleTable: React.FC<Props> = ({
               </Text>
             </Tooltip>
             <Tooltip title="Copy ID">
-              <Button
-                size="small"
+              <EmobButton
                 icon={<CopyOutlined />}
                 onClick={() => navigator.clipboard.writeText(id)}
               />
@@ -145,23 +145,23 @@ export const VehicleTable: React.FC<Props> = ({
       render: (_: unknown, record: IVehicle) => (
         <div className="flex justify-center items-center gap-2 flex-wrap mx-auto">
           {canAddUnit && (
-            <Button
+            <EmobButton
               icon={<PlusOutlined />}
               onClick={() => onAddUnit(record.id!)}
               className="rounded-md border-none bg-[#a8b57a] text-white hover:opacity-90 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Thêm đơn vị
-            </Button>
+              Nhập xe hàng loạt
+            </EmobButton>
           )}
-          <Button
+          <EmobButton
             type="primary"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
             className="rounded-md bg-[#627254] border-none hover:opacity-90 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Sửa
-          </Button>
-          <Button
+          </EmobButton>
+          <EmobButton
             danger
             type="primary"
             icon={<DeleteOutlined />}
@@ -169,7 +169,7 @@ export const VehicleTable: React.FC<Props> = ({
             className="rounded-md transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Xóa
-          </Button>
+          </EmobButton>
         </div>
       ),
     },

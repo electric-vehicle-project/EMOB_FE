@@ -25,7 +25,7 @@ import type { DealerApiModel } from "../../../model/Dealer";
 import { toast } from "react-toastify";
 import { DealerModal } from "./DealerModal";
 import { Card } from "../../atoms/Card";
-
+import { Button as EmobButton } from "../../atoms/Button";
 export const DealerList = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
@@ -234,7 +234,7 @@ export const DealerList = () => {
         </div>
 
         {canModify && (
-          <Button
+          <EmobButton
             type="primary"
             icon={<PlusOutlined />}
             className="bg-green-700"
@@ -244,7 +244,7 @@ export const DealerList = () => {
             }}
           >
             Thêm đại lý mới
-          </Button>
+          </EmobButton>
         )}
       </div>
 

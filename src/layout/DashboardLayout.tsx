@@ -145,11 +145,11 @@ function DashboardLayout() {
           ),
 
           // danh sách trả góp của khách hàng
-          getItem(
-            "Danh mục trả góp khách hàng",
-            ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
-            <FileTextOutlined />
-          ),
+          // getItem(
+          //   "Danh mục trả góp khách hàng",
+          //   ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
+          //   <FileTextOutlined />
+          // ),
           getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
 
           getItem(
@@ -191,11 +191,11 @@ function DashboardLayout() {
             <FileTextOutlined />
           ),
           // danh sách trả góp của khách hàng
-          getItem(
-            "Danh mục trả góp khách hàng",
-            ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
-            <FileTextOutlined />
-          ),
+          // getItem(
+          //   "Danh mục trả góp khách hàng",
+          //   ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
+          //   <FileTextOutlined />
+          // ),
 
           // Chính sách đại lý & yêu cầu
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo } from "react";
 import { Form, Button, Modal, Spin, Input } from "antd";
 import type { NamePath } from "antd/es/form/interface";
@@ -14,6 +15,7 @@ import { usePromotionList } from "../../service/promotionService";
 import { useCustomerList } from "../../service/customerService";
 import { useGetVehicles } from "../../service/vehicleService";
 import { toast } from "react-toastify";
+import { PlusOutlined } from "@ant-design/icons";
 
 export interface UpdateQuotationPayload {
   items: IQuotationItem[];
@@ -257,11 +259,12 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
 
                 <Button
                   type="dashed"
+                  icon={<PlusOutlined />}
                   onClick={() => add()}
                   block
                   className="mt-3 border-[#627254] text-[#627254]"
                 >
-                  + Thêm xe vào báo giá
+                  Thêm xe vào báo giá
                 </Button>
               </>
             )}

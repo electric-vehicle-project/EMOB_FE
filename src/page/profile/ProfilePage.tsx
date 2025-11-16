@@ -9,7 +9,6 @@ import {
   Typography,
   Space,
   Divider,
-  message,
   Tag,
   Skeleton,
   Tabs,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
 import { Modal, Form, Button, message } from "antd";
 import TextInput from "../../components/atoms/TextInput";
@@ -6,6 +7,7 @@ import SelectInput from "../../components/atoms/SelectInput";
 import { useCreateVehicleRequest } from "../../service/vehicleRequestService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { NamePath } from "antd/es/form/interface";
+import { PlusOutlined } from "@ant-design/icons";
 
 /**
  * Modal tạo yêu cầu xe (hỗ trợ thêm nhiều xe trong 1 request)
@@ -141,11 +143,12 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
               {/* Nút thêm xe mới */}
               <Button
                 type="dashed"
+                icon={<PlusOutlined />}
                 onClick={() => add()}
                 block
                 className="mt-2 border-[#627254] text-[#627254]"
               >
-                + Thêm xe
+                Thêm xe
               </Button>
             </>
           )}
