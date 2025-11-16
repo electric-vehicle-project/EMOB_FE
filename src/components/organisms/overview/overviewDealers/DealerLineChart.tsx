@@ -45,10 +45,24 @@ export default function RevenueLineChart({ data, region, country }: Props) {
                 legendOffset: 36,
                 legendPosition: "middle",
               }}
+              yFormat={(v) => {
+                if (v >= 1000000000) return v / 1000000000 + " tỷ";
+                if (v >= 1000000) return v / 1000000 + " triệu";
+                if (v >= 1000) return v / 1000 + " nghìn";
+                return v;
+              }}
               axisLeft={{
                 legend: "Doanh thu (VND)",
                 legendOffset: -52,
                 legendPosition: "middle",
+                tickRotation: -35,
+                tickPadding: 6,
+                format: (v) => {
+                  if (v >= 1000000000) return v / 1000000000 + " tỷ";
+                  if (v >= 1000000) return v / 1000000 + " triệu";
+                  if (v >= 1000) return v / 1000 + " nghìn";
+                  return v;
+                },
               }}
               animate
               motionConfig="gentle"
@@ -59,7 +73,6 @@ export default function RevenueLineChart({ data, region, country }: Props) {
               pointBorderWidth={2}
               enableArea
               areaOpacity={0.15}
-              areaBaselineValue={0}
               lineWidth={3}
               defs={[
                 {
@@ -75,7 +88,6 @@ export default function RevenueLineChart({ data, region, country }: Props) {
               useMesh
               theme={{
                 background: "#ffffff",
-                textColor: "#374151",
                 axis: {
                   domain: { line: { stroke: "#d1d5db" } },
                   ticks: {

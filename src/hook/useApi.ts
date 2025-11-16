@@ -33,6 +33,7 @@ export const createQueryHook =
       queryKey: [queryKey, params],
       queryFn: async () => (await api.get(url, { params })).data,
       ...{ ...options, retry: 0 },
+      refetchOnMount: "always",
     });
 
 // ==========GET-WITH-PARAM===============
@@ -45,6 +46,7 @@ export const createQueryWithPathParamHook =
     return useQuery({
       queryKey: id ? [queryKey, id] : [queryKey],
       queryFn: async () => (await api.get(`${url}/${id}`)).data,
+      refetchOnMount: "always",
       ...{ ...options, retry: 0 },
     });
   };
@@ -108,7 +110,7 @@ export const deleteMutationHook =
     });
   };
 
-// ==========UPLOAD===============  
+// ==========UPLOAD===============
 export const createMutationUploadFilesHook =
   (queryKey: string, url: string) =>
   (

@@ -112,7 +112,7 @@ export const useGetVehicleUnitsByVehicleId = (
 // ========== UNITS by MODEL (có params page/size) ==========
 export const useGetVehicleUnitsByVehicleIdPaged = (
   modelId: string,
-  params: { page: number; size: number },
+  params: { page: number; size: number; statuses?: string[] },
   options?: unknown
 ): UseQueryResult<{
   units: unknown[];
@@ -122,13 +122,22 @@ export const useGetVehicleUnitsByVehicleIdPaged = (
     units: unknown[];
     metadata?: { totalElements?: number } | Record<string, unknown>;
   }>({
-    queryKey: ["get-vehicle-units-by-model", modelId, params.page, params.size],
+    queryKey: [
+      "get-vehicle-units-by-model",
+      modelId,
+      params.page,
+      params.size,
+      params.statuses ?? null,
+    ],
     queryFn: async () => {
       const res = await api.get(`${UNIT_URL}/view-all-by-model/${modelId}`, {
         params,
       });
       return res.data;
     },
+    refetchOnMount: "always",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
     ...(typeof options === "object" && options !== null
       ? (options as Record<string, unknown>)
       : {}),
@@ -138,16 +147,20 @@ export const useGetVehicleUnitsByVehicleIdPaged = (
         data?: unknown | unknown[];
         metadata?: unknown;
       };
+
       const d = data as ApiResult;
+
       const units = Array.isArray(d.result?.data)
         ? d.result?.data
         : Array.isArray(d.data)
         ? (d.data as unknown[])
         : [];
+
       const metadata = (d.result?.metadata ?? d.metadata) as
         | { totalElements?: number }
         | Record<string, unknown>
         | undefined;
+
       return { units, metadata };
     },
   });

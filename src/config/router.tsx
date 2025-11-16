@@ -113,7 +113,6 @@ export const router = createBrowserRouter([
       { path: ROUTES.DEALER_POINT_RULE, element: <DealerPointRuleAdminPage /> },
 
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
-      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
       // { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditModal /> },
@@ -153,7 +152,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.VEHICLE_REQUEST, element: <AdminVehicleRequestPage /> },
 
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
-      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      // { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_NEW, element: <VehicleCreatePage /> },
       // { path: ROUTES.EVM_VEHICLE_EDIT, element: <VehicleEditModal /> },
@@ -198,7 +197,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
 
-      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      // { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {
@@ -216,7 +215,7 @@ export const router = createBrowserRouter([
         element: <SaleOrderByStaffPage />,
       },
       { path: ROUTES.REPORT, element: <ReportPage /> },
-      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage/> },
+      { path: ROUTES.REPORT_DETAIL, element: <ReportDetailPage /> },
       { path: ROUTES.CONTRACT, element: <ContractAllCustomersPage /> },
       {
         path: ROUTES.CONTRACT_WITH_EVM,
@@ -271,7 +270,7 @@ export const router = createBrowserRouter([
 
       { path: ROUTES.EVM_VEHICLE, element: <VehicleListPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
-      { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
+      // { path: ROUTES.EVM_VEHICLE_BULK, element: <VehicleBulkPage /> },
       { path: ROUTES.EVM_VEHICLE_DETAIL, element: <VehicleDetailPage /> },
       { path: ROUTES.EVM_VEHICLE_RULE, element: <VehiclePriceRulePage /> },
       {

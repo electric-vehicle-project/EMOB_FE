@@ -88,16 +88,6 @@ export const AccountTable: React.FC<Props> = ({
       dataIndex: "fullName",
       key: "fullName",
       align: "center",
-      render: (text: string, record) => (
-        <Tooltip title={text}>
-          <Link
-            onClick={() => onViewDetails && onViewDetails(record)}
-            className="font-medium"
-          >
-            {text}
-          </Link>
-        </Tooltip>
-      ),
     },
 
     {
@@ -186,6 +176,13 @@ export const AccountTable: React.FC<Props> = ({
               </span>
             ),
             onClick: () => onChangeStatus(record.id, next),
+          },
+          {
+            key: "viewDetails",
+            label: (
+              <span className="text-[14px] pl-10 pr-10">Xem chi tiết</span>
+            ),
+            onClick: () => onViewDetails && onViewDetails(record),
           },
           {
             key: "ban",

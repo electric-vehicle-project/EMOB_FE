@@ -1,11 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { Card } from "antd";
+import { Card, Modal } from "antd";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import type { RootState } from "../../redux/store";
 import { CustomerForm } from "../../components/organisms/customer/CustomerForm";
 import { useCustomerCreate } from "../../service/customerService";
-import { CardWrapper } from "../../components/template/CardWrapper";
 
 interface CustomerFormData {
   fullName: string;
@@ -17,8 +16,14 @@ interface CustomerFormData {
   loyaltyPoints?: number;
   note?: string;
 }
-
-export const CustomerCreatePage: React.FC = () => {
+interface CustomerCreatePageProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+export const CustomerCreatePage: React.FC<CustomerCreatePageProps> = ({
+  open,
+  onClose,
+}) => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user);
   const { mutateAsync: createCustomer, isPending } = useCustomerCreate();
@@ -40,10 +45,17 @@ export const CustomerCreatePage: React.FC = () => {
     } catch {
       toast.error("Không thể tạo khách hàng, vui lòng thử lại!");
     }
+    onClose?.();
   };
 
   return (
-    <CardWrapper>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      title={null}
+      width={600}
+    >
       <h2 className="text-xl font-semibold text-[#627254] mb-4">
         Thêm khách hàng mới
       </h2>
@@ -51,7 +63,7 @@ export const CustomerCreatePage: React.FC = () => {
       <Card bordered>
         <CustomerForm onSubmit={handleSubmit} loading={isPending} />
       </Card>
-    </CardWrapper>
+    </Modal>
   );
 };
 
