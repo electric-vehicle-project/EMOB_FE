@@ -1,5 +1,3 @@
-import { Button } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
@@ -28,11 +26,7 @@ export const DealerPointRulePage: React.FC = () => {
   const dealerId = typedUser?.dealerId;
 
   // ADMIN / EVM_STAFF xem toàn bộ quy tắc
-  const {
-    data: allRules,
-    isLoading: loadingAll,
-    refetch: refetchAll,
-  } = useDealerPointRuleList();
+  const { data: allRules, isLoading: loadingAll } = useDealerPointRuleList();
 
   // MANAGER / DEALER_STAFF xem quy tắc của đại lý mình
   const {
@@ -83,12 +77,6 @@ export const DealerPointRulePage: React.FC = () => {
     }
   };
 
-  // Hàm tải lại dữ liệu
-  const handleReload = () => {
-    if (role === "ADMIN" || role === "EVM_STAFF") refetchAll();
-    else refetchDealer();
-  };
-
   return (
     <CardWrapper>
       {/* Header */}
@@ -96,15 +84,6 @@ export const DealerPointRulePage: React.FC = () => {
         <h2 className="text-xl font-semibold text-[#627254]">
           Quy tắc tích điểm của đại lý
         </h2>
-
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={handleReload}
-          type="primary"
-          className="!bg-[#627254] hover:!bg-[#4f6f52] text-white"
-        >
-          Tải lại
-        </Button>
       </div>
 
       {/* Bảng dữ liệu */}

@@ -1,3 +1,4 @@
+// src/components/organisms/saleOrder/SaleOrderTable.tsx
 import { Tag } from "antd";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
@@ -6,7 +7,6 @@ import type { SaleOrderResponse, OrderStatus } from "../../../model/SaleOrder";
 import { EMOBTable } from "../../molecules/EMOBTable";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
-
 import { useDealerByIdQuery } from "../../../service/dealerService";
 
 const DealerName = ({ dealerId }: { dealerId: string }) => {
@@ -50,8 +50,9 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   sortDir = "desc",
 }) => {
   const role = useSelector((state: RootState) => state.user?.role ?? null);
-  const canComplete = role === "EVM_STAFF" || role === "DEALER_STAFF";
-  const canDelete = role === "EVM_STAFF" || role === "DEALER_STAFF";
+
+  const canComplete = role === "DEALER_STAFF" || role === "EVM_STAFF";
+  const canDelete = role === "DEALER_STAFF" || role === "EVM_STAFF";
 
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
@@ -68,37 +69,34 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
         </span>
       ),
     },
-
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
       width: 150,
       align: "center" as const,
-      sorter: true,
+      sorter: !!onSortChange,
       sortOrder: sortField === "createdAt" ? order : null,
       render: (createdAt: string) =>
         dayjs(createdAt).format("HH:mm DD/MM/YYYY"),
     },
-
     {
       title: "Tổng SL",
       dataIndex: "totalQuantity",
       key: "totalQuantity",
       width: 110,
       align: "center" as const,
-      sorter: true,
+      sorter: !!onSortChange,
       sortOrder: sortField === "totalQuantity" ? order : null,
       render: (val: number) => <span className="font-medium">{val}</span>,
     },
-
     {
       title: "Tổng tiền (VAT)",
       dataIndex: "totalPrice",
       key: "totalPrice",
       width: 160,
-      sorter: true,
       align: "center" as const,
+      sorter: !!onSortChange,
       sortOrder: sortField === "totalPrice" ? order : null,
       render: (price: number) => (
         <span className="text-gray-900 font-semibold">
@@ -106,7 +104,6 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
         </span>
       ),
     },
-
     ...(showDealerColumn
       ? [
           {
@@ -123,7 +120,6 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
           },
         ]
       : []),
-
     {
       title: "Trạng thái",
       dataIndex: "status",
@@ -141,7 +137,6 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
     },
   ];
 
-  // ACTION MENU — Style đồng bộ Dealer Discount Policy
   const actions = (record: SaleOrderResponse) => {
     const menuItems = [
       {
@@ -157,7 +152,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       },
     ];
 
-    if (canComplete && record.status === "CREATED")
+    if (canComplete && record.status === "CREATED") {
       menuItems.push({
         key: "complete",
         label: (
@@ -169,8 +164,9 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
           </span>
         ),
       });
+    }
 
-    if (canDelete && record.status === "CREATED")
+    if (canDelete && record.status === "CREATED") {
       menuItems.push({
         key: "delete",
         label: (
@@ -182,25 +178,25 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
           </span>
         ),
       });
+    }
 
     return menuItems;
   };
 
-  // HANDLE TABLE SORT → BE
   const handleChange = (
     _pagination: TablePaginationConfig,
     _filters: Record<string, FilterValue | null>,
     sorter: SorterResult<SaleOrderResponse> | SorterResult<SaleOrderResponse>[]
   ): void => {
+    if (!onSortChange) return;
+
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
 
-    if (onSortChange) {
-      if (s?.order) {
-        const order = s.order === "ascend" ? "asc" : "desc";
-        onSortChange(s.field as keyof SaleOrderResponse, order);
-      } else {
-        onSortChange("createdAt", "desc");
-      }
+    if (s?.order && s.field) {
+      const next: "asc" | "desc" = s.order === "ascend" ? "asc" : "desc";
+      onSortChange(s.field as keyof SaleOrderResponse, next);
+    } else {
+      onSortChange("createdAt", "desc");
     }
   };
 

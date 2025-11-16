@@ -10,14 +10,17 @@ export interface Promotion {
   id: string;
   name: string;
   description?: string;
-  type: PromotionType;
-  value: number | null; // có thể null khi chờ duyệt
-  minValue: number;
-  startDate: string; // ISO
-  endDate: string; // ISO
+  type: PromotionType | null;
+  value: number | null;
+  minValue?: number | null;
+  startDate: string | null;
+  endDate: string | null;
   scope: PromotionScope;
-  status: PromotionStatus;
-  createAt: string; // ISO
+  status: PromotionStatus | null;
+  createAt: string;
+
+  dealerIds: string[];
+  vehicleIds: string[];
 }
 
 // ===== Page theo Swagger =====

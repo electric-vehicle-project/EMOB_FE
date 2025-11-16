@@ -1,5 +1,5 @@
 // src/page/saleOrder/SaleOrderDealerPage.tsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button, Select } from "antd";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
@@ -14,39 +14,45 @@ import {
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
+import { SaleOrderDetailModal } from "../../components/organisms/saleOrder/SaleOrderDetailModal";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import { useDebounce } from "../../hook/useDebounce";
 import { toast } from "react-toastify";
 
 const STATUS_OPTIONS = [
-  { label: "Đã tạo", value: "CREATED" as OrderStatus },
-  { label: "Hoàn tất", value: "COMPLETED" as OrderStatus },
-  { label: "Đã huỷ", value: "CANCELED" as OrderStatus },
+  { label: "Đã tạo", value: "CREATED" },
+  { label: "Hoàn tất", value: "COMPLETED" },
+  { label: "Đã huỷ", value: "CANCELED" },
+];
+
+const SORT_FIELDS = [
+  { label: "Ngày tạo", value: "createdAt" },
+  { label: "Tổng tiền", value: "totalPrice" },
+  { label: "Tổng số lượng", value: "totalQuantity" },
+];
+
+const SORT_DIRS = [
+  { label: "Tăng dần", value: "asc" },
+  { label: "Giảm dần", value: "desc" },
 ];
 
 type DealerRole = "MANAGER" | "DEALER_STAFF";
 
 const SaleOrderDealerPage: React.FC = () => {
   const navigate = useNavigate();
-  const user = useSelector((s: RootState) => s.user);
-  const role = (user?.role as DealerRole) ?? "DEALER_STAFF";
+  const role = useSelector((s: RootState) => s.user?.role as DealerRole);
 
-  // Search + Filter
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
+  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>();
 
-  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>(
-    undefined
-  );
-
-  // Pagination + Sort
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // API
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
   const { data, isLoading, isFetching, refetch } =
     useSaleOrderListCurrentDealer({
       page,
@@ -57,108 +63,69 @@ const SaleOrderDealerPage: React.FC = () => {
       sortDir,
     });
 
-  const orders: SaleOrderResponse[] = data?.result?.data ?? data?.data ?? [];
+  const orders: SaleOrderResponse[] = useMemo(
+    () => data?.result?.data ?? data?.data ?? [],
+    [data]
+  );
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
-  // Cancel logic
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
   const { mutateAsync: cancelOrder, isPending: canceling } =
     useSaleOrderDelete();
 
-  const handleDeleteClick = (id: string) => {
-    setSelectedId(id);
-    setConfirmOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!selectedId) return;
-    try {
-      await cancelOrder(selectedId);
-      toast.success("Đã hủy đơn hàng thành công!");
-      refetch();
-    } catch {
-      toast.error("Không thể hủy đơn hàng này!");
-    } finally {
-      setConfirmOpen(false);
-    }
-  };
-
-  // Reset filters
-  const resetFilters = () => {
-    setKeyword("");
-    setStatuses(undefined);
-    setSortField("createdAt");
-    setSortDir("desc");
-    setPage(0);
-    setSize(10);
-  };
-
-  const handleViewDetail = (id: string) => {
-    const base = `/${role.toLowerCase()}`;
-    navigate(`${base}/sale-order/${id}`);
-  };
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const filterContent = (
     <div className="flex flex-col gap-4">
-      {/* STATUS FILTER */}
       <div>
-        <b className="text-gray-700">Trạng thái</b>
-        <Select<OrderStatus[]>
+        <b>Trạng thái</b>
+        <Select
           mode="multiple"
-          allowClear
           className="w-full mt-2"
+          allowClear
           placeholder="Trạng thái"
           value={statuses}
           options={STATUS_OPTIONS}
-          onChange={(vals) => setStatuses(vals.length ? vals : undefined)}
+          onChange={(v: OrderStatus[]) => setStatuses(v.length ? v : undefined)}
         />
       </div>
 
-      {/* SORT FIELD */}
       <div>
-        <b className="text-gray-700">Sắp xếp theo</b>
+        <b>Sắp xếp theo</b>
         <Select
           className="w-full mt-2"
           value={sortField}
-          onChange={(v) => {
+          options={SORT_FIELDS}
+          onChange={(v: keyof SaleOrderResponse) => {
             setSortField(v);
             setPage(0);
           }}
-        >
-          <Select.Option value="createdAt">Ngày tạo</Select.Option>
-          <Select.Option value="totalPrice">Tổng tiền</Select.Option>
-          <Select.Option value="totalQuantity">Tổng số lượng</Select.Option>
-        </Select>
+        />
       </div>
 
-      {/* SORT DIRECTION */}
       <div>
-        <b className="text-gray-700">Thứ tự</b>
+        <b>Thứ tự</b>
         <Select
           className="w-full mt-2"
           value={sortDir}
-          onChange={(v) => {
+          options={SORT_DIRS}
+          onChange={(v: "asc" | "desc") => {
             setSortDir(v);
             setPage(0);
           }}
-        >
-          <Select.Option value="asc">Tăng dần</Select.Option>
-          <Select.Option value="desc">Giảm dần</Select.Option>
-        </Select>
+        />
       </div>
     </div>
   );
 
   return (
-    <CardWrapper>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-[#627254]">
-          Đơn hàng của đại lý
-        </h2>
-
+    <CardWrapper
+      title="Đơn hàng của đại lý"
+      subtitle="Quản lý các đơn hàng thuộc đại lý hiện tại"
+      variant="dashboard"
+    >
+      <div className="flex justify-end mb-4">
         {role === "MANAGER" ? (
           <Button
             type="primary"
@@ -176,27 +143,28 @@ const SaleOrderDealerPage: React.FC = () => {
         )}
       </div>
 
-      {/* FILTER BAR (EMOB) */}
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onReset={resetFilters}
+        onReset={() => {
+          setKeyword("");
+          setStatuses(undefined);
+          setSortField("createdAt");
+          setSortDir("desc");
+          setPage(0);
+          setSize(10);
+        }}
         filterDropdown={filterContent}
       />
 
-      {/* TABLE */}
       <SaleOrderTable
         data={orders}
         loading={isLoading || isFetching || canceling}
-        sortField={sortField}
-        sortDir={sortDir}
-        onSortChange={(field, order) => {
-          setSortField(field);
-          setSortDir(order);
-          setPage(0);
+        onDelete={(id) => {
+          setSelectedId(id);
+          setConfirmOpen(true);
         }}
-        onDelete={handleDeleteClick}
-        onViewDetail={handleViewDetail}
+        onViewDetail={(id) => setDetailId(id)}
         pagination={{
           current: page + 1,
           pageSize: size,
@@ -215,8 +183,25 @@ const SaleOrderDealerPage: React.FC = () => {
         open={confirmOpen}
         orderId={selectedId ?? undefined}
         onCancel={() => setConfirmOpen(false)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={async () => {
+          if (!selectedId) return;
+          try {
+            await cancelOrder(selectedId);
+            toast.success("Đã hủy đơn hàng thành công!");
+            refetch();
+          } catch {
+            toast.error("Không thể hủy đơn hàng này!");
+          } finally {
+            setConfirmOpen(false);
+          }
+        }}
         loading={canceling}
+      />
+
+      <SaleOrderDetailModal
+        open={!!detailId}
+        orderId={detailId ?? undefined}
+        onClose={() => setDetailId(null)}
       />
     </CardWrapper>
   );

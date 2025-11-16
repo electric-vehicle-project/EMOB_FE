@@ -1,8 +1,8 @@
+// src/pages/customer/CustomerPage.tsx
 import { useState, useMemo } from "react";
 import { Button, Select } from "antd";
 import { toast } from "react-toastify";
 import { PlusOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import type { RootState } from "../../redux/store";
@@ -18,8 +18,10 @@ import { CustomerDeleteConfirm } from "../../components/organisms/customer/Custo
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import { useDebounce } from "../../hook/useDebounce";
-import CustomerCreatePage from "./CustomerCreatePage";
-import CustomerEditPage from "./CustomerEditPage";
+
+import { CustomerCreateModal } from "../../components/organisms/customer/CustomerCreateModal";
+import { CustomerEditModal } from "../../components/organisms/customer/CustomerEditModal";
+import { CustomerDetailModal } from "../../components/organisms/customer/CustomerDetailModal";
 
 const STATUS_OPTIONS = [
   { label: "Tiềm năng", value: "LEAD" },
@@ -30,13 +32,10 @@ const STATUS_OPTIONS = [
 ];
 
 export const CustomerPage: React.FC = () => {
-  const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.user);
-
   const role: "MANAGER" | "DEALER_STAFF" =
     (user?.role as "MANAGER" | "DEALER_STAFF") ?? "DEALER_STAFF";
 
-  // ========================== FILTERS + SORT ==========================
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
 
@@ -48,7 +47,6 @@ export const CustomerPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  // ========================== API ==========================
   const { data, isLoading, isFetching, refetch } = useCustomerList({
     page,
     size,
@@ -65,16 +63,14 @@ export const CustomerPage: React.FC = () => {
 
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
-  // ========================== PERMISSIONS ==========================
   const isDealerStaff = role === "DEALER_STAFF";
   const canCreate = isDealerStaff;
-  const canEdit = isDealerStaff;
-  const canDelete = isDealerStaff;
 
-  // ========================== DELETE ==========================
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
     null
   );
@@ -86,8 +82,15 @@ export const CustomerPage: React.FC = () => {
   };
 
   const handleEdit = (id: string) => {
+    const target = customers.find((c) => c.id === id) || null;
+    setSelectedCustomer(target);
     setEditOpen(true);
-    setSelectedCustomer(customers.find((c) => c.id === id) || null);
+  };
+
+  const handleDetail = (id: string) => {
+    const target = customers.find((c) => c.id === id) || null;
+    setSelectedCustomer(target);
+    setDetailOpen(true);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -103,10 +106,10 @@ export const CustomerPage: React.FC = () => {
 
     try {
       await deleteCustomer(selectedCustomer.id);
-      toast.success("Đã xoá khách hàng thành công!");
+      toast.success("Đã xoá khách hàng thành công");
       refetch();
     } catch {
-      toast.error("Không thể xoá khách hàng!");
+      toast.error("Không thể xoá khách hàng");
     } finally {
       setConfirmOpen(false);
     }
@@ -114,25 +117,35 @@ export const CustomerPage: React.FC = () => {
 
   return (
     <>
-      <CustomerEditPage
+      <CustomerCreateModal
+        open={createOpen}
+        onClose={() => {
+          setCreateOpen(false);
+          refetch();
+        }}
+      />
+
+      <CustomerEditModal
         open={editOpen}
         customerId={selectedCustomer?.id}
-        onClose={() => setEditOpen(false)}
+        onClose={() => {
+          setEditOpen(false);
+          refetch();
+        }}
       />
-      {/* CREATE MODAL */}
-      <CustomerCreatePage
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+
+      <CustomerDetailModal
+        open={detailOpen}
+        customerId={selectedCustomer?.id}
+        onClose={() => setDetailOpen(false)}
       />
-      <CardWrapper>
-        {/* ========================== HEADER ========================== */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-[#627254]">
-            Danh sách khách hàng của đại lý
-          </h2>
-        </div>
-        <div className="flex justify-between items-center gap-4 flex-wrap">
-          {/* ========================== FILTER BAR ========================== */}
+
+      <CardWrapper
+        title="Quản lý khách hàng"
+        subtitle="Theo dõi và quản lý thông tin khách hàng của đại lý"
+        variant="dashboard"
+      >
+        <div className="flex justify-between items-center gap-4 flex-wrap mb-4">
           <EMOBFilterBar
             keyword={keyword}
             onKeywordChange={(v) => setKeyword(v)}
@@ -146,7 +159,6 @@ export const CustomerPage: React.FC = () => {
             }}
             filterDropdown={
               <div className="flex flex-col gap-4 w-full">
-                {/* TRẠNG THÁI */}
                 <div>
                   <div className="font-medium mb-1">Trạng thái</div>
                   <Select
@@ -162,7 +174,6 @@ export const CustomerPage: React.FC = () => {
                   />
                 </div>
 
-                {/* SẮP XẾP THEO */}
                 <div>
                   <div className="font-medium mb-1">Sắp xếp theo</div>
                   <Select
@@ -185,7 +196,6 @@ export const CustomerPage: React.FC = () => {
                   </Select>
                 </div>
 
-                {/* THỨ TỰ */}
                 <div>
                   <div className="font-medium mb-1">Thứ tự</div>
                   <Select
@@ -203,34 +213,29 @@ export const CustomerPage: React.FC = () => {
               </div>
             }
           />
+
           {canCreate && (
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={handleCreate}
               disabled={!canCreate}
-              className={`text-white ${"!bg-[#627254] !border-[#627254] hover:!bg-[#4f6f52]"}`}
+              className="text-white !bg-[#627254] !border-[#627254] hover:!bg-[#4f6f52]"
             >
               Thêm khách hàng
             </Button>
           )}
         </div>
 
-        {/* ========================== TABLE ========================== */}
         <CustomerTable
           data={customers}
           loading={isLoading || isFetching}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          onEdit={(id) => handleEdit(id)}
+          onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          onDetail={handleDetail}
           sortField={sortField}
           sortDir={sortDir}
-          onChangeSort={(field, order) => {
-            setSortField(field || "fullName");
-            setSortDir(order === "ascend" ? "asc" : "desc");
-            setPage(0);
-          }}
+          onChangeSort={() => undefined}
           pagination={{
             current: page + 1,
             pageSize: size,
@@ -245,7 +250,6 @@ export const CustomerPage: React.FC = () => {
           }}
         />
 
-        {/* ========================== DELETE MODAL ========================== */}
         <CustomerDeleteConfirm
           open={confirmOpen}
           customerName={selectedCustomer?.fullName}
