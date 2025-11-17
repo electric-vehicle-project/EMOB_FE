@@ -1,4 +1,4 @@
-import { Table, Pagination, Tag } from "antd";
+import { Table, Pagination, Tag, Menu, Dropdown } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { IInstallmentPlan } from "../../../model/InstallmentPlan";
 import {
@@ -6,7 +6,7 @@ import {
   formatDateVietnam,
 } from "../../../utils/timeFeature";
 import { formatMoney } from "../../../utils/formatMoney";
-import { Button } from "../../atoms/Button";
+import { EllipsisOutlined } from "@ant-design/icons";
 
 interface PaginationProps {
   current: number;
@@ -30,6 +30,7 @@ export const InstallmentPlanTable = ({
   pagination,
   isLoading,
   onMarkAsPaid,
+  onViewDetail,
 }: Props) => {
   const statusColors: Record<string, string> = {
     PAID: "green",
@@ -107,28 +108,52 @@ export const InstallmentPlanTable = ({
         );
       },
     },
+
+    // =================== THAO TÁC ===================
     {
       title: "Thao tác",
-      key: "action",
+      key: "actions",
       align: "center",
+      width: "6%",
       render: (_, record) => {
         const isPaid = record.status === "PAID";
-        const isNotPaid =
+        const canMarkPaid =
           record.status === "NOT_PAID" || record.status === "OVERDUE";
 
+        const menuItems = [
+          {
+            key: "details",
+            label: (
+              <span className="text-[14px] pl-10 pr-10">Xem chi tiết</span>
+            ),
+            onClick: () => onViewDetail?.(record.id),
+          },
+          {
+            key: "markPaid",
+            label: (
+              <span
+                className={`text-[14px] pl-10 pr-10 ${
+                  isPaid ? "text-gray-400" : "text-green-600"
+                }`}
+              >
+                Đánh dấu đã đóng
+              </span>
+            ),
+            disabled: isPaid,
+            onClick: () => {
+              if (canMarkPaid) onMarkAsPaid?.(record.id);
+            },
+          },
+        ];
+
         return (
-          <Button
-            type="primary"
-            disabled={isPaid}
-            onClick={() => {
-              if (onMarkAsPaid && isNotPaid) {
-                onMarkAsPaid(record.id);
-              }
-            }}
-            className={isPaid ? "!bg-gray-400 !cursor-not-allowed" : ""}
+          <Dropdown
+            overlay={<Menu items={menuItems} />}
+            trigger={["click"]}
+            placement="bottomRight"
           >
-            Đã đóng
-          </Button>
+            <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />
+          </Dropdown>
         );
       },
     },
@@ -143,6 +168,7 @@ export const InstallmentPlanTable = ({
         loading={isLoading}
         pagination={false}
       />
+
       {pagination && (
         <div className="p-3 flex justify-center">
           <Pagination {...pagination} />

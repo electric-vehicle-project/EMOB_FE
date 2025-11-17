@@ -122,13 +122,6 @@ export default function VehiclePriceUpdateModal({
         footer={
           <div className="flex justify-end gap-2">
             <Button
-              onClick={requestClose}
-              disabled={updatePrices.isPending}
-              className="rounded-md"
-            >
-              Hủy
-            </Button>
-            <Button
               type="primary"
               onClick={() => form.submit()}
               loading={updatePrices.isPending}

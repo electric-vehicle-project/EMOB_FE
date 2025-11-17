@@ -1,4 +1,5 @@
 // src/page/vehicle/VehicleBulkPage.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo } from "react";
 import {
   Card,
@@ -20,7 +21,6 @@ import {
   useCreateVehicleUnitsBulk,
   useGetAIDemandForecast,
 } from "../../service/vehicleService";
-import { ROUTES } from "../../model/routePaths";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { toast } from "react-toastify";
 import { ReloadOutlined, CheckOutlined } from "@ant-design/icons";
@@ -82,15 +82,6 @@ export const VehicleBulkPage = ({
   const navigate = useNavigate();
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
-
-  const basePath =
-    role === "ADMIN"
-      ? "/admin"
-      : role === "EVM_STAFF"
-      ? "/evm_staff"
-      : role === "MANAGER"
-      ? "/manager"
-      : "/dealer_staff";
 
   const { vehicle: vehicleInfo, isLoading: vehicleLoading } = useGetVehicleById(
     vehicleId ?? "",
@@ -300,47 +291,36 @@ export const VehicleBulkPage = ({
               )}
             </div>
             {role === "EVM_STAFF" && (
-              <button
-                onClick={openForecast}
-                disabled={!vehicleInfo || loadingForecast}
-                className="
-      relative overflow-hidden
-      flex items-center gap-2
-      px-7 py-2 rounded-full text-xs font-semibold tracking-wide
-      text-[#2e4b32]
-      transition-all duration-300
-      active:scale-[0.94]
-      hover:scale-[1.06] 
-      bg-white
-    "
-              >
-                {/* VIỀN ĐIỆN XANH EMOB */}
-                <span
+              <div className="relative p-1">
+                <button
+                  onClick={openForecast}
+                  disabled={!vehicleInfo || loadingForecast}
                   className="
-        absolute inset-0 rounded-full p-[2px]
-        bg-gradient-to-r from-[#7bc47f] via-[#40c463] to-[#7bc47f]
-        animate-electric-border-green
-        opacity-95
-        z-0
-      "
+                  relative overflow-visible
+                  flex items-center gap-2
+                  px-7 py-2 rounded-full text-xs font-semibold tracking-wide
+                  text-[#2e4b32]
+                  transition-all duration-300
+                  active:scale-[0.95]
+                  hover:scale-[1.06]
+                  bg-white
+                "
                 >
-                  <span className="block w-full h-full rounded-full bg-white" />
-                </span>
+                  {/* Viền AI xanh tĩnh (không xoay) */}
+                  <span className="ai-border-static z-0">
+                    <span className="block w-full h-full rounded-full bg-white"></span>
+                  </span>
 
-                {/* AURA GLOW XANH TO & RÕ */}
-                <span
-                  className="
-        absolute inset-0 rounded-full
-        bg-green-300/40 blur-2xl
-        animate-electric-aura-green
-        z-0
-      "
-                />
+                  {/* Aura xanh đậm */}
+                  <span className="absolute inset-0 rounded-full bg-green-300/40 animate-electric-aura-green z-0"></span>
 
-                {/* ICON + TEXT */}
-                <span className="relative z-10 text-base">🌿</span>
-                <span className="relative z-10">Dự báo AI</span>
-              </button>
+                  {/* Icon AI */}
+                  <span className="relative z-10 text-base animate-pulse">
+                    ✨
+                  </span>
+                  <span className="relative z-10">Dự báo AI</span>
+                </button>
+              </div>
             )}
           </div>
         }
@@ -525,6 +505,9 @@ export const VehicleBulkPage = ({
                           picker="year"
                           className="w-full"
                           placeholder="Chọn năm"
+                          disabledDate={(current) =>
+                            current && current.year() > dayjs().year()
+                          }
                         />
                       </Form.Item>
 

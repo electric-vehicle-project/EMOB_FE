@@ -29,7 +29,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 /* -------------------------------------------------------------------------- */
 export default function DealerDashboardPage() {
   const [selectedYear, setSelectedYear] = useState<number>(CURRENT_YEAR);
-  const [customers, setCustomers] = useState<{ id: string; name: string }[]>(
+  const [ setCustomers] = useState<{ id: string; name: string }[]>(
     []
   );
   const [loadingCustomers, setLoadingCustomers] = useState(false);

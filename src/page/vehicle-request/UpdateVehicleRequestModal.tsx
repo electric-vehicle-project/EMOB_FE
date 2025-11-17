@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo } from "react";
 import { Form, Button, Modal, message } from "antd";
 import TextInput from "../../components/atoms/TextInput";
 import NumberInput from "../../components/atoms/NumberInput";
 import SelectInput from "../../components/atoms/SelectInput";
+import { PlusOutlined } from "@ant-design/icons";
 import {
   useGetVehicleRequestById,
   useUpdateVehicleRequest,
@@ -75,7 +77,7 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
       message.success("Cập nhật yêu cầu thành công!");
       onSuccess?.();
       onClose();
-    } catch (err: any) {
+    } catch {
       message.error("Không thể cập nhật yêu cầu.");
     }
   };
@@ -171,11 +173,12 @@ const UpdateVehicleRequestModal: React.FC<UpdateVehicleRequestModalProps> = ({
               {/* Nút thêm dòng */}
               <Button
                 type="dashed"
+                icon={<PlusOutlined />}
                 onClick={() => add()}
                 block
                 className="mt-2 border-[#627254] text-[#627254]"
               >
-                + Thêm xe
+                Thêm mẫu xe mới
               </Button>
             </>
           )}
