@@ -1,23 +1,22 @@
 import { Form, Input, InputNumber, DatePicker, Select, Button } from "antd";
 import dayjs from "dayjs";
 import type { ICustomer } from "../../../model/Customer";
+import { useEffect } from "react";
 
-// --- Kiểu dữ liệu cho form khách hàng
-interface CustomerFormData {
+export interface CustomerFormData {
   fullName: string;
   email: string;
   phoneNumber: string;
   address: string;
-  dateOfBirth?: string | Date;
+  dateOfBirth?: string | dayjs.Dayjs;
   gender?: "MALE" | "FEMALE";
   loyaltyPoints?: number;
   note?: string;
 }
 
-// --- Props cho CustomerForm
 interface Props {
   initialValues?: Partial<
-    Omit<ICustomer, "dateOfBirth"> & { dateOfBirth?: string | dayjs.Dayjs }
+    Omit<ICustomer, "dateOfBirth"> & { dateOfBirth?: dayjs.Dayjs }
   >;
   onSubmit: (data: CustomerFormData) => void;
   loading?: boolean;
@@ -26,7 +25,12 @@ interface Props {
 export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
   const [form] = Form.useForm<CustomerFormData>();
 
-  // Xử lý khi submit form
+  useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
+    }
+  }, [initialValues, form]);
+
   const handleFinish = (values: CustomerFormData) => {
     const payload: CustomerFormData = {
       ...values,
@@ -59,7 +63,7 @@ export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
         label="Email"
         rules={[
           { required: true, message: "Vui lòng nhập email" },
-          { type: "email", message: "Địa chỉ email không hợp lệ" },
+          { type: "email", message: "Email không hợp lệ" },
         ]}
       >
         <Input placeholder="example@gmail.com" />
@@ -68,7 +72,13 @@ export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
       <Form.Item
         name="phoneNumber"
         label="Số điện thoại"
-        rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
+        rules={[
+          { required: true, message: "Vui lòng nhập số điện thoại" },
+          {
+            pattern: /^0\d{9}$/,
+            message: "Số điện thoại không hợp lệ",
+          },
+        ]}
       >
         <Input placeholder="0123456789" />
       </Form.Item>
@@ -81,7 +91,20 @@ export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
         <Input placeholder="123 Đường A, Quận B, TP. HCM" />
       </Form.Item>
 
-      <Form.Item name="dateOfBirth" label="Ngày sinh">
+      <Form.Item
+        name="dateOfBirth"
+        label="Ngày sinh"
+        rules={[
+          {
+            validator: (_, value) => {
+              if (!value) return Promise.resolve();
+              const age = dayjs().diff(dayjs(value), "year");
+              if (age < 18) return Promise.reject("Khách hàng phải từ 18 tuổi");
+              return Promise.resolve();
+            },
+          },
+        ]}
+      >
         <DatePicker className="w-full" format="YYYY-MM-DD" />
       </Form.Item>
 
@@ -100,12 +123,11 @@ export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
       </Form.Item>
 
       <Form.Item
-        label="Ghi chú"
         name="note"
+        label="Ghi chú"
         rules={[{ max: 255, message: "Tối đa 255 ký tự" }]}
       >
         <Input.TextArea
-          placeholder="Nhập ghi chú (nếu có)"
           rows={3}
           style={{
             borderRadius: 8,

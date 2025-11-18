@@ -19,13 +19,10 @@ export const SaleOrderItemTable = ({ items }: Props) => {
 
   const vehicleMap = useMemo(() => {
     const map: Record<string, string> = {};
-
     const list = Array.isArray(vehicles) ? (vehicles as VehicleItem[]) : [];
 
     list.forEach((v) => {
-      if (v.id) {
-        map[v.id] = `${v.brand} ${v.model}`;
-      }
+      if (v.id) map[v.id] = `${v.brand} ${v.model}`;
     });
 
     return map;
@@ -38,10 +35,9 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       key: "vehicleId",
       align: "left",
       width: 260,
-      render: (_: string, record) => {
+      render: (_, record) => {
         const id = record.vehicleId;
         const label = vehicleMap[id] || record.vehicleName || "Không xác định";
-
         return (
           <span className="font-medium text-gray-800 whitespace-nowrap">
             {label}
@@ -63,8 +59,7 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       key: "quantity",
       align: "center",
       width: 100,
-      sorter: (a, b) => a.quantity - b.quantity,
-      render: (v) => <span className="font-medium">{v}</span>,
+      render: (v: number) => <span className="font-medium">{v}</span>,
     },
     {
       title: "Đơn giá (VNĐ)",
@@ -72,7 +67,6 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       key: "unitPrice",
       align: "center",
       width: 150,
-      sorter: (a, b) => a.unitPrice - b.unitPrice,
       render: (price?: number) => (price ? price.toLocaleString("vi-VN") : "0"),
     },
     {
@@ -90,7 +84,6 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       key: "totalPrice",
       align: "center",
       width: 160,
-      sorter: (a, b) => a.totalPrice - b.totalPrice,
       render: (price?: number) =>
         price ? (
           <span className="font-semibold text-green-700">
@@ -111,19 +104,16 @@ export const SaleOrderItemTable = ({ items }: Props) => {
   ];
 
   return (
-    <Table
+    <Table<SaleOrderItemResponse>
       columns={columns}
-      dataSource={items.map((item) => ({
-        ...item,
-        key: item.id,
-      }))}
+      dataSource={items.map((i) => ({ ...i, key: i.id }))}
       pagination={false}
       bordered
       className="rounded-xl shadow-sm bg-white"
+      scroll={{ x: "max-content" }}
       locale={{
         emptyText: "Không có sản phẩm nào trong đơn hàng",
       }}
-      scroll={{ x: "max-content" }}
     />
   );
 };

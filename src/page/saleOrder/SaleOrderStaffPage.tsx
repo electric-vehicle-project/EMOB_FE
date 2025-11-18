@@ -1,10 +1,8 @@
-// src/page/saleOrder/SaleOrderStaffPage.tsx
 import { useMemo, useState } from "react";
 import { Button, Select } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../redux/store";
+
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 
 import {
@@ -16,36 +14,42 @@ import {
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
 import { SaleOrderCancelConfirm } from "../../components/organisms/saleOrder/SaleOrderCancelConfirm";
+import { SaleOrderDetailModal } from "../../components/organisms/saleOrder/SaleOrderDetailModal";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import { useDebounce } from "../../hook/useDebounce";
 import { toast } from "react-toastify";
 
 const STATUS_OPTIONS = [
-  { label: "Đã tạo", value: "CREATED" as OrderStatus },
-  { label: "Hoàn tất", value: "COMPLETED" as OrderStatus },
-  { label: "Đã huỷ", value: "CANCELED" as OrderStatus },
+  { label: "Đã tạo", value: "CREATED" },
+  { label: "Hoàn tất", value: "COMPLETED" },
+  { label: "Đã huỷ", value: "CANCELED" },
+];
+
+const SORT_FIELDS = [
+  { label: "Ngày tạo", value: "createdAt" },
+  { label: "Tổng tiền", value: "totalPrice" },
+  { label: "Tổng số lượng", value: "totalQuantity" },
+];
+
+const SORT_DIRS = [
+  { label: "Tăng dần", value: "asc" },
+  { label: "Giảm dần", value: "desc" },
 ];
 
 const SaleOrderStaffPage: React.FC = () => {
   const navigate = useNavigate();
-  const role = (useSelector((s: RootState) => s.user?.role) ??
-    "DEALER_STAFF") as string;
 
-  // Search + Filter state
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
-  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>(
-    undefined
-  );
 
-  // Pagination + Sort
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>();
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // API
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
   const { data, isLoading, isFetching, refetch } = useSaleOrderListStaffCurrent(
     {
       page,
@@ -61,7 +65,6 @@ const SaleOrderStaffPage: React.FC = () => {
     () => data?.result?.data ?? data?.data ?? [],
     [data]
   );
-
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
   const { mutateAsync: cancelOrder, isPending: canceling } =
@@ -72,7 +75,8 @@ const SaleOrderStaffPage: React.FC = () => {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // Cancel
+  const [detailId, setDetailId] = useState<string | null>(null);
+
   const confirmCancel = async () => {
     if (!selectedId) return;
     try {
@@ -86,17 +90,15 @@ const SaleOrderStaffPage: React.FC = () => {
     }
   };
 
-  // Complete
   const handleComplete = async (id: string) => {
     try {
       await completeOrder(id);
       refetch();
     } catch {
-      /* handled elsewhere */
+      /* empty */
     }
   };
 
-  // Reset all filters
   const resetFilters = () => {
     setKeyword("");
     setStatuses(undefined);
@@ -108,62 +110,54 @@ const SaleOrderStaffPage: React.FC = () => {
 
   const filterContent = (
     <div className="flex flex-col gap-4">
-      {/* STATUS FILTER */}
       <div>
-        <b className="text-gray-700">Trạng thái</b>
-        <Select<OrderStatus[]>
+        <b>Trạng thái</b>
+        <Select
           mode="multiple"
           allowClear
           className="w-full mt-2"
           placeholder="Trạng thái"
-          options={STATUS_OPTIONS}
           value={statuses}
-          onChange={(v) => setStatuses(v.length ? v : undefined)}
+          options={STATUS_OPTIONS}
+          onChange={(v: OrderStatus[]) => setStatuses(v.length ? v : undefined)}
         />
       </div>
 
-      {/* SORT FIELD */}
       <div>
-        <b className="text-gray-700">Sắp xếp theo</b>
+        <b>Sắp xếp theo</b>
         <Select
           className="w-full mt-2"
           value={sortField}
-          onChange={(v) => {
+          options={SORT_FIELDS}
+          onChange={(v: keyof SaleOrderResponse) => {
             setSortField(v);
             setPage(0);
           }}
-        >
-          <Select.Option value="createdAt">Ngày tạo</Select.Option>
-          <Select.Option value="totalPrice">Tổng tiền</Select.Option>
-          <Select.Option value="totalQuantity">Tổng số lượng</Select.Option>
-        </Select>
+        />
       </div>
 
-      {/* SORT DIRECTION */}
       <div>
-        <b className="text-gray-700">Thứ tự</b>
+        <b>Thứ tự</b>
         <Select
           className="w-full mt-2"
           value={sortDir}
-          onChange={(v) => {
+          options={SORT_DIRS}
+          onChange={(v: "asc" | "desc") => {
             setSortDir(v);
             setPage(0);
           }}
-        >
-          <Select.Option value="asc">Tăng dần</Select.Option>
-          <Select.Option value="desc">Giảm dần</Select.Option>
-        </Select>
+        />
       </div>
     </div>
   );
 
   return (
-    <CardWrapper>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-[#627254]">
-          Đơn hàng của nhân viên
-        </h2>
+    <CardWrapper
+      title="Đơn hàng của nhân viên"
+      subtitle="Theo dõi các đơn hàng do nhân viên phụ trách"
+      variant="dashboard"
+    >
+      <div className="flex justify-end mb-4">
         <Button
           type="primary"
           icon={<ArrowLeftOutlined />}
@@ -173,7 +167,6 @@ const SaleOrderStaffPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Filter Bar */}
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}
@@ -181,25 +174,15 @@ const SaleOrderStaffPage: React.FC = () => {
         filterDropdown={filterContent}
       />
 
-      {/* Table */}
       <SaleOrderTable
         data={orders}
         loading={isLoading || isFetching || canceling || completing}
-        sortField={sortField}
-        sortDir={sortDir}
-        onSortChange={(field, order) => {
-          setSortField(field);
-          setSortDir(order);
-          setPage(0);
-        }}
         onDelete={(id) => {
           setSelectedId(id);
           setCancelOpen(true);
         }}
         onComplete={handleComplete}
-        onViewDetail={(id) =>
-          navigate(`/${role.toLowerCase()}/sale-order/${id}`)
-        }
+        onViewDetail={(id) => setDetailId(id)}
         pagination={{
           current: page + 1,
           pageSize: size,
@@ -220,6 +203,12 @@ const SaleOrderStaffPage: React.FC = () => {
         onCancel={() => setCancelOpen(false)}
         onConfirm={confirmCancel}
         loading={canceling}
+      />
+
+      <SaleOrderDetailModal
+        open={!!detailId}
+        orderId={detailId ?? undefined}
+        onClose={() => setDetailId(null)}
       />
     </CardWrapper>
   );

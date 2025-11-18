@@ -1,51 +1,45 @@
 import { useMemo, useState } from "react";
 import { Select } from "antd";
-import { useNavigate } from "react-router";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../redux/store";
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 
-import {
-  useSaleOrderListDealers,
-  useSaleOrderCompleteDirect,
-} from "../../service/saleOrderService";
+import { useSaleOrderListDealers } from "../../service/saleOrderService";
 
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
+import { SaleOrderDetailModal } from "../../components/organisms/saleOrder/SaleOrderDetailModal";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import { useDebounce } from "../../hook/useDebounce";
 
 const STATUS_OPTIONS = [
-  { label: "Đã tạo", value: "CREATED" as OrderStatus },
-  { label: "Hoàn tất", value: "COMPLETED" as OrderStatus },
-  { label: "Đã huỷ", value: "CANCELED" as OrderStatus },
+  { label: "Đã tạo", value: "CREATED" },
+  { label: "Hoàn tất", value: "COMPLETED" },
+  { label: "Đã huỷ", value: "CANCELED" },
 ];
 
-type EvmRole = "EVM_STAFF" | "ADMIN";
+const SORT_FIELDS = [
+  { label: "Ngày tạo", value: "createdAt" },
+  { label: "Tổng tiền", value: "totalPrice" },
+  { label: "Tổng số lượng", value: "totalQuantity" },
+];
+
+const SORT_DIRS = [
+  { label: "Tăng dần", value: "asc" },
+  { label: "Giảm dần", value: "desc" },
+];
 
 const SaleOrderEvmPage: React.FC = () => {
-  const navigate = useNavigate();
-  const role =
-    (useSelector((s: RootState) => s.user?.role) as EvmRole) ?? "EVM_STAFF";
-
-  // Search + Filter
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
-  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>(
-    undefined
-  );
 
-  // Sort
+  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>();
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Pagination
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  // API
-  const { data, isLoading, isFetching, refetch } = useSaleOrderListDealers({
+  const { data, isLoading, isFetching } = useSaleOrderListDealers({
     page,
     size,
     keyword: debouncedKeyword,
@@ -54,121 +48,79 @@ const SaleOrderEvmPage: React.FC = () => {
     sortDir,
   });
 
-  const orders = useMemo<SaleOrderResponse[]>(
-    () => data?.result?.data ?? data?.data ?? [],
-    [data]
-  );
+  const orders = useMemo(() => data?.result?.data ?? data?.data ?? [], [data]);
 
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
-  const { mutateAsync: completeOrder, isPending: completing } =
-    useSaleOrderCompleteDirect();
+  const [detailId, setDetailId] = useState<string | null>(null);
 
-  const handleComplete = async (id: string) => {
-    try {
-      await completeOrder(id);
-      refetch();
-    } catch {
-      /* handled in hook */
-    }
-  };
-
-  const handleViewDetail = (id: string) =>
-    navigate(`/${role.toLowerCase()}/sale-order/${id}`);
-
-  // Reset Filter
-  const resetFilters = () => {
-    setKeyword("");
-    setStatuses(undefined);
-    setSortField("createdAt");
-    setSortDir("desc");
-    setPage(0);
-    setSize(10);
-  };
-
-  // Render Filter UI theo mẫu Dealer Discount Policy
   const filterContent = (
     <div className="flex flex-col gap-4">
-      {/* STATUS FILTER */}
       <div>
-        <b className="text-gray-700">Trạng thái</b>
-        <Select<OrderStatus[]>
+        <b>Trạng thái</b>
+        <Select
           mode="multiple"
-          allowClear
           className="w-full mt-2"
+          allowClear
           placeholder="Trạng thái"
           value={statuses}
           options={STATUS_OPTIONS}
-          onChange={(vals) => setStatuses(vals.length ? vals : undefined)}
+          onChange={(v) => setStatuses(v.length ? v : undefined)}
         />
       </div>
 
-      {/* SORT FIELD */}
       <div>
-        <b className="text-gray-700">Sắp xếp theo</b>
+        <b>Sắp xếp theo</b>
         <Select
           className="w-full mt-2"
           value={sortField}
-          onChange={(v) => {
+          options={SORT_FIELDS}
+          onChange={(v: keyof SaleOrderResponse) => {
             setSortField(v);
             setPage(0);
           }}
-        >
-          <Select.Option value="createdAt">Ngày tạo</Select.Option>
-          <Select.Option value="totalPrice">Tổng tiền</Select.Option>
-          <Select.Option value="totalQuantity">Tổng số lượng</Select.Option>
-        </Select>
+        />
       </div>
 
-      {/* SORT DIRECTION */}
       <div>
-        <b className="text-gray-700">Thứ tự</b>
+        <b>Thứ tự</b>
         <Select
           className="w-full mt-2"
           value={sortDir}
-          onChange={(v) => {
+          options={SORT_DIRS}
+          onChange={(v: "asc" | "desc") => {
             setSortDir(v);
             setPage(0);
           }}
-        >
-          <Select.Option value="asc">Tăng dần</Select.Option>
-          <Select.Option value="desc">Giảm dần</Select.Option>
-        </Select>
+        />
       </div>
     </div>
   );
 
   return (
-    <CardWrapper>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-[#627254]">
-          Quản lý đơn hàng của các đại lý
-        </h2>
-      </div>
-
-      {/* Filter Bar */}
+    <CardWrapper
+      title="Quản lý đơn hàng của các đại lý"
+      subtitle="Theo dõi toàn bộ đơn hàng trong hệ thống"
+      variant="dashboard"
+    >
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onReset={resetFilters}
+        onReset={() => {
+          setKeyword("");
+          setStatuses(undefined);
+          setSortField("createdAt");
+          setSortDir("desc");
+          setPage(0);
+          setSize(10);
+        }}
         filterDropdown={filterContent}
       />
 
-      {/* Table */}
       <SaleOrderTable
         data={orders}
-        loading={isLoading || isFetching || completing}
+        loading={isLoading || isFetching}
         showDealerColumn
-        onViewDetail={handleViewDetail}
-        onComplete={handleComplete}
-        sortField={sortField}
-        sortDir={sortDir}
-        onSortChange={(field, order) => {
-          setSortField(field);
-          setSortDir(order);
-          setPage(0);
-        }}
         pagination={{
           current: page + 1,
           pageSize: size,
@@ -181,6 +133,13 @@ const SaleOrderEvmPage: React.FC = () => {
           position: ["bottomCenter"],
           showTotal: (t) => `Tổng cộng ${t} đơn hàng`,
         }}
+        onViewDetail={(id) => setDetailId(id)}
+      />
+
+      <SaleOrderDetailModal
+        open={!!detailId}
+        orderId={detailId ?? undefined}
+        onClose={() => setDetailId(null)}
       />
     </CardWrapper>
   );

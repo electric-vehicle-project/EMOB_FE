@@ -1,3 +1,4 @@
+// src/service/promotionService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -14,18 +15,18 @@ export const usePromotionList = (
   page = 0,
   size = 10,
   keyword?: string,
-  status?: string,
+  statuses?: string, // <--- chỉ còn string, không phải mảng
   sortField = "createAt",
   sortDir: "asc" | "desc" = "desc"
 ) =>
   createQueryHook("promotionList", `${BASE_URL}/view-all/{scope}`)(
     {},
     {
-      scope, // cho phép truyền mảng scope
+      scopes: scope,
       page,
       size,
       keyword,
-      status,
+      statuses, // <--- đúng key, đúng kiểu, sẽ ra ?statuses=ACTIVE
       sortField,
       sortDir,
     }
@@ -54,8 +55,8 @@ export const usePromotionCreate = createMutationHook(
 export type UpdatePromotionPayload = {
   name?: string;
   description?: string;
-  dealerIds?: string[]; // thêm dealer mới (EVM_STAFF)
-  electricVehicleIds?: string[]; // thêm mẫu xe mới (cả DEALER_STAFF & EVM_STAFF)
+  dealerIds?: string[];
+  electricVehicleIds?: string[];
 };
 
 // ======= Cập nhật khuyến mãi (DEALER_STAFF / EVM_STAFF) =======

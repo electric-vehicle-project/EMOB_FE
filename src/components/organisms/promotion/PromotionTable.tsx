@@ -1,7 +1,7 @@
-import { Tag, Button } from "antd";
+// src/components/organisms/promotion/PromotionTable.tsx
+import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { TablePaginationConfig, TableProps } from "antd";
-import type { SorterResult } from "antd/es/table/interface";
+import type { TablePaginationConfig } from "antd";
 import dayjs from "dayjs";
 
 import type {
@@ -11,19 +11,18 @@ import type {
   PromotionScope,
 } from "../../../model/Promotion";
 import { EMOBTable } from "../../molecules/EMOBTable";
-import type { JSX } from "react";
 
 interface Props {
   data: Promotion[];
   loading?: boolean;
   role: "ADMIN" | "EVM_STAFF" | "MANAGER" | "DEALER_STAFF";
+  userDealerId?: string;
 
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onView?: (id: string) => void;
 
-  sortField: string;
-  sortDir: "asc" | "desc";
-  onChangeSort: (field?: string, order?: "ascend" | "descend") => void;
+  onChangeSort?: (field?: string, order?: "ascend" | "descend") => void;
 
   pagination?: TablePaginationConfig;
 }
@@ -65,10 +64,41 @@ const getStatusColor = (status: PromotionStatus): string => {
   }
 };
 
-const canEditPromotion = (role: Props["role"]) =>
-  role === "ADMIN" || role === "EVM_STAFF";
+// ADMIN luôn được xoá.
+// MANAGER được xoá khuyến mãi LOCAL của đại lý mình.
+const canDeletePromotion = (
+  role: Props["role"],
+  record: Promotion,
+  userDealerId?: string
+): boolean => {
+  if (role === "ADMIN") return true;
 
-const canDeletePromotion = (role: Props["role"]) => role === "ADMIN";
+  if (role === "MANAGER" && record.scope === "LOCAL") {
+    if (!userDealerId) return false;
+    const dealers = record.dealerIds ?? [];
+    return dealers.includes(userDealerId);
+  }
+
+  return false;
+};
+
+// ADMIN / EVM_STAFF chỉnh sửa tất cả.
+// MANAGER và DEALER_STAFF chỉ được chỉnh sửa LOCAL của đại lý mình.
+const canEditPromotion = (
+  role: Props["role"],
+  record: Promotion,
+  userDealerId?: string
+): boolean => {
+  if (role === "ADMIN" || role === "EVM_STAFF") return true;
+
+  if (role === "MANAGER" || role === "DEALER_STAFF") {
+    if (!userDealerId) return false;
+    const dealers = record.dealerIds ?? [];
+    return record.scope === "LOCAL" && dealers.includes(userDealerId);
+  }
+
+  return false;
+};
 
 /* ======================
    COMPONENT
@@ -78,27 +108,27 @@ export const PromotionTable = ({
   data,
   loading,
   role,
+  userDealerId,
   onEdit,
   onDelete,
-  sortField,
-  sortDir,
+  onView,
   onChangeSort,
   pagination,
 }: Props) => {
-  const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
-
-  /* ======================
-      COLUMNS
-  ====================== */
   const columns: ColumnsType<Promotion> = [
     {
       title: "Tên chương trình",
       dataIndex: "name",
       key: "name",
-      sorter: true,
-      sortOrder: sortField === "name" ? order : null,
-      render: (text: string) => (
-        <span className="font-medium text-gray-800">{text}</span>
+      width: 220,
+      ellipsis: true,
+      render: (text: string, record: Promotion) => (
+        <div
+          className="font-medium text-[#4f6f52] hover:text-[#627254] cursor-pointer truncate"
+          onClick={() => onView?.(record.id)}
+        >
+          {text}
+        </div>
       ),
     },
     {
@@ -106,6 +136,7 @@ export const PromotionTable = ({
       dataIndex: "type",
       key: "type",
       align: "center",
+      width: 140,
       render: (type?: PromotionType) =>
         type ? (
           <Tag color="purple">{TYPE_LABELS[type]}</Tag>
@@ -118,17 +149,10 @@ export const PromotionTable = ({
       dataIndex: "value",
       key: "value",
       align: "center",
-      sorter: true,
-      sortOrder: sortField === "value" ? order : null,
+      width: 120,
       render: (val: Promotion["value"], record: Promotion) => {
-        if (val == null) {
-          return <span className="text-gray-400">—</span>;
-        }
-
-        if (record.type === "PERCENTAGE") {
-          return `${val}%`;
-        }
-
+        if (val == null) return <span className="text-gray-400">—</span>;
+        if (record.type === "PERCENTAGE") return `${val}%`;
         return `${val.toLocaleString("vi-VN")} ₫`;
       },
     },
@@ -136,8 +160,7 @@ export const PromotionTable = ({
       title: "Thời gian áp dụng",
       key: "startDate",
       align: "center",
-      sorter: true,
-      sortOrder: sortField === "startDate" ? order : null,
+      width: 210,
       render: (_: unknown, record: Promotion) => {
         const start = dayjs(record.startDate);
         const end = dayjs(record.endDate);
@@ -154,6 +177,7 @@ export const PromotionTable = ({
       dataIndex: "scope",
       key: "scope",
       align: "center",
+      width: 120,
       render: (scope: PromotionScope) => (
         <Tag color={scope === "GLOBAL" ? "geekblue" : "success"}>
           {SCOPE_LABELS[scope]}
@@ -165,6 +189,12 @@ export const PromotionTable = ({
       dataIndex: "status",
       key: "status",
       align: "center",
+      width: 150,
+      onHeaderCell: () => ({
+        onClick: () => {
+          onChangeSort?.("status", undefined);
+        },
+      }),
       render: (status?: PromotionStatus) =>
         status ? (
           <Tag color={getStatusColor(status)}>{STATUS_LABELS[status]}</Tag>
@@ -174,65 +204,6 @@ export const PromotionTable = ({
     },
   ];
 
-  /* ======================
-      SORT EVENT
-  ====================== */
-  const handleChange: TableProps<Promotion>["onChange"] = (
-    _pagination,
-    _filters,
-    sorter
-  ) => {
-    const s = Array.isArray(sorter)
-      ? (sorter[0] as SorterResult<Promotion>)
-      : (sorter as SorterResult<Promotion>);
-
-    if (!s?.field) return;
-
-    onChangeSort(s.field as string, s.order ?? undefined);
-  };
-
-  /* ======================
-      ACTION MENU
-  ====================== */
-  const actions =
-    role === "DEALER_STAFF" || role === "MANAGER"
-      ? undefined
-      : (record: Promotion) => {
-          const menu: { key: string; label: JSX.Element }[] = [];
-
-          if (canEditPromotion(role)) {
-            menu.push({
-              key: "edit",
-              label: (
-                <Button
-                  type="link"
-                  className="!text-[#627254]"
-                  onClick={() => onEdit?.(record.id)}
-                >
-                  Chỉnh sửa
-                </Button>
-              ),
-            });
-          }
-
-          if (canDeletePromotion(role)) {
-            menu.push({
-              key: "delete",
-              label: (
-                <Button
-                  type="link"
-                  className="!text-red-600"
-                  onClick={() => onDelete?.(record.id)}
-                >
-                  Xoá
-                </Button>
-              ),
-            });
-          }
-
-          return menu;
-        };
-
   return (
     <EMOBTable<Promotion>
       rowKey="id"
@@ -240,8 +211,51 @@ export const PromotionTable = ({
       dataSource={data}
       loading={loading}
       pagination={pagination}
-      onChange={handleChange}
-      actions={actions}
+      actions={(record) => {
+        const items = [
+          {
+            key: "detail",
+            label: (
+              <div
+                className="cursor-pointer"
+                onClick={() => onView?.(record.id)}
+              >
+                Xem chi tiết
+              </div>
+            ),
+          },
+        ];
+
+        if (canEditPromotion(role, record, userDealerId)) {
+          items.push({
+            key: "edit",
+            label: (
+              <div
+                className="cursor-pointer"
+                onClick={() => onEdit?.(record.id)}
+              >
+                Chỉnh sửa
+              </div>
+            ),
+          });
+        }
+
+        if (canDeletePromotion(role, record, userDealerId)) {
+          items.push({
+            key: "delete",
+            label: (
+              <div
+                className="text-red-600 cursor-pointer"
+                onClick={() => onDelete?.(record.id)}
+              >
+                Xoá
+              </div>
+            ),
+          });
+        }
+
+        return items;
+      }}
     />
   );
 };
