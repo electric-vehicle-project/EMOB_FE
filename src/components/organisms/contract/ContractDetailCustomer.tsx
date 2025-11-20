@@ -47,7 +47,6 @@ export const ContractDetailCustomer = () => {
   const customer = useCustomerById(saleOrder?.customerId).data?.result;
   const dealer = useDealerByIdQuery(user?.dealerId).data?.result;
 
-
   const printRef = useRef<HTMLDivElement>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -112,7 +111,10 @@ export const ContractDetailCustomer = () => {
         <Spin size="large" />
       </div>
     );
-
+  const parseNumberInput = (v: string | undefined): number => {
+    const parsed = Number((v || "").toString().replace(/,/g, ""));
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
   return (
     <div className="max-w-4xl mx-auto mt-6">
       {/* Thanh điều hướng + nút in */}
@@ -256,12 +258,11 @@ export const ContractDetailCustomer = () => {
                         key={item.id}
                         className="border rounded-xl p-4 bg-gray-50 transition-colors shadow-sm"
                       >
-
                         <div className="flex justify-between px-4">
                           <h4 className="text-lg font-semibold text-[#394a2f]">
                             Lô hàng #{(index + 1).toString().padStart(2, "0")}
                           </h4>
-                          <h4 className="font-semibold text-[#394a2f] italic" >
+                          <h4 className="font-semibold text-[#394a2f] italic">
                             Mã lô hàng: {item.id}
                           </h4>
                         </div>
@@ -271,7 +272,8 @@ export const ContractDetailCustomer = () => {
                         {/* THÔNG TIN CHUNG CỦA LÔ */}
                         <div className="pr-4 pl-4 grid grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
                           <p>
-                            <b>Màu sắc xe thuộc lô:</b> {item.color || "Không xác định"}
+                            <b>Màu sắc xe thuộc lô:</b>{" "}
+                            {item.color || "Không xác định"}
                           </p>
 
                           <p>
@@ -284,7 +286,8 @@ export const ContractDetailCustomer = () => {
 
                           <p>
                             <b>Giảm giá:</b>{" "}
-                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"}{" "}
+                            ₫
                           </p>
                           <p>
                             <b>Tổng tiền lô hàng:</b>{" "}
@@ -292,7 +295,8 @@ export const ContractDetailCustomer = () => {
                           </p>
 
                           <p>
-                            <b>Mã khuyến mãi:</b> {item.promotionId || "Không áp dụng"}
+                            <b>Mã khuyến mãi:</b>{" "}
+                            {item.promotionId || "Không áp dụng"}
                           </p>
                         </div>
 
@@ -300,12 +304,18 @@ export const ContractDetailCustomer = () => {
 
                         {/* DANH SÁCH XE CON */}
                         <div className="mt-4">
-                          <b className="pl-4">Danh sách xe thuộc lô (chi tiết từng xe):</b>
+                          <b className="pl-4">
+                            Danh sách xe thuộc lô (chi tiết từng xe):
+                          </b>
 
-                          {item.vehicleUnitIds && item.vehicleUnitIds.length > 0 ? (
+                          {item.vehicleUnitIds &&
+                          item.vehicleUnitIds.length > 0 ? (
                             <div className="grid grid-cols-3 gap-4 mt-4">
                               {item.vehicleUnitIds.map((uid: string) => (
-                                <VehicleUnitCard key={uid} vehicleUnitId={uid} />
+                                <VehicleUnitCard
+                                  key={uid}
+                                  vehicleUnitId={uid}
+                                />
                               ))}
                             </div>
                           ) : (
@@ -318,8 +328,6 @@ export const ContractDetailCustomer = () => {
 
                   <Divider />
                 </div>
-
-
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
@@ -335,10 +343,6 @@ export const ContractDetailCustomer = () => {
                   </p>
                 </div>
               </div>
-
-
-
-
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
               <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
@@ -351,13 +355,17 @@ export const ContractDetailCustomer = () => {
           <div className="flex justify-between items-start mt-8 mr-10 ml-10">
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
-              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
               <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
 
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
               <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
           </div>
@@ -458,7 +466,18 @@ export const ContractDetailCustomer = () => {
                   },
                 ]}
               >
-                <InputNumber min={0} className="!w-full" />
+                <InputNumber
+                  min={0}
+                  className="w-full"
+                  size="large"
+                  addonAfter="₫"
+                  formatter={(value) =>
+                    value != null
+                      ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      : ""
+                  }
+                  parser={parseNumberInput}
+                />
               </Form.Item>
 
               <Form.Item

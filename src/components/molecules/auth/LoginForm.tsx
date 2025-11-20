@@ -36,9 +36,10 @@ export const LoginForm = () => {
 
   const handleLogin = (values: LoginFormValues) => {
     const { username, password, remember } = values;
+    const trimmedUsername = username.trim();
 
     loginMutation(
-      { email: username, password },
+      { email: trimmedUsername, password },
       {
         onSuccess: (res) => {
           const { token, refreshToken, ...user } = res.data.result;
@@ -62,7 +63,10 @@ export const LoginForm = () => {
         onError: () => {
           form.setFields([
             { name: "username", errors: [""] },
-            { name: "password", errors: ["Tên đăng nhập hoặc mật khẩu không đúng"] },
+            {
+              name: "password",
+              errors: ["Tên đăng nhập hoặc mật khẩu không đúng"],
+            },
           ]);
         },
       }

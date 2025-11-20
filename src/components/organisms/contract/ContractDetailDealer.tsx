@@ -9,7 +9,7 @@ import {
   Select,
   InputNumber,
   Form,
-  DatePicker
+  DatePicker,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -110,7 +110,10 @@ export const ContractDetailDealer = () => {
         <Spin size="large" />
       </div>
     );
-
+  const parseNumberInput = (v: string | undefined): number => {
+    const parsed = Number((v || "").toString().replace(/,/g, ""));
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
   return (
     <div className="max-w-4xl mx-auto mt-6">
       {/* Thanh điều hướng + nút in */}
@@ -169,9 +172,11 @@ export const ContractDetailDealer = () => {
             </p>
 
             <p>
-              <b>BÊN A (Hãng xe):</b> Công ty TNHH Xe Điện EMOB 
+              <b>BÊN A (Hãng xe):</b> Công ty TNHH Xe Điện EMOB
               <br />
-              Đại diện: Ông/Bà <b>{user?.fullName ?? "______________________"}</b> - Chức vụ: Nhân viên hãng xe
+              Đại diện: Ông/Bà{" "}
+              <b>{user?.fullName ?? "______________________"}</b> - Chức vụ:
+              Nhân viên hãng xe
               <br />
               Địa chỉ: Tòa nhà FPTU, Quận 9, TP. Thủ Đức, TP. Hồ Chí Minh
             </p>
@@ -179,7 +184,8 @@ export const ContractDetailDealer = () => {
             <p>
               <b>BÊN B (Đại lý):</b> {dealer?.name ?? "______________________"}
               <br />
-              Đại diện: Ông/Bà ______________________ - Chức vụ: ______________________
+              Đại diện: Ông/Bà ______________________ - Chức vụ:
+              ______________________
               <br />
               Địa chỉ: {dealer?.address ?? "______________________"}
             </p>
@@ -258,7 +264,8 @@ export const ContractDetailDealer = () => {
                         {/* THÔNG TIN CHUNG CỦA LÔ */}
                         <div className="pr-4 pl-4 grid grid-cols-2 gap-x-8 gap-y-2 text-[15px]">
                           <p>
-                            <b>Màu sắc xe thuộc lô:</b> {item.color || "Không xác định"}
+                            <b>Màu sắc xe thuộc lô:</b>{" "}
+                            {item.color || "Không xác định"}
                           </p>
 
                           <p>
@@ -271,7 +278,8 @@ export const ContractDetailDealer = () => {
 
                           <p>
                             <b>Giảm giá:</b>{" "}
-                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"} ₫
+                            {item.discountPrice?.toLocaleString("vi-VN") ?? "0"}{" "}
+                            ₫
                           </p>
                           <p>
                             <b>Tổng tiền lô hàng:</b>{" "}
@@ -279,10 +287,10 @@ export const ContractDetailDealer = () => {
                           </p>
 
                           <p>
-                            <b>Mã khuyến mãi:</b> {item.promotionId || "Không áp dụng"}
+                            <b>Mã khuyến mãi:</b>{" "}
+                            {item.promotionId || "Không áp dụng"}
                           </p>
                         </div>
-
                       </div>
                     );
                   })}
@@ -291,9 +299,11 @@ export const ContractDetailDealer = () => {
 
                 <div className="flex justify-end mt-6 text-[15px] font-medium">
                   <p>
-                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0} &nbsp;&nbsp;
+                    <b>Tổng số lượng:</b> {contract?.totalQuantity ?? 0}{" "}
+                    &nbsp;&nbsp;
                     <b>Tổng giá trị (chưa VAT):</b>{" "}
-                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫ &nbsp;&nbsp;
+                    {contract?.totalPrice?.toLocaleString("vi-VN")} ₫
+                    &nbsp;&nbsp;
                     <b>Thuế VAT:</b>{" "}
                     {contract?.vatAmount
                       ? `${contract?.vatAmount.toLocaleString("vi-VN")} ₫`
@@ -301,7 +311,6 @@ export const ContractDetailDealer = () => {
                   </p>
                 </div>
               </div>
-
               <br />- Hai bên cam kết thực hiện nghiêm chỉnh hợp đồng này.
               <br />- Hợp đồng có hiệu lực kể từ ngày ký.
               <br />- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá
@@ -314,13 +323,17 @@ export const ContractDetailDealer = () => {
           <div className="flex justify-between items-start mt-8 mr-10 ml-10">
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN A</p>
-              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
               <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
 
             <div className="text-center">
               <p className="font-semibold uppercase">ĐẠI DIỆN BÊN B</p>
-              <p className="mt-1 text-sm text-gray-500">(Ký và ghi rõ họ tên)</p>
+              <p className="mt-1 text-sm text-gray-500">
+                (Ký và ghi rõ họ tên)
+              </p>
               <div className="h-30 w-40 mx-auto mt-2"></div>
             </div>
           </div>
@@ -421,7 +434,18 @@ export const ContractDetailDealer = () => {
                   },
                 ]}
               >
-                <InputNumber min={0} className="!w-full" />
+                <InputNumber
+                  min={0}
+                  className="w-full"
+                  size="large"
+                  addonAfter="₫"
+                  formatter={(value) =>
+                    value != null
+                      ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      : ""
+                  }
+                  parser={parseNumberInput}
+                />
               </Form.Item>
 
               <Form.Item
