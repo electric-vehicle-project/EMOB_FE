@@ -93,14 +93,6 @@ export const SaleOrderItemTable = ({ items }: Props) => {
           "0"
         ),
     },
-    {
-      title: "Khuyến mãi",
-      dataIndex: "promotionName",
-      key: "promotionName",
-      align: "center",
-      width: 150,
-      render: (text?: string) => text ?? "-",
-    },
   ];
 
   return (
