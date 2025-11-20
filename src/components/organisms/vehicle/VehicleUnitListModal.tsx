@@ -1,5 +1,5 @@
 // src/components/organisms/vehicle/VehicleUnitListModal.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
   Modal,
   Table,
@@ -15,7 +15,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
-import type { Key } from "react";
+import type { Key, MouseEventHandler } from "react";
 import dayjs from "dayjs";
 import {
   useGetVehicleUnitsByVehicleIdPaged,
@@ -56,11 +56,11 @@ type VehicleUnitRow = {
 const { Text } = Typography;
 
 const STATUS_LABEL_VI: Record<VehicleUnitRow["status"], string> = {
-  NORMAL: "Xe mới (bình thường)",
-  SPECIAL: "Trưng bày / đặc biệt",
-  OLD_STOCK: "Tồn kho cũ",
-  TEST_DRIVE: "Lái thử",
-  RESERVED: "Giữ chỗ",
+  NORMAL: "Xe mới",
+  SPECIAL: "Xe đặc biệt",
+  OLD_STOCK: "Xe tồn kho",
+  TEST_DRIVE: "Xe lái thử",
+  RESERVED: "Xe đã đặt cọc",
   SOLD: "Đã bán",
 };
 
@@ -81,6 +81,17 @@ const SORT_FIELD_OPTIONS = [
 
 type SortField = (typeof SORT_FIELD_OPTIONS)[number]["value"];
 
+const STATUS_FILTER_OPTIONS: {
+  label: string;
+  value: Exclude<VehicleUnitRow["status"], "SOLD">;
+}[] = [
+  { value: "NORMAL", label: STATUS_LABEL_VI.NORMAL },
+  { value: "SPECIAL", label: STATUS_LABEL_VI.SPECIAL },
+  { value: "OLD_STOCK", label: STATUS_LABEL_VI.OLD_STOCK },
+  { value: "TEST_DRIVE", label: STATUS_LABEL_VI.TEST_DRIVE },
+  { value: "RESERVED", label: STATUS_LABEL_VI.RESERVED },
+];
+
 export default function VehicleUnitListModal({
   open,
   onClose,
@@ -92,6 +103,7 @@ export default function VehicleUnitListModal({
 
   const [sortField, setSortField] = useState<SortField>("purchaseDate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [statuses, setStatuses] = useState<VehicleUnitRow["status"][]>([]);
 
   const size = 10;
 
@@ -104,6 +116,7 @@ export default function VehicleUnitListModal({
       setSelectedKeys([]);
       setSortField("purchaseDate");
       setSortDir("desc");
+      setStatuses([]);
     }
   }, [open, vehicleId]);
 
@@ -114,6 +127,7 @@ export default function VehicleUnitListModal({
       size,
       sortField,
       sortDir,
+      statuses: statuses.length ? statuses : undefined,
     },
     {
       enabled: open && !!vehicleId,
@@ -243,14 +257,19 @@ export default function VehicleUnitListModal({
     "vi-VN"
   )} / ${total.toLocaleString("vi-VN")} đơn vị xe`;
 
+  const handleInnerClick: MouseEventHandler<HTMLDivElement> = (e) =>
+    e.stopPropagation();
+
   const FilterContent = () => (
     <Card
-      {...({ onClick: (e: any) => e.stopPropagation() } as any)}
-      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+      onClick={handleInnerClick}
+      className="p-4 bg-white rounded-xl shadow-md w-[260px] flex flex-col gap-4 border border-gray-100"
     >
       <Space direction="vertical" style={{ width: "100%" }}>
         <div>
-          <b className="text-gray-700">Sắp xếp theo</b>
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Sắp xếp theo
+          </span>
           <Select
             className="w-full mt-2"
             value={sortField}
@@ -258,6 +277,7 @@ export default function VehicleUnitListModal({
               setSortField(v);
               setPage(0);
             }}
+            size="middle"
           >
             {SORT_FIELD_OPTIONS.map((opt) => (
               <Select.Option key={opt.value} value={opt.value}>
@@ -268,7 +288,9 @@ export default function VehicleUnitListModal({
         </div>
 
         <div>
-          <b className="text-gray-700">Thứ tự</b>
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Thứ tự
+          </span>
           <Select
             className="w-full mt-2"
             value={sortDir}
@@ -276,9 +298,36 @@ export default function VehicleUnitListModal({
               setSortDir(v);
               setPage(0);
             }}
+            size="middle"
           >
             <Select.Option value="asc">Tăng dần</Select.Option>
             <Select.Option value="desc">Giảm dần</Select.Option>
+          </Select>
+        </div>
+
+        <div>
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Lọc trạng thái
+          </span>
+          <Select
+            className="w-full mt-2"
+            mode="multiple"
+            allowClear
+            maxTagCount="responsive"
+            placeholder="Chọn trạng thái"
+            value={statuses.filter((s) => s !== "SOLD")}
+            onChange={(values) => {
+              const next = values as VehicleUnitRow["status"][];
+              setStatuses(next);
+              setPage(0);
+            }}
+            size="middle"
+          >
+            {STATUS_FILTER_OPTIONS.map((opt) => (
+              <Select.Option key={opt.value} value={opt.value}>
+                {opt.label}
+              </Select.Option>
+            ))}
           </Select>
         </div>
       </Space>
@@ -319,13 +368,18 @@ export default function VehicleUnitListModal({
               trigger="click"
               placement="bottomRight"
               content={<FilterContent />}
+              overlayInnerStyle={{
+                padding: 0,
+                background: "transparent",
+                boxShadow: "none",
+              }}
             >
               <Button
                 type="default"
-                className="flex items-center gap-2 rounded-full !px-3 !h-9 border-gray-300"
+                className="flex items-center gap-2 rounded-full !px-3 !h-9 border-gray-300 bg-white"
               >
                 <SlidersOutlined />
-                <span className="text-sm">Sắp xếp</span>
+                <span className="text-sm">Sắp xếp / Lọc</span>
               </Button>
             </Popover>
           </div>

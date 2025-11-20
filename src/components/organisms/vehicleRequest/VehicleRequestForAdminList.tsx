@@ -53,6 +53,7 @@ const VehicleRequestForAdminList: React.FC = () => {
     "name", // sortField
     "asc", // sortDir
     undefined, // country
+    undefined, // regions
     true // enabled
   );
 

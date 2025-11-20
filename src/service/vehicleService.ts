@@ -1,8 +1,4 @@
 // src/service/vehicleService.ts
-// ==================================
-// EMOB 2025 - Vehicle Service
-// KHÔNG sửa useApi.ts, KHÔNG sửa api.ts
-// ==================================
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -13,7 +9,6 @@ import {
 } from "../hook/useApi";
 import {
   useMutation,
-  useQuery,
   useQueryClient,
   type UseQueryResult,
 } from "@tanstack/react-query";
@@ -109,26 +104,37 @@ export const useGetVehicleUnitsByVehicleId = (
   return { ...query, units, metadata };
 };
 
-// ========== UNITS by MODEL (có params page/size) ==========
-// ========== UNITS by MODEL (có params page/size/sort) ==========
-export const useGetVehicleUnitsByVehicleIdPaged = (
-  modelId: string,
-  params: {
-    page: number;
-    size: number;
-    statuses?: string[];
-    sortField?: string; // purchaseDate theo BE
-    sortDir?: "asc" | "desc" | "ASC" | "DESC";
-  },
-  options?: unknown
-): UseQueryResult<{
+// ========== UNITS by MODEL (có params page/size/filter/sort theo BE) ==========
+type VehicleUnitListParams = {
+  page: number;
+  size: number;
+  statuses?: string[];
+  sortField?: string; // map trực tiếp field sort theo BE
+  sortDir?: "asc" | "desc" | "ASC" | "DESC";
+};
+
+type VehicleUnitListResult = {
   units: unknown[];
   metadata?: { totalElements?: number } | Record<string, unknown>;
-}> => {
-  return useQuery<{
-    units: unknown[];
-    metadata?: { totalElements?: number } | Record<string, unknown>;
-  }>({
+};
+
+export const useGetVehicleUnitsByVehicleIdPaged = (
+  modelId: string,
+  params: VehicleUnitListParams,
+  options?: unknown
+): UseQueryResult<VehicleUnitListResult> => {
+  const hook = createQueryWithPathParamHook(
+    "get-vehicle-units-by-model",
+    `${UNIT_URL}/view-all-by-model`
+  );
+
+  const safeOptions =
+    typeof options === "object" && options !== null
+      ? (options as Record<string, unknown>)
+      : {};
+
+  const mergedOptions: Record<string, unknown> = {
+    ...safeOptions,
     queryKey: [
       "get-vehicle-units-by-model",
       modelId,
@@ -144,12 +150,8 @@ export const useGetVehicleUnitsByVehicleIdPaged = (
       });
       return res.data;
     },
-    refetchOnMount: "always",
-    staleTime: 0,
     refetchOnWindowFocus: false,
-    ...(typeof options === "object" && options !== null
-      ? (options as Record<string, unknown>)
-      : {}),
+    staleTime: 0,
     select: (data: unknown) => {
       type ApiResult = {
         result?: { data?: unknown[]; metadata?: unknown };
@@ -160,7 +162,7 @@ export const useGetVehicleUnitsByVehicleIdPaged = (
       const d = data as ApiResult;
 
       const units = Array.isArray(d.result?.data)
-        ? d.result?.data
+        ? d.result.data ?? []
         : Array.isArray(d.data)
         ? (d.data as unknown[])
         : [];
@@ -170,9 +172,12 @@ export const useGetVehicleUnitsByVehicleIdPaged = (
         | Record<string, unknown>
         | undefined;
 
-      return { units, metadata };
+      const result: VehicleUnitListResult = { units, metadata };
+      return result;
     },
-  });
+  };
+
+  return hook(modelId, mergedOptions) as UseQueryResult<VehicleUnitListResult>;
 };
 
 // ========== ALL UNITS ==========
@@ -235,6 +240,9 @@ export const useGetAIDemandForecast = () => {
     },
   };
 };
+
+
+
 
 // ========== (Giữ lại, nhưng BulkPage không dùng) ==========
 export const useCreateAIDemandForecasts = (vehicleId?: string) => {

@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { Result, Button, Empty, Dropdown, Select, Space } from "antd";
 import { SlidersOutlined, PlusOutlined } from "@ant-design/icons";
 import type { IDealer } from "../../../model/Dealer";
+
 import { SearchBar } from "../../molecules/SearchBar";
 import { DeleteConfirm } from "../DeleteConfirm";
 import { useDebounce } from "../../../hook/useDebounce";
@@ -25,7 +26,14 @@ import type { DealerApiModel } from "../../../model/Dealer";
 import { toast } from "react-toastify";
 import { DealerModal } from "./DealerModal";
 import { Button as EmobButton } from "../../atoms/Button";
+
 export const DealerList = () => {
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
+  const canView = role === "ADMIN" || role === "EVM_STAFF";
+  const canModify = role === "ADMIN";
+
+  // ================== STATE ==================
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
@@ -33,29 +41,25 @@ export const DealerList = () => {
   const [editDealer, setEditDealer] = useState<IDealer | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const [current, setCurrent] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
-  // FILTER STATE
-  const [sortField, setSortField] = useState("createdAt");
+  const [sortField, setSortField] = useState<string>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
   const [country, setCountry] = useState<string | undefined>();
+  const [regions, setRegions] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // ROLE
-  const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role || "";
-  const canView = role === "ADMIN" || role === "EVM_STAFF";
-  const canModify = role === "ADMIN";
-
-  // MAIN DEALER QUERY
+  // ================== MAIN QUERY (SERVER FILTER + SORT) ==================
   const { data, refetch, isLoading, isError, error } = useDealersQuery(
-    current - 1,
+    page - 1,
     pageSize,
     debouncedSearch,
     sortField,
     sortDir,
-    country
+    country,
+    regions
   );
 
   const dealers: IDealer[] = useMemo(() => {
@@ -74,7 +78,7 @@ export const DealerList = () => {
 
   const total = data?.result?.metadata?.totalElements ?? 0;
 
-  // LOAD ALL COUNTRIES FOR DROPDOWN
+  // ================== LOAD COUNTRY LIST ==================
   const { data: allDealerResp } = useDealersQuery(
     0,
     9999,
@@ -93,7 +97,7 @@ export const DealerList = () => {
     return Array.from(new Set(list));
   }, [allDealerResp]);
 
-  // MUTATIONS
+  // ================== MUTATIONS ==================
   const createDealer = useCreateDealerMutation();
   const updateDealer = useUpdateDealerMutation();
   const deleteDealer = useDeleteDealerMutation();
@@ -118,35 +122,54 @@ export const DealerList = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
     await deleteDealer.mutateAsync(deleteId);
-    toast.success("Đã xóa đại lý");
+    toast.success("Đã xoá đại lý");
     setDeleteId(null);
     refetch();
   };
 
-  // FILTER DROPDOWN CONTENT
+  // ================== FILTER CONTENT ==================
   const FilterContent = () => (
     <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
       <Space direction="vertical" style={{ width: "100%" }}>
-        {/* COUNTRY FILTER */}
+        {/* COUNTRY */}
         <div>
           <b className="text-gray-700">Quốc gia</b>
           <Select
             allowClear
             className="w-full mt-2"
             value={country}
-            onChange={(val) => {
-              setCountry(val);
-              setCurrent(1);
+            onChange={(v) => {
+              setCountry(v);
+              setPage(1);
             }}
           >
-            {countryOptions?.map((c) => (
+            {countryOptions.map((c) => (
               <Select.Option key={c} value={c}>
                 {c}
               </Select.Option>
             ))}
+          </Select>
+        </div>
+
+        {/* REGIONS */}
+        <div>
+          <b className="text-gray-700">Vùng</b>
+          <Select
+            mode="multiple"
+            allowClear
+            className="w-full mt-2"
+            value={regions}
+            onChange={(v) => {
+              setRegions(v);
+              setPage(1);
+            }}
+          >
+            <Select.Option value="NORTH">Miền Bắc</Select.Option>
+            <Select.Option value="CENTRAL">Miền Trung</Select.Option>
+            <Select.Option value="SOUTH">Miền Nam</Select.Option>
           </Select>
         </div>
 
@@ -158,7 +181,7 @@ export const DealerList = () => {
             value={sortField}
             onChange={(v) => {
               setSortField(v);
-              setCurrent(1);
+              setPage(1);
             }}
           >
             <Select.Option value="createdAt">Ngày tạo</Select.Option>
@@ -175,7 +198,7 @@ export const DealerList = () => {
             value={sortDir}
             onChange={(v) => {
               setSortDir(v);
-              setCurrent(1);
+              setPage(1);
             }}
           >
             <Select.Option value="asc">Tăng dần</Select.Option>
@@ -186,7 +209,7 @@ export const DealerList = () => {
     </div>
   );
 
-  // PERMISSIONS
+  // ================== PERMISSION ==================
   if (!canView)
     return (
       <Result
@@ -207,6 +230,7 @@ export const DealerList = () => {
       />
     );
 
+  // ================== UI ==================
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* SEARCH + FILTER */}
@@ -258,12 +282,12 @@ export const DealerList = () => {
           onDelete={(id) => setDeleteId(id)}
           canModify={canModify}
           pagination={{
-            current,
-            pageSize,
+            current: page,
+            pageSize: pageSize,
             total,
             showSizeChanger: true,
             onChange: (p, s) => {
-              setCurrent(p);
+              setPage(p);
               setPageSize(s || pageSize);
             },
           }}
@@ -272,13 +296,13 @@ export const DealerList = () => {
           onSortChange={(f, d) => {
             setSortField(f ?? "createdAt");
             setSortDir(d ?? "desc");
-            setCurrent(1);
+            setPage(1);
           }}
           countryOptions={countryOptions}
           activeCountry={country}
           onFilterCountry={(c) => {
             setCountry(c);
-            setCurrent(1);
+            setPage(1);
           }}
         />
       ) : (

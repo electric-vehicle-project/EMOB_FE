@@ -1,7 +1,6 @@
 import { Form, Input, Select } from "antd";
 import type { FormInstance } from "antd/es/form";
-import type { IDealer } from "../../../model/Dealer";
-import type { DealerFormValues, Region } from "./dealerUtils";
+import type { DealerFormValues } from "./dealerUtils";
 import { normalizeDealerValues } from "./dealerUtils";
 
 interface Props {
@@ -9,32 +8,22 @@ interface Props {
   form: FormInstance<DealerFormValues>;
   isEdit?: boolean;
   currentId?: string;
-  existingDealers: IDealer[];
   onFinish: (values: DealerFormValues) => void;
-  onCanSubmitChange?: (can: boolean) => void;
   baseline: DealerFormValues | null;
 }
 
-const REGION_OPTIONS: { label: string; value: Region }[] = [
+const REGION_OPTIONS = [
   { label: "Miền Bắc", value: "NORTH" },
   { label: "Miền Trung", value: "CENTRAL" },
   { label: "Miền Nam", value: "SOUTH" },
 ];
 
-export const DealerForm: React.FC<Props> = ({
-  form,
-  isEdit,
-  currentId,
-  existingDealers,
-  onFinish,
-}) => {
+export const DealerForm = ({ form, onFinish }: Props) => {
   return (
     <Form<DealerFormValues>
       layout="vertical"
       form={form}
       autoComplete="off"
-      requiredMark={true} // hoặc xoá dòng này, mặc định là true
-      className="space-y-2"
       validateTrigger="onSubmit"
       onFinish={(values) => onFinish(normalizeDealerValues(values))}
     >
@@ -54,27 +43,8 @@ export const DealerForm: React.FC<Props> = ({
         name="emailContact"
         label="Email liên hệ"
         rules={[
-          { type: "email", message: "Email không hợp lệ" },
           { required: true, message: "Vui lòng nhập email liên hệ" },
-          {
-            validator: (_, value) => {
-              if (!value) return Promise.resolve();
-              const normalized = String(value).trim().toLowerCase();
-
-              const duplicated = existingDealers.some((d) => {
-                const email = (d.emailContact || "").trim().toLowerCase();
-                if (!email) return false;
-                if (isEdit && currentId && d.id === currentId) return false;
-                return email === normalized;
-              });
-
-              return duplicated
-                ? Promise.reject(
-                    new Error("Email này đã tồn tại trong hệ thống")
-                  )
-                : Promise.resolve();
-            },
-          },
+          { type: "email", message: "Email không hợp lệ" },
         ]}
       >
         <Input placeholder="VD: vinfast@company.com" allowClear />
@@ -88,25 +58,6 @@ export const DealerForm: React.FC<Props> = ({
           {
             pattern: /^(0|\+84)(1|2|3|4|5|6|7|8|9)\d{8}$/,
             message: "Số điện thoại không hợp lệ",
-          },
-          {
-            validator: (_, value) => {
-              if (!value) return Promise.resolve();
-              const normalized = String(value).trim();
-
-              const duplicated = existingDealers.some((d) => {
-                const phone = (d.phoneContact || "").trim();
-                if (!phone) return false;
-                if (isEdit && currentId && d.id === currentId) return false;
-                return phone === normalized;
-              });
-
-              return duplicated
-                ? Promise.reject(
-                    new Error("Số điện thoại này đã tồn tại trong hệ thống")
-                  )
-                : Promise.resolve();
-            },
           },
         ]}
       >
@@ -127,11 +78,7 @@ export const DealerForm: React.FC<Props> = ({
           label="Khu vực"
           rules={[{ required: true, message: "Vui lòng chọn khu vực" }]}
         >
-          <Select
-            options={REGION_OPTIONS}
-            placeholder="Chọn khu vực"
-            allowClear={false}
-          />
+          <Select options={REGION_OPTIONS} placeholder="Chọn khu vực" />
         </Form.Item>
       </div>
 

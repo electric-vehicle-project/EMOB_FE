@@ -45,8 +45,6 @@ export const AccountList = () => {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [filterRole, setFilterRole] = useState<string | undefined>();
-
-  /* MULTI FILTER STATUS */
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
 
   const [filterOpen, setFilterOpen] = useState(false);
@@ -66,13 +64,29 @@ export const AccountList = () => {
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
+  /* ======== CALL API ĐÚNG CHUẨN BACKEND ======== */
   const adminQuery = useGetAccountsByAdmin(
-    { page, size: pageSize, sortField, sortDir },
+    {
+      page,
+      size: pageSize,
+      sortField,
+      sortDir,
+      keyword: debounced || undefined,
+      statuses: filterStatus.length ? filterStatus : undefined,
+      roles: filterRole ? [filterRole] : undefined,
+    },
     { enabled: isAdmin }
   );
 
   const managerQuery = useGetAccountsByManager(
-    { page, size: pageSize, sortField, sortDir },
+    {
+      page,
+      size: pageSize,
+      sortField,
+      sortDir,
+      keyword: debounced || undefined,
+      statuses: filterStatus.length ? filterStatus : undefined,
+    },
     { enabled: isManager }
   );
 
@@ -103,38 +117,11 @@ export const AccountList = () => {
   const isLoading = isAdmin ? adminQuery.isLoading : managerQuery.isLoading;
   const refetch = isAdmin ? adminQuery.refetch : managerQuery.refetch;
 
-  const accounts: IAccount[] = useMemo(
-    () => (isAdmin ? adminQuery.data : managerQuery.data) ?? [],
-    [isAdmin, adminQuery.data, managerQuery.data]
-  );
+  /* == FE KHÔNG LỌC SORT SEARCH — DÙNG DATA TỪ BACKEND == */
+  const accounts: IAccount[] =
+    (isAdmin ? adminQuery.data : managerQuery.data) ?? [];
 
   const meta = (isAdmin ? adminQuery.meta : managerQuery.meta) ?? null;
-
-  /* ======================= SEARCH + FILTER ======================= */
-  const filteredAccounts: IAccount[] = useMemo(() => {
-    let list = accounts;
-
-    const keyword = debounced.trim().toLowerCase();
-    if (keyword) {
-      list = list.filter(
-        (acc) =>
-          acc.fullName?.toLowerCase().includes(keyword) ||
-          acc.email?.toLowerCase().includes(keyword) ||
-          acc.phone?.includes(keyword)
-      );
-    }
-
-    if (isAdmin && filterRole) {
-      list = list.filter((acc) => acc.role === filterRole);
-    }
-
-    /* MULTI STATUS FILTER */
-    if (filterStatus.length > 0) {
-      list = list.filter((acc) => filterStatus.includes(acc.status));
-    }
-
-    return list;
-  }, [accounts, debounced, filterRole, filterStatus, isAdmin]);
 
   if (!isAdmin && !isManager) {
     return (
@@ -327,9 +314,9 @@ export const AccountList = () => {
         )}
       </div>
 
-      {filteredAccounts.length > 0 ? (
+      {accounts.length > 0 ? (
         <AccountTable
-          data={filteredAccounts}
+          data={accounts}
           loading={isLoading}
           canModify
           pagination={paginationConfig}
