@@ -10,7 +10,7 @@ interface Props {
   loading: boolean;
   selectedStatuses: string[];
   selectedDate: Date;
-  onRefetch?: () => void; 
+  onRefetch?: () => void;
 }
 
 export const TestDriveCalendar = ({
@@ -41,6 +41,15 @@ export const TestDriveCalendar = ({
     CANCELLED: "#cf1322", // đỏ
   };
 
+  // Nhãn tiếng Việt
+  const statusLabelMap: Record<string, string> = {
+    PENDING: "CHỜ XỬ LÍ",
+    CONFIRMED: "ĐÃ XÁC NHẬN",
+    COMPLETED: "HOÀN THÀNH",
+    CANCELLED: "ĐÃ HỦY",
+  };
+
+
   // Render từng ô
   const getCell = (day: dayjs.Dayjs, hour: string) => {
     const match = filtered.find(
@@ -55,7 +64,7 @@ export const TestDriveCalendar = ({
 
       return (
         <Tooltip
-          title={`Trạng thái: ${match.status} • Thời lượng: ${duration} phút`}
+          title={`Trạng thái: ${statusLabelMap[match.status] || match.status} • Thời lượng: ${duration} phút`}
           placement="top"
         >
           <div

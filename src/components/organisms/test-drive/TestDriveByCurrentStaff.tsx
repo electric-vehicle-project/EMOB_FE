@@ -17,8 +17,6 @@ import { TestDriveCalendar } from "../../molecules/test-drive/TestDriveCalendar"
 import { TestDriveCreateModal } from "../../molecules/test-drive/TestDriveCreateModal";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
 import dayjs from "dayjs";
-import { ROUTES } from "../../../model/routePaths";
-import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -58,7 +56,6 @@ export const TestDriveByCurrentStaff = () => {
     const testDrives = data?.result?.data ?? [];
     const total = data?.result?.metadata?.totalElements ?? 0;
 
-    const navigate = useNavigate();
 
     // Lấy danh sách ngày có lịch
     const scheduledDates = new Set(
@@ -131,12 +128,6 @@ export const TestDriveByCurrentStaff = () => {
         <div className="flex gap-6">
             {/* SIDEBAR */}
             <div className="flex flex-col gap-4 w-[320px]">
-                <span>
-                    <b className="text-lg text-[#627254]">
-                        Lịch theo tuần của tôi
-                    </b>
-                </span>
-
                 <Card>
                     <Calendar
                         fullscreen={false}
@@ -165,15 +156,6 @@ export const TestDriveByCurrentStaff = () => {
                         }}
                     />
                 </Card>
-
-                <b
-                    onClick={() =>
-                        navigate(`/${role.toLowerCase()}/${ROUTES.TEST_DRIVE}`)
-                    }
-                    className="underline text-[#627254] cursor-pointer hover:text-[#4f5a42]"
-                >
-                    Xem lịch lái thử của toàn bộ Đại lý
-                </b>
 
                 <Divider style={{ margin: 10 }} />
 
