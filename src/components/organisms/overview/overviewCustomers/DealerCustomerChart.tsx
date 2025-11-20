@@ -1,4 +1,4 @@
-import { ResponsiveBar } from "@nivo/bar";
+import { ResponsiveBar, type BarDatum } from "@nivo/bar";
 import { motion } from "framer-motion";
 
 interface ChartData {
@@ -51,8 +51,8 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
       : undefined;
 
   // Tính toán tổng / trung bình
-  const total = data.reduce((sum, d) => sum + d.value, 0);
-  const average = total / data.length;
+  // const total = data.reduce((sum, d) => sum + d.value, 0);
+  // const average = total / data.length;
 
   // title
   const chartTitle =
@@ -81,7 +81,7 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
         <div style={{ height: 380 }}>
           <ResponsiveBar
             colors={["#5e6e51"]}
-            data={data}
+            data={data as unknown as BarDatum[]}
             keys={["value"]}
             indexBy="customer"
             margin={{ top: 20, right: 40, bottom: 60, left: 90 }}
@@ -106,8 +106,10 @@ export default function DealerCustomerChart({ data, metric, title }: Props) {
             enableGridY
             gridYValues={tickValues}
             theme={{
-              textColor: "#0f172a",
-              fontSize: 11,
+              text: {
+                fill: "#475569",
+                fontSize: 11,
+              },
               grid: { line: { stroke: "#e5e7eb", strokeWidth: 1 } },
               axis: {
                 ticks: { text: { fill: "#475569", fontSize: 11 } },
