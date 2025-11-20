@@ -100,7 +100,7 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
     ...(detailItems || [])
       .filter((i: any) => i.promotionId)
       .map((i: any) => ({
-        label: i.promotionName || i.promotionId,
+        label: i.promotionName,
         value: i.promotionId,
       })),
   ];

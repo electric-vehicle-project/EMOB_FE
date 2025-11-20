@@ -13,6 +13,7 @@ import { Card } from "../../atoms/Card";
 import { SlidersOutlined } from "@ant-design/icons";
 import { SearchBar } from "../../molecules/SearchBar";
 import { UpdateAmountPaidModal } from "../../../page/installmentPlan/UpdateInstallmentPlanModal";
+import { InstallmentPlanDetailModal } from "../../../page/installmentPlan/ViewInstallmentPlanCustomerModal";
 
 export const InstallmentPlanCustomerList = () => {
   const [search, setSearch] = useState("");
@@ -30,14 +31,16 @@ export const InstallmentPlanCustomerList = () => {
   const role = (user as { role?: string } | null)?.role || "";
   const canView = role === "DEALER_STAFF" || role === "MANAGER";
 
-  // ---------------------------------------------
-  // Modal Update Amount Paid
-  // ---------------------------------------------
+  // Modal Update
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{
     id: string;
     amountPaid: number;
   } | null>(null);
+
+  // Modal Detail
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   useEffect(() => setCurrent(1), [debouncedSearch]);
 
@@ -59,14 +62,15 @@ export const InstallmentPlanCustomerList = () => {
   );
 
   const { data, refetch, isLoading, isError, error } = customerPlansQuery;
-  console.log("hi");
+
   const installmentPlans: IInstallmentPlan[] = useMemo(() => {
     const raw: InstallmentPlanApiModel[] = data?.result?.data ?? [];
-
     return raw;
   }, [data]);
+
   const total = data?.result?.metadata?.totalElements ?? 0;
 
+  // Filter Dropdown Content
   const FilterContent = () => (
     <Card
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
@@ -102,8 +106,8 @@ export const InstallmentPlanCustomerList = () => {
               setCurrent(1);
             }}
           >
-            <Select.Option value="effectiveDate">Ngày hiệu lực</Select.Option>
             <Select.Option value="downDate">Ngày đặt cọc</Select.Option>
+            <Select.Option value="totalAmount">Tổng tiền</Select.Option>
             <Select.Option value="nextDueDate">
               Ngày thanh toán tiếp theo
             </Select.Option>
@@ -180,6 +184,10 @@ export const InstallmentPlanCustomerList = () => {
             setSelectedPlan({ id, amountPaid });
             setUpdateModalOpen(true);
           }}
+          onViewDetail={(id) => {
+            setDetailId(id);
+            setDetailOpen(true);
+          }}
           pagination={{
             current,
             pageSize,
@@ -196,6 +204,7 @@ export const InstallmentPlanCustomerList = () => {
         <Empty description="Không có dữ liệu" />
       )}
 
+      {/* Modal Update */}
       {selectedPlan && (
         <UpdateAmountPaidModal
           id={selectedPlan.id}
@@ -205,6 +214,18 @@ export const InstallmentPlanCustomerList = () => {
             refetch();
           }}
           currentAmount={selectedPlan.amountPaid}
+        />
+      )}
+
+      {/* Modal Detail */}
+      {detailId && (
+        <InstallmentPlanDetailModal
+          id={detailId}
+          open={detailOpen}
+          onClose={() => {
+            setDetailOpen(false);
+            setDetailId(null);
+          }}
         />
       )}
     </>
