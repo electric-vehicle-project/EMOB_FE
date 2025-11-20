@@ -19,14 +19,14 @@ export const usePromotionList = (
   sortField = "createAt",
   sortDir: "asc" | "desc" = "desc"
 ) =>
-  createQueryHook("promotionList", `${BASE_URL}/view-all/{scope}`)(
+  createQueryHook("promotionList", `${BASE_URL}/view-all`)(
     {},
     {
       scopes: scope,
       page,
       size,
       keyword,
-      statuses, // <--- đúng key, đúng kiểu, sẽ ra ?statuses=ACTIVE
+      statuses,
       sortField,
       sortDir,
     }
