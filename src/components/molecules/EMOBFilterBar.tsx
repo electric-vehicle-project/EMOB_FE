@@ -57,6 +57,7 @@ export const EMOBFilterBar = ({
           className="text-gray-600 hover:text-black"
         />
       </Dropdown>
+      
     </div>
   );
 };

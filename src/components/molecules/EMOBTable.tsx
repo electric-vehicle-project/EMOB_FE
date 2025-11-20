@@ -40,26 +40,24 @@ export function EMOBTable<T extends object>({
 
   return (
     <ConfigProvider>
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        {/* FILTER BAR */}
-        {filterBar && <div className="mb-2">{filterBar}</div>}
+      {/* FILTER BAR */}
+      {filterBar && <div className="mb-2">{filterBar}</div>}
 
-        <Table<T>
-          {...props}
-          bordered
-          className="bg-white rounded-lg shadow-sm"
-          tableLayout="auto"
-          columns={
-            [...(columns || []), actionColumn].filter(Boolean) as ColumnsType<T>
-          }
-          pagination={{
-            position: ["bottomCenter"],
-            showSizeChanger: true,
-            showTotal: (t) => `Tổng cộng ${t} mục`,
-            ...pagination,
-          }}
-        />
-      </div>
+      <Table<T>
+        {...props}
+        bordered
+        className="bg-white rounded-lg shadow-sm"
+        tableLayout="auto"
+        columns={
+          [...(columns || []), actionColumn].filter(Boolean) as ColumnsType<T>
+        }
+        pagination={{
+          position: ["bottomCenter"],
+          showSizeChanger: true,
+          showTotal: (t) => `Tổng cộng ${t} mục`,
+          ...pagination,
+        }}
+      />
     </ConfigProvider>
   );
 }

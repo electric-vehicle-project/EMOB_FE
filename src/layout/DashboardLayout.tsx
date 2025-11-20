@@ -143,13 +143,7 @@ function DashboardLayout() {
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
-
-          // danh sách trả góp của khách hàng
-          // getItem(
-          //   "Danh mục trả góp khách hàng",
-          //   ROUTES.INSTALLMENT_PLAN_CUSTOMERS,
-          //   <FileTextOutlined />
-          // ),
+          getItem("Phản hồi khách hàng", ROUTES.REPORT, <TagsOutlined />),
           getItem("Lịch lái thử", ROUTES.TEST_DRIVE, <CalendarOutlined />),
 
           getItem(
@@ -185,11 +179,13 @@ function DashboardLayout() {
           getItem("Đơn bán", ROUTES.SALE_ORDER, <ShoppingCartOutlined />),
           getItem("Hợp đồng", ROUTES.CONTRACT, <FileDoneOutlined />),
           getItem("Giao hàng", ROUTES.DELIVERY_CUSTOMERS, <SendOutlined />),
+
           getItem(
             "Danh mục trả góp",
             ROUTES.INSTALLMENT_PLAN,
             <FileTextOutlined />
           ),
+          getItem("Phản hồi khách hàng", ROUTES.REPORT, <TagsOutlined />),
           // danh sách trả góp của khách hàng
           // getItem(
           //   "Danh mục trả góp khách hàng",

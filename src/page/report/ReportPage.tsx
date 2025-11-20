@@ -222,7 +222,16 @@ export const ReportPage = () => {
         <h2 className="text-xl font-semibold text-[#627254]">
           Quản lý Báo cáo
         </h2>
+      </div>
 
+      {/* FILTER BAR */}
+      <div className="flex justify-between items-center">
+        <EMOBFilterBar
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          onReset={resetFilters}
+          filterDropdown={filterContent}
+        />
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -232,14 +241,6 @@ export const ReportPage = () => {
           Thêm báo cáo
         </Button>
       </div>
-
-      {/* FILTER BAR */}
-      <EMOBFilterBar
-        keyword={keyword}
-        onKeywordChange={setKeyword}
-        onReset={resetFilters}
-        filterDropdown={filterContent}
-      />
 
       {/* TABLE */}
       <ReportTable
