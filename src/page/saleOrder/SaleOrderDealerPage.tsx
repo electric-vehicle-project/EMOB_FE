@@ -1,6 +1,5 @@
-// src/page/saleOrder/SaleOrderDealerPage.tsx
 import { useState, useMemo } from "react";
-import { Button, Select } from "antd";
+import { Select } from "antd";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
@@ -44,8 +43,8 @@ const SaleOrderDealerPage: React.FC = () => {
 
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
-  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>();
 
+  const [statuses, setStatuses] = useState<OrderStatus[] | undefined>();
   const [sortField, setSortField] =
     useState<keyof SaleOrderResponse>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -82,7 +81,7 @@ const SaleOrderDealerPage: React.FC = () => {
         <b>Trạng thái</b>
         <Select
           mode="multiple"
-          className="w-full mt-2"
+          className="w-full mt-2 emob-multi-select"
           allowClear
           placeholder="Trạng thái"
           value={statuses}
@@ -118,31 +117,30 @@ const SaleOrderDealerPage: React.FC = () => {
       </div>
     </div>
   );
+  const rightLink =
+    role === "MANAGER" ? (
+      <b
+        className="text-green-600 underline hover:text-green-800 text-sm cursor-pointer"
+        onClick={() => navigate("/manager/sale-order/staff-summary")}
+      >
+        Xem doanh số theo nhân viên
+      </b>
+    ) : (
+      <b
+        className="text-green-600 underline hover:text-green-800 text-sm cursor-pointer"
+        onClick={() => navigate("/dealer_staff/sale-order/staff")}
+      >
+        Xem đơn hàng của tôi
+      </b>
+    );
 
   return (
     <CardWrapper
       title="Đơn hàng của đại lý"
       subtitle="Quản lý các đơn hàng thuộc đại lý hiện tại"
       variant="dashboard"
+      rightLink={rightLink}
     >
-      <div className="flex justify-end mb-4">
-        {role === "MANAGER" ? (
-          <Button
-            type="primary"
-            onClick={() => navigate("/manager/sale-order/staff-summary")}
-          >
-            Xem doanh số theo nhân viên
-          </Button>
-        ) : (
-          <Button
-            type="primary"
-            onClick={() => navigate("/dealer_staff/sale-order/staff")}
-          >
-            Xem đơn hàng của tôi
-          </Button>
-        )}
-      </div>
-
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}

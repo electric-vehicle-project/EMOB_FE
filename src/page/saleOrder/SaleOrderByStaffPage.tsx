@@ -11,16 +11,12 @@ import type { SalesByStaffResponse } from "../../model/SaleOrder";
 import { toast } from "react-toastify";
 
 const SaleOrderByStaffPage: React.FC = () => {
-  // ==============================
-  // 🔍 State: Sắp xếp
-  // ==============================
+  //  State: Sắp xếp
   const [sortField, setSortField] =
     useState<keyof SalesByStaffResponse>("amount");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // ==============================
-  // ⚙️ Query Params
-  // ==============================
+  //  Query Params
   const params = useMemo(
     () => ({
       page: 0,
@@ -31,36 +27,30 @@ const SaleOrderByStaffPage: React.FC = () => {
     [sortField, sortDir]
   );
 
-  // ==============================
-  // 📦 API: Doanh số nhân viên
-  // ==============================
+  //  API: Doanh số nhân viên
   const { data, isLoading, isFetching, refetch, isError } =
     useSalesByStaff(params);
 
-  // ==============================
-  // 👤 API: Danh sách nhân viên
-  // ==============================
-  const { data: accountsData } = useGetAccountsByManager(0, 50);
+  //  API: Danh sách nhân viên
+  const { data: accountsData } = useGetAccountsByManager({
+    page: 0,
+    size: 50,
+  });
+
   const accountOptions = mapToSelectOptions(accountsData, "fullName", "id");
 
-  // ==============================
-  // 🚨 Xử lý lỗi
-  // ==============================
+  //  Xử lý lỗi
   useEffect(() => {
     if (isError) toast.error("Không thể tải dữ liệu doanh số!");
   }, [isError]);
 
-  // ==============================
-  // 🔄 Refetch khi sort thay đổi
-  // ==============================
+  //  Refetch khi sort thay đổi
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortDir]);
 
-  // ==============================
-  // 🧩 Mapping dữ liệu hiển thị
-  // ==============================
+  //  Mapping dữ liệu hiển thị
   const staffSales: SalesByStaffResponse[] = useMemo(() => {
     const raw = data?.result?.data ?? data?.data ?? [];
     return raw.map((s: SalesByStaffResponse, index: number) => {
@@ -71,9 +61,7 @@ const SaleOrderByStaffPage: React.FC = () => {
     });
   }, [data, accountOptions]);
 
-  // ==============================
-  // 🖼️ Render UI (hiệu ứng kết hợp)
-  // ==============================
+  //  Render UI (hiệu ứng kết hợp)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

@@ -30,24 +30,32 @@ export const PromotionDetailModal = ({ open, onClose, promotionId }: Props) => {
           <p>
             <b>Loại:</b>{" "}
             <Tag color="purple">
-              {promotion.type === "PERCENTAGE"
-                ? "Giảm theo %"
-                : promotion.type === "FIXED_AMOUNT"
-                ? "Giảm số tiền"
-                : "Điểm thưởng"}
+              {promotion.type
+                ? promotion.type === "PERCENTAGE"
+                  ? "Giảm theo %"
+                  : promotion.type === "FIXED_AMOUNT"
+                  ? "Giảm số tiền"
+                  : "Điểm thưởng"
+                : "—"}
             </Tag>
           </p>
 
           <p>
             <b>Giá trị:</b>{" "}
-            {promotion.type === "PERCENTAGE"
-              ? `${promotion.value}%`
-              : `${promotion.value?.toLocaleString("vi-VN")} ₫`}
+            {promotion.value != null
+              ? promotion.type === "PERCENTAGE"
+                ? `${promotion.value}%`
+                : `${promotion.value.toLocaleString("vi-VN")} ₫`
+              : "—"}
           </p>
 
           <p>
-            <b>Thời gian:</b> {dayjs(promotion.startDate).format("DD/MM/YYYY")}{" "}
-            – {dayjs(promotion.endDate).format("DD/MM/YYYY")}
+            <b>Thời gian:</b>{" "}
+            {promotion.startDate && promotion.endDate
+              ? `${dayjs(promotion.startDate).format("DD/MM/YYYY")} – ${dayjs(
+                  promotion.endDate
+                ).format("DD/MM/YYYY")}`
+              : "—"}
           </p>
 
           <p>

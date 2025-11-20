@@ -148,7 +148,6 @@ export const useSaleOrderCompleteDirect = () => {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Đơn hàng đã được hoàn tất");
       queryClient.invalidateQueries({
         queryKey: ["saleOrderListCurrentDealer"],
       });

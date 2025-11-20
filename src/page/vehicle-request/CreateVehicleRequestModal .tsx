@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
-import { Modal, Form, Button, message } from "antd";
+import { Modal, Form, Button } from "antd";
 import TextInput from "../../components/atoms/TextInput";
 import NumberInput from "../../components/atoms/NumberInput";
 import SelectInput from "../../components/atoms/SelectInput";
@@ -8,6 +8,7 @@ import { useCreateVehicleRequest } from "../../service/vehicleRequestService";
 import { useGetVehicles } from "../../service/vehicleService";
 import type { NamePath } from "antd/es/form/interface";
 import { PlusOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
 
 /**
  * Modal tạo yêu cầu xe (hỗ trợ thêm nhiều xe trong 1 request)
@@ -43,12 +44,12 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
 
     try {
       await createVehicleRequest(payload);
-      message.success("Tạo yêu cầu thành công!");
+      toast.success("Tạo yêu cầu thành công!");
       onSuccess?.();
       form.resetFields();
       onClose?.();
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || "Không thể tạo yêu cầu");
+    } catch {
+      toast.error("Chưa có chính sách cho mẫu xe này");
     }
   };
 
