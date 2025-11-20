@@ -14,7 +14,6 @@ import {
   Empty,
 } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { useNavigate } from "react-router-dom";
 import {
   useGetVehicleById,
   useCreateVehicleUnitsBulk,
@@ -79,18 +78,26 @@ const topColorOf = (colors?: ApiColorForecast[]) => {
 };
 
 type VehicleBulkPageProps = {
-  onClose?: () => void;
   open: boolean;
   vehicleId?: string;
+  /** Đóng modal bulk (cancel, đóng X, hủy confirm) */
+  onClose?: () => void;
+  /**
+   * Gọi khi tạo lô thành công (AI hoặc thủ công).
+   * Parent dùng để:
+   * - Đóng modal bulk.
+   * - (nếu muốn) refetch list lô xe ở ngoài.
+   */
+  onSuccess?: () => void;
 };
 
 export const VehicleBulkPage = ({
-  onClose,
   open,
   vehicleId,
+  onClose,
+  onSuccess,
 }: VehicleBulkPageProps) => {
   const [form] = Form.useForm<FormValues>();
-  const navigate = useNavigate();
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role ?? "EVM_STAFF";
 
@@ -271,6 +278,21 @@ export const VehicleBulkPage = ({
     );
   };
 
+  // ================= Đóng sau khi tạo thành công =================
+  const handleAfterSuccess = (message?: string) => {
+    if (message) toast.success(message);
+    setForecastOpen(false); // tắt modal AI nếu đang mở
+    // reset flag loading AI (phòng khi bị kẹt state)
+    setApplyingFromAi(false);
+    setApplyingColor(null);
+    // parent đóng modal bulk
+    if (onSuccess) {
+      onSuccess();
+    } else if (onClose) {
+      onClose();
+    }
+  };
+
   const createBatchesFromSuggestions = async (targets: ColorSuggestion[]) => {
     if (!vehicleId) {
       toast.error("Thiếu vehicleId. Vui lòng quay lại.");
@@ -293,18 +315,18 @@ export const VehicleBulkPage = ({
         });
         totalCreated += s.quantity;
       }
+
       if (totalCreated > 0) {
-        toast.success(
+        handleAfterSuccess(
           `Đã nhập tổng cộng ${totalCreated.toLocaleString(
             "vi-VN"
           )} xe theo gợi ý AI.`
         );
-        setForecastOpen(false);
-        onClose?.();
       }
     } catch {
       toast.error("Không thể nhập lô theo gợi ý. Vui lòng thử lại.");
     } finally {
+      // nếu handleAfterSuccess đã được gọi, modal bulk sẽ unmount, nhưng đặt lại state cho an toàn
       setApplyingFromAi(false);
       setApplyingColor(null);
     }
@@ -324,7 +346,7 @@ export const VehicleBulkPage = ({
     await createBatchesFromSuggestions(positiveSuggestions);
   };
 
-  // ================= Submit + Hủy =================
+  // ================= Submit + Hủy (thủ công) =================
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
       toast.error("Thiếu vehicleId. Vui lòng quay lại.");
@@ -339,13 +361,11 @@ export const VehicleBulkPage = ({
         status: values.status,
       });
 
-      toast.success(
+      handleAfterSuccess(
         `Nhập ${values.quantity} xe (${
           values.status
         }) thành công — Giá/xe: ${previewPrice.toLocaleString("vi-VN")}₫`
       );
-
-      onClose?.();
     } catch {
       toast.error("Không thể nhập đơn vị xe. Vui lòng thử lại.");
     }
@@ -353,7 +373,7 @@ export const VehicleBulkPage = ({
 
   const handleCancelBulk = () => {
     if (!form.isFieldsTouched()) {
-      navigate(-1);
+      onClose?.();
       return;
     }
     setCancelConfirmOpen(true);
@@ -371,7 +391,13 @@ export const VehicleBulkPage = ({
   }, []);
 
   return (
-    <Modal open={open} footer={null} width={800} onCancel={onClose}>
+    <Modal
+      open={open}
+      footer={null}
+      width={800}
+      onCancel={onClose}
+      destroyOnClose
+    >
       <Card
         bordered={false}
         className="w-full max-w-5xl shadow-sm rounded-2xl border border-gray-100 overflow-hidden bg-white"
@@ -660,16 +686,7 @@ export const VehicleBulkPage = ({
         footer={null}
         width={920}
         destroyOnClose
-        title={
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-[#414d38]">
-              🔮 Dự báo nhu cầu nhập kho
-            </span>
-            <span className="text-xs text-gray-500">
-              Dựa trên dữ liệu 3 tháng gần nhất
-            </span>
-          </div>
-        }
+        maskClosable={!applyingFromAi}
       >
         {loadingForecast ? (
           <Skeleton active paragraph={{ rows: 6 }} />
@@ -857,7 +874,7 @@ export const VehicleBulkPage = ({
         onCancel={() => setCancelConfirmOpen(false)}
         onConfirm={() => {
           setCancelConfirmOpen(false);
-          navigate(-1);
+          onClose?.();
         }}
         title="Hủy nhập lô xe?"
         message="Các thông tin đã nhập sẽ bị mất. Bạn có chắc chắn muốn hủy?"

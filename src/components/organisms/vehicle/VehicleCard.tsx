@@ -87,7 +87,7 @@ export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
       hoverable
       cover={cover}
       bodyStyle={{ padding: 14 }}
-      className="group rounded-2xl border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer bg-white"
+      className="group rounded-2xl border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer bg-white flex flex-col h-full"
       onClick={handleActivate}
     >
       <div
@@ -95,10 +95,10 @@ export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
         tabIndex={0}
         aria-label={`Xem chi tiết ${vehicle.name}`}
         onKeyDown={handleKey}
-        className="outline-none"
+        className="outline-none flex-1 flex flex-col"
       >
         {/* Tên + hãng */}
-        <div className="min-h-[44px] mb-1">
+        <div className="min-h-[50px] mb-1">
           <Tooltip title={vehicle.name}>
             <h3 className="font-semibold text-[15px] text-[#1f2933] leading-snug line-clamp-1">
               {vehicle.name}
@@ -111,8 +111,10 @@ export const VehicleCard: React.FC<Props> = ({ vehicle, onOpenDetail }) => {
           )}
         </div>
 
-        {/* Thông số nhanh */}
-        <div className="flex flex-wrap gap-1.5 mt-2">{shownKpis}</div>
+        {/* KPIs */}
+        <div className="mt-auto">
+          <div className="flex flex-wrap gap-1.5 mt-2">{shownKpis}</div>
+        </div>
       </div>
     </Card>
   );
