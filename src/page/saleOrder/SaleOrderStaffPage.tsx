@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import { Button, Select } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
 
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
@@ -18,6 +16,7 @@ import { SaleOrderDetailModal } from "../../components/organisms/saleOrder/SaleO
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
 import { useDebounce } from "../../hook/useDebounce";
 import { toast } from "react-toastify";
+import { Select } from "antd";
 
 const STATUS_OPTIONS = [
   { label: "Đã tạo", value: "CREATED" },
@@ -156,17 +155,15 @@ const SaleOrderStaffPage: React.FC = () => {
       title="Đơn hàng của nhân viên"
       subtitle="Theo dõi các đơn hàng do nhân viên phụ trách"
       variant="dashboard"
-    >
-      <div className="flex justify-end mb-4">
-        <Button
-          type="primary"
-          icon={<ArrowLeftOutlined />}
+      rightLink={
+        <b
+          className="text-green-600 underline hover:text-green-800 text-sm cursor-pointer"
           onClick={() => navigate("/dealer_staff/sale-order")}
         >
-          Quay lại đơn hàng của đại lý
-        </Button>
-      </div>
-
+          Xem đơn hàng của đại lý
+        </b>
+      }
+    >
       <EMOBFilterBar
         keyword={keyword}
         onKeywordChange={setKeyword}
