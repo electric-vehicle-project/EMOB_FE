@@ -20,6 +20,8 @@ import {
   useGetAccountsByManager,
   useChangeAccountStatus,
   useBanAccount,
+  useRegisterByAdmin,
+  useRegisterByManager,
 } from "../../../service/accountService";
 
 import { useDealersQuery } from "../../../service/dealerService";
@@ -27,61 +29,6 @@ import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 
 import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
-import api from "../../../config/api";
-
-/* ======================= Helper ======================= */
-const getApiBaseUrl = () => api.defaults.baseURL ?? "";
-
-const getRegisterPathByRole = (creatorRole: Role) =>
-  creatorRole === Role.MANAGER
-    ? "/auth/register-by-manager"
-    : "/auth/register-by-admin";
-
-const registerAccount = async (
-  creatorRole: Role,
-  payload: AccountCreatePayload
-) => {
-  const baseUrl = getApiBaseUrl();
-  const path = getRegisterPathByRole(creatorRole);
-  const url = `${baseUrl}${path}`;
-
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const contentType = response.headers.get("content-type") || "";
-  let data;
-
-  if (contentType.includes("application/json")) {
-    data = await response.json();
-  } else {
-    data = await response.text();
-  }
-
-  if (!response.ok) {
-    const errorMessage =
-      typeof data === "string"
-        ? data || "Tạo tài khoản thất bại"
-        : typeof data === "object" &&
-          data !== null &&
-          "message" in data &&
-          typeof (data as { message: unknown }).message === "string"
-        ? (data as { message: string }).message
-        : "Tạo tài khoản thất bại";
-
-    const err = new Error(errorMessage);
-    throw err;
-  }
-
-  return data;
-};
 
 /* ======================= MAIN COMPONENT ======================= */
 export const AccountList = () => {
@@ -98,8 +45,6 @@ export const AccountList = () => {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [filterRole, setFilterRole] = useState<string | undefined>();
-
-  /* MULTI FILTER STATUS */
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
 
   const [filterOpen, setFilterOpen] = useState(false);
@@ -119,19 +64,31 @@ export const AccountList = () => {
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
-  const adminQuery = useGetAccountsByAdmin(page, pageSize, {
-    enabled: isAdmin,
-    queryKey: ["accounts-by-admin", page, pageSize, sortField, sortDir],
-    sortField,
-    sortDir,
-  });
+  /* ======== CALL API ĐÚNG CHUẨN BACKEND ======== */
+  const adminQuery = useGetAccountsByAdmin(
+    {
+      page,
+      size: pageSize,
+      sortField,
+      sortDir,
+      keyword: debounced || undefined,
+      statuses: filterStatus.length ? filterStatus : undefined,
+      roles: filterRole ? [filterRole] : undefined,
+    },
+    { enabled: isAdmin }
+  );
 
-  const managerQuery = useGetAccountsByManager(page, pageSize, {
-    enabled: isManager,
-    queryKey: ["accounts-by-manager", page, pageSize, sortField, sortDir],
-    sortField,
-    sortDir,
-  });
+  const managerQuery = useGetAccountsByManager(
+    {
+      page,
+      size: pageSize,
+      sortField,
+      sortDir,
+      keyword: debounced || undefined,
+      statuses: filterStatus.length ? filterStatus : undefined,
+    },
+    { enabled: isManager }
+  );
 
   const { data: dealersData } = useDealersQuery(0, 1000);
 
@@ -154,42 +111,17 @@ export const AccountList = () => {
 
   const changeStatus = useChangeAccountStatus();
   const banAccount = useBanAccount();
+  const registerByAdmin = useRegisterByAdmin();
+  const registerByManager = useRegisterByManager();
 
   const isLoading = isAdmin ? adminQuery.isLoading : managerQuery.isLoading;
   const refetch = isAdmin ? adminQuery.refetch : managerQuery.refetch;
 
-  const accounts: IAccount[] = useMemo(
-    () => (isAdmin ? adminQuery.data : managerQuery.data) ?? [],
-    [isAdmin, adminQuery.data, managerQuery.data]
-  );
+  /* == FE KHÔNG LỌC SORT SEARCH — DÙNG DATA TỪ BACKEND == */
+  const accounts: IAccount[] =
+    (isAdmin ? adminQuery.data : managerQuery.data) ?? [];
 
   const meta = (isAdmin ? adminQuery.meta : managerQuery.meta) ?? null;
-
-  /* ======================= SEARCH + FILTER ======================= */
-  const filteredAccounts: IAccount[] = useMemo(() => {
-    let list = accounts;
-
-    const keyword = debounced.trim().toLowerCase();
-    if (keyword) {
-      list = list.filter(
-        (acc) =>
-          acc.fullName?.toLowerCase().includes(keyword) ||
-          acc.email?.toLowerCase().includes(keyword) ||
-          acc.phone?.includes(keyword)
-      );
-    }
-
-    if (isAdmin && filterRole) {
-      list = list.filter((acc) => acc.role === filterRole);
-    }
-
-    /* MULTI STATUS FILTER */
-    if (filterStatus.length > 0) {
-      list = list.filter((acc) => filterStatus.includes(acc.status));
-    }
-
-    return list;
-  }, [accounts, debounced, filterRole, filterStatus, isAdmin]);
 
   if (!isAdmin && !isManager) {
     return (
@@ -207,7 +139,15 @@ export const AccountList = () => {
   }
 
   const handleCreate = async (values: AccountCreatePayload) => {
-    await registerAccount(currentRole, values);
+    if (currentRole === Role.ADMIN) {
+      await registerByAdmin.mutateAsync(values);
+    } else if (currentRole === Role.MANAGER) {
+      await registerByManager.mutateAsync(values);
+    } else {
+      toast.error("Bạn không có quyền tạo tài khoản");
+      return;
+    }
+
     toast.success("Tạo tài khoản thành công!");
     setAccountModalOpen(false);
     setCreatingRole(null);
@@ -374,9 +314,9 @@ export const AccountList = () => {
         )}
       </div>
 
-      {filteredAccounts.length > 0 ? (
+      {accounts.length > 0 ? (
         <AccountTable
-          data={filteredAccounts}
+          data={accounts}
           loading={isLoading}
           canModify
           pagination={paginationConfig}
@@ -416,7 +356,13 @@ export const AccountList = () => {
         creatorRole={currentRole}
         creatingRole={creatingRole}
         onSubmit={handleCreate}
-        loading={false}
+        loading={
+          currentRole === Role.ADMIN
+            ? registerByAdmin.isPending
+            : currentRole === Role.MANAGER
+            ? registerByManager.isPending
+            : false
+        }
         dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 

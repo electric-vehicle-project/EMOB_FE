@@ -21,9 +21,9 @@ export type VehiclePriceRuleUpsertPayload = VehiclePriceRule[];
 
 /** Hiển thị tiếng Việt tương ứng cho status */
 export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
-  NORMAL: "Xe tiêu chuẩn",
-  SPECIAL: "Xe đặc biệt / trưng bày",
-  OLD_STOCK: "Xe tồn kho cũ",
+  NORMAL: "Xe mới",
+  SPECIAL: "Xe đặc biệt",
+  OLD_STOCK: "Xe đã đặt cọc",
   TEST_DRIVE: "Xe lái thử",
   RESERVED: "Xe được đặt trước",
 };

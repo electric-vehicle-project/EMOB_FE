@@ -11,7 +11,7 @@ import {
 // 🔹 QUERY HOOKS (GET)
 // ===============================
 const BASE_URL = "/dealer";
-// GET all dealers (params: page, size, keyword, country, sortField, sortDir)
+// GET all dealers (params: page, size, keyword, country, sortField, sortDir, region)
 export const useDealersQuery = (
   page: number = 0,
   size: number = 10,
@@ -19,6 +19,7 @@ export const useDealersQuery = (
   sortField: string = "createdAt",
   sortDir: "asc" | "desc" = "desc",
   country?: string,
+  regions?: string[], // NORTH | CENTRAL | SOUTH
   enabled: boolean = true
 ) => {
   return createQueryHook("dealers", BASE_URL)(
@@ -30,6 +31,7 @@ export const useDealersQuery = (
       sortField,
       sortDir,
       country: country || undefined,
+      regions: regions && regions.length > 0 ? regions : undefined, // ← thêm CHUẨN Swagger
     }
   );
 };

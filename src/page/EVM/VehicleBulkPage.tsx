@@ -1,5 +1,4 @@
 // src/page/vehicle/VehicleBulkPage.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo } from "react";
 import {
   Card,
@@ -55,6 +54,17 @@ type ApiForecastItem = {
   colorForecast?: ApiColorForecast[];
 };
 
+type MultiplierApiResponse = {
+  result?: {
+    multiplier?: number;
+  };
+};
+
+type ColorSuggestion = {
+  color: string;
+  quantity: number;
+};
+
 const normalize = (s?: string) =>
   (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
@@ -73,6 +83,7 @@ type VehicleBulkPageProps = {
   open: boolean;
   vehicleId?: string;
 };
+
 export const VehicleBulkPage = ({
   onClose,
   open,
@@ -117,13 +128,17 @@ export const VehicleBulkPage = ({
   const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [applyingFromAi, setApplyingFromAi] = useState(false);
+  const [applyingColor, setApplyingColor] = useState<string | null>(null);
+
   const fetchMultiplier = async (status: FormValues["status"]) => {
     setIsLoadingMultiplier(true);
     try {
-      const res: any = await api.get(
-        `${import.meta.env.VITE_BASE_URL}/vehicle-price-rules/${status}`
+      const res = await api.get<MultiplierApiResponse>(
+        `/vehicle-price-rules/${status}`
       );
-      const newMultiplier = res?.result?.multiplier;
+      const newMultiplier = res.data.result?.multiplier;
       setMultiplier(typeof newMultiplier === "number" ? newMultiplier : 1);
     } catch {
       setMultiplier(1);
@@ -140,6 +155,7 @@ export const VehicleBulkPage = ({
   // ================= Lấy forecast từ BE =================
   const loadForecasts = async () => {
     setLoadingForecast(true);
+    setSelectedColors([]);
     try {
       const res = await demandForecast.refetch(vehicleInfo?.model);
       const raw: unknown = res;
@@ -224,6 +240,90 @@ export const VehicleBulkPage = ({
   const recommended = best?.recommendedProduction;
   const predicted = best?.predictedDealerDemand;
 
+  const colorSuggestions: ColorSuggestion[] = useMemo(() => {
+    if (!best?.allColors || best.allColors.length === 0) return [];
+    const list: ColorSuggestion[] = best.allColors.map((c) => ({
+      color: c.color,
+      quantity:
+        typeof c.predictedColorDemand === "number"
+          ? Math.round(c.predictedColorDemand)
+          : 0,
+    }));
+    return list.sort((a, b) => b.quantity - a.quantity);
+  }, [best]);
+
+  const positiveSuggestions = useMemo(
+    () => colorSuggestions.filter((s) => s.quantity > 0),
+    [colorSuggestions]
+  );
+
+  const selectedSuggestionList = useMemo(
+    () => positiveSuggestions.filter((s) => selectedColors.includes(s.color)),
+    [positiveSuggestions, selectedColors]
+  );
+
+  const hasAnyPositive = positiveSuggestions.length > 0;
+  const hasSelectedPositive = selectedSuggestionList.length > 0;
+
+  const toggleSelectColor = (color: string) => {
+    setSelectedColors((prev) =>
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
+    );
+  };
+
+  const createBatchesFromSuggestions = async (targets: ColorSuggestion[]) => {
+    if (!vehicleId) {
+      toast.error("Thiếu vehicleId. Vui lòng quay lại.");
+      return;
+    }
+    const effectiveTargets = targets.filter((s) => s.quantity > 0);
+    if (!effectiveTargets.length) return;
+
+    setApplyingFromAi(true);
+    try {
+      let totalCreated = 0;
+      for (const s of effectiveTargets) {
+        setApplyingColor(s.color);
+        await bulkCreate({
+          vehicleId,
+          quantity: s.quantity,
+          color: s.color,
+          productionYear: dayjs().format("YYYY-01-01"),
+          status: "NORMAL",
+        });
+        totalCreated += s.quantity;
+      }
+      if (totalCreated > 0) {
+        toast.success(
+          `Đã nhập tổng cộng ${totalCreated.toLocaleString(
+            "vi-VN"
+          )} xe theo gợi ý AI.`
+        );
+        setForecastOpen(false);
+        onClose?.();
+      }
+    } catch {
+      toast.error("Không thể nhập lô theo gợi ý. Vui lòng thử lại.");
+    } finally {
+      setApplyingFromAi(false);
+      setApplyingColor(null);
+    }
+  };
+
+  const handleApplySingleSuggestion = async (s: ColorSuggestion) => {
+    await createBatchesFromSuggestions([s]);
+  };
+
+  const handleApplySelectedSuggestions = async () => {
+    if (!hasSelectedPositive) return;
+    await createBatchesFromSuggestions(selectedSuggestionList);
+  };
+
+  const handleApplyAllSuggestions = async () => {
+    if (!hasAnyPositive) return;
+    await createBatchesFromSuggestions(positiveSuggestions);
+  };
+
   // ================= Submit + Hủy =================
   const handleSubmit = async (values: FormValues) => {
     if (!vehicleId) {
@@ -306,15 +406,12 @@ export const VehicleBulkPage = ({
                   bg-white
                 "
                 >
-                  {/* Viền AI xanh tĩnh (không xoay) */}
                   <span className="ai-border-static z-0">
                     <span className="block w-full h-full rounded-full bg-white"></span>
                   </span>
 
-                  {/* Aura xanh đậm */}
                   <span className="absolute inset-0 rounded-full bg-green-300/40 animate-electric-aura-green z-0"></span>
 
-                  {/* Icon AI */}
                   <span className="relative z-10 text-base animate-pulse">
                     ✨
                   </span>
@@ -333,7 +430,6 @@ export const VehicleBulkPage = ({
               {/* ẢNH + INFO */}
               <div className="flex-1 flex flex-col items-center">
                 <div className="w-full max-w-md rounded-2xl overflow-hidden bg-gradient-to-b from-[#f5f7f0] to-white border">
-                  {/* ==== PREVIEW MAIN IMAGE ONLY ==== */}
                   <Image.PreviewGroup
                     items={[mainImage]}
                     preview={{
@@ -349,7 +445,6 @@ export const VehicleBulkPage = ({
 
                         return (
                           <div className="ant-image-preview-operations">
-                            {/* Prev (nếu có nhiều ảnh sẽ hoạt động, còn 1 ảnh thì ẩn) */}
                             {prevIcon && (
                               <div
                                 className="ant-image-preview-operations-operation"
@@ -359,7 +454,6 @@ export const VehicleBulkPage = ({
                               </div>
                             )}
 
-                            {/* Next */}
                             {nextIcon && (
                               <div
                                 className="ant-image-preview-operations-operation"
@@ -369,7 +463,6 @@ export const VehicleBulkPage = ({
                               </div>
                             )}
 
-                            {/* Zoom In */}
                             <div
                               className="ant-image-preview-operations-operation"
                               onClick={onZoomIn}
@@ -377,7 +470,6 @@ export const VehicleBulkPage = ({
                               {zoomInIcon}
                             </div>
 
-                            {/* Zoom Out */}
                             <div
                               className="ant-image-preview-operations-operation"
                               onClick={onZoomOut}
@@ -523,12 +615,10 @@ export const VehicleBulkPage = ({
                       >
                         <Select onChange={handleStatusChange}>
                           <Option value="NORMAL">Xe mới</Option>
-                          <Option value="SPECIAL">
-                            Xe đặc biệt / trưng bày
-                          </Option>
-                          <Option value="OLD_STOCK">Xe tồn kho</Option>
+                          <Option value="SPECIAL">Xe đặc biệt</Option>
+                          <Option value="OLD_STOCK">Xe tồn kho lâu ngày</Option>
                           <Option value="TEST_DRIVE">Xe lái thử</Option>
-                          <Option value="RESERVED">Xe giữ chỗ</Option>
+                          <Option value="RESERVED">Xe đã đặt cọc</Option>
                         </Select>
                       </Form.Item>
                     </div>
@@ -563,7 +653,7 @@ export const VehicleBulkPage = ({
         )}
       </Card>
 
-      {/* MODAL AI Forecast - giao diện bong bóng chat */}
+      {/* MODAL AI Forecast */}
       <Modal
         open={forecastOpen}
         onCancel={() => setForecastOpen(false)}
@@ -593,7 +683,7 @@ export const VehicleBulkPage = ({
           />
         ) : (
           <div className="space-y-6">
-            {/* Thanh hành động phía trên, tránh trùng nút X */}
+            {/* Thanh hành động phía trên */}
             <div className="flex justify-end mb-2">
               <Button
                 size="small"
@@ -606,7 +696,7 @@ export const VehicleBulkPage = ({
               </Button>
             </div>
 
-            {/* Bong bóng chat AI */}
+            {/* Bong bóng chat AI + danh sách gợi ý theo màu */}
             <div className="flex gap-3">
               <div className="h-10 w-10 rounded-full overflow-hidden border">
                 <img
@@ -617,64 +707,114 @@ export const VehicleBulkPage = ({
               </div>
 
               <div className="max-w-[640px] rounded-2xl bg-gray-100 px-4 py-3 shadow-sm">
-                <p className="mt-1 text-sm text-gray-700">
-                  Dự báo cho tháng tiếp theo:{" "}
-                  {typeof topColorDemand === "number" ? (
-                    <>
-                      nhu cầu ước tính khoảng <b>{fmt(topColorDemand)} xe</b>{" "}
-                      cho {topColor ? <b>màu {topColor}</b> : "màu ưu tiên"}.
-                    </>
-                  ) : (
-                    "hệ thống chưa có đủ dữ liệu chi tiết theo màu."
-                  )}
+                <p className="text-sm text-gray-700">
+                  Trong 3 tháng gần đây, hệ thống ghi nhận các màu sau có nhu
+                  cầu cao, kèm số lượng xe nên nhập cho tháng tới.
                 </p>
 
-                <p className="mt-1 text-sm text-gray-700">
-                  Hệ thống đề xuất nhập khoảng{" "}
-                  {typeof recommended === "number" ? (
-                    <b>{fmt(recommended)} xe</b>
-                  ) : typeof predicted === "number" ? (
-                    <b>{fmt(predicted)} xe</b>
-                  ) : (
-                    "một số lượng phù hợp"
-                  )}{" "}
-                  để đáp ứng nhu cầu dự kiến trong tháng tới.
-                </p>
+                {colorSuggestions.length === 0 ? (
+                  <p className="mt-2 text-sm text-gray-700">
+                    Hệ thống chưa có đủ dữ liệu chi tiết theo màu để đưa ra gợi
+                    ý nhập kho.
+                  </p>
+                ) : (
+                  <>
+                    <div className="mt-3 space-y-2">
+                      {colorSuggestions.map((s) => {
+                        const isSelected = selectedColors.includes(s.color);
+                        const canAccept = s.quantity > 0;
+                        const isThisApplying =
+                          applyingFromAi && applyingColor === s.color;
 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    type="primary"
-                    icon={<CheckOutlined />}
-                    className="!bg-[#627254] !border-[#627254] rounded-full px-4"
-                    onClick={() => {
-                      const q =
-                        typeof recommended === "number"
-                          ? recommended
-                          : predicted;
+                        return (
+                          <div
+                            key={s.color}
+                            className="flex items-center justify-between rounded-xl bg-white px-3 py-2 border border-gray-200"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">
+                                Màu {s.color}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Gợi ý nhập khoảng <b>{fmt(s.quantity)} xe</b>{" "}
+                                trong tháng tới.
+                              </p>
+                            </div>
 
-                      const patch: Partial<FormValues> = {};
-                      if (typeof q === "number") patch.quantity = q;
-                      if (topColor) patch.color = topColor;
+                            <div className="flex items-center gap-2">
+                              {canAccept ? (
+                                <>
+                                  <Button
+                                    size="small"
+                                    className={`rounded-full px-3 border ${
+                                      isSelected
+                                        ? "!border-[#627254] !text-[#627254]"
+                                        : ""
+                                    }`}
+                                    disabled={applyingFromAi}
+                                    onClick={() => toggleSelectColor(s.color)}
+                                  >
+                                    {isSelected ? "Đã chọn" : "Chọn"}
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    type="primary"
+                                    icon={<CheckOutlined />}
+                                    className="rounded-full px-3 !bg-[#627254] !border-[#627254]"
+                                    disabled={applyingFromAi}
+                                    loading={isThisApplying}
+                                    onClick={() =>
+                                      handleApplySingleSuggestion(s)
+                                    }
+                                  >
+                                    Nhập lô này
+                                  </Button>
+                                </>
+                              ) : (
+                                <span className="text-[11px] text-gray-400 italic">
+                                  Nhu cầu ~0 xe, không tạo lô.
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-                      form.setFieldsValue(patch as FormValues);
-                      toast.success("Đã áp dụng dự báo vào form.");
-                      setForecastOpen(false);
-                    }}
-                  >
-                    Áp dụng vào form
-                  </Button>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        type="primary"
+                        icon={<CheckOutlined />}
+                        className="rounded-full px-4 !bg-[#627254] !border-[#627254]"
+                        disabled={!hasAnyPositive || applyingFromAi}
+                        loading={applyingFromAi && applyingColor === null}
+                        onClick={handleApplyAllSuggestions}
+                      >
+                        Nhập tất cả gợi ý khả dụng
+                      </Button>
 
-                  <Button
-                    onClick={() => setForecastOpen(false)}
-                    className="rounded-full px-4"
-                  >
-                    Tự nhập thủ công
-                  </Button>
-                </div>
+                      <Button
+                        className="rounded-full px-4 border border-gray-300"
+                        disabled={!hasSelectedPositive || applyingFromAi}
+                        onClick={handleApplySelectedSuggestions}
+                      >
+                        Nhập các gợi ý đã chọn
+                      </Button>
+
+                      <Button
+                        className="rounded-full px-4"
+                        disabled={applyingFromAi}
+                        onClick={() => setForecastOpen(false)}
+                      >
+                        Tạo thủ công
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Thẻ tóm tắt số liệu */}
+            {/* Thẻ tóm tắt số liệu tổng quan */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card size="small" className="border border-gray-200">
                 <p className="text-xs text-gray-500">Nhu cầu đại lý dự báo</p>
