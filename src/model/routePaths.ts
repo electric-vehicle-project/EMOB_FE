@@ -64,11 +64,9 @@ export const ROUTES = {
   // ====== SALE ORDER ======
   SALE_ORDER: "sale-order",
   SALE_ORDER_STAFF: "sale-order/staff",
-  SALE_ORDER_DETAIL: "sale-order/:id",
   SALE_ORDER_STAFF_SUMMARY: "sale-order/staff-summary",
   // ====== REPORT ======
   REPORT: "report",
-  REPORT_DETAIL: "report/:id",
   // ====== REPORT ======
   VEHICLE_REQUEST: "vehicle-request",
 
@@ -100,7 +98,6 @@ export const ROUTES = {
   // TEST DRIVE
   TEST_DRIVE: "test-drive",
   TEST_DRIVE_BY_CURRENT_STAFF: "test-drive/staff",
-
 
   //InstallmentPlan
   INSTALLMENT_PLAN: "installment-plan",

@@ -1,4 +1,6 @@
+// src/components/organisms/customer/CustomerForm.tsx
 import { Form, Input, InputNumber, DatePicker, Select, Button } from "antd";
+import type { FormInstance } from "antd/es/form";
 import dayjs from "dayjs";
 import type { ICustomer } from "../../../model/Customer";
 import { useEffect } from "react";
@@ -15,6 +17,7 @@ export interface CustomerFormData {
 }
 
 interface Props {
+  form: FormInstance<CustomerFormData>;
   initialValues?: Partial<
     Omit<ICustomer, "dateOfBirth"> & { dateOfBirth?: dayjs.Dayjs }
   >;
@@ -22,9 +25,12 @@ interface Props {
   loading?: boolean;
 }
 
-export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
-  const [form] = Form.useForm<CustomerFormData>();
-
+export const CustomerForm = ({
+  form,
+  initialValues,
+  onSubmit,
+  loading,
+}: Props) => {
   useEffect(() => {
     if (initialValues) {
       form.setFieldsValue(initialValues);
@@ -46,7 +52,6 @@ export const CustomerForm = ({ initialValues, onSubmit, loading }: Props) => {
       layout="vertical"
       form={form}
       onFinish={handleFinish}
-      initialValues={initialValues}
       disabled={loading}
       style={{ maxWidth: 800, margin: "0 auto" }}
     >

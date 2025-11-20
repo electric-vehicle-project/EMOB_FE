@@ -8,7 +8,6 @@ import type {
   Promotion,
   PromotionStatus,
   PromotionType,
-  PromotionScope,
 } from "../../../model/Promotion";
 import { EMOBTable } from "../../molecules/EMOBTable";
 
@@ -36,11 +35,6 @@ const STATUS_LABELS: Record<PromotionStatus, string> = {
   UPCOMING: "Sắp diễn ra",
   EXPIRED: "Đã kết thúc",
   INACTIVE: "Không hoạt động",
-};
-
-const SCOPE_LABELS: Record<PromotionScope, string> = {
-  GLOBAL: "Toàn hệ thống",
-  LOCAL: "Đại lý",
 };
 
 const TYPE_LABELS: Record<PromotionType, string> = {
@@ -172,18 +166,7 @@ export const PromotionTable = ({
         return `${start.format("DD/MM/YYYY")} - ${end.format("DD/MM/YYYY")}`;
       },
     },
-    {
-      title: "Phạm vi",
-      dataIndex: "scope",
-      key: "scope",
-      align: "center",
-      width: 120,
-      render: (scope: PromotionScope) => (
-        <Tag color={scope === "GLOBAL" ? "geekblue" : "success"}>
-          {SCOPE_LABELS[scope]}
-        </Tag>
-      ),
-    },
+
     {
       title: "Trạng thái",
       dataIndex: "status",

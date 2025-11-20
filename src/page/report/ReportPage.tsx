@@ -1,14 +1,14 @@
+// src/pages/report/ReportPage.tsx
 import { useMemo, useState } from "react";
 import { Button, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router";
-import { useSelector } from "react-redux";
 
 import { ReportTable } from "../../components/molecules/report/ReportTable";
 import { ReportFormModal } from "../../components/molecules/report/ReportFormModal";
 import { ProcessReportModal } from "../../components/molecules/report/ProcessReportModal";
 import { ReportDeleteConfirm } from "../../components/molecules/report/ReportDeleteConfirm";
+import { ReportDetailModal } from "../../components/molecules/report/ReportDetailModal";
 
 import {
   useReportList,
@@ -22,7 +22,6 @@ import { useDebounce } from "../../hook/useDebounce";
 import useGetParams from "../../hook/useGetParams";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { EMOBFilterBar } from "../../components/molecules/EMOBFilterBar";
-import type { RootState } from "../../redux/store";
 import type { IReport } from "../../model/Report";
 
 interface ReportFormValues {
@@ -43,8 +42,6 @@ const STATUS_OPTIONS = [
 
 export const ReportPage = () => {
   const getParam = useGetParams();
-  const navigate = useNavigate();
-  const role = useSelector((s: RootState) => s.user?.role) ?? "MANAGER";
 
   /** ========== SEARCH + FILTER ========== */
   const [keyword, setKeyword] = useState(getParam("keyword") ?? "");
@@ -95,6 +92,10 @@ export const ReportPage = () => {
   const [processing, setProcessing] = useState<IReport | null>(null);
 
   const [deleting, setDeleting] = useState<IReport | null>(null);
+
+  // Detail modal
+  const [openDetail, setOpenDetail] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   /** CREATE / UPDATE */
   const handleSubmit = async (values: ReportFormValues) => {
@@ -274,7 +275,10 @@ export const ReportPage = () => {
           setProcessing(r);
           setOpenProcess(true);
         }}
-        onViewDetail={(id) => navigate(`/${role.toLowerCase()}/report/${id}`)}
+        onViewDetail={(id) => {
+          setDetailId(id);
+          setOpenDetail(true);
+        }}
       />
 
       {/* CREATE / EDIT */}
@@ -302,8 +306,20 @@ export const ReportPage = () => {
       <ReportDeleteConfirm
         open={!!deleting}
         onCancel={() => setDeleting(null)}
-        onConfirm={() => handleDelete(deleting!.reportId)}
+        onConfirm={() => deleting && handleDelete(deleting.reportId)}
+      />
+
+      {/* DETAIL */}
+      <ReportDetailModal
+        open={openDetail}
+        reportId={detailId ?? undefined}
+        onClose={() => {
+          setOpenDetail(false);
+          setDetailId(null);
+        }}
       />
     </CardWrapper>
   );
 };
+
+export default ReportPage;
