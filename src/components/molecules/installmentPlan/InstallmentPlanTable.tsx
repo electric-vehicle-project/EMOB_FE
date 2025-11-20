@@ -7,6 +7,7 @@ import {
 } from "../../../utils/timeFeature";
 import { formatMoney } from "../../../utils/formatMoney";
 import { EllipsisOutlined } from "@ant-design/icons";
+import { useState } from "react";
 
 interface PaginationProps {
   current: number;
@@ -23,6 +24,7 @@ interface Props {
   pagination?: PaginationProps;
   onMarkAsPaid?: (id: string) => void;
   onViewDetail?: (id: string) => void;
+  onUpdatePaid?: (id: string, amountPaid: number) => void;
 }
 
 export const InstallmentPlanTable = ({
@@ -45,7 +47,11 @@ export const InstallmentPlanTable = ({
     OVERDUE: "Quá hạn",
     CANCELLED: "Đã hủy",
   };
-
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{
+    id: string;
+    amountPaid: number;
+  } | null>(null);
   const columns: ColumnsType<IInstallmentPlan> = [
     {
       title: "Ngày đặt cọc",
@@ -129,26 +135,26 @@ export const InstallmentPlanTable = ({
             onClick: () => onViewDetail?.(record.id),
           },
           {
-            key: "markPaid",
+            key: "updatePaid",
             label: (
-              <span
-                className={`text-[14px] pl-10 pr-10 ${
-                  isPaid ? "text-gray-400" : "text-green-600"
-                }`}
-              >
-                Đánh dấu đã đóng
+              <span className="text-[14px] pl-10 pr-10 text-blue-600">
+                Cập nhật thanh toán
               </span>
             ),
-            disabled: isPaid,
             onClick: () => {
-              if (canMarkPaid) onMarkAsPaid?.(record.id);
+              setSelectedPlan({
+                id: record.id,
+                amountPaid: record.totalAmount ?? 0,
+              });
+              console.log("check");
+              setUpdateModalOpen(true);
             },
           },
         ];
 
         return (
           <Dropdown
-            overlay={<Menu items={menuItems} />}
+            menu={{ items: menuItems }}
             trigger={["click"]}
             placement="bottomRight"
           >
