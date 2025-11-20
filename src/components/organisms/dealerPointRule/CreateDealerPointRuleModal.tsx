@@ -45,17 +45,18 @@ export const CreateDealerPointRuleModal = ({
         price: Number(values.price),
       };
 
-      onSuccess(payload); // đẩy dữ liệu ra parent
+      onSuccess(payload);
       toast.success("Đã thêm quy tắc. Nhấn 'Lưu thay đổi' để xác nhận!");
+
       form.resetFields();
       onClose();
     } catch {
-      // lỗi validate -> im lặng
+      /* empty */
     }
   };
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} width={460}>
+    <Modal open={open} onCancel={onClose} footer={null} width={440}>
       <h2 className="text-lg font-semibold mb-4 text-[#627254]">
         Tạo quy tắc tích điểm
       </h2>
