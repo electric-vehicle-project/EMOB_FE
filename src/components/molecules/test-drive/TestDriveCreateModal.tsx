@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Modal, Form, Select, DatePicker, Button, Row, Col, Divider,
-  Avatar, Typography, Tag, Empty
+  Avatar, Typography, Tag, Empty,
+  Input
 } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import { useState } from "react";
@@ -183,13 +184,12 @@ export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
                 )}
               </div>
 
-              <Form.Item label="Địa điểm" name="location"
-                rules={[{ required: true, message: "Vui lòng chọn địa điểm" }]}>
-                <Select placeholder="Chọn địa điểm" options={[
-                  { label: "EV Showroom District 9", value: "EV Showroom District 9" },
-                  { label: "EV Showroom Bến Thành", value: "EV Showroom Bến Thành" },
-                  { label: "EV Showroom Thủ Đức", value: "EV Showroom Thủ Đức" },
-                ]} />
+              <Form.Item
+                label="Địa điểm"
+                name="location"
+                rules={[{ required: true, message: "Vui lòng chọn địa điểm" }]}
+              >
+                <Input placeholder="EV Showroom Quận 9..." />
               </Form.Item>
 
               <Row gutter={12}>
@@ -291,6 +291,7 @@ export const TestDriveCreateModal = ({ open, onClose, onSuccess }: Props) => {
                           ? "border-[#627254] bg-[#f6ffed]"
                           : "border-gray-200 bg-white"
                           }`}
+                        style={{ minHeight: 110 }} 
                       >
                         <div className="font-semibold text-[#627254]">{v.vinNumber}</div>
                         <div className="text-sm text-gray-600">{v.color}</div>
