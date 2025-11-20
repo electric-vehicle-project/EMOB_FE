@@ -1,25 +1,16 @@
-import {
-  createQueryHook,
-  createQueryWithPathParamHook,
-  updateMutationHook,
-} from "../hook/useApi";
+import { createQueryHook, createQueryWithPathParamHook } from "../hook/useApi";
 
-const BASE_URL = "/api/dealer-point-rules";
+const BASE_URL = "/dealer-point-rules";
 
-// GET all (Admin, EVM_STAFF)
-export const useDealerPointRuleList = createQueryHook(
-  "dealerPointRuleList",
-  BASE_URL
-);
+// GET all (Admin + EVM)
+export const useDealerPointRuleList = () =>
+  createQueryHook("dealerPointRuleList", BASE_URL)();
 
-// GET by dealerId (Manager, DealerStaff)
+// GET by dealer
 export const useDealerPointRuleByDealerId = createQueryWithPathParamHook(
   "dealerPointRuleByDealerId",
   BASE_URL
 );
 
-// PUT update toàn bộ rule cho 1 dealer (body = array)
-export const useDealerPointRuleUpdate = updateMutationHook(
-  "dealerPointRuleUpdate",
-  BASE_URL
-);
+// Không export mutation cho PUT vì BE không có /:id
+// PUT được gọi trực tiếp trong Page bằng api.put()

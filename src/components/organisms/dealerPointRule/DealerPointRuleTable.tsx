@@ -12,6 +12,23 @@ interface Props {
   onUpdate?: (updatedData: IDealerPointRule[]) => void;
 }
 
+const getLevelColor = (level: string): string => {
+  switch (level) {
+    case "NORMAL":
+      return "green";
+    case "BRONZE":
+      return "volcano";
+    case "SILVER":
+      return "gray";
+    case "GOLD":
+      return "gold";
+    case "PLATINUM":
+      return "geekblue";
+    default:
+      return "default";
+  }
+};
+
 export const DealerPointRuleTable: React.FC<Props> = ({
   data,
   loading,
@@ -25,21 +42,6 @@ export const DealerPointRuleTable: React.FC<Props> = ({
   React.useEffect(() => {
     setEditableData(data);
   }, [data]);
-
-  const getLevelColor = (level: string): string => {
-    switch (level) {
-      case "BRONZE":
-        return "volcano";
-      case "SILVER":
-        return "gray";
-      case "GOLD":
-        return "gold";
-      case "PLATINUM":
-        return "geekblue";
-      default:
-        return "default";
-    }
-  };
 
   const handleValueChange = (
     level: string,
@@ -59,6 +61,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       return;
     }
     onUpdate(editableData);
+    toast.success("Cập nhật thành công");
   };
 
   const columns: ColumnsType<IDealerPointRule> = [
@@ -80,7 +83,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       key: "minPoints",
       align: "center",
       width: 170,
-      render: (val: number, record) =>
+      render: (val, record) =>
         editable ? (
           <InputNumber
             min={0}
@@ -99,7 +102,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       key: "price",
       align: "center",
       width: 180,
-      render: (val: number, record) =>
+      render: (val, record) =>
         editable ? (
           <InputNumber
             min={0}
@@ -117,7 +120,7 @@ export const DealerPointRuleTable: React.FC<Props> = ({
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md">
-      <EMOBTable<IDealerPointRule>
+      <EMOBTable
         rowKey="membershipLevel"
         columns={columns}
         dataSource={editableData}
