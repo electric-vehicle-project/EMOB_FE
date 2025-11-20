@@ -36,7 +36,7 @@ export const DeliveryDealerTable = ({
             render: (text, record) => (
                 <Tooltip title={text}>
                     <Link
-                        to={"/current/"+`${record.id}`}
+                        to={"/current/" + `${record.id}`}
                         className="block truncate text-[#627254] font-semibold hover:underline"
                     >
                         {text}
@@ -65,6 +65,14 @@ export const DeliveryDealerTable = ({
             dataIndex: "status",
             key: "status",
             align: "center",
+            minWidth: 120,
+            width: "12%",
+            filters: [
+                { text: "Đã giao", value: "SUCCESS" },
+                { text: "Đang giao", value: "IN_PROGRESS" },
+                { text: "Đã hủy", value: "FAILED" },
+            ],
+            onFilter: (value, record) => record.status === value,
             render: (status: string) => {
                 const color =
                     status === "SUCCESS"
@@ -72,10 +80,20 @@ export const DeliveryDealerTable = ({
                         : status === "IN_PROGRESS"
                             ? "blue"
                             : "red";
+
+                const viLabel =
+                    status === "SUCCESS"
+                        ? "Đã giao"
+                        : status === "IN_PROGRESS"
+                            ? "Đang giao"
+                            : "Đã hủy";
+
                 return (
-                    <Tag color={color} className="uppercase font-semibold">
-                        {status}
-                    </Tag>
+                    <Tooltip title={viLabel}>
+                        <Tag color={color} className="uppercase font-semibold">
+                            {viLabel}
+                        </Tag>
+                    </Tooltip>
                 );
             },
         },

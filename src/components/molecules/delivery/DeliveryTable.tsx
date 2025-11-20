@@ -43,8 +43,7 @@ export const DeliveryTable = ({ data }: Props) => {
                     </span>
                 </Tooltip>
             ),
-        },
-        {
+        }, {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
@@ -52,9 +51,9 @@ export const DeliveryTable = ({ data }: Props) => {
             minWidth: 120,
             width: "12%",
             filters: [
-                { text: "SUCCESS", value: "SUCCESS" },
-                { text: "IN_PROGRESS", value: "IN_PROGRESS" },
-                { text: "FAILED", value: "FAILED" },
+                { text: "Đã giao", value: "SUCCESS" },
+                { text: "Đang giao", value: "IN_PROGRESS" },
+                { text: "Đã hủy", value: "FAILED" },
             ],
             onFilter: (value, record) => record.status === value,
             render: (status: string) => {
@@ -65,10 +64,17 @@ export const DeliveryTable = ({ data }: Props) => {
                             ? "blue"
                             : "red";
 
+                const viLabel =
+                    status === "SUCCESS"
+                        ? "Đã giao"
+                        : status === "IN_PROGRESS"
+                            ? "Đang giao"
+                            : "Đã hủy";
+
                 return (
-                    <Tooltip title={status}>
+                    <Tooltip title={viLabel}>
                         <Tag color={color} className="uppercase font-semibold">
-                            {status}
+                            {viLabel}
                         </Tag>
                     </Tooltip>
                 );

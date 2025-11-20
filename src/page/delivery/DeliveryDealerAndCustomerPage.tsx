@@ -1,29 +1,32 @@
+import { useNavigate } from "react-router-dom";
 import { DeliveryDealerAndCustomerList } from "../../components/organisms/delivery/DeliveryDealerAndCustomerList";
 import { CardWrapper } from "../../components/template/CardWrapper";
+import { useCurrentUser } from "../../utils/getCurrentUser";
+import { ROUTES } from "../../model/routePaths";
 
 export const DeliveryDealerAndCustomerPage = () => {
-  // const user = useCurrentUser();
-  // const canAccess = ["ADMIN", "EVM_STAFF"].includes(
-  //   (user as { role?: string } | null)?.role || ""
-  // );
+
+  const navigate = useNavigate();
+  const user = useCurrentUser();
+  const role = (user as { role?: string } | null)?.role || "";
 
   return (
     <CardWrapper
       title="Quản lý đơn vận chuyển"
-      // subtitle={
-      //   canAccess
-      //     ? "Theo dõi và quản lý thông tin các đại lý trong hệ thống"
-      //     : "Bạn không có quyền truy cập trang này"
-      // }
+      subtitle="Danh sách đơn vận chuyển từ Đại lý đến Khách hàng"
       variant="dashboard"
+      rightLink={
+        <span>
+          <b
+            onClick={() => navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CURRENT_DEALER}`)}
+            className="text-green-600 underline hover:text-green-800 text-sm"
+          >
+            Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
+          </b>
+        </span>
+      }
     >
-      {/* {canAccess ? ( */}
       <DeliveryDealerAndCustomerList />
-      {/* ) : (
-        <p className="text-center text-red-500 py-10 font-medium">
-          Access Denied
-        </p>
-      )} */}
     </CardWrapper>
   );
 };
