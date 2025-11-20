@@ -47,7 +47,7 @@ export default function DealerEmployeeChart({ data, metric }: Props) {
           motionConfig="gentle"
           theme={{
             background: "#ffffff",
-            textColor: "#374151",
+            text: { fontSize: 11 },
             axis: {
               domain: { line: { stroke: "#d1d5db" } },
               ticks: { text: { fill: "#374151" } },

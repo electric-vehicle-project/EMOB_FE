@@ -34,7 +34,7 @@ export default function DealerEmployeeCard({ data, dealer }: Props) {
         <DealerEmployeeToolbar metric={metric} onChange={setMetric} />
       </div>
 
-      <DealerEmployeeChart data={data} metric={metric} />
+      <DealerEmployeeChart data={data} dealer={metric} />
     </motion.div>
   );
 }

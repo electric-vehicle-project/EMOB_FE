@@ -9,7 +9,6 @@ import type { DealerApiResponse } from "../../model/Overview";
 import DealerKPI from "../../components/molecules/overview/KpiCard";
 import DealerContractPie from "../../components/organisms/overview/overviewDealers/DealerContractPie";
 import DealerSalesChart from "../../components/organisms/overview/overviewDealers/DealerSaleChart";
-import { formatMoney } from "../../utils/formatMoney";
 import RevenueLineChart from "../../components/organisms/overview/overviewDealers/DealerLineChart";
 const REGION_MAP = [
   { vi: "Miền Bắc", en: "NORTH" },
@@ -48,8 +47,8 @@ export default function CarBrandDealerDashboard() {
 
   // API trả về result, không phải data.data
   const rows = useMemo(() => {
-    return Array.isArray(data?.result) ? data.result : [];
-  }, [data?.result]);
+    return Array.isArray((data as any)?.result) ? (data as any).result : [];
+  }, [(data as any)?.result]);
 
   // KPI tổng hợp
   const totalRevenue = sumBy(rows, "totalRevenue") || 0;
@@ -85,7 +84,13 @@ export default function CarBrandDealerDashboard() {
       ],
     };
   }, [rows, selectedYear, totalContracts]);
+  const formatMoney = (value: number) => {
+    if (value == null || isNaN(value)) return "0 VNĐ";
+    const billion = 1_000_000_000;
+    const result = value / billion;
 
+    return `${result.toFixed(2)} tỷ VNĐ`;
+  };
   // KPI Cards
   const kpi = [
     {

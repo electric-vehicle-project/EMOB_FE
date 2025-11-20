@@ -37,7 +37,7 @@ export default function DealerCustomerCard({ data, dealer }: Props) {
     // Một số API trả về dạng { data: [...] } hoặc { customers: [...] }
     const list: any[] = Array.isArray(customers)
       ? customers
-      : customers?.data || customers?.customers || [];
+      : (customers as any)?.data || (customers as any)?.customers || [];
 
     list.forEach((c: any) => {
       if (c?.id && c?.name) {
@@ -126,8 +126,10 @@ export default function DealerCustomerCard({ data, dealer }: Props) {
               gridYValues={tickValues}
               enableLabel={false}
               theme={{
-                textColor: "#e2e8f0",
-                fontSize: 11,
+                text: {
+                  fill: "#cbd5e1",
+                  fontSize: 11,
+                },
                 grid: { line: { stroke: "#1e293b" } },
                 axis: {
                   ticks: { text: { fill: "#cbd5e1" } },

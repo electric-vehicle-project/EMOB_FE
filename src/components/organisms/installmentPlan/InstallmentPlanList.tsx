@@ -57,7 +57,6 @@ export const InstallmentPlanList = () => {
     }),
     [current, pageSize, debouncedSearch, sortField, sortDir, statusFilter]
   );
-
   const allPlansQuery = useInstallmentPlansQuery(
     { enabled: canView && !isDealer },
     params
@@ -88,7 +87,7 @@ export const InstallmentPlanList = () => {
     }));
   }, [data]);
   const total = data?.result?.metadata?.totalElements ?? 0;
-
+  console.log("hi");
   const FilterContent = () => (
     <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
@@ -102,6 +101,7 @@ export const InstallmentPlanList = () => {
             allowClear
             className="w-full mt-2"
             value={statusFilter}
+            maxTagCount="responsive"
             onChange={(v) => {
               setStatusFilter(v);
               setCurrent(1);
@@ -110,7 +110,6 @@ export const InstallmentPlanList = () => {
             <Select.Option value="PAID">Đã thanh toán hết</Select.Option>
             <Select.Option value="NOT_PAID">Chưa thanh toán</Select.Option>
             <Select.Option value="OVERDUE">Trễ hẹn</Select.Option>
-            <Select.Option value="CANCELLED">Hủy thanh toán</Select.Option>
           </Select>
         </div>
 

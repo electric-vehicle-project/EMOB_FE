@@ -18,7 +18,6 @@ import type {
 import DealerKPI from "../../components/molecules/overview/KpiCard";
 import DealerContractPie from "../../components/organisms/overview/overviewDealers/DealerContractPie";
 import { useDealerCustomerReportQuery } from "../../service/overviewRevenueDealer";
-import { formatMoney } from "../../utils/formatMoney";
 import RevenueLineChart from "../../components/organisms/overview/overviewDealers/DealerLineChart";
 import DealerCustomerChart from "../../components/organisms/overview/overviewCustomers/DealerCustomerChart";
 
@@ -28,9 +27,6 @@ const CURRENT_YEAR = new Date().getFullYear();
 /* -------------------------------------------------------------------------- */
 export default function DealerDashboardPage() {
   const [selectedYear, setSelectedYear] = useState<number>(CURRENT_YEAR);
-  const [ setCustomers] = useState<{ id: string; name: string }[]>(
-    []
-  );
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
   // Gọi API doanh thu theo năm
@@ -49,7 +45,7 @@ export default function DealerDashboardPage() {
 
   // Chuẩn hóa dữ liệu doanh thu
   const rows = useMemo(() => {
-    const list = data?.result ?? [];
+    const list = (data as any)?.result ?? [];
     return list.map(
       (r: CustomerRevenue & { month?: number; customerId?: string }) => ({
         customerId: r.customerId ?? "",
@@ -63,7 +59,8 @@ export default function DealerDashboardPage() {
 
   // Lấy danh sách customerIds duy nhất
   const customerIds = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.customerId).filter(Boolean))),
+    () =>
+      Array.from(new Set(rows.map((r: any) => r.customerId).filter(Boolean))),
     [rows]
   );
 
@@ -74,37 +71,6 @@ export default function DealerDashboardPage() {
 
       setLoadingCustomers(true);
 
-      const results = await Promise.all(
-        customerIds.map(async (id) => {
-          try {
-            const res = await fetch(`/api/customers/${id}`, {
-              headers: { Accept: "application/json" },
-            });
-
-            if (!res.ok) return { id, name: `Khách hàng #${id.slice(-6)}` };
-
-            const json = await res.json();
-            const name =
-              json?.result?.fullName ||
-              json?.result?.data?.fullName ||
-              json?.data?.fullName ||
-              json?.fullName ||
-              json?.result?.name ||
-              json?.data?.name ||
-              json?.name;
-
-            return {
-              id,
-              name: (name && name.trim()) || `Khách hàng #${id.slice(-6)}`,
-            };
-          } catch (err) {
-            console.error(`lỗi lấy dữ liệu khách hàng ${id}:`, err);
-            return { id, name: `Khách hàng #${id.slice(-6)}` };
-          }
-        })
-      );
-
-      setCustomers(results);
       setLoadingCustomers(false);
     }
 
@@ -128,6 +94,14 @@ export default function DealerDashboardPage() {
     lastYearRevenue > 0
       ? ((totalRevenue - lastYearRevenue) / lastYearRevenue) * 100
       : 0;
+
+  const formatMoney = (value: number) => {
+    if (value == null || isNaN(value)) return "0 VNĐ";
+    const billion = 1_000_000_000;
+    const result = value / billion;
+
+    return `${result.toFixed(2)} tỷ VNĐ`;
+  };
 
   // KPI cards
   const kpi = [
