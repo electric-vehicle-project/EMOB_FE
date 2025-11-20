@@ -2,6 +2,7 @@ import { ContractListCurrentDealer } from "../../components/organisms/contract/C
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../../utils/getCurrentUser";
+import { Button } from "antd";
 
 export const ContractCurrentDealerPage = () => {
 
@@ -15,14 +16,9 @@ export const ContractCurrentDealerPage = () => {
       subtitle="Danh sách hợp đồng bàn giao với Hãng xe"
       variant="dashboard"
       rightLink={
-        <span>
-          <b
-            onClick={() => navigate("/" + role.toLowerCase() + "/contract")}
-            className="text-green-600 underline hover:text-green-800 text-sm"
-          >
-            Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng
-          </b>
-        </span>
+        <Button type="primary"  onClick={() => navigate("/" + role.toLowerCase() + "/contract")}>
+          Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng
+        </Button>
       }
     >
       <ContractListCurrentDealer />
