@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+// src/components/organisms/promotion/PromotionCreateModal.tsx
+import { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Form,
@@ -22,6 +23,7 @@ import {
   mapDealerOptions,
   mapVehicleOptions,
 } from "../../../utils/mapToSelectOptions";
+import { DeleteConfirm } from "../DeleteConfirm";
 
 const { Title } = Typography;
 
@@ -39,6 +41,8 @@ interface Props {
 
 export const PromotionCreateModal = ({ open, onClose }: Props) => {
   const [form] = Form.useForm<PromotionFormValues>();
+  const baselineRef = useRef<PromotionFormValues | null>(null);
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   const user = useSelector((s: RootState) => s.user ?? {}) as Partial<{
     id: string;
@@ -90,12 +94,22 @@ export const PromotionCreateModal = ({ open, onClose }: Props) => {
   }, [dealersData, vehiclesData, canFetchDealers]);
 
   useEffect(() => {
-    if (open) {
+    if (!open) {
       form.resetFields();
-      if (isDealerStaff && user.dealerId) {
-        form.setFieldsValue({ dealerId: [user.dealerId] });
-      }
+      baselineRef.current = null;
+      return;
     }
+
+    form.resetFields();
+    if (isDealerStaff && user.dealerId) {
+      form.setFieldsValue({ dealerId: [user.dealerId] });
+    }
+
+    const id = setTimeout(() => {
+      baselineRef.current = form.getFieldsValue();
+    }, 0);
+
+    return () => clearTimeout(id);
   }, [open, isDealerStaff, user.dealerId, form]);
 
   const handleSubmit = async (values: PromotionFormValues) => {
@@ -115,87 +129,128 @@ export const PromotionCreateModal = ({ open, onClose }: Props) => {
     }
   };
 
+  const handleRequestClose = () => {
+    const baseline = baselineRef.current ?? form.getFieldsValue();
+    const current = form.getFieldsValue();
+
+    const hasChanges = JSON.stringify(current) !== JSON.stringify(baseline);
+
+    if (!hasChanges) {
+      onClose();
+      return;
+    }
+
+    setConfirmVisible(true);
+  };
+
+  const handleConfirmDiscard = () => {
+    setConfirmVisible(false);
+    form.resetFields();
+    onClose();
+  };
+
+  const handleCancelDiscard = () => {
+    setConfirmVisible(false);
+  };
+
   const loading = !mappingDone || loadingDealers || loadingVehicles;
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} width={650}>
-      {loading ? (
-        <div className="flex justify-center mt-10 mb-6">
-          <Spin size="large" />
-        </div>
-      ) : (
-        <>
-          <Space style={{ marginBottom: 16 }}>
-            <Title level={4} style={{ margin: 0, color: "#627254" }}>
-              Tạo khuyến mãi mới
-            </Title>
-          </Space>
+    <>
+      <Modal
+        open={open}
+        onCancel={handleRequestClose}
+        footer={null}
+        width={650}
+      >
+        {loading ? (
+          <div className="flex justify-center mt-10 mb-6">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <>
+            <Space style={{ marginBottom: 16 }}>
+              <Title level={4} style={{ margin: 0, color: "#627254" }}>
+                Tạo khuyến mãi mới
+              </Title>
+            </Space>
 
-          <Form<PromotionFormValues>
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-          >
-            {!isDealerStaff && (
-              <Form.Item label="Áp dụng cho đại lý" name="dealerId">
+            <Form<PromotionFormValues>
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+            >
+              {!isDealerStaff && (
+                <Form.Item label="Áp dụng cho đại lý" name="dealerId">
+                  <Select
+                    mode="multiple"
+                    allowClear
+                    placeholder="Bỏ trống để tạo khuyến mãi GLOBAL"
+                    options={dealerOptions}
+                  />
+                </Form.Item>
+              )}
+
+              <Form.Item
+                label="Xe điện áp dụng"
+                name="electricVehiclesId"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn ít nhất một xe điện",
+                  },
+                ]}
+              >
                 <Select
                   mode="multiple"
                   allowClear
-                  placeholder="Bỏ trống để tạo khuyến mãi GLOBAL"
-                  options={dealerOptions}
+                  placeholder="Chọn xe điện"
+                  options={vehicleOptions}
                 />
               </Form.Item>
-            )}
 
-            <Form.Item
-              label="Xe điện áp dụng"
-              name="electricVehiclesId"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng chọn ít nhất một xe điện",
-                },
-              ]}
-            >
-              <Select
-                mode="multiple"
-                allowClear
-                placeholder="Chọn xe điện"
-                options={vehicleOptions}
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Tên khuyến mãi"
-              name="name"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên khuyến mãi" },
-              ]}
-            >
-              <Input placeholder="VD: Giảm giá 10%" />
-            </Form.Item>
-
-            <Form.Item label="Mô tả" name="description">
-              <Input.TextArea
-                rows={3}
-                style={{ resize: "none", borderRadius: 8 }}
-              />
-            </Form.Item>
-
-            <div className="flex justify-end">
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isPending}
-                className="!bg-[#627254] !border-[#627254] !text-white"
+              <Form.Item
+                label="Tên khuyến mãi"
+                name="name"
+                rules={[
+                  { required: true, message: "Vui lòng nhập tên khuyến mãi" },
+                ]}
               >
-                Tạo khuyến mãi
-              </Button>
-            </div>
-          </Form>
-        </>
-      )}
-    </Modal>
+                <Input placeholder="VD: Giảm giá 10%" />
+              </Form.Item>
+
+              <Form.Item label="Mô tả" name="description">
+                <Input.TextArea
+                  rows={3}
+                  style={{ resize: "none", borderRadius: 8 }}
+                />
+              </Form.Item>
+
+              <div className="flex justify-end">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={isPending}
+                  className="!bg-[#627254] !border-[#627254] !text-white"
+                >
+                  Tạo khuyến mãi
+                </Button>
+              </div>
+            </Form>
+          </>
+        )}
+      </Modal>
+
+      <DeleteConfirm
+        open={confirmVisible}
+        onConfirm={handleConfirmDiscard}
+        onCancel={handleCancelDiscard}
+        message="Các thay đổi sẽ không được lưu. Bạn có chắc chắn muốn hủy?"
+        okText="Bỏ thay đổi"
+        danger={false}
+        title="Xác nhận hủy"
+      />
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 // src/components/organisms/promotion/PromotionEditModal.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
   Card,
@@ -32,6 +32,7 @@ import {
 import { useDealersQuery } from "../../../service/dealerService";
 import { toast } from "react-toastify";
 import type { CustomTagProps } from "rc-select/lib/BaseSelect";
+import { DeleteConfirm } from "../DeleteConfirm";
 
 const { RangePicker } = DatePicker;
 
@@ -75,6 +76,9 @@ export default function PromotionEditModal({
   onSuccess,
 }: Props) {
   const [form] = Form.useForm<FormValues>();
+  const baselineRef = useRef<FormValues | null>(null);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+
   const user = useSelector((state: RootState) => state.user);
 
   const role: Role =
@@ -137,7 +141,7 @@ export default function PromotionEditModal({
   const tagRender =
     (existingIds: string[], findLabel: (id: string) => string) =>
     (props: CustomTagProps) => {
-      const { value, closable, onClose } = props;
+      const { value, closable, onClose: onTagClose } = props;
       const stringValue = String(value);
       const isOld = existingIds.includes(stringValue);
 
@@ -145,7 +149,7 @@ export default function PromotionEditModal({
         <Tag
           color={isOld ? "default" : "blue"}
           closable={!isOld && closable}
-          onClose={isOld ? (e) => e.preventDefault() : onClose}
+          onClose={isOld ? (e) => e.preventDefault() : onTagClose}
         >
           {findLabel(stringValue)}
         </Tag>
@@ -177,6 +181,19 @@ export default function PromotionEditModal({
       electricVehicleIds: vehicles,
     });
   }, [promotion, form]);
+
+  useEffect(() => {
+    if (!open || !promotion) {
+      if (!open) baselineRef.current = null;
+      return;
+    }
+
+    const id = setTimeout(() => {
+      baselineRef.current = form.getFieldsValue();
+    }, 0);
+
+    return () => clearTimeout(id);
+  }, [open, promotion, form]);
 
   const handleSubmit = async (values: FormValues) => {
     if (!promotionId) {
@@ -227,141 +244,183 @@ export default function PromotionEditModal({
     }
   };
 
+  const handleRequestClose = () => {
+    const baseline = baselineRef.current ?? form.getFieldsValue();
+    const current = form.getFieldsValue();
+
+    const hasChanges = JSON.stringify(current) !== JSON.stringify(baseline);
+
+    if (!hasChanges) {
+      onClose();
+      return;
+    }
+
+    setConfirmVisible(true);
+  };
+
+  const handleConfirmDiscard = () => {
+    setConfirmVisible(false);
+    form.resetFields();
+    onClose();
+  };
+
+  const handleCancelDiscard = () => {
+    setConfirmVisible(false);
+  };
+
   const loading = isLoading || loadingDealers || loadingVehicles;
 
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width={900}
-      destroyOnClose
-    >
-      <h2 className="text-xl font-semibold text-[#627254] mb-4">
-        Cập nhật khuyến mãi
-      </h2>
+    <>
+      <Modal
+        open={open}
+        onCancel={handleRequestClose}
+        footer={null}
+        width={900}
+        destroyOnClose
+      >
+        <h2 className="text-xl font-semibold text-[#627254] mb-4">
+          Cập nhật khuyến mãi
+        </h2>
 
-      <Card bordered>
-        {loading ? (
-          <div className="flex justify-center items-center py-10">
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Form<FormValues>
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            key={promotionId}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  label="Tên khuyến mãi"
-                  name="name"
-                  rules={[{ required: true, message: "Nhập tên khuyến mãi" }]}
-                >
-                  <Input disabled={isManager || isAdmin} />
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item label="Loại khuyến mãi" name="type">
-                  <Select
-                    disabled={!isManager && !isAdmin}
-                    className="!rounded-lg"
-                    options={[
-                      { label: "Giảm theo phần trăm (%)", value: "PERCENTAGE" },
-                      { label: "Giảm cố định (VNĐ)", value: "FIXED_AMOUNT" },
-                      { label: "Điểm thưởng", value: "POINT" },
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item label="Giá trị" name="value">
-                  <InputNumber
-                    disabled={!isManager && !isAdmin}
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item label="Đơn tối thiểu (VNĐ)" name="minValue">
-                  <InputNumber
-                    disabled={!isManager && !isAdmin}
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            {canEditTargets && (
+        <Card bordered>
+          {loading ? (
+            <div className="flex justify-center items-center py-10">
+              <Spin size="large" />
+            </div>
+          ) : (
+            <Form<FormValues>
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              key={promotionId}
+            >
               <Row gutter={16}>
                 <Col span={12}>
-                  <Form.Item label="Dealer áp dụng" name="dealerIds">
-                    <Select
-                      mode="multiple"
-                      disabled={!canPickDealers}
-                      tagRender={tagRender(existingDealerIds, findDealerLabel)}
-                      options={dealerOptions}
-                    />
+                  <Form.Item
+                    label="Tên khuyến mãi"
+                    name="name"
+                    rules={[{ required: true, message: "Nhập tên khuyến mãi" }]}
+                  >
+                    <Input disabled={isManager || isAdmin} />
                   </Form.Item>
                 </Col>
 
                 <Col span={12}>
-                  <Form.Item label="Mẫu xe áp dụng" name="electricVehicleIds">
+                  <Form.Item label="Loại khuyến mãi" name="type">
                     <Select
-                      mode="multiple"
-                      tagRender={tagRender(
-                        existingVehicleIds,
-                        findVehicleLabel
-                      )}
-                      options={vehicleOptions}
+                      disabled={!isManager && !isAdmin}
+                      className="!rounded-lg"
+                      options={[
+                        {
+                          label: "Giảm theo phần trăm (%)",
+                          value: "PERCENTAGE",
+                        },
+                        { label: "Giảm cố định (VNĐ)", value: "FIXED_AMOUNT" },
+                        { label: "Điểm thưởng", value: "POINT" },
+                      ]}
                     />
                   </Form.Item>
                 </Col>
               </Row>
-            )}
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item label="Thời gian áp dụng" name="duration">
-                  <RangePicker
-                    showTime
-                    disabled={!isManager && !isAdmin}
-                    format="YYYY-MM-DD HH:mm"
-                    className="!w-full"
-                  />
-                </Form.Item>
-              </Col>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item label="Giá trị" name="value">
+                    <InputNumber
+                      disabled={!isManager && !isAdmin}
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
 
-              <Col span={12}>
-                <Form.Item label="Mô tả" name="description">
-                  <Input.TextArea
-                    rows={3}
-                    style={{ resize: "none", borderRadius: 8 }}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+                <Col span={12}>
+                  <Form.Item label="Đơn tối thiểu (VNĐ)" name="minValue">
+                    <InputNumber
+                      disabled={!isManager && !isAdmin}
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <div className="flex justify-end">
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={updatingBasic || updatingValue}
-                className="!bg-[#627254] !border-[#627254] !text-white"
-              >
-                Cập nhật khuyến mãi
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Card>
-    </Modal>
+              {canEditTargets && (
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="Dealer áp dụng" name="dealerIds">
+                      <Select
+                        mode="multiple"
+                        disabled={!canPickDealers}
+                        tagRender={tagRender(
+                          existingDealerIds,
+                          findDealerLabel
+                        )}
+                        options={dealerOptions}
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={12}>
+                    <Form.Item label="Mẫu xe áp dụng" name="electricVehicleIds">
+                      <Select
+                        mode="multiple"
+                        tagRender={tagRender(
+                          existingVehicleIds,
+                          findVehicleLabel
+                        )}
+                        options={vehicleOptions}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
+
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item label="Thời gian áp dụng" name="duration">
+                    <RangePicker
+                      showTime
+                      disabled={!isManager && !isAdmin}
+                      format="YYYY-MM-DD HH:mm"
+                      className="!w-full"
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col span={12}>
+                  <Form.Item label="Mô tả" name="description">
+                    <Input.TextArea
+                      rows={3}
+                      style={{ resize: "none", borderRadius: 8 }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <div className="flex justify-end">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={updatingBasic || updatingValue}
+                  className="!bg-[#627254] !border-[#627254] !text-white"
+                >
+                  Cập nhật khuyến mãi
+                </Button>
+              </div>
+            </Form>
+          )}
+        </Card>
+      </Modal>
+
+      <DeleteConfirm
+        open={confirmVisible}
+        onConfirm={handleConfirmDiscard}
+        onCancel={handleCancelDiscard}
+        message="Các thay đổi sẽ không được lưu. Bạn có chắc chắn muốn hủy?"
+        okText="Bỏ thay đổi"
+        danger={false}
+        title="Xác nhận hủy"
+      />
+    </>
   );
 }

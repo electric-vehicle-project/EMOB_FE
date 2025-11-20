@@ -43,7 +43,7 @@ const EvmPromotionsPage: React.FC = () => {
   const debouncedKeyword = useDebounce(keyword, 350);
 
   /* FILTERS */
-  const [status, setStatus] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState<string[]>([]);
 
   /* SORT */
   const [sortField, setSortField] = useState("createAt");
@@ -59,7 +59,7 @@ const EvmPromotionsPage: React.FC = () => {
     page,
     size,
     debouncedKeyword,
-    status,
+    status.length ? status : undefined,
     sortField,
     sortDir
   );
@@ -96,7 +96,7 @@ const EvmPromotionsPage: React.FC = () => {
   /* RESET FILTER */
   const handleReset = () => {
     setKeyword("");
-    setStatus(undefined);
+    setStatus([]);
     setSortField("createAt");
     setSortDir("desc");
     setPage(0);
@@ -120,13 +120,14 @@ const EvmPromotionsPage: React.FC = () => {
               <div>
                 <div className="font-medium mb-1">Trạng thái</div>
                 <Select
+                  mode="multiple"
                   allowClear
                   value={status}
                   className="w-full"
                   options={STATUS_OPTIONS}
                   placeholder="Chọn trạng thái"
                   onChange={(v) => {
-                    setStatus(v || undefined);
+                    setStatus(v);
                     setPage(0);
                   }}
                 />
@@ -194,7 +195,7 @@ const EvmPromotionsPage: React.FC = () => {
           pageSize: size,
           total: totalElements,
           showSizeChanger: true,
-          onChange: (p, s) => {
+          onChange: (p: number, s?: number) => {
             setPage(p - 1);
             setSize(s ?? 10);
           },

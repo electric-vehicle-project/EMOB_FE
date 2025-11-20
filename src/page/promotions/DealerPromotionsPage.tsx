@@ -1,4 +1,3 @@
-// src/pages/promotion/DealerPromotionsPage.tsx
 import { useState, useMemo } from "react";
 import { Button, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -53,7 +52,7 @@ const DealerPromotionsPage: React.FC = () => {
 
   // Filters
   const [scope, setScope] = useState<string[]>(["LOCAL"]);
-  const [status, setStatus] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState<string[]>([]);
 
   // Sort
   const [sortField, setSortField] = useState("createAt");
@@ -69,7 +68,7 @@ const DealerPromotionsPage: React.FC = () => {
     page,
     size,
     debouncedKeyword,
-    status,
+    status.length ? status : undefined,
     sortField,
     sortDir
   );
@@ -133,7 +132,7 @@ const DealerPromotionsPage: React.FC = () => {
   const handleReset = () => {
     setKeyword("");
     setScope(["LOCAL"]);
-    setStatus(undefined);
+    setStatus([]);
     setSortField("createAt");
     setSortDir("desc");
     setPage(0);
@@ -204,13 +203,14 @@ const DealerPromotionsPage: React.FC = () => {
                 <div>
                   <div className="font-medium mb-1">Trạng thái</div>
                   <Select
+                    mode="multiple"
                     allowClear
                     value={status}
                     className="w-full"
                     options={STATUS_OPTIONS}
                     placeholder="Chọn trạng thái"
-                    onChange={(val) => {
-                      setStatus(val || undefined);
+                    onChange={(v) => {
+                      setStatus(v);
                       setPage(0);
                     }}
                   />

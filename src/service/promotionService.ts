@@ -1,4 +1,3 @@
-// src/service/promotionService.ts
 import {
   createQueryHook,
   createQueryWithPathParamHook,
@@ -15,18 +14,18 @@ export const usePromotionList = (
   page = 0,
   size = 10,
   keyword?: string,
-  statuses?: string, // <--- chỉ còn string, không phải mảng
+  statuses?: string[],
   sortField = "createAt",
   sortDir: "asc" | "desc" = "desc"
 ) =>
-  createQueryHook("promotionList", `${BASE_URL}/view-all/{scope}`)(
+  createQueryHook("promotionList", `${BASE_URL}/view-all`)(
     {},
     {
       scopes: scope,
       page,
       size,
       keyword,
-      statuses, // <--- đúng key, đúng kiểu, sẽ ra ?statuses=ACTIVE
+      statuses,
       sortField,
       sortDir,
     }

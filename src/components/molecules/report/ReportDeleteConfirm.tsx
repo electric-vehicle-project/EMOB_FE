@@ -1,3 +1,4 @@
+// src/components/molecules/report/ReportDeleteConfirm.tsx
 import { Modal } from "antd";
 import { ExclamationCircleFilled } from "@ant-design/icons";
 
@@ -25,8 +26,7 @@ export const ReportDeleteConfirm = ({ open, onCancel, onConfirm }: Props) => {
       }
     >
       <p className="text-gray-700">
-        Are you sure you want to delete this report? This action cannot be
-        undone.
+        Bạn có chắc chắn muốn xóa khiếu nại này không?
       </p>
     </Modal>
   );

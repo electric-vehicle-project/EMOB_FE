@@ -23,7 +23,6 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
     }
   };
 
-  // Reset form mỗi khi modal mở lại
   useEffect(() => {
     if (open) {
       form.resetFields();
@@ -66,7 +65,6 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
             </Form.Item>
           </Col>
         </Row>
-
         {status === "RESOLVED" && (
           <Row gutter={16}>
             <Col xs={24}>
@@ -90,7 +88,7 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
             </Col>
           </Row>
         )}
-
+        //
         <div className="flex justify-end mt-6 gap-3">
           <Button onClick={onCancel}>Hủy</Button>
           <Button
