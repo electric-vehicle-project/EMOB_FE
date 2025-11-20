@@ -6,6 +6,7 @@ export const ContractAllDealersPage = () => {
   return (
     <CardWrapper
       title="Quản lý hợp đồng"
+      subtitle="Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý"
       variant="dashboard"
     >
       <ContractListAllDealers />

@@ -146,7 +146,13 @@ export const DeliveryDealerDetail = () => {
                                 }
                                 className="uppercase font-semibold"
                             >
-                                {delivery.status}
+                                {
+                                    delivery.status === "SUCCESS"
+                                        ? "Đã giao"
+                                        : delivery.status === "IN_PROGRESS"
+                                            ? "Đang giao"
+                                            : "Đã hủy"
+                                }
                             </Tag>
                         </div>
 

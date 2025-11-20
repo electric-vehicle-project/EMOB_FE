@@ -62,9 +62,9 @@ export const ContractListAllDealers = () => {
           allowClear
           className="w-full mt-2"
         >
-          <Option value="PENDING">PENDING</Option>
-          <Option value="SIGNED">SIGNED</Option>
-          <Option value="TERMINATED">TERMINATED</Option>
+          <Option value="PENDING">Chờ xử lý</Option>
+            <Option value="SIGNED">Đã ký</Option>
+            <Option value="TERMINATED">Đã hủy</Option>
         </Select>
       </div>
 
@@ -94,8 +94,8 @@ export const ContractListAllDealers = () => {
           }}
           className="w-full mt-2"
         >
-          <Option value="asc">ASC</Option>
-          <Option value="desc">DESC</Option>
+          <Option value="asc">Tăng dần</Option>
+          <Option value="desc">Giảm dần</Option>
         </Select>
       </div>
     </div>
@@ -103,12 +103,6 @@ export const ContractListAllDealers = () => {
 
   return (
     <div>
-      <span className="flex justify-between p-5">
-        <b className="text-lg text-[#627254]">
-          Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý
-        </b>
-      </span>
-
       <Card>
         {/* TOOLBAR */}
         <Space className="flex justify-start pb-5">
