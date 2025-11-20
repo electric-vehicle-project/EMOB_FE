@@ -187,7 +187,6 @@ export const InstallmentPlanCustomerList = () => {
         <InstallmentPlanTable
           data={installmentPlans}
           isLoading={isLoading}
-          onMarkAsPaid={() => {}}
           onUpdatePaid={(id, amountPaid) => {
             setSelectedPlan({ id, amountPaid });
             setUpdateModalOpen(true);

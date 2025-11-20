@@ -14,6 +14,8 @@ import {
 } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
 import { SlidersOutlined } from "@ant-design/icons";
+import { InstallmentPlanDetailModal } from "../../../page/installmentPlan/ViewInstallmentPlanCustomerModal";
+import { UpdateAmountPaidModal } from "../../../page/installmentPlan/UpdateInstallmentPlanModal";
 
 export const InstallmentPlanList = () => {
   const [search, setSearch] = useState("");
@@ -26,6 +28,10 @@ export const InstallmentPlanList = () => {
   const [sortField, setSortField] = useState("downDate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [amountPaid, setAmountPaid] = useState(0);
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
@@ -76,6 +82,7 @@ export const InstallmentPlanList = () => {
       monthlyAmount: p.monthlyAmount,
       interestRate: p.interestRate,
       termMonths: p.termMonths,
+      paidMonths: p.paidMonths,
       nextDueDate: p.nextDueDate,
       status: p.status,
     }));
@@ -192,7 +199,6 @@ export const InstallmentPlanList = () => {
         <InstallmentPlanTable
           data={installmentPlans}
           isLoading={isLoading}
-          onMarkAsPaid={() => {}}
           pagination={{
             current,
             pageSize,
@@ -204,10 +210,37 @@ export const InstallmentPlanList = () => {
             },
             showTotal: (t) => `Tổng ${t} kế hoạch trả góp`,
           }}
+          onViewDetail={(id: string) => {
+            setSelectedId(id);
+            setDetailModalVisible(true);
+          }}
+          onUpdatePaid={(id, amountPaid) => {
+            setSelectedId(id);
+            setAmountPaid(amountPaid);
+            setUpdateModalOpen(true);
+          }}
         />
       ) : (
         <Empty description="Không có dữ liệu" />
       )}
+
+      {selectedId && (
+        <UpdateAmountPaidModal
+          id={selectedId}
+          open={updateModalOpen}
+          onClose={() => {
+            setUpdateModalOpen(false);
+            refetch();
+          }}
+          currentAmount={amountPaid}
+        />
+      )}
+
+      <InstallmentPlanDetailModal
+        id={selectedId}
+        open={detailModalVisible}
+        onClose={() => setDetailModalVisible(false)}
+      />
     </>
   );
 };

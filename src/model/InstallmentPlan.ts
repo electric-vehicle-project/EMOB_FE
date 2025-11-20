@@ -12,6 +12,7 @@ export interface InstallmentPlanApiModel {
   totalAmount: number;
   monthlyAmount: number;
   interestRate: number;
+  paidMonths: number;
   termMonths: number;
   nextDueDate: string;
   status: InstallmentPlanStatus;
@@ -28,4 +29,5 @@ export interface IInstallmentPlan {
   termMonths: number;
   nextDueDate: string;
   status: InstallmentPlanStatus;
+  paidMonths?: number;
 }

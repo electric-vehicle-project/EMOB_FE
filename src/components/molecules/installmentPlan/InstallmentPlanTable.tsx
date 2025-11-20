@@ -1,4 +1,4 @@
-import { Table, Pagination, Tag, Menu, Dropdown } from "antd";
+import { Table, Pagination, Tag, Dropdown } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { IInstallmentPlan } from "../../../model/InstallmentPlan";
 import {
@@ -7,7 +7,6 @@ import {
 } from "../../../utils/timeFeature";
 import { formatMoney } from "../../../utils/formatMoney";
 import { EllipsisOutlined } from "@ant-design/icons";
-import { useState } from "react";
 
 interface PaginationProps {
   current: number;
@@ -22,7 +21,6 @@ interface Props {
   data: IInstallmentPlan[];
   isLoading?: boolean;
   pagination?: PaginationProps;
-  onMarkAsPaid?: (id: string) => void;
   onViewDetail?: (id: string) => void;
   onUpdatePaid?: (id: string, amountPaid: number) => void;
 }
@@ -31,7 +29,7 @@ export const InstallmentPlanTable = ({
   data,
   pagination,
   isLoading,
-  onMarkAsPaid,
+  onUpdatePaid,
   onViewDetail,
 }: Props) => {
   const statusColors: Record<string, string> = {
@@ -47,11 +45,6 @@ export const InstallmentPlanTable = ({
     OVERDUE: "Quá hạn",
     CANCELLED: "Đã hủy",
   };
-  const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<{
-    id: string;
-    amountPaid: number;
-  } | null>(null);
   const columns: ColumnsType<IInstallmentPlan> = [
     {
       title: "Ngày đặt cọc",
@@ -95,6 +88,13 @@ export const InstallmentPlanTable = ({
       align: "right",
     },
     {
+      title: "Số tháng đã trả",
+      dataIndex: "paidMonths",
+      key: "paidMonths",
+      render: (val: number) => `${val} tháng`,
+      align: "right",
+    },
+    {
       title: "Ngày đến hạn tiếp theo",
       dataIndex: "nextDueDate",
       key: "nextDueDate",
@@ -122,10 +122,6 @@ export const InstallmentPlanTable = ({
       align: "center",
       width: "6%",
       render: (_, record) => {
-        const isPaid = record.status === "PAID";
-        const canMarkPaid =
-          record.status === "NOT_PAID" || record.status === "OVERDUE";
-
         const menuItems = [
           {
             key: "details",
@@ -141,14 +137,7 @@ export const InstallmentPlanTable = ({
                 Cập nhật thanh toán
               </span>
             ),
-            onClick: () => {
-              setSelectedPlan({
-                id: record.id,
-                amountPaid: record.totalAmount ?? 0,
-              });
-              console.log("check");
-              setUpdateModalOpen(true);
-            },
+            onClick: () => onUpdatePaid?.(record.id, record.monthlyAmount ?? 0),
           },
         ];
 

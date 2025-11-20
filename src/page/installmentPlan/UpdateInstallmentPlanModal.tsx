@@ -37,22 +37,33 @@ export const UpdateAmountPaidModal = ({
       message.error(err?.response?.data?.message || "Cập nhật thất bại!");
     }
   };
-
+  const parseNumberInput = (v: string | undefined): number => {
+    const parsed = Number((v || "").toString().replace(/,/g, ""));
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
   return (
     <Modal
       title="Cập nhật số tiền đã thanh toán"
       onCancel={onClose}
       onOk={handleUpdate}
       okText="Lưu"
-      destroyOnClose
+      open={open}
     >
       <div className="flex flex-col gap-3">
         <label>Số tiền đã thanh toán</label>
         <InputNumber
-          className="w-full"
           min={0}
+          className="w-full"
+          size="large"
+          addonAfter="₫"
           value={amountPaid}
           onChange={(v) => setAmountPaid(v ?? 0)}
+          formatter={(value) =>
+            value != null
+              ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              : ""
+          }
+          parser={parseNumberInput}
         />
       </div>
     </Modal>
