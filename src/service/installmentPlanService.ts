@@ -1,5 +1,9 @@
 // src/service/installmentPlanService.ts
-import { createQueryHook, createQueryWithPathParamHook } from "../hook/useApi";
+import {
+  createQueryHook,
+  createQueryWithPathParamHook,
+  updateMutationHook,
+} from "../hook/useApi";
 
 // ===============================
 // 🔹 QUERY HOOKS (GET)
@@ -26,3 +30,8 @@ export const useInstallmetnPlanByCustomersByIdQuery =
     "currentDealerInstallmentPlans",
     "/installment/by-customer"
   );
+
+export const useInstallmentPlanUpdate = updateMutationHook(
+  "installmentPlan",
+  "/installment"
+);
