@@ -13,4 +13,3 @@ export const useDealerPointRuleByDealerId = createQueryWithPathParamHook(
 );
 
 // Không export mutation cho PUT vì BE không có /:id
-// PUT được gọi trực tiếp trong Page bằng api.put()
