@@ -132,7 +132,6 @@ export const DeliveryCustomerDetail = () => {
                             <p className="text-sm text-gray-500">Số lượng xe</p>
                             <p>{delivery.quantity}</p>
                         </div>
-
                         <div>
                             <p className="text-sm text-gray-500">Trạng thái</p>
                             <Tag
@@ -145,9 +144,16 @@ export const DeliveryCustomerDetail = () => {
                                 }
                                 className="uppercase font-semibold"
                             >
-                                {delivery.status}
+                                {
+                                    delivery.status === "SUCCESS"
+                                        ? "Đã giao"
+                                        : delivery.status === "IN_PROGRESS"
+                                            ? "Đang giao"
+                                            : "Đã hủy"
+                                }
                             </Tag>
                         </div>
+
 
                         <div className="col-span-2">
                             <b className="pl-4">Danh sách xe vận chuyển (chi tiết từng xe):</b>

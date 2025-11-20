@@ -11,7 +11,6 @@ import {
 } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
 import type { InstallmentPlanApiModel } from "../../../model/InstallmentPlan";
-import { Card } from "../../atoms/Card";
 import { SlidersOutlined } from "@ant-design/icons";
 
 export const InstallmentPlanList = () => {
@@ -98,7 +97,7 @@ export const InstallmentPlanList = () => {
 
   // =============== FILTER DROPDOWN PANEL ===============
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -159,7 +158,7 @@ export const InstallmentPlanList = () => {
           </Select>
         </div>
       </Space>
-    </Card>
+    </div>
   );
 
   // ============ UI RENDER ============
@@ -201,21 +200,20 @@ export const InstallmentPlanList = () => {
             onChange={setSearch}
             placeholder="Tìm kiếm kế hoạch trả góp..."
           />
+          {/* FILTER DROPDOWN */}
+          <Dropdown
+            trigger={["click"]}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            dropdownRender={() => <FilterContent />}
+          >
+            <Button
+              type="text"
+              icon={<SlidersOutlined style={{ fontSize: 20 }} />}
+              className="text-gray-600 hover:text-black"
+            />
+          </Dropdown>
         </div>
-
-        {/* FILTER DROPDOWN */}
-        <Dropdown
-          trigger={["click"]}
-          open={filterOpen}
-          onOpenChange={setFilterOpen}
-          dropdownRender={() => <FilterContent />}
-        >
-          <Button
-            type="text"
-            icon={<SlidersOutlined style={{ fontSize: 20 }} />}
-            className="text-gray-600 hover:text-black"
-          />
-        </Dropdown>
       </div>
 
       {installmentPlans.length > 0 ? (

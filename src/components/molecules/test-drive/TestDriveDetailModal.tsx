@@ -98,15 +98,22 @@ export const TestDriveDetailModal = ({
                 status === "CANCELLED"
                   ? "red"
                   : status === "COMPLETED"
-                  ? "green"
-                  : status === "CONFIRMED"
-                  ? "blue"
-                  : "gold"
+                    ? "green"
+                    : status === "CONFIRMED"
+                      ? "blue"
+                      : "gold"
               }
               className="font-semibold"
             >
-              {status}
+              {status === "CANCELLED"
+                ? "ĐÃ HỦY"
+                : status === "COMPLETED"
+                  ? "HOÀN THÀNH"
+                  : status === "CONFIRMED"
+                    ? "ĐÃ XÁC NHẬN"
+                    : "CHỜ XỬ LÍ"}
             </Tag>
+
           </Space>
         }
       >

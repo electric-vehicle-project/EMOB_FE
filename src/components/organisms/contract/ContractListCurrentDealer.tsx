@@ -13,8 +13,6 @@ import {
   useContractQueryByCurrentDealer,
 } from "../../../service/contractService";
 import { ContractTable } from "../../molecules/contract/ContractTable";
-import { useNavigate } from "react-router-dom";
-import { useCurrentUser } from "../../../utils/getCurrentUser";
 
 const { Option } = Select;
 
@@ -28,9 +26,7 @@ export const ContractListCurrentDealer = () => {
 
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const navigate = useNavigate();
-  const user = useCurrentUser();
-  const role = (user as { role?: string } | null)?.role || "";
+
 
   const { data, refetch } = useContractQueryByCurrentDealer(
     {},
@@ -70,9 +66,9 @@ export const ContractListCurrentDealer = () => {
           allowClear
           className="w-full mt-2"
         >
-          <Option value="PENDING">PENDING</Option>
-          <Option value="SIGNED">SIGNED</Option>
-          <Option value="TERMINATED">TERMINATED</Option>
+          <Option value="PENDING">Chờ xử lý</Option>
+            <Option value="SIGNED">Đã ký</Option>
+            <Option value="TERMINATED">Đã hủy</Option>
         </Select>
       </div>
 
@@ -104,8 +100,8 @@ export const ContractListCurrentDealer = () => {
           }}
           className="w-full mt-2"
         >
-          <Option value="asc">ASC</Option>
-          <Option value="desc">DESC</Option>
+          <Option value="asc">Tăng dần</Option>
+          <Option value="desc">Giảm dần</Option>
         </Select>
       </div>
     </div>
@@ -114,20 +110,7 @@ export const ContractListCurrentDealer = () => {
   // ========== RENDER ==========
   return (
     <div>
-      <span className="flex justify-between p-5">
-        <b className="text-lg text-[#627254]">
-          Danh sách hợp đồng bàn giao với Hãng xe
-        </b>
-
-        <b
-          onClick={() => navigate("/" + role.toLowerCase() + "/contract")}
-          className="underline text-[#627254] cursor-pointer hover:text-[#4f5a42] transition-colors"
-        >
-          Danh sách hợp đồng mua bán xe với toàn bộ Khách hàng
-        </b>
-      </span>
-
-      <Card>
+          <Card>
         {/* TOOLBAR */}
         <Space className="flex justify-start pb-5">
           <Input

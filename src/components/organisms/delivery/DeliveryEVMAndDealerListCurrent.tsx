@@ -17,10 +17,6 @@ import {
 } from "../../../service/deliveryService";
 import { DeliveryTable } from "../../molecules/delivery/DeliveryTable";
 import { toast } from "react-toastify";
-import { ROUTES } from "../../../model/routePaths";
-import { useCurrentUser } from "../../../utils/getCurrentUser";
-import { useNavigate } from "react-router-dom";
-
 const { Option } = Select;
 
 export const DeliveryEVMAndDealerListCurrent = () => {
@@ -33,10 +29,6 @@ export const DeliveryEVMAndDealerListCurrent = () => {
   const [keyword, setKeyword] = useState("");
 
   const [filterOpen, setFilterOpen] = useState(false);
-
-  const user = useCurrentUser();
-  const role = (user as any)?.role || "";
-  const navigate = useNavigate();
 
   const { data, isLoading, refetch } = useDeliveryQueryByCurrentDealer(
     {},
@@ -133,22 +125,6 @@ export const DeliveryEVMAndDealerListCurrent = () => {
 
   return (
     <div>
-      {/* HEADER */}
-      <span className="flex justify-between p-5">
-        <b className="text-lg text-[#627254]">
-          Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
-        </b>
-
-        <b
-          onClick={() =>
-            navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CUSTOMERS}`)
-          }
-          className="underline cursor-pointer text-[#627254] hover:text-[#4f5a42]"
-        >
-          Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
-        </b>
-      </span>
-
       <Card>
         {/* Toolbar */}
         <Space className="flex justify-start pb-5">

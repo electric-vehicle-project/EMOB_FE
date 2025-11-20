@@ -7,7 +7,6 @@ import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { useInstallmetnPlanByCustomersQuery } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
 import type { InstallmentPlanApiModel } from "../../../model/InstallmentPlan";
-import { Card } from "../../atoms/Card";
 import { SlidersOutlined } from "@ant-design/icons";
 
 export const InstallmentPlanCustomerList = () => {
@@ -86,7 +85,7 @@ export const InstallmentPlanCustomerList = () => {
 
   // =============== FILTER DROPDOWN PANEL ===============
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -147,7 +146,7 @@ export const InstallmentPlanCustomerList = () => {
           </Select>
         </div>
       </Space>
-    </Card>
+    </div>
   );
 
   // ================= UI RENDER =================

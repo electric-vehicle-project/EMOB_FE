@@ -21,8 +21,6 @@ import {
 import { useContractQueryByDealer } from "../../../service/contractService";
 import { DeliveryTable } from "../../molecules/delivery/DeliveryTable";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
-import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../../../model/routePaths";
 import { toast } from "react-toastify";
 
 const { Option } = Select;
@@ -40,7 +38,6 @@ export const DeliveryDealerAndCustomerList = () => {
 
   const user = useCurrentUser();
   const role = (user as any)?.role || "";
-  const navigate = useNavigate();
 
   // Modal control
   const [openModal, setOpenModal] = useState(false);
@@ -147,22 +144,6 @@ export const DeliveryDealerAndCustomerList = () => {
 
   return (
     <div>
-      {/* HEADER */}
-      <span className="flex justify-between p-5">
-        <b className="text-lg text-[#627254]">
-          Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
-        </b>
-
-        <b
-          onClick={() =>
-            navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CURRENT_DEALER}`)
-          }
-          className="underline text-[#627254] cursor-pointer hover:text-[#4f5a42]"
-        >
-          Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
-        </b>
-      </span>
-
       <Card>
         {/* Toolbar */}
         <Space className="flex justify-between w-full pb-5">
