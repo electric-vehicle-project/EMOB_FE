@@ -88,7 +88,7 @@ export const useGoogleLogin = () => {
 
     // Dọn dẹp
     return () => window.removeEventListener("message", handleMessage);
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, loginMutation]);
 
   return { startGoogleLogin, loading };
 };

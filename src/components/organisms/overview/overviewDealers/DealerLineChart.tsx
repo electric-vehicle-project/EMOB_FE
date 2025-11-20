@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponsiveLine } from "@nivo/line";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../../../atoms/Card";

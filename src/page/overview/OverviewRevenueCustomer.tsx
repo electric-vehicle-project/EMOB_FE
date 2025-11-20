@@ -23,7 +23,6 @@ import RevenueLineChart from "../../components/organisms/overview/overviewDealer
 import DealerCustomerChart from "../../components/organisms/overview/overviewCustomers/DealerCustomerChart";
 
 const CURRENT_YEAR = new Date().getFullYear();
-
 /* -------------------------------------------------------------------------- */
 /*                     Dashboard: Thống kê khách hàng theo NĂM               */
 /* -------------------------------------------------------------------------- */

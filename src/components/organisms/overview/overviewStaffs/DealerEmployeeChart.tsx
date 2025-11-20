@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponsiveBar } from "@nivo/bar";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "../../atoms/Card";
+import { Card, CardContent } from "../../../atoms/Card";
 
 interface EmployeeData {
   accountId: string;
@@ -118,8 +119,10 @@ export default function DealerEmployeeChart({ data, dealer }: Props) {
                   gridYValues={5}
                   enableLabel={false}
                   theme={{
-                    textColor: "#0f172a",
-                    fontSize: 11,
+                    text: {
+                      fill: "#0f172a",
+                      fontSize: 11,
+                    },
                     grid: {
                       line: {
                         stroke: "#e5e7eb",

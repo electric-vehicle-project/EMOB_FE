@@ -28,7 +28,6 @@ import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 
 import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
 import api from "../../../config/api";
-import { Card } from "../../atoms/Card";
 
 /* ======================= Helper ======================= */
 const getApiBaseUrl = () => api.defaults.baseURL ?? "";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Table,
@@ -70,7 +71,7 @@ const DealerDiscountPolicyList: React.FC = () => {
   }
   const debouncedSearch = useDebounce(searchTerm, 500);
 
-  let hookToUse =
+  const hookToUse =
     role === "ADMIN" || role === "EVM_STAFF"
       ? useGetAllDealerDiscountPolicies
       : useGetAllDealerDiscountPoliciesByDealer;
@@ -111,7 +112,7 @@ const DealerDiscountPolicyList: React.FC = () => {
   //    FILTER DROPDOWN CONTENT
   // ===============================
   const FilterContent = () => (
-    <div
+    <Card
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -164,7 +165,7 @@ const DealerDiscountPolicyList: React.FC = () => {
           </Select>
         </div>
       </Space>
-    </div>
+    </Card>
   );
 
   // Xóa chính sách (chỉ Admin mới được)
