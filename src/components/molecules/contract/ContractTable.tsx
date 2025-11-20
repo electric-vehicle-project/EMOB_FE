@@ -7,12 +7,12 @@ import type { IContract } from "../../../model/Contract";
 import dayjs from "dayjs";
 
 interface Props {
-    data: IContract[];
-    loading?: boolean;
-    page: number;
-    size: number;
-    total: number;
-    onPageChange?: (page: number) => void;
+  data: IContract[];
+  loading?: boolean;
+  page: number;
+  size: number;
+  total: number;
+  onPageChange?: (page: number) => void;
 }
 
 export const ContractTable = ({ data }: Props) => {
@@ -44,7 +44,6 @@ export const ContractTable = ({ data }: Props) => {
         </Tooltip>
       ),
     },
-
     {
       title: "Trạng thái",
       dataIndex: "status",
@@ -59,9 +58,17 @@ export const ContractTable = ({ data }: Props) => {
             : status === "PENDING"
               ? "yellow"
               : "red";
+
+        const viLabel =
+          status === "SIGNED"
+            ? "Đã ký"
+            : status === "PENDING"
+              ? "Chờ xử lí"
+              : "Đã hủy";
+
         return (
           <Tag color={color} className="uppercase font-semibold">
-            {status}
+            {viLabel}
           </Tag>
         );
       },
@@ -87,7 +94,7 @@ export const ContractTable = ({ data }: Props) => {
       key: "totalPrice",
       minWidth: 140,
       width: "13%",
-      
+
       sorter: (a, b) => (a.totalPrice || 0) - (b.totalPrice || 0),
       render: (val: number) => (
         <span className="font-semibold text-gray-700">
@@ -142,7 +149,7 @@ export const ContractTable = ({ data }: Props) => {
         );
 
 
-        
+
         return (
           <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
             <EllipsisOutlined className="text-2xl cursor-pointer text-gray-600 hover:text-black" />

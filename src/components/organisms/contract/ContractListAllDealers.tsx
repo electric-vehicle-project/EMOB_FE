@@ -64,7 +64,7 @@ export const ContractListAllDealers = () => {
         >
           <Option value="PENDING">Chờ xử lý</Option>
             <Option value="SIGNED">Đã ký</Option>
-            <Option value="TERMINATED">Hủy hợp đồng</Option>
+            <Option value="TERMINATED">Đã hủy</Option>
         </Select>
       </div>
 
@@ -103,12 +103,6 @@ export const ContractListAllDealers = () => {
 
   return (
     <div>
-      <span className="flex justify-between p-5">
-        <b className="text-lg text-[#627254]">
-          Danh sách hợp đồng bàn giao xe đến toàn bộ Đại lý
-        </b>
-      </span>
-
       <Card>
         {/* TOOLBAR */}
         <Space className="flex justify-start pb-5">
