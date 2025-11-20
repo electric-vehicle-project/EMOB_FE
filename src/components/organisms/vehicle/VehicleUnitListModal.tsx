@@ -1,4 +1,5 @@
 // src/components/organisms/vehicle/VehicleUnitListModal.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Modal,
   Table,
@@ -8,6 +9,9 @@ import {
   Empty,
   Spin,
   Select,
+  Card,
+  Space,
+  Popover,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
@@ -21,7 +25,11 @@ import { useCurrentUser } from "../../../utils/getCurrentUser";
 import { Button } from "../../atoms/Button";
 import { toast } from "react-toastify";
 import { DeleteConfirm } from "../DeleteConfirm";
-import { DeleteOutlined, AppstoreOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  AppstoreOutlined,
+  SlidersOutlined,
+} from "@ant-design/icons";
 
 type Props = {
   open: boolean;
@@ -41,6 +49,7 @@ type VehicleUnitRow = {
     | "RESERVED"
     | "SOLD";
   productionYear?: string;
+  purchaseDate?: string;
   price?: number;
 };
 
@@ -64,12 +73,13 @@ const STATUS_COLORS: Record<VehicleUnitRow["status"], string> = {
   SOLD: "red",
 };
 
-const STATUS_OPTIONS = [
-  { label: "Xe mới (bình thường)", value: "NORMAL" },
-  { label: "Trưng bày / đặc biệt", value: "SPECIAL" },
-  { label: "Tồn kho cũ", value: "OLD_STOCK" },
-  { label: "Lái thử", value: "TEST_DRIVE" },
-];
+const SORT_FIELD_OPTIONS = [
+  { label: "Ngày nhập", value: "purchaseDate" },
+  { label: "Năm SX", value: "productionYear" },
+  { label: "Giá bán lẻ", value: "price" },
+] as const;
+
+type SortField = (typeof SORT_FIELD_OPTIONS)[number]["value"];
 
 export default function VehicleUnitListModal({
   open,
@@ -77,7 +87,11 @@ export default function VehicleUnitListModal({
   vehicleId,
 }: Props) {
   const [page, setPage] = useState(0);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const [sortField, setSortField] = useState<SortField>("purchaseDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const size = 10;
 
@@ -85,7 +99,12 @@ export default function VehicleUnitListModal({
   const isEvmStaff = role === "EVM_STAFF";
 
   useEffect(() => {
-    if (open) setPage(0);
+    if (open) {
+      setPage(0);
+      setSelectedKeys([]);
+      setSortField("purchaseDate");
+      setSortDir("desc");
+    }
   }, [open, vehicleId]);
 
   const query = useGetVehicleUnitsByVehicleIdPaged(
@@ -93,7 +112,8 @@ export default function VehicleUnitListModal({
     {
       page,
       size,
-      statuses: selectedStatuses, // truyền list status
+      sortField,
+      sortDir,
     },
     {
       enabled: open && !!vehicleId,
@@ -115,7 +135,6 @@ export default function VehicleUnitListModal({
   const { mutateAsync: deleteUnits, isPending: deleting } =
     useDeleteVehicleUnitsBulk();
 
-  const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
   const selectedIds = useMemo(
     () => selectedKeys.map((k) => String(k)),
     [selectedKeys]
@@ -153,36 +172,59 @@ export default function VehicleUnitListModal({
     }
   };
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
   const columns: ColumnsType<VehicleUnitRow> = [
     {
       title: "Số khung (VIN)",
       dataIndex: "vinNumber",
-      render: (v: string) => <Text copyable>{v}</Text>,
+      width: 240,
+      render: (v: string) => (
+        <Text
+          copyable
+          ellipsis={{ tooltip: v }}
+          className="inline-block max-w-[200px]"
+        >
+          {v}
+        </Text>
+      ),
     },
     {
       title: "Màu sắc",
       dataIndex: "color",
+      width: 140,
+      render: (c: string) => (
+        <span className="text-gray-700 whitespace-nowrap">{c}</span>
+      ),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
+      width: 200,
       render: (s: VehicleUnitRow["status"]) => (
-        <Tag color={STATUS_COLORS[s]}>{STATUS_LABEL_VI[s]}</Tag>
+        <Tag
+          color={STATUS_COLORS[s]}
+          className="px-2 py-0.5 rounded-full text-xs border-none"
+        >
+          {STATUS_LABEL_VI[s]}
+        </Tag>
       ),
     },
     {
       title: "Năm SX",
       dataIndex: "productionYear",
-      render: (v?: string) => (v ? dayjs(v).format("YYYY") : "—"),
+      width: 110,
+      render: (v?: string) => (
+        <span className="text-gray-700">
+          {v ? dayjs(v).format("YYYY") : "—"}
+        </span>
+      ),
     },
     {
       title: "Giá bán lẻ",
       dataIndex: "price",
       align: "right",
+      width: 170,
       render: (p?: number) =>
-        typeof p === "number" ? `${p.toLocaleString("vi-VN")}₫` : "—",
+        typeof p === "number" ? `${p.toLocaleString("vi-VN")} ₫` : "—",
     },
   ];
 
@@ -200,6 +242,48 @@ export default function VehicleUnitListModal({
   const totalLabel = `${currentCount.toLocaleString(
     "vi-VN"
   )} / ${total.toLocaleString("vi-VN")} đơn vị xe`;
+
+  const FilterContent = () => (
+    <Card
+      {...({ onClick: (e: any) => e.stopPropagation() } as any)}
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
+    >
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <div>
+          <b className="text-gray-700">Sắp xếp theo</b>
+          <Select
+            className="w-full mt-2"
+            value={sortField}
+            onChange={(v: SortField) => {
+              setSortField(v);
+              setPage(0);
+            }}
+          >
+            {SORT_FIELD_OPTIONS.map((opt) => (
+              <Select.Option key={opt.value} value={opt.value}>
+                {opt.label}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        <div>
+          <b className="text-gray-700">Thứ tự</b>
+          <Select
+            className="w-full mt-2"
+            value={sortDir}
+            onChange={(v: "asc" | "desc") => {
+              setSortDir(v);
+              setPage(0);
+            }}
+          >
+            <Select.Option value="asc">Tăng dần</Select.Option>
+            <Select.Option value="desc">Giảm dần</Select.Option>
+          </Select>
+        </div>
+      </Space>
+    </Card>
+  );
 
   return (
     <Modal
@@ -222,102 +306,117 @@ export default function VehicleUnitListModal({
         </div>
       }
     >
-      {isEvmStaff && (
-        <div className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2 mb-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-50 text-gray-700 border text-xs font-medium">
-              Đã chọn:{" "}
-              <span className="ml-1 font-semibold">
-                {selectedIds.length.toLocaleString("vi-VN")}
-              </span>
+      <div className="mt-1 space-y-3">
+        {/* Thanh filter + thao tác */}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="text-xs text-gray-500">
+              Tổng:{" "}
+              <span className="font-medium text-gray-700">{totalLabel}</span>
             </span>
 
-            {!allPageSelected ? (
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              content={<FilterContent />}
+            >
               <Button
-                type="link"
-                className="!px-0 !text-[#627254]"
-                onClick={selectAllCurrentPage}
-                disabled={units.length === 0}
+                type="default"
+                className="flex items-center gap-2 rounded-full !px-3 !h-9 border-gray-300"
               >
-                Chọn tất cả trên trang này
+                <SlidersOutlined />
+                <span className="text-sm">Sắp xếp</span>
               </Button>
-            ) : (
-              <Button
-                type="link"
-                className="!px-0 !text-[#627254]"
-                onClick={clearSelection}
-              >
-                Bỏ chọn trang này
-              </Button>
-            )}
-
-            <Select
-              mode="multiple"
-              allowClear
-              maxTagCount="responsive"
-              placeholder="Lọc theo trạng thái"
-              value={selectedStatuses}
-              onChange={(vals) => {
-                setSelectedStatuses(vals);
-                setPage(0);
-              }}
-              options={STATUS_OPTIONS}
-              style={{ width: 300 }}
-              className="whitespace-nowrap [&_.ant-select-selector]:!min-h-[36px] [&_.ant-select-selection-overflow]:flex-nowrap"
-            />
+            </Popover>
           </div>
 
-          {selectedIds.length > 0 && (
-            <Button
-              type="primary"
-              danger
-              size="middle"
-              loading={deleting}
-              className="flex items-center gap-2 rounded-full !px-4 !h-9 shadow-sm"
-              onClick={() => setConfirmOpen(true)}
-            >
-              <DeleteOutlined />
-              <span className="font-medium">Xoá các mục đã chọn</span>
-            </Button>
+          {isEvmStaff && (
+            <div className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-50 text-gray-700 border text-xs font-medium">
+                  Đã chọn:{" "}
+                  <span className="ml-1 font-semibold">
+                    {selectedIds.length.toLocaleString("vi-VN")}
+                  </span>
+                </span>
+
+                {!allPageSelected ? (
+                  <Button
+                    type="link"
+                    className="!px-0 !text-[#627254]"
+                    onClick={selectAllCurrentPage}
+                    disabled={units.length === 0}
+                  >
+                    Chọn tất cả trên trang này
+                  </Button>
+                ) : (
+                  <Button
+                    type="link"
+                    className="!px-0 !text-[#627254]"
+                    onClick={clearSelection}
+                  >
+                    Bỏ chọn trang này
+                  </Button>
+                )}
+              </div>
+
+              {selectedIds.length > 0 && (
+                <Button
+                  type="primary"
+                  danger
+                  size="middle"
+                  loading={deleting}
+                  className="flex items-center gap-2 rounded-full !px-4 !h-9 shadow-sm"
+                  onClick={() => setConfirmOpen(true)}
+                >
+                  <DeleteOutlined />
+                  <span className="font-medium">Xoá các mục đã chọn</span>
+                </Button>
+              )}
+            </div>
           )}
         </div>
-      )}
 
-      {isLoading && units.length === 0 ? (
-        <div className="flex justify-center py-10">
-          <Spin size="large" />
-        </div>
-      ) : units.length === 0 ? (
-        <Empty
-          description="Không có đơn vị xe nào thuộc mẫu xe này."
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
-      ) : (
-        <>
-          <Table<VehicleUnitRow>
-            dataSource={units}
-            columns={columns}
-            rowKey={(r) => r.vehicleUnitId}
-            pagination={false}
-            size="middle"
-            bordered
-            rowSelection={rowSelection}
-            className="rounded-xl overflow-hidden bg-white"
-            scroll={{ x: true }}
-          />
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-            <span className="text-gray-600 text-sm">{totalLabel}</span>
-            <Pagination
-              current={page + 1}
-              total={total}
-              pageSize={size}
-              onChange={(p) => setPage(p - 1)}
-              showSizeChanger={false}
+        {/* Nội dung bảng / empty / loading */}
+        {isLoading && units.length === 0 ? (
+          <div className="flex justify-center py-10">
+            <Spin size="large" />
+          </div>
+        ) : units.length === 0 ? (
+          <div className="py-8">
+            <Empty
+              description="Không có đơn vị xe nào thuộc mẫu xe này."
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            <Table<VehicleUnitRow>
+              dataSource={units}
+              columns={columns}
+              rowKey={(r) => r.vehicleUnitId}
+              pagination={false}
+              size="middle"
+              bordered={false}
+              rowSelection={rowSelection}
+              loading={isLoading}
+              className="rounded-xl border border-gray-200 overflow-hidden bg-white"
+              scroll={{ x: true }}
+            />
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+              <span className="text-gray-600 text-sm">{totalLabel}</span>
+              <Pagination
+                current={page + 1}
+                total={total}
+                pageSize={size}
+                onChange={(p) => setPage(p - 1)}
+                showSizeChanger={false}
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       <DeleteConfirm
         open={confirmOpen && selectedIds.length > 0}

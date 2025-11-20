@@ -110,9 +110,16 @@ export const useGetVehicleUnitsByVehicleId = (
 };
 
 // ========== UNITS by MODEL (có params page/size) ==========
+// ========== UNITS by MODEL (có params page/size/sort) ==========
 export const useGetVehicleUnitsByVehicleIdPaged = (
   modelId: string,
-  params: { page: number; size: number; statuses?: string[] },
+  params: {
+    page: number;
+    size: number;
+    statuses?: string[];
+    sortField?: string; // purchaseDate theo BE
+    sortDir?: "asc" | "desc" | "ASC" | "DESC";
+  },
   options?: unknown
 ): UseQueryResult<{
   units: unknown[];
@@ -128,6 +135,8 @@ export const useGetVehicleUnitsByVehicleIdPaged = (
       params.page,
       params.size,
       params.statuses ?? null,
+      params.sortField ?? null,
+      params.sortDir ?? null,
     ],
     queryFn: async () => {
       const res = await api.get(`${UNIT_URL}/view-all-by-model/${modelId}`, {

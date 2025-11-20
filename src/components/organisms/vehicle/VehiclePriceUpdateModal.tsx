@@ -138,7 +138,7 @@ export default function VehiclePriceUpdateModal({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-2">
-            {/* Thông tin hiện tại */}
+            {/* Cột thông tin hiện tại */}
             <div className="space-y-4">
               <div className="flex items-start gap-2">
                 <div className="mt-0.5">
@@ -180,48 +180,75 @@ export default function VehiclePriceUpdateModal({
               </p>
             </div>
 
-            {/* Form cập nhật giá */}
+            {/* Cột form cập nhật giá */}
             <div>
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                className="space-y-3"
-              >
-                <Form.Item
-                  label="Giá nhập (VNĐ)"
-                  name="importPrice"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập giá nhập!" },
-                  ]}
-                >
-                  <InputNumber
-                    min={0}
-                    className="w-full"
-                    formatter={(v) =>
-                      `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
-                    parser={parseNumberInput}
-                  />
-                </Form.Item>
+              <div className="rounded-lg border border-gray-100 bg-[#f9faf7] p-4">
+                <p className="text-xs text-gray-500 mb-3">
+                  Nhập giá mới cho mẫu xe.
+                </p>
 
-                <Form.Item
-                  label="Giá bán lẻ (VNĐ)"
-                  name="retailPrice"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập giá bán lẻ!" },
-                  ]}
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmit}
+                  className="space-y-3"
                 >
-                  <InputNumber
-                    min={0}
-                    className="w-full"
-                    formatter={(v) =>
-                      `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  <Form.Item
+                    label="Giá nhập (VNĐ)"
+                    name="importPrice"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập giá nhập!" },
+                    ]}
+                    extra={
+                      <span className="text-[11px] text-gray-400">
+                        Áp dụng cho các lô nhập xe mới dựa trên mẫu xe này.
+                      </span>
                     }
-                    parser={parseNumberInput}
-                  />
-                </Form.Item>
-              </Form>
+                  >
+                    <InputNumber
+                      min={0}
+                      className="w-full"
+                      size="large"
+                      addonAfter="₫"
+                      formatter={(value) =>
+                        value != null
+                          ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                          : ""
+                      }
+                      parser={parseNumberInput}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Giá bán lẻ (VNĐ)"
+                    name="retailPrice"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập giá bán lẻ!",
+                      },
+                    ]}
+                    extra={
+                      <span className="text-[11px] text-gray-400">
+                        Là giá tham khảo cho việc báo giá và tạo đơn hàng mới.
+                      </span>
+                    }
+                  >
+                    <InputNumber
+                      min={0}
+                      className="w-full"
+                      size="large"
+                      addonAfter="₫"
+                      formatter={(value) =>
+                        value != null
+                          ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                          : ""
+                      }
+                      parser={parseNumberInput}
+                    />
+                  </Form.Item>
+                </Form>
+              </div>
             </div>
           </div>
         )}
