@@ -1,8 +1,13 @@
 import { useMemo, useState } from "react";
 import { Select } from "antd";
+import { toast } from "react-toastify";
+
 import type { SaleOrderResponse, OrderStatus } from "../../model/SaleOrder";
 
-import { useSaleOrderListDealers } from "../../service/saleOrderService";
+import {
+  useSaleOrderListDealers,
+  useSaleOrderCompleteDirect,
+} from "../../service/saleOrderService";
 
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SaleOrderTable } from "../../components/organisms/saleOrder/SaleOrderTable";
@@ -39,7 +44,7 @@ const SaleOrderEvmPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  const { data, isLoading, isFetching } = useSaleOrderListDealers({
+  const { data, isLoading, isFetching, refetch } = useSaleOrderListDealers({
     page,
     size,
     keyword: debouncedKeyword,
@@ -48,8 +53,9 @@ const SaleOrderEvmPage: React.FC = () => {
     sortDir,
   });
 
-  const orders = useMemo(() => data?.result?.data ?? data?.data ?? [], [data]);
+  const { mutateAsync: completeOrder } = useSaleOrderCompleteDirect();
 
+  const orders = useMemo(() => data?.result?.data ?? data?.data ?? [], [data]);
   const totalElements = data?.result?.metadata?.totalElements ?? 0;
 
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -134,9 +140,19 @@ const SaleOrderEvmPage: React.FC = () => {
           showTotal: (t) => `Tổng cộng ${t} đơn hàng`,
         }}
         onViewDetail={(id) => setDetailId(id)}
+        onComplete={async (id) => {
+          try {
+            await completeOrder(id);
+            toast.success("Đã hoàn tất đơn hàng");
+            refetch();
+          } catch {
+            toast.error("Không thể hoàn tất đơn hàng");
+          }
+        }}
       />
 
       <SaleOrderDetailModal
+        disableActions
         open={!!detailId}
         orderId={detailId ?? undefined}
         onClose={() => setDetailId(null)}

@@ -1,4 +1,3 @@
-// src/components/organisms/saleOrder/SaleOrderTable.tsx
 import { Tag } from "antd";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
@@ -6,25 +5,13 @@ import type { RootState } from "../../../redux/store";
 import type { SaleOrderResponse, OrderStatus } from "../../../model/SaleOrder";
 import { EMOBTable } from "../../molecules/EMOBTable";
 import type { TablePaginationConfig } from "antd/es/table";
-import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import { useDealerByIdQuery } from "../../../service/dealerService";
-
-const DealerName = ({ dealerId }: { dealerId: string }) => {
-  const { data, isLoading } = useDealerByIdQuery(dealerId);
-
-  if (isLoading) return <span className="text-gray-400">...</span>;
-
-  return (
-    <span className="text-gray-700 font-medium">
-      {data?.result?.name || "Không xác định"}
-    </span>
-  );
-};
 
 interface SaleOrderTableProps {
   data: SaleOrderResponse[];
   loading?: boolean;
   showDealerColumn?: boolean;
+  disableActions?: boolean;
   onDelete?: (id: string) => void;
   onComplete?: (id: string) => void;
   onViewDetail?: (id: string) => void;
@@ -37,10 +24,21 @@ interface SaleOrderTableProps {
   sortDir?: "asc" | "desc";
 }
 
+const DealerName = ({ dealerId }: { dealerId: string }) => {
+  const { data, isLoading } = useDealerByIdQuery(dealerId);
+  if (isLoading) return <span className="text-gray-400">...</span>;
+  return (
+    <span className="text-gray-700 font-medium">
+      {data?.result?.name || "Không xác định"}
+    </span>
+  );
+};
+
 export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   data,
   loading = false,
   showDealerColumn = false,
+  disableActions = false,
   onDelete,
   onComplete,
   onViewDetail,
@@ -49,10 +47,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
   sortField,
   sortDir = "desc",
 }) => {
-  const role = useSelector((state: RootState) => state.user?.role ?? null);
-
-  const canComplete = role === "DEALER_STAFF" || role === "EVM_STAFF";
-  const canDelete = role === "DEALER_STAFF" || role === "EVM_STAFF";
+  const role = useSelector((s: RootState) => s.user?.role ?? null);
 
   const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
@@ -88,7 +83,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       align: "center" as const,
       sorter: !!onSortChange,
       sortOrder: sortField === "totalQuantity" ? order : null,
-      render: (val: number) => <span className="font-medium">{val}</span>,
+      render: (v: number) => <span className="font-medium">{v}</span>,
     },
     {
       title: "Tổng tiền (VAT)",
@@ -98,9 +93,9 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       align: "center" as const,
       sorter: !!onSortChange,
       sortOrder: sortField === "totalPrice" ? order : null,
-      render: (price: number) => (
+      render: (v: number) => (
         <span className="text-gray-900 font-semibold">
-          {price?.toLocaleString("vi-VN")} ₫
+          {v.toLocaleString("vi-VN")} ₫
         </span>
       ),
     },
@@ -111,9 +106,9 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
             dataIndex: "dealerId",
             key: "dealerId",
             width: 180,
-            render: (dealerId: string) =>
-              dealerId ? (
-                <DealerName dealerId={dealerId} />
+            render: (x: string) =>
+              x ? (
+                <DealerName dealerId={x} />
               ) : (
                 <span className="text-gray-400">Không xác định</span>
               ),
@@ -126,25 +121,25 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       key: "status",
       width: 130,
       align: "center" as const,
-      render: (status: OrderStatus) => {
-        const config: Record<OrderStatus, { color: string; text: string }> = {
+      render: (s: OrderStatus) => {
+        const config = {
           CREATED: { color: "blue", text: "Đã tạo" },
           COMPLETED: { color: "green", text: "Hoàn tất" },
           CANCELED: { color: "red", text: "Đã huỷ" },
         };
-        return <Tag color={config[status].color}>{config[status].text}</Tag>;
+        return <Tag color={config[s].color}>{config[s].text}</Tag>;
       },
     },
   ];
 
   const actions = (record: SaleOrderResponse) => {
-    const menuItems = [
+    const items = [
       {
         key: "detail",
         label: (
           <span
             className="block px-3 text-[14px]"
-            onClick={() => onViewDetail?.(record.id)}
+            onMouseDown={() => onViewDetail?.(record.id)}
           >
             Chi tiết
           </span>
@@ -152,27 +147,35 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       },
     ];
 
-    if (canComplete && record.status === "CREATED") {
-      menuItems.push({
+    if (disableActions) return items;
+
+    const isCreated = record.status === "CREATED";
+
+    const allowDealerStaff = role === "DEALER_STAFF" && !!record.customerId;
+
+    const allowEvmStaff = role === "EVM_STAFF";
+
+    const allowAction = isCreated && (allowDealerStaff || allowEvmStaff);
+
+    if (allowAction) {
+      items.push({
         key: "complete",
         label: (
           <span
             className="block px-3 text-[14px] text-green-600"
-            onClick={() => onComplete?.(record.id)}
+            onMouseDown={() => onComplete?.(record.id)}
           >
             Hoàn tất
           </span>
         ),
       });
-    }
 
-    if (canDelete && record.status === "CREATED") {
-      menuItems.push({
+      items.push({
         key: "delete",
         label: (
           <span
             className="block px-3 text-[14px] text-red-600"
-            onClick={() => onDelete?.(record.id)}
+            onMouseDown={() => onDelete?.(record.id)}
           >
             Huỷ
           </span>
@@ -180,24 +183,7 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       });
     }
 
-    return menuItems;
-  };
-
-  const handleChange = (
-    _pagination: TablePaginationConfig,
-    _filters: Record<string, FilterValue | null>,
-    sorter: SorterResult<SaleOrderResponse> | SorterResult<SaleOrderResponse>[]
-  ): void => {
-    if (!onSortChange) return;
-
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-
-    if (s?.order && s.field) {
-      const next: "asc" | "desc" = s.order === "ascend" ? "asc" : "desc";
-      onSortChange(s.field as keyof SaleOrderResponse, next);
-    } else {
-      onSortChange("createdAt", "desc");
-    }
+    return items;
   };
 
   return (
@@ -206,9 +192,18 @@ export const SaleOrderTable: React.FC<SaleOrderTableProps> = ({
       columns={columns}
       dataSource={data}
       loading={loading}
-      pagination={pagination}
-      onChange={handleChange}
       actions={actions}
+      pagination={pagination}
+      onChange={(s) => {
+        if (!onSortChange) return;
+        const one = Array.isArray(s) ? s[0] : s;
+        if (one?.order && one.field) {
+          onSortChange(
+            one.field as keyof SaleOrderResponse,
+            one.order === "ascend" ? "asc" : "desc"
+          );
+        }
+      }}
     />
   );
 };

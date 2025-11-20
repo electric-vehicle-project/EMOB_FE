@@ -1,45 +1,26 @@
-// src/components/organisms/saleOrder/SaleOrderDetailModal.tsx
-import { Modal, Button, Divider, Spin } from "antd";
+import { Modal, Divider, Spin } from "antd";
 import { useMemo } from "react";
-import {
-  useSaleOrderById,
-  useSaleOrderDelete,
-  useSaleOrderCompleteDirect,
-} from "../../../service/saleOrderService";
+import { useSaleOrderById } from "../../../service/saleOrderService";
 import { SaleOrderDetailInfo } from "./SaleOrderDetailInfo";
 import { useCustomerById } from "../../../service/customerService";
 import { useDealerByIdQuery } from "../../../service/dealerService";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../../redux/store";
 import type {
   SaleOrderResponse,
   SaleOrderItemResponse,
 } from "../../../model/SaleOrder";
 import { SaleOrderItemTable } from "./SaleOrderItemTable";
-import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
   orderId?: string;
   onClose: () => void;
+  disableActions?: boolean;
 }
 
 export const SaleOrderDetailModal = ({ open, orderId, onClose }: Props) => {
-  const role = useSelector((s: RootState) => s.user?.role ?? null);
-
-  const {
-    data: orderData,
-    isLoading,
-    refetch,
-  } = useSaleOrderById(orderId ?? "", {
+  const { data: orderData, isLoading } = useSaleOrderById(orderId ?? "", {
     enabled: !!orderId && open,
   });
-
-  const { mutateAsync: cancelOrder, isPending: canceling } =
-    useSaleOrderDelete();
-
-  const { mutateAsync: completeOrder, isPending: completing } =
-    useSaleOrderCompleteDirect();
 
   const rawOrder: SaleOrderResponse | null =
     (orderData?.result as SaleOrderResponse | undefined) ??
@@ -56,9 +37,6 @@ export const SaleOrderDetailModal = ({ open, orderId, onClose }: Props) => {
 
   const customer = customerData?.result ?? null;
   const dealer = dealerData?.result ?? null;
-
-  const isDealerStaff = role === "DEALER_STAFF";
-  const isEvmStaff = role === "EVM_STAFF";
 
   const normalizedItems: SaleOrderItemResponse[] = useMemo(() => {
     if (!rawOrder?.items) return [];
@@ -77,31 +55,7 @@ export const SaleOrderDetailModal = ({ open, orderId, onClose }: Props) => {
     }));
   }, [rawOrder]);
 
-  const hideItems = rawOrder?.status === "COMPLETED" && !!rawOrder.customerId;
-
-  const handleCancel = async () => {
-    if (!orderId) return;
-    try {
-      await cancelOrder(orderId);
-      toast.success("Đã hủy đơn hàng");
-      refetch();
-      onClose();
-    } catch {
-      toast.error("Không thể hủy đơn hàng");
-    }
-  };
-
-  const handleComplete = async () => {
-    if (!orderId) return;
-    try {
-      await completeOrder(orderId);
-      toast.success("Đã hoàn tất đơn hàng");
-      refetch();
-      onClose();
-    } catch {
-      toast.error("Không thể hoàn tất đơn hàng");
-    }
-  };
+  const hideItems = rawOrder?.status === "COMPLETED" && !!rawOrder?.customerId;
 
   return (
     <Modal
@@ -136,27 +90,6 @@ export const SaleOrderDetailModal = ({ open, orderId, onClose }: Props) => {
               </h3>
               <SaleOrderItemTable items={normalizedItems} />
             </>
-          )}
-
-          {(isDealerStaff || isEvmStaff) && rawOrder.status === "CREATED" && (
-            <div className="flex justify-end gap-3 mt-4">
-              <Button
-                danger
-                loading={canceling}
-                onClick={handleCancel}
-                className="px-5 rounded-lg"
-              >
-                Hủy đơn hàng
-              </Button>
-              <Button
-                type="primary"
-                loading={completing}
-                onClick={handleComplete}
-                className="bg-[#3f4a3c] border-none hover:!bg-[#2f382e] px-6 rounded-lg"
-              >
-                Hoàn tất đơn hàng
-              </Button>
-            </div>
           )}
         </div>
       )}
