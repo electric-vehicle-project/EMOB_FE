@@ -1,3 +1,4 @@
+// src/components/molecules/report/ReportFormModal.tsx
 import { Modal, Form, Input, Select, Row, Col, Button } from "antd";
 import { useEffect } from "react";
 import { useCustomerList } from "../../../service/customerService";
@@ -31,7 +32,6 @@ export const ReportFormModal = ({
   const { data: customers, isLoading } = useCustomerList();
   const customerOptions = mapCustomerOptions(customers);
 
-  // Đồng bộ form theo initialValues mỗi lần mở modal
   useEffect(() => {
     if (!open) {
       form.resetFields();
@@ -60,7 +60,7 @@ export const ReportFormModal = ({
       onSubmit(values);
       form.resetFields();
     } catch {
-      // bỏ qua
+      // ignore
     }
   };
 

@@ -1,11 +1,7 @@
+// src/components/molecules/report/ReportTable.tsx
 import { Tag } from "antd";
-import type {
-  ColumnsType,
-  TablePaginationConfig,
-  TableProps,
-} from "antd/es/table";
+import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { IReport } from "../../../model/Report";
-import type { FilterValue } from "antd/es/table/interface";
 import { EMOBTable } from "../../molecules/EMOBTable";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
@@ -30,17 +26,12 @@ export const ReportTable = ({
   data,
   loading,
   pagination,
-  sortField = "createdAt",
-  sortDir = "desc",
-  onSortChange,
   onEdit,
   onProcess,
   onDelete,
   onViewDetail,
 }: ReportTableProps) => {
   const role = useSelector((s: RootState) => s.user?.role ?? "");
-
-  const order: "ascend" | "descend" = sortDir === "asc" ? "ascend" : "descend";
 
   /** ==== Columns ==== */
   const columns: ColumnsType<IReport> = [
@@ -50,8 +41,6 @@ export const ReportTable = ({
       key: "title",
       width: 260,
       ellipsis: true,
-      sorter: true,
-      sortOrder: sortField === "title" ? order : null,
       render: (text: string, record) => (
         <span
           className="text-black font-medium hover:underline cursor-pointer"
@@ -62,7 +51,6 @@ export const ReportTable = ({
       ),
     },
 
-    /** ========== TYPE ========== */
     {
       title: "Loại",
       dataIndex: "type",
@@ -79,16 +67,14 @@ export const ReportTable = ({
         } as const;
 
         const item = map[type];
-
-        if (!item) {
-          return <Tag color="default">{type || "Không xác định"}</Tag>;
-        }
-
-        return <Tag color={item.color}>{item.label}</Tag>;
+        return item ? (
+          <Tag color={item.color}>{item.label}</Tag>
+        ) : (
+          <Tag>{type || "Không xác định"}</Tag>
+        );
       },
     },
 
-    /** ========== STATUS ========== */
     {
       title: "Trạng thái",
       dataIndex: "status",
@@ -104,12 +90,11 @@ export const ReportTable = ({
         } as const;
 
         const item = map[status];
-
-        if (!item) {
-          return <Tag color="default">{status || "Không xác định"}</Tag>;
-        }
-
-        return <Tag color={item.color}>{item.label}</Tag>;
+        return item ? (
+          <Tag color={item.color}>{item.label}</Tag>
+        ) : (
+          <Tag>{status || "Không xác định"}</Tag>
+        );
       },
     },
 
@@ -128,8 +113,6 @@ export const ReportTable = ({
       key: "createdAt",
       width: 190,
       align: "center",
-      sorter: true,
-      sortOrder: sortField === "createdAt" ? order : null,
       render: (v: string) =>
         new Date(v).toLocaleString("vi-VN", {
           day: "2-digit",
@@ -171,7 +154,6 @@ export const ReportTable = ({
       });
     }
 
-    // 👉 Manager xử lý
     if (role === "MANAGER") {
       items.push({
         key: "process",
@@ -186,7 +168,6 @@ export const ReportTable = ({
       });
     }
 
-    // 👉 Xóa (ĐỎ)
     items.push({
       key: "delete",
       label: (
@@ -202,21 +183,7 @@ export const ReportTable = ({
     return items;
   };
 
-  /** ==== Sort handler ==== */
-  const handleChange: TableProps<IReport>["onChange"] = (
-    _pagination,
-    _filters: Record<string, FilterValue | null>,
-    sorter
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s || !s.field) return;
-
-    const field = s.field as keyof IReport;
-    const order = s.order === "ascend" ? "asc" : "desc";
-
-    onSortChange?.(field, order);
-  };
-
+  /** ==== Table (không còn sort) ==== */
   return (
     <EMOBTable<IReport>
       rowKey="reportId"
@@ -225,7 +192,6 @@ export const ReportTable = ({
       loading={loading}
       pagination={pagination}
       actions={actions}
-      onChange={handleChange}
     />
   );
 };

@@ -23,7 +23,6 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
     }
   };
 
-  // Reset form mỗi khi modal mở lại
   useEffect(() => {
     if (open) {
       form.resetFields();
