@@ -6,18 +6,20 @@ import {
 
 const BASE_URL = "/dealer-point-rules";
 
-// ✅ GET /dealer-point-rules (Admin, EVM_STAFF)
-export const useDealerPointRuleList = () =>
-  createQueryHook("dealerPointRuleList", BASE_URL)();
+// GET all (Admin, EVM_STAFF)
+export const useDealerPointRuleList = createQueryHook(
+  "dealerPointRuleList",
+  BASE_URL
+);
 
-// ✅ GET /dealer-point-rules/{dealerId} (Manager, DealerStaff)
+// GET by dealerId (Manager, DealerStaff)
 export const useDealerPointRuleByDealerId = createQueryWithPathParamHook(
   "dealerPointRuleByDealerId",
   BASE_URL
 );
 
-// ✅ PUT /dealer-point-rules (Manager update toàn bộ rule cho đại lý)
+// PUT update toàn bộ rule cho 1 dealer (body = array)
 export const useDealerPointRuleUpdate = updateMutationHook(
-  "dealerPointRuleList",
+  "dealerPointRuleUpdate",
   BASE_URL
 );
