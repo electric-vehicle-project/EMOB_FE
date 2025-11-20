@@ -21,7 +21,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 export default function CarBrandDealerDashboard() {
   const [selectedRegion, setSelectedRegion] = useState("Tất cả khu vực");
-  const [selectedCountry, setSelectedCountry] = useState("Tất cả thành phố");
+  const [selectedCountry, setSelectedCountry] = useState("Tất cả địa chỉ");
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
 
   // call api theo năm
@@ -34,7 +34,7 @@ export default function CarBrandDealerDashboard() {
           ? undefined
           : REGION_MAP.find((r) => r.vi === selectedRegion)?.en,
       country:
-        selectedCountry === "Tất cả thành phố" ? undefined : selectedCountry,
+        selectedCountry === "Tất cả địa chỉ" ? undefined : selectedCountry,
     }
   ) as UseQueryResult<DealerApiResponse, unknown>;
 
@@ -176,9 +176,9 @@ export default function CarBrandDealerDashboard() {
                 setSelectedRegion(newRegion);
                 if (
                   newRegion === "Tất cả khu vực" ||
-                  selectedCountry !== "Tất cả thành phố"
+                  selectedCountry !== "Tất cả địa chỉ"
                 ) {
-                  setSelectedCountry("Tất cả thành phố");
+                  setSelectedCountry("Tất cả địa chỉ");
                 }
               }}
             >
@@ -192,7 +192,7 @@ export default function CarBrandDealerDashboard() {
           {/* DEALER */}
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Thành phố
+              Địa chỉ
             </label>
             <select
               className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 shadow-sm hover:border-[#627254] focus:ring-2 focus:ring-[#627254]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -200,7 +200,7 @@ export default function CarBrandDealerDashboard() {
               onChange={(e) => setSelectedCountry(e.target.value)}
               disabled={selectedRegion === "Tất cả khu vực"}
             >
-              <option>Tất cả thành phố</option>
+              <option>Tất cả địa chỉ</option>
             </select>
           </div>
 
