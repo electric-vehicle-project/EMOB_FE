@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Modal, Form } from "antd";
 import SelectInput from "../../components/atoms/SelectInput";
 import {
@@ -41,7 +42,7 @@ const BulkDeleteDiscountPolicyModal = ({ open, onClose, onSuccess }: any) => {
       onSuccess?.();
       onClose();
       form.resetFields();
-    } catch (err: any) {
+    } catch {
       toast.error("Xóa hàng loạt thất bại!");
     }
   };

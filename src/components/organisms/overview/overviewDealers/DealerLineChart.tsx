@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponsiveLine } from "@nivo/line";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../../../atoms/Card";
@@ -10,7 +11,7 @@ interface Props {
 
 export default function RevenueLineChart({ data, region, country }: Props) {
   const title = (() => {
-    if (country && country !== "Tất cả thành phố") {
+    if (country && country !== "Tất cả địa chỉ") {
       return `Doanh thu đại lý ${country}`;
     }
     if (region && region !== "Tất cả khu vực") {

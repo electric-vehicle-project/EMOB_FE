@@ -18,7 +18,6 @@ export default function DealerEmployeeChart({ data, metric }: Props) {
     revenue: d.amount,
     orders: d.orderCount,
   }));
-
   return (
     <Card>
       <CardContent className="h-[350px]">

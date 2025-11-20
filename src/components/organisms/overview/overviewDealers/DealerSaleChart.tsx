@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponsiveBar } from "@nivo/bar";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../../../atoms/Card";
@@ -82,7 +83,7 @@ export default function DealerSalesChart({ data, region }: Props) {
                   },
                 },
               }}
-              tooltip={({ id, value, indexValue }) => (
+              tooltip={({ value, indexValue }) => (
                 <div className="p-2 text-sm bg-white rounded-md shadow-md border border-gray-100">
                   <strong>{indexValue}</strong>
                   <div className="text-[#627254] font-semibold">

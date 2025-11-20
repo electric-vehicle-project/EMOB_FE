@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Button, Empty, Select, Space, Dropdown } from "antd";
+import { Result, Button, Empty, Input } from "antd";
 import { useDebounce } from "../../hook/useDebounce";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { useInstallmetnPlanByCustomersQuery } from "../../service/installmentPlanService";
@@ -11,11 +10,6 @@ import type {
 import { InstallmentPlanTable } from "../../components/molecules/installmentPlan/InstallmentPlanTable";
 import { InstallmentPlanDetailModal } from "./ViewInstallmentPlanCustomerModal";
 import { CardWrapper } from "../../components/template/CardWrapper";
-import { SlidersOutlined } from "@ant-design/icons";
-import { Card } from "../../components/atoms/Card";
-import { SearchBar } from "../../components/molecules/SearchBar";
-import { Link } from "react-router-dom";
-import { ROUTES } from "../../model/routePaths";
 
 export const InstallmentPlanCustomersPage = () => {
   const [search, setSearch] = useState("");
@@ -23,14 +17,8 @@ export const InstallmentPlanCustomersPage = () => {
 
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [sortField, setSortField] = useState("downDate");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const user = useCurrentUser();
   const role = (user as { role?: string } | null)?.role || "";
@@ -45,32 +33,40 @@ export const InstallmentPlanCustomersPage = () => {
       page: current - 1,
       size: pageSize,
       keyword: debouncedSearch || undefined,
-      sortField,
-      sortDir,
-      statuses: statusFilter,
+      sortField: "downDate",
+      sortDir: "desc",
     }),
-    [current, pageSize, debouncedSearch, sortField, sortDir, statusFilter]
+    [current, pageSize, debouncedSearch]
   );
 
+  const isDealerRole = role === "DEALER_STAFF" || role === "MANAGER";
   const customerPlansQuery = useInstallmetnPlanByCustomersQuery(
-    { enabled: canView },
+    { enabled: canView && isDealerRole },
     params
   );
 
-  const { data, isLoading } = customerPlansQuery;
+  const { data, refetch, isLoading, isError, error } = isDealerRole
+    ? customerPlansQuery
+    : {
+        data: [],
+        refetch: () => {},
+        isLoading: false,
+        isError: false,
+        error: null,
+      };
 
   const installmentPlans: IInstallmentPlan[] = useMemo(() => {
     const raw: InstallmentPlanApiModel[] = data?.result?.data ?? [];
-    return raw.map((p) => ({
-      id: p.id,
-      downDate: p.downDate,
-      deposit: p.deposit,
-      totalAmount: p.totalAmount,
-      monthlyAmount: p.monthlyAmount,
-      interestRate: p.interestRate,
-      termMonths: p.termMonths,
-      nextDueDate: p.nextDueDate,
-      status: p.status,
+    return raw.map((plan) => ({
+      id: plan.id,
+      downDate: plan.downDate,
+      deposit: plan.deposit,
+      totalAmount: plan.totalAmount,
+      monthlyAmount: plan.monthlyAmount,
+      interestRate: plan.interestRate,
+      termMonths: plan.termMonths,
+      nextDueDate: plan.nextDueDate,
+      status: plan.status,
     }));
   }, [data]);
 
@@ -81,105 +77,63 @@ export const InstallmentPlanCustomersPage = () => {
     setIsModalOpen(true);
   }, []);
 
-  // ================== FILTER CONTENT ==================
-  const FilterContent = () => (
-    <div
-      {...({ onClick: (e: any) => e.stopPropagation() } as any)}
-      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
-    >
-      <Space direction="vertical" className="w-full">
-        <div>
-          <b>Trạng thái</b>
-          <Select
-            mode="multiple"
-            allowClear
-            className="w-full mt-2"
-            value={statusFilter}
-            onChange={(v) => {
-              setStatusFilter(v);
-              setCurrent(1);
-            }}
-          >
-            <Select.Option value="PAID">Đã thanh toán hết</Select.Option>
-            <Select.Option value="NOT_PAID">Chưa thanh toán</Select.Option>
-            <Select.Option value="OVERDUE">Trễ hẹn</Select.Option>
-            <Select.Option value="CANCELLED">Hủy thanh toán</Select.Option>
-          </Select>
-        </div>
+  if (!canView)
+    return (
+      <CardWrapper
+        title="Quản lý kế hoạch trả góp khách hàng"
+        subtitle="Bạn không có quyền truy cập trang này"
+        variant="dashboard"
+      >
+        <Result
+          status="403"
+          title="403"
+          subTitle="Bạn không có quyền truy cập trang này."
+          extra={
+            <Button type="primary" href="/dashboard">
+              Về trang tổng quan
+            </Button>
+          }
+        />
+      </CardWrapper>
+    );
 
-        <div>
-          <b>Sắp xếp theo</b>
-          <Select
-            className="w-full mt-2"
-            value={sortField}
-            onChange={(v) => {
-              setSortField(v);
-              setCurrent(1);
-            }}
-          >
-            <Select.Option value="effectiveDate">Ngày hiệu lực</Select.Option>
-            <Select.Option value="downDate">Ngày đặt cọc</Select.Option>
-            <Select.Option value="nextDueDate">
-              Ngày thanh toán tiếp theo
-            </Select.Option>
-          </Select>
-        </div>
+  if (isError)
+    return (
+      <CardWrapper
+        title="Quản lý kế hoạch trả góp khách hàng"
+        subtitle="Không thể tải danh sách kế hoạch trả góp"
+        variant="dashboard"
+      >
+        <Result
+          status="error"
+          title="Không thể tải danh sách kế hoạch trả góp"
+          subTitle={
+            (error as { message?: string })?.message || "Vui lòng thử lại."
+          }
+          extra={
+            <Button type="primary" onClick={() => refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
+      </CardWrapper>
+    );
 
-        <div>
-          <b>Thứ tự</b>
-          <Select
-            className="w-full mt-2"
-            value={sortDir}
-            onChange={(v) => {
-              setSortDir(v);
-              setCurrent(1);
-            }}
-          >
-            <Select.Option value="asc">Tăng dần</Select.Option>
-            <Select.Option value="desc">Giảm dần</Select.Option>
-          </Select>
-        </div>
-      </Space>
-    </div>
-  );
-
-  // ================== UI ==================
   return (
     <CardWrapper
       title="Quản lý kế hoạch trả góp khách hàng"
       subtitle="Theo dõi, tìm kiếm và xem chi tiết kế hoạch trả góp của khách hàng"
       variant="dashboard"
-      rightLink={
-        <Link
-          to={`/${role.toLowerCase()}/${ROUTES.INSTALLMENT_PLAN}`}
-          className="text-green-600 underline hover:text-green-800 text-sm"
-        >
-          Xem tất cả kế hoạch trả góp
-        </Link>
-      }
     >
-      {/* SEARCH + FILTER */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-[320px]">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm kiếm kế hoạch trả góp..."
-          />
-        </div>
-
-        <Dropdown
-          trigger={["click"]}
-          open={filterOpen}
-          onOpenChange={setFilterOpen}
-          dropdownRender={() => <FilterContent />}
-        >
-          <Button
-            type="text"
-            icon={<SlidersOutlined style={{ fontSize: 20 }} />}
-            className="text-gray-600 hover:text-black"
-          />
-        </Dropdown>
+      <div className="flex justify-end mb-4">
+        <Input
+          placeholder="Tìm kiếm kế hoạch trả góp..."
+          allowClear
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: 320 }}
+          className="rounded-md shadow-sm border-gray-300 focus:border-green-600 focus:ring-green-600"
+        />
       </div>
 
       {installmentPlans.length > 0 ? (

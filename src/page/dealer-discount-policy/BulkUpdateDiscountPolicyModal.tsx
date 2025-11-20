@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */ 
 import { Modal, Form, InputNumber, DatePicker } from "antd";
 import {
   useBulkUpdateDiscountPolicies,

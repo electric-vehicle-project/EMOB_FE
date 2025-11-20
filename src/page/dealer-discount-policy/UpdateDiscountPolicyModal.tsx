@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */ 
 import React, { useEffect, useMemo } from "react";
 import { Modal, Form, InputNumber, DatePicker, Spin } from "antd";
 import dayjs from "dayjs";

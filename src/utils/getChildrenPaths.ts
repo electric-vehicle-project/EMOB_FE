@@ -50,7 +50,7 @@ const processRoutesRecursively = (
  * @returns Một mảng duy nhất chứa tất cả các route con đã được làm phẳng.
  */
 export const createFlattenedRoutes = (allRoutes: RouteObject[]): FlattenedRoute[] => {
-  let flattenedList: FlattenedRoute[] = [];
+  const flattenedList: FlattenedRoute[] = [];
 
   // Lặp qua các route ở cấp cao nhất (ví dụ: /admin, /dashboard)
   allRoutes.forEach(topLevelRoute => {

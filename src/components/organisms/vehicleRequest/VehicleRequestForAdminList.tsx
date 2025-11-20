@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState } from "react";
 import { Table, Tag, Input, Spin, Menu, Dropdown, Select, Button } from "antd";
 import {
@@ -47,12 +48,13 @@ const VehicleRequestForAdminList: React.FC = () => {
 
   // fetch danh sách đại lý (để hiển thị tên)
   const { data: dealerData, isLoading: dealerLoading } = useDealersQuery(
-    0,
-    200,
-    "",
-    "name",
-    "desc",
-    undefined
+    0, // page
+    200, // size
+    "", // keyword
+    "name", // sortField
+    "asc", // sortDir
+    undefined, // country
+    true // enabled
   );
 
   // tạo map từ dealerId -> dealerName
@@ -85,7 +87,7 @@ const VehicleRequestForAdminList: React.FC = () => {
   //    FILTER DROPDOWN CONTENT
   // ===============================
   const FilterContent = () => (
-    <div
+    <Card
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -121,8 +123,6 @@ const VehicleRequestForAdminList: React.FC = () => {
           className="w-full mt-2"
         >
           <Select.Option value="createdAt">Ngày tạo</Select.Option>
-          <Select.Option value="totalQuantity">Số lượng</Select.Option>
-          <Select.Option value="totalPrice">Tổng giá trị</Select.Option>
         </Select>
       </div>
 
@@ -141,7 +141,7 @@ const VehicleRequestForAdminList: React.FC = () => {
           <Select.Option value="asc">Giảm dần</Select.Option>
         </Select>
       </div>
-    </div>
+    </Card>
   );
 
   const columns: ColumnsType<IVehicleRequest> = [

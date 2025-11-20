@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */ 
 import { Table } from "antd";
 import React from "react";
 export type InventoryProps = {
