@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { Modal, Form, Select, InputNumber, DatePicker, Card } from "antd";
 import {

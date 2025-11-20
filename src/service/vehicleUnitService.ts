@@ -1,4 +1,4 @@
-// src/service/vehicleService.ts
+
 import { createQueryHook, createMutationHook } from "../hook/useApi";
 import api from "../config/api";
 import { useQuery } from "@tanstack/react-query";

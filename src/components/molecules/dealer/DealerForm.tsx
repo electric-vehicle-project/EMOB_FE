@@ -33,7 +33,7 @@ export const DealerForm: React.FC<Props> = ({
       layout="vertical"
       form={form}
       autoComplete="off"
-      requiredMark="optional"
+      requiredMark={true} // hoặc xoá dòng này, mặc định là true
       className="space-y-2"
       validateTrigger="onSubmit"
       onFinish={(values) => onFinish(normalizeDealerValues(values))}

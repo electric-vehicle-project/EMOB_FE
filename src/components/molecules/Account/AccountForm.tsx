@@ -1,4 +1,3 @@
-// src/components/molecules/Account/AccountForm.tsx
 import { Form, Input, Select, DatePicker } from "antd";
 import { Button as EmobButton } from "../../atoms/Button";
 import type { Dayjs } from "dayjs";
@@ -55,9 +54,8 @@ export const AccountForm: React.FC<Props> = ({
   const [innerForm] = Form.useForm<AccountFormValues>();
   const form = outerForm ?? innerForm;
 
-  /* Reset form khi thay đổi role/modal truyền form từ ngoài */
+  /* Reset form khi không truyền form từ modal */
   if (!outerForm) {
-    // Nếu không dùng form từ modal, dùng form nội bộ, reset khi mount
     form.resetFields();
   }
 
@@ -73,7 +71,7 @@ export const AccountForm: React.FC<Props> = ({
     };
 
     if (role === Role.MANAGER) {
-      return onSubmit(base); // Manager luôn tạo DEALER_STAFF (logic giữ nguyên)
+      return onSubmit(base);
     }
 
     const finalRole = defaultCreatingRole ?? values.role;
@@ -96,8 +94,8 @@ export const AccountForm: React.FC<Props> = ({
       form={form}
       onFinish={handleFinish}
       autoComplete="off"
-      requiredMark="optional"
-      validateTrigger={["onBlur", "onSubmit"]} // improved
+      requiredMark={true} // ⭐ luôn hiển thị dấu * đỏ
+      validateTrigger={["onBlur", "onSubmit"]}
       className="space-y-2"
     >
       {/* Full name */}

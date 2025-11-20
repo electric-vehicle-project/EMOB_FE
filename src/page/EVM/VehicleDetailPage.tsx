@@ -2,6 +2,7 @@
 /* EMOB-2025 - VehicleDetailPage */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, Tag, Image, Dropdown, Menu } from "antd";
+import { Button as EmobButton } from "../../components/atoms/Button";
 import {
   useLocation,
   useNavigate,
@@ -46,7 +47,6 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import { ROUTES } from "../../model/routePaths";
-import { Button } from "../../components/atoms/Button";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { toast } from "react-toastify";
@@ -302,22 +302,32 @@ export const VehicleDetailPage = () => {
         variant="dashboard"
       >
         <div className="flex items-center justify-between mb-4 gap-3">
-          <Button
+          {/* NÚT QUAY LẠI */}
+          <EmobButton
             key="back"
             icon={<ArrowLeftOutlined />}
             onClick={handleBack}
-            className="rounded-full border border-[#d3d7c3] bg-white px-3 h-9 text-[#414d38] hover:bg-[#f5f7f0] hover:border-[#c4c8b0]"
+            className="h-10 px-4 flex items-center gap-2 
+             rounded-full border border-[#d3d7c3] 
+             bg-white text-[#414d38]
+             hover:bg-[#f5f7f0] hover:border-[#c4c8b0]"
           >
-            Quay lại
-          </Button>
+            <span className="text-sm font-medium tracking-wide">Quay lại</span>
+          </EmobButton>
 
+          {/* NÚT THAO TÁC */}
           <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
-            <Button className="rounded-full bg-[#f5f7f0] border border-[#d3d7c3] flex items-center gap-2 px-3 h-9 text-[#414d38] transition-colors duration-150 hover:bg-[#ecefe2] hover:border-[#c4c8b0]">
-              <span className="hidden sm:inline text-xs font-medium tracking-wide">
+            <EmobButton
+              className="h-10 px-4 flex items-center gap-2 
+               rounded-full border border-[#d3d7c3] 
+               bg-white text-[#414d38]
+               hover:bg-[#f5f7f0] hover:border-[#c4c8b0]"
+            >
+              <span className="hidden sm:inline text-sm font-medium tracking-wide">
                 Thao tác
               </span>
               <EllipsisOutlined className="text-lg" />
-            </Button>
+            </EmobButton>
           </Dropdown>
         </div>
 

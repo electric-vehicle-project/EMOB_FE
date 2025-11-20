@@ -1,9 +1,10 @@
 // src/components/organisms/account/AccountModal.tsx
 import { Modal, Form } from "antd";
+import { useEffect, useRef, useState } from "react";
 import { AccountForm } from "../../molecules/Account/AccountForm";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 import { Role } from "../../../model/Account";
-import { useEffect } from "react";
+import { DeleteConfirm } from "../DeleteConfirm";
 
 interface Props {
   open: boolean;
@@ -34,10 +35,18 @@ export const AccountModal = ({
   dealerOptions = [],
 }: Props) => {
   const [form] = Form.useForm();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  /* Reset form mỗi khi modal mở */
+  // Lưu trạng thái form ban đầu khi mở modal
+  const initialValuesRef = useRef<Record<string, unknown> | null>(null);
+
   useEffect(() => {
-    if (open) form.resetFields();
+    if (open) {
+      form.resetFields();
+      setConfirmOpen(false);
+      // Sau khi reset, trạng thái này là "ban đầu"
+      initialValuesRef.current = form.getFieldsValue(true);
+    }
   }, [open, form]);
 
   const handleSubmit = async (values: AccountCreatePayload) => {
@@ -65,24 +74,66 @@ export const AccountModal = ({
     }
   };
 
+  // Khi bấm X hoặc bấm ra ngoài
+  const requestClose = () => {
+    const currentValues = form.getFieldsValue(true);
+    const initialValues = initialValuesRef.current;
+
+    // Nếu chưa có initialValues (trường hợp edge) -> đóng luôn
+    if (!initialValues) {
+      onClose();
+      return;
+    }
+
+    const isSame =
+      JSON.stringify(currentValues) === JSON.stringify(initialValues);
+
+    if (isSame) {
+      // Form đang giống trạng thái ban đầu (kể cả khi đã nhập rồi xóa hết)
+      onClose();
+      return;
+    }
+
+    // Có khác so với ban đầu -> hỏi confirm
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDiscard = () => {
+    form.resetFields();
+    setConfirmOpen(false);
+    onClose();
+  };
+
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      title="Tạo tài khoản mới"
-      width={600}
-      destroyOnClose
-      maskClosable={false} // tránh mất dữ liệu khi click ra ngoài
-    >
-      <AccountForm
-        role={creatorRole}
-        defaultCreatingRole={creatingRole}
-        onSubmit={handleSubmit}
-        loading={loading}
-        dealerOptions={dealerOptions}
-        form={form}
+    <>
+      <Modal
+        open={open}
+        onCancel={requestClose}
+        footer={null}
+        title="Tạo tài khoản mới"
+        width={600}
+        destroyOnClose
+        maskClosable // bấm nền cũng gọi onCancel => requestClose
+      >
+        <AccountForm
+          role={creatorRole}
+          defaultCreatingRole={creatingRole}
+          onSubmit={handleSubmit}
+          loading={loading}
+          dealerOptions={dealerOptions}
+          form={form}
+        />
+      </Modal>
+
+      <DeleteConfirm
+        open={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmDiscard}
+        title="Hủy tạo tài khoản?"
+        message="Các thông tin đã nhập sẽ bị xoá. Bạn có chắc chắn muốn hủy?"
+        okText="Hủy thay đổi"
+        danger
       />
-    </Modal>
+    </>
   );
 };

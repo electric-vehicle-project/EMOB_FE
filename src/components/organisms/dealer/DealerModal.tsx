@@ -1,5 +1,5 @@
 import { Modal, Button } from "antd";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "antd/es/form/Form";
 import type { IDealer, Region } from "../../../model/Dealer";
 import { DealerForm } from "../../molecules/dealer/DealerForm";
@@ -11,6 +11,7 @@ import {
 } from "../../molecules/dealer/dealerUtils";
 import { useDealersQuery } from "../../../service/dealerService";
 import { toast } from "react-toastify";
+import { DeleteConfirm } from "../DeleteConfirm";
 
 interface Props {
   open: boolean;
@@ -27,8 +28,8 @@ export const DealerModal = ({
 }: Props) => {
   const [form] = useForm<DealerFormValues>();
   const baselineRef = useRef<DealerFormValues | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
-  // FIX: Add enabled = true
   const { data: allDealerResp, refetch: refetchAllDealers } = useDealersQuery(
     0,
     9999,
@@ -38,7 +39,6 @@ export const DealerModal = ({
     undefined
   );
 
-  // SAFE MAP
   const allDealers: IDealer[] = Array.isArray(allDealerResp?.result?.data)
     ? allDealerResp!.result!.data
     : [];
@@ -85,9 +85,23 @@ export const DealerModal = ({
       await onSubmit(payload as unknown as IDealer);
     } catch {
       const action = initialValues ? "cập nhật" : "tạo";
-
       toast.error(`Không thể ${action} đại lý.`);
     }
+  };
+
+  const handleRequestClose = () => {
+    const baseline =
+      baselineRef.current ?? normalizeDealerValues(form.getFieldsValue());
+    const current = normalizeDealerValues(form.getFieldsValue());
+
+    const hasChanges = !isSameDealerValues(current, baseline);
+
+    if (!hasChanges) {
+      onClose();
+      return;
+    }
+
+    setConfirmDiscardOpen(true);
   };
 
   const footer = (
@@ -103,23 +117,46 @@ export const DealerModal = ({
   );
 
   return (
-    <Modal
-      open={open}
-      title={initialValues ? "Sửa thông tin đại lý" : "Thêm đại lý mới"}
-      onCancel={onClose}
-      footer={footer}
-      destroyOnClose
-      centered
-    >
-      <DealerForm
+    <>
+      <Modal
         open={open}
-        form={form}
-        isEdit={!!initialValues}
-        currentId={initialValues?.id}
-        existingDealers={allDealers}
-        onFinish={handleFinish}
-        baseline={baselineRef.current}
+        title={initialValues ? "Sửa thông tin đại lý" : "Thêm đại lý mới"}
+        onCancel={handleRequestClose}
+        footer={footer}
+        destroyOnClose
+        centered
+      >
+        <DealerForm
+          open={open}
+          form={form}
+          isEdit={!!initialValues}
+          currentId={initialValues?.id}
+          existingDealers={allDealers}
+          onFinish={handleFinish}
+          baseline={baselineRef.current}
+        />
+      </Modal>
+
+      <DeleteConfirm
+        open={confirmDiscardOpen}
+        onCancel={() => setConfirmDiscardOpen(false)}
+        onConfirm={() => {
+          setConfirmDiscardOpen(false);
+          onClose();
+        }}
+        title={
+          initialValues
+            ? "Hủy thay đổi thông tin đại lý?"
+            : "Hủy tạo mới đại lý?"
+        }
+        message={
+          initialValues
+            ? "Các thay đổi chưa được lưu sẽ bị mất. Bạn có chắc chắn muốn hủy?"
+            : "Thông tin đã nhập sẽ bị mất. Bạn có chắc chắn muốn hủy?"
+        }
+        okText="Hủy thay đổi"
+        danger
       />
-    </Modal>
+    </>
   );
 };
