@@ -662,11 +662,20 @@ export const VehicleDetailPage = () => {
           />
         )}
       </CardWrapper>
-      <VehicleBulkPage
-        open={bulkOpen}
-        onClose={() => setBulkOpen(false)}
-        vehicleId={id ?? undefined}
-      />
+
+      {id && (
+        <VehicleBulkPage
+          open={bulkOpen}
+          vehicleId={id ?? undefined}
+          onClose={() => setBulkOpen(false)}
+          onSuccess={() => {
+            // đóng modal bulk sau khi tạo lô thành công
+            setBulkOpen(false);
+            // nếu cần refetch lô xe / detail thì gọi thêm ở đây
+            // ví dụ: handleOpenUnits(); hoặc refetch vehicle units list
+          }}
+        />
+      )}
     </>
   );
 };
