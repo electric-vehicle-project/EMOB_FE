@@ -6,7 +6,7 @@ import {
 } from "../hook/useApi";
 
 // ===============================
-// 🔹 QUERY HOOKS (GET)
+// QUERY HOOKS (GET)
 // ===============================
 
 // GET all installment plans (params: page, size, keyword, sortField, sortDir)
@@ -33,5 +33,10 @@ export const useInstallmetnPlanByCustomersByIdQuery =
 
 export const useInstallmentPlanUpdate = updateMutationHook(
   "installmentPlan",
+  "/installment"
+);
+
+export const useInstallmentPlanView = createQueryWithPathParamHook(
+  "installment",
   "/installment"
 );

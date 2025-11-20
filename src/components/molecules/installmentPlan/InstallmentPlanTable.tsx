@@ -45,6 +45,7 @@ export const InstallmentPlanTable = ({
     OVERDUE: "Quá hạn",
     CANCELLED: "Đã hủy",
   };
+
   const columns: ColumnsType<IInstallmentPlan> = [
     {
       title: "Ngày đặt cọc",
@@ -104,18 +105,15 @@ export const InstallmentPlanTable = ({
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status?: string) => {
-        return status ? (
+      render: (status?: string) =>
+        status ? (
           <Tag color={statusColors[status] || "default"}>
             {statusMap[status] || status}
           </Tag>
         ) : (
           "-"
-        );
-      },
+        ),
     },
-
-    // =================== THAO TÁC ===================
     {
       title: "Thao tác",
       key: "actions",
@@ -128,7 +126,6 @@ export const InstallmentPlanTable = ({
             label: (
               <span className="text-[14px] pl-10 pr-10">Xem chi tiết</span>
             ),
-            onClick: () => onViewDetail?.(record.id),
           },
           {
             key: "updatePaid",
@@ -137,13 +134,21 @@ export const InstallmentPlanTable = ({
                 Cập nhật thanh toán
               </span>
             ),
-            onClick: () => onUpdatePaid?.(record.id, record.monthlyAmount ?? 0),
           },
         ];
 
+        const handleMenuClick = (info: any) => {
+          if (info.key === "details") {
+            onViewDetail?.(record.id);
+          }
+          if (info.key === "updatePaid") {
+            onUpdatePaid?.(record.id, record.monthlyAmount ?? 0);
+          }
+        };
+
         return (
           <Dropdown
-            menu={{ items: menuItems }}
+            menu={{ items: menuItems, onClick: handleMenuClick }}
             trigger={["click"]}
             placement="bottomRight"
           >

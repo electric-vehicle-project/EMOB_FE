@@ -1,5 +1,5 @@
 import { Modal, Descriptions, Spin } from "antd";
-import { useInstallmetnPlanByCustomersByIdQuery } from "../../service/installmentPlanService";
+import { useInstallmentPlanView } from "../../service/installmentPlanService";
 
 interface InstallmentPlanDetailModalProps {
   id: string | null;
@@ -12,15 +12,17 @@ export const InstallmentPlanDetailModal = ({
   open,
   onClose,
 }: InstallmentPlanDetailModalProps) => {
-  const validId = id ?? undefined;
+  const { data, isLoading, isError } = useInstallmentPlanView(id!, {
+    enabled: Boolean(id),
+  });
 
-  const { data, isLoading, isError } = useInstallmetnPlanByCustomersByIdQuery(
-    validId,
-    {
-      enabled: !!validId, // also safe
-    }
-  );
-
+  const detail = data?.result; // data response
+  const statusMap: Record<string, string> = {
+    PAID: "Đã thanh toán",
+    NOT_PAID: "Chưa thanh toán",
+    OVERDUE: "Quá hạn",
+    CANCELLED: "Đã hủy",
+  };
   return (
     <Modal
       title="Chi tiết kế hoạch trả góp"
@@ -42,28 +44,34 @@ export const InstallmentPlanDetailModal = ({
         </div>
       ) : isError ? (
         <p>Không thể tải thông tin kế hoạch trả góp.</p>
-      ) : data ? (
+      ) : detail ? (
         <Descriptions column={1} bordered>
           <Descriptions.Item label="Ngày đặt cọc">
-            {data.downDate}
+            {detail.downDate}
           </Descriptions.Item>
           <Descriptions.Item label="Số tiền đặt cọc">
-            {data.deposit}
+            {detail.deposit}
           </Descriptions.Item>
           <Descriptions.Item label="Tổng tiền">
-            {data.totalAmount}
+            {detail.totalAmount}
+          </Descriptions.Item>
+          <Descriptions.Item label="Số tiền trả hàng tháng">
+            {detail.monthlyAmount}
           </Descriptions.Item>
           <Descriptions.Item label="Lãi suất">
-            {data.interestRate}%
+            {detail.interestRate}%
           </Descriptions.Item>
           <Descriptions.Item label="Kỳ hạn (tháng)">
-            {data.termMonths}
+            {detail.termMonths}
+          </Descriptions.Item>
+          <Descriptions.Item label="Đã trả">
+            {detail.paidMonths}
           </Descriptions.Item>
           <Descriptions.Item label="Ngày thanh toán tiếp theo">
-            {data.nextDueDate}
+            {detail.nextDueDate}
           </Descriptions.Item>
           <Descriptions.Item label="Trạng thái">
-            {data.status}
+            {statusMap[detail.status] || detail.status}
           </Descriptions.Item>
         </Descriptions>
       ) : (
