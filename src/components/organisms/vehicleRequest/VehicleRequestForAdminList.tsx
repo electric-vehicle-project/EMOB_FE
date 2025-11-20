@@ -104,7 +104,6 @@ const VehicleRequestForAdminList: React.FC = () => {
           placeholder="Chọn trạng thái"
           className="w-full mt-2"
         >
-          
           <Select.Option value="PENDING">Chờ duyệt</Select.Option>
           <Select.Option value="APPROVED">Đã duyệt</Select.Option>
           <Select.Option value="REJECTED">Từ chối</Select.Option>
@@ -123,6 +122,8 @@ const VehicleRequestForAdminList: React.FC = () => {
           className="w-full mt-2"
         >
           <Select.Option value="createdAt">Ngày tạo</Select.Option>
+          <Select.Option value="totalQuantity">Số lượng</Select.Option>
+          <Select.Option value="totalPrice">Tổng giá trị</Select.Option>
         </Select>
       </div>
 
@@ -138,7 +139,7 @@ const VehicleRequestForAdminList: React.FC = () => {
           className="w-full mt-2"
         >
           <Select.Option value="asc">Tăng dần</Select.Option>
-          <Select.Option value="asc">Giảm dần</Select.Option>
+          <Select.Option value="desc">Giảm dần</Select.Option>
         </Select>
       </div>
     </div>

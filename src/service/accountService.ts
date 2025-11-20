@@ -12,34 +12,76 @@ import type { IAccount } from "../model/Account";
 
 const BASE_URL = "/auth";
 
+export interface AccountQueryParams {
+  page?: number;
+  size?: number;
+  sortField?: string;
+  sortDir?: "asc" | "desc";
+  // Các filter khác (keyword, status, role, ...) nếu BE có hỗ trợ sẽ được truyền thêm vào đây
+  [key: string]: unknown;
+}
 
-/** ADMIN /api/auth/by-admin?page&size */
+/** ADMIN /api/auth/by-admin?page&size&sortField&sortDir&... */
 export const useGetAccountsByAdmin = (
-  page = 0,
-  size = 10,
-  options?: Record<string, unknown> 
+  params: AccountQueryParams = {},
+  options?: Record<string, unknown>
 ) => {
-  const query = createQueryHook(
-    `accounts-by-admin-${page}-${size}`,
-    `${BASE_URL}/by-admin`
-  )(options, { page, size });
+  const {
+    page = 0,
+    size = 10,
+    sortField = "createdAt",
+    sortDir = "desc",
+    ...restFilters
+  } = params;
+
+  const queryParams = {
+    page,
+    size,
+    sortField,
+    sortDir,
+    ...restFilters, // ví dụ: keyword, status, role nếu có
+  };
+
+  const query = createQueryHook("accounts-by-admin", `${BASE_URL}/by-admin`)(
+    options,
+    queryParams
+  );
+
   const accounts: IAccount[] = query.data?.result?.data ?? [];
   const meta = query.data?.result?.metadata ?? null;
+
   return { ...query, data: accounts, meta };
 };
 
-/** MANAGER /api/auth/by-manager?page&size */
+/** MANAGER /api/auth/by-manager?page&size&sortField&sortDir&... */
 export const useGetAccountsByManager = (
-  page = 0,
-  size = 10,
-  options?: Record<string, unknown> 
+  params: AccountQueryParams = {},
+  options?: Record<string, unknown>
 ) => {
+  const {
+    page = 0,
+    size = 10,
+    sortField = "createdAt",
+    sortDir = "desc",
+    ...restFilters
+  } = params;
+
+  const queryParams = {
+    page,
+    size,
+    sortField,
+    sortDir,
+    ...restFilters,
+  };
+
   const query = createQueryHook(
-    `accounts-by-manager-${page}-${size}`,
+    "accounts-by-manager",
     `${BASE_URL}/by-manager`
-  )(options, { page, size });
+  )(options, queryParams);
+
   const accounts: IAccount[] = query.data?.result?.data ?? [];
   const meta = query.data?.result?.metadata ?? null;
+
   return { ...query, data: accounts, meta };
 };
 

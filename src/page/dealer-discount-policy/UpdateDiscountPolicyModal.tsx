@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */ 
-import React, { useEffect, useMemo } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Form, InputNumber, DatePicker, Spin } from "antd";
 import dayjs from "dayjs";
 import {
@@ -11,6 +11,7 @@ import { useGetVehicles } from "../../service/vehicleService";
 import SelectInput from "../../components/atoms/SelectInput";
 import type { IVehicle } from "../../model/Vehicle";
 import { toast } from "react-toastify";
+import { DeleteConfirm } from "../../components/organisms/DeleteConfirm";
 
 const { RangePicker } = DatePicker;
 
@@ -29,6 +30,10 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
 }) => {
   const [form] = Form.useForm();
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const initialValuesRef = useRef<any | null>(null);
+  const initializedRef = useRef(false);
+
   // Lấy thông tin chi tiết chính sách
   const { data: policyData, isLoading: loadingPolicy } =
     useGetDiscountPolicyById(policyId, {
@@ -45,10 +50,8 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
     100
   );
 
-  //  Hook cập nhật
   const { mutateAsync: updatePolicy, isPending } = useUpdateDiscountPolicy();
 
-  // Chuyển dữ liệu thành Select options
   const dealerOptions = useMemo(() => {
     const dealers = dealersData?.result?.data || [];
     return dealers.map((d: any) => ({
@@ -65,9 +68,19 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
     }));
   }, [vehiclesData]);
 
-  // Khi có dữ liệu chính sách, fill form
+  // Reset state khi mở modal
   useEffect(() => {
-    if (policyData?.result) {
+    if (open) {
+      initializedRef.current = false;
+      setConfirmOpen(false);
+      form.resetFields();
+      initialValuesRef.current = null;
+    }
+  }, [open, form]);
+
+  // Khi có dữ liệu chính sách → fill form + chụp trạng thái ban đầu
+  useEffect(() => {
+    if (open && policyData?.result && !initializedRef.current) {
       const policy = policyData.result;
       form.setFieldsValue({
         customMultiplier: policy.customMultiplier,
@@ -76,8 +89,30 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
         vehicleId: policy.vehicleId,
         dateRange: [dayjs(policy.effectiveDate), dayjs(policy.expiryDate)],
       });
+      initialValuesRef.current = form.getFieldsValue(true);
+      initializedRef.current = true;
     }
-  }, [policyData, form]);
+  }, [open, policyData, form]);
+
+  const isDirty = () => {
+    if (!initializedRef.current || !initialValuesRef.current) return false;
+    const current = form.getFieldsValue(true);
+    return JSON.stringify(current) !== JSON.stringify(initialValuesRef.current);
+  };
+
+  const requestClose = () => {
+    if (!isDirty()) {
+      onClose();
+      return;
+    }
+    setConfirmOpen(true);
+  };
+
+  const handleDiscard = () => {
+    form.resetFields();
+    setConfirmOpen(false);
+    onClose();
+  };
 
   // Submit cập nhật
   const handleSubmit = async (values: any) => {
@@ -92,101 +127,112 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
 
     try {
       await updatePolicy({ id: policyId, data: payload });
-      toast.success(" Cập nhật chính sách chiết khấu thành công!");
+      toast.success("Cập nhật chính sách chiết khấu thành công!");
       onSuccess?.();
       onClose();
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || " Cập nhật chính sách thất bại!"
+        error?.response?.data?.message || "Cập nhật chính sách thất bại!"
       );
     }
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      onOk={() => form.submit()}
-      confirmLoading={isPending}
-      title="Cập nhật chính sách chiết khấu"
-      okText="Cập nhật"
-      cancelText="Hủy"
-      width={600}
-      destroyOnClose
-    >
-      {loadingPolicy ? (
-        <div className="flex justify-center py-8">
-          <Spin tip="Đang tải dữ liệu..." />
-        </div>
-      ) : (
-        <Form layout="vertical" form={form} onFinish={handleSubmit}>
-          {/* Dealer */}
-          <SelectInput
-            label="Đại lý"
-            name="dealerId"
-            placeholder="Chọn đại lý"
-            options={dealerOptions}
-            loading={loadingDealers}
-            rules={[{ required: true, message: "Vui lòng chọn đại lý" }]}
-          />
-
-          {/* Vehicle */}
-          <SelectInput
-            label="Xe"
-            name="vehicleId"
-            placeholder="Chọn xe"
-            options={vehicleOptions}
-            loading={loadingVehicles}
-            rules={[{ required: true, message: "Vui lòng chọn xe" }]}
-          />
-
-          {/*  Custom Multiplier */}
-          <Form.Item
-            label="Hệ số chiết khấu"
-            name="customMultiplier"
-            rules={[{ required: true, message: "Vui lòng nhập hệ số" }]}
-          >
-            <InputNumber
-              min={0}
-              step={0.01}
-              style={{ width: "100%" }}
-              placeholder="Ví dụ: 1.05"
+    <>
+      <Modal
+        open={open}
+        onCancel={requestClose}
+        onOk={() => form.submit()}
+        confirmLoading={isPending}
+        title="Cập nhật chính sách chiết khấu"
+        okText="Cập nhật"
+        cancelText="Hủy"
+        width={600}
+        destroyOnClose={false}
+        maskClosable
+      >
+        {loadingPolicy ? (
+          <div className="flex justify-center py-8">
+            <Spin tip="Đang tải dữ liệu..." />
+          </div>
+        ) : (
+          <Form layout="vertical" form={form} onFinish={handleSubmit}>
+            <SelectInput
+              label="Đại lý"
+              name="dealerId"
+              placeholder="Chọn đại lý"
+              options={dealerOptions}
+              loading={loadingDealers}
+              rules={[{ required: true, message: "Vui lòng chọn đại lý" }]}
             />
-          </Form.Item>
 
-          {/*  Final Price */}
-          <Form.Item
-            label="Giá cuối cùng (VND)"
-            name="finalPrice"
-            rules={[{ required: true, message: "Vui lòng nhập giá" }]}
-          >
-            <InputNumber
-              style={{ width: "100%" }}
-              min={0}
-              formatter={(value) =>
-                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-              }
-              placeholder="Nhập giá cuối cùng"
+            <SelectInput
+              label="Xe"
+              name="vehicleId"
+              placeholder="Chọn xe"
+              options={vehicleOptions}
+              loading={loadingVehicles}
+              rules={[{ required: true, message: "Vui lòng chọn xe" }]}
             />
-          </Form.Item>
 
-          {/* Date Range */}
-          <Form.Item
-            label="Thời gian hiệu lực"
-            name="dateRange"
-            rules={[
-              { required: true, message: "Vui lòng chọn thời gian hiệu lực" },
-            ]}
-          >
-            <RangePicker
-              style={{ width: "100%" }}
-              format="DD/MM/YYYY"
-              placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
-            />
-          </Form.Item>
-        </Form>
-      )}
-    </Modal>
+            <Form.Item
+              label="Hệ số chiết khấu"
+              name="customMultiplier"
+              rules={[{ required: true, message: "Vui lòng nhập hệ số" }]}
+            >
+              <InputNumber
+                min={0}
+                step={0.01}
+                style={{ width: "100%" }}
+                placeholder="Ví dụ: 1.05"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Giá cuối cùng (VND)"
+              name="finalPrice"
+              rules={[{ required: true, message: "Vui lòng nhập giá" }]}
+            >
+              <InputNumber
+                style={{ width: "100%" }}
+                min={0}
+                formatter={(value) =>
+                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                }
+                placeholder="Nhập giá cuối cùng"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Thời gian hiệu lực"
+              name="dateRange"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng chọn thời gian hiệu lực",
+                },
+              ]}
+            >
+              <RangePicker
+                style={{ width: "100%" }}
+                format="DD/MM/YYYY"
+                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
+              />
+            </Form.Item>
+          </Form>
+        )}
+      </Modal>
+
+      <DeleteConfirm
+        open={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleDiscard}
+        title="Hủy thay đổi?"
+        message="Các thông tin đã chỉnh sửa sẽ bị xóa. Bạn có chắc chắn muốn hủy?"
+        okText="Hủy thay đổi"
+        danger
+      />
+    </>
   );
 };
 

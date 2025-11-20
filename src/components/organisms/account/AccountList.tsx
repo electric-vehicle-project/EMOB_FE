@@ -20,6 +20,8 @@ import {
   useGetAccountsByManager,
   useChangeAccountStatus,
   useBanAccount,
+  useRegisterByAdmin,
+  useRegisterByManager,
 } from "../../../service/accountService";
 
 import { useDealersQuery } from "../../../service/dealerService";
@@ -27,61 +29,6 @@ import { Role, type IAccount } from "../../../model/Account";
 import type { AccountCreatePayload } from "../../molecules/Account/AccountForm";
 
 import { AccountDetailModal } from "../../molecules/Account/AccountDetailModal";
-import api from "../../../config/api";
-
-/* ======================= Helper ======================= */
-const getApiBaseUrl = () => api.defaults.baseURL ?? "";
-
-const getRegisterPathByRole = (creatorRole: Role) =>
-  creatorRole === Role.MANAGER
-    ? "/auth/register-by-manager"
-    : "/auth/register-by-admin";
-
-const registerAccount = async (
-  creatorRole: Role,
-  payload: AccountCreatePayload
-) => {
-  const baseUrl = getApiBaseUrl();
-  const path = getRegisterPathByRole(creatorRole);
-  const url = `${baseUrl}${path}`;
-
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const contentType = response.headers.get("content-type") || "";
-  let data;
-
-  if (contentType.includes("application/json")) {
-    data = await response.json();
-  } else {
-    data = await response.text();
-  }
-
-  if (!response.ok) {
-    const errorMessage =
-      typeof data === "string"
-        ? data || "Tạo tài khoản thất bại"
-        : typeof data === "object" &&
-          data !== null &&
-          "message" in data &&
-          typeof (data as { message: unknown }).message === "string"
-        ? (data as { message: string }).message
-        : "Tạo tài khoản thất bại";
-
-    const err = new Error(errorMessage);
-    throw err;
-  }
-
-  return data;
-};
 
 /* ======================= MAIN COMPONENT ======================= */
 export const AccountList = () => {
@@ -119,19 +66,15 @@ export const AccountList = () => {
   const isAdmin = currentRole === Role.ADMIN;
   const isManager = currentRole === Role.MANAGER;
 
-  const adminQuery = useGetAccountsByAdmin(page, pageSize, {
-    enabled: isAdmin,
-    queryKey: ["accounts-by-admin", page, pageSize, sortField, sortDir],
-    sortField,
-    sortDir,
-  });
+  const adminQuery = useGetAccountsByAdmin(
+    { page, size: pageSize, sortField, sortDir },
+    { enabled: isAdmin }
+  );
 
-  const managerQuery = useGetAccountsByManager(page, pageSize, {
-    enabled: isManager,
-    queryKey: ["accounts-by-manager", page, pageSize, sortField, sortDir],
-    sortField,
-    sortDir,
-  });
+  const managerQuery = useGetAccountsByManager(
+    { page, size: pageSize, sortField, sortDir },
+    { enabled: isManager }
+  );
 
   const { data: dealersData } = useDealersQuery(0, 1000);
 
@@ -154,6 +97,8 @@ export const AccountList = () => {
 
   const changeStatus = useChangeAccountStatus();
   const banAccount = useBanAccount();
+  const registerByAdmin = useRegisterByAdmin();
+  const registerByManager = useRegisterByManager();
 
   const isLoading = isAdmin ? adminQuery.isLoading : managerQuery.isLoading;
   const refetch = isAdmin ? adminQuery.refetch : managerQuery.refetch;
@@ -207,7 +152,15 @@ export const AccountList = () => {
   }
 
   const handleCreate = async (values: AccountCreatePayload) => {
-    await registerAccount(currentRole, values);
+    if (currentRole === Role.ADMIN) {
+      await registerByAdmin.mutateAsync(values);
+    } else if (currentRole === Role.MANAGER) {
+      await registerByManager.mutateAsync(values);
+    } else {
+      toast.error("Bạn không có quyền tạo tài khoản");
+      return;
+    }
+
     toast.success("Tạo tài khoản thành công!");
     setAccountModalOpen(false);
     setCreatingRole(null);
@@ -416,7 +369,13 @@ export const AccountList = () => {
         creatorRole={currentRole}
         creatingRole={creatingRole}
         onSubmit={handleCreate}
-        loading={false}
+        loading={
+          currentRole === Role.ADMIN
+            ? registerByAdmin.isPending
+            : currentRole === Role.MANAGER
+            ? registerByManager.isPending
+            : false
+        }
         dealerOptions={creatingRole === Role.MANAGER ? dealerOptions : []}
       />
 
