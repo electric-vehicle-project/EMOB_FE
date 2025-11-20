@@ -3,6 +3,7 @@ import { CardWrapper } from "../../components/template/CardWrapper";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { ROUTES } from "../../model/routePaths";
 import { useNavigate } from "react-router-dom";
+import { Button } from "antd";
 
 export const DeliveryEVMAndCurrentDealerPage = () => {
 
@@ -18,14 +19,9 @@ export const DeliveryEVMAndCurrentDealerPage = () => {
       subtitle="Danh sách đơn vận chuyển từ Hãng xe đến Đại lý"
       variant="dashboard"
       rightLink={
-        <span>
-          <b
-            onClick={() => navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CUSTOMERS}`)}
-            className="text-green-600 underline hover:text-green-800 text-sm"
-          >
-            Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
-          </b>
-        </span>
+         <Button type="primary" onClick={() => navigate(`/${role.toLowerCase()}/${ROUTES.DELIVERY_CUSTOMERS}`)}>
+           Danh sách đơn vận chuyển từ Đại lý đến Khách hàng
+        </Button>
       }
     >
       <DeliveryEVMAndDealerListCurrent />

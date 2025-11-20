@@ -3,6 +3,7 @@ import { CardWrapper } from "../../components/template/CardWrapper";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../../utils/getCurrentUser";
 import { ROUTES } from "../../model/routePaths";
+import { Button } from "antd";
 
 export const TestDriveByCurrentStaffPage = () => {
 
@@ -16,16 +17,12 @@ export const TestDriveByCurrentStaffPage = () => {
       subtitle="Hiển thị lịch lái thử do tôi phụ trách"
       variant="dashboard"
       rightLink={
-        <span>
-          <b
-            onClick={() =>
-              navigate(`/${role.toLowerCase()}/${ROUTES.TEST_DRIVE}`)
-            }
-            className="underline text-[#627254] cursor-pointer hover:text-[#4f5a42]"
-          >
-            Xem lịch lái thử của toàn bộ Đại lý
-          </b>
-        </span>
+        <Button
+          type="primary"
+          onClick={() => navigate(`/${role.toLowerCase()}/${ROUTES.TEST_DRIVE}`)}
+        >
+          Xem lịch lái thử của toàn bộ Đại lý
+        </Button>
       }
     >
       <TestDriveByCurrentStaff />
