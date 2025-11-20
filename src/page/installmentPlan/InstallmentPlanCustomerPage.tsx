@@ -3,10 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button, Empty, Select, Space, Dropdown } from "antd";
 import { useDebounce } from "../../hook/useDebounce";
 import { useCurrentUser } from "../../utils/getCurrentUser";
-import {
-  useInstallmentPlanUpdate,
-  useInstallmetnPlanByCustomersQuery,
-} from "../../service/installmentPlanService";
+import { useInstallmetnPlanByCustomersQuery } from "../../service/installmentPlanService";
 import type {
   IInstallmentPlan,
   InstallmentPlanApiModel,
@@ -16,18 +13,21 @@ import { InstallmentPlanDetailModal } from "./ViewInstallmentPlanCustomerModal";
 import { CardWrapper } from "../../components/template/CardWrapper";
 import { SlidersOutlined } from "@ant-design/icons";
 import { SearchBar } from "../../components/molecules/SearchBar";
-import { Link } from "react-router-dom";
 import { ROUTES } from "../../model/routePaths";
+import { useNavigate } from "react-router-dom";
+import { UpdateAmountPaidModal } from "./UpdateInstallmentPlanModal";
 
 export const InstallmentPlanCustomersPage = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
-
+  const navigate = useNavigate();
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [amountPaid, setAmountPaid] = useState(0);
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -59,7 +59,7 @@ export const InstallmentPlanCustomersPage = () => {
     params
   );
 
-  const { data, isLoading } = customerPlansQuery;
+  const { data, isLoading, refetch } = customerPlansQuery;
 
   const installmentPlans: IInstallmentPlan[] = useMemo(() => {
     const raw: InstallmentPlanApiModel[] = data?.result?.data ?? [];
@@ -71,6 +71,7 @@ export const InstallmentPlanCustomersPage = () => {
       monthlyAmount: p.monthlyAmount,
       interestRate: p.interestRate,
       termMonths: p.termMonths,
+      paidMonths: p.paidMonths,
       nextDueDate: p.nextDueDate,
       status: p.status,
     }));
@@ -83,7 +84,6 @@ export const InstallmentPlanCustomersPage = () => {
     setIsModalOpen(true);
   }, []);
 
-  const handleUpdateInstallment = useInstallmentPlanUpdate();
   // ================== FILTER CONTENT ==================
   const FilterContent = () => (
     <div
@@ -153,12 +153,14 @@ export const InstallmentPlanCustomersPage = () => {
       subtitle="Theo dõi, tìm kiếm và xem chi tiết kế hoạch trả góp của khách hàng"
       variant="dashboard"
       rightLink={
-        <Link
-          to={`/${role.toLowerCase()}/${ROUTES.INSTALLMENT_PLAN}`}
-          className="text-green-600 underline hover:text-green-800 text-sm"
+        <Button
+          type="primary"
+          onClick={() =>
+            navigate(`/${role.toLowerCase()}/${ROUTES.INSTALLMENT_PLAN}`)
+          }
         >
-          Xem tất cả kế hoạch trả góp
-        </Link>
+          Danh sách hợp đồng bàn giao với Hãng xe
+        </Button>
       }
     >
       {/* SEARCH + FILTER */}
@@ -190,6 +192,11 @@ export const InstallmentPlanCustomersPage = () => {
           data={installmentPlans}
           isLoading={isLoading}
           onViewDetail={handleViewDetail}
+          onUpdatePaid={(id, amountPaid) => {
+            setSelectedId(id);
+            setAmountPaid(amountPaid);
+            setUpdateModalOpen(true);
+          }}
           pagination={{
             current,
             pageSize,
@@ -204,6 +211,18 @@ export const InstallmentPlanCustomersPage = () => {
         />
       ) : (
         <Empty description="Không có dữ liệu" />
+      )}
+
+      {selectedId && (
+        <UpdateAmountPaidModal
+          id={selectedId}
+          open={updateModalOpen}
+          onClose={() => {
+            setUpdateModalOpen(false);
+            refetch();
+          }}
+          currentAmount={amountPaid}
+        />
       )}
 
       <InstallmentPlanDetailModal

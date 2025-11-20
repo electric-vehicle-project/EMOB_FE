@@ -87,7 +87,6 @@ export const InstallmentPlanList = () => {
       status: p.status,
     }));
   }, [data]);
-
   const total = data?.result?.metadata?.totalElements ?? 0;
 
   const FilterContent = () => (
