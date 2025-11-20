@@ -111,7 +111,7 @@ const DealerDiscountPolicyList: React.FC = () => {
   //    FILTER DROPDOWN CONTENT
   // ===============================
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -164,7 +164,7 @@ const DealerDiscountPolicyList: React.FC = () => {
           </Select>
         </div>
       </Space>
-    </Card>
+    </div>
   );
 
   // Xóa chính sách (chỉ Admin mới được)

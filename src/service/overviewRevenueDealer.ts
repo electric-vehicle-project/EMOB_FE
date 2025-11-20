@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createQueryHook, createQueryWithPathParamHook } from "../hook/useApi";
+import { createQueryHook } from "../hook/useApi";
 import type { DealerApiResponse } from "../model/Overview";
 import type { ICustomer } from "../model/Customer";
 

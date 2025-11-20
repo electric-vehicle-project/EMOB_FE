@@ -83,7 +83,7 @@ export const InstallmentPlanCustomersPage = () => {
 
   // ================== FILTER CONTENT ==================
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -140,7 +140,7 @@ export const InstallmentPlanCustomersPage = () => {
           </Select>
         </div>
       </Space>
-    </Card>
+    </div>
   );
 
   // ================== UI ==================
