@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { Table, Button, Tag, Input, Modal, Menu, Dropdown, Select } from "antd";
 import type { ColumnsType } from "antd/es/table";

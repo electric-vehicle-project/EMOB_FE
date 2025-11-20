@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { DealerApiItem } from "../model/Overview";
 
 export const sumBy = <T extends Record<string, any>>(

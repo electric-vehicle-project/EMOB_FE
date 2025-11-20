@@ -51,7 +51,7 @@ export const ResetPasswordForm = () => {
   // --- Khi đang ở trạng thái thành công, dừng form thao tác ---
   useEffect(() => {
     if (success) form.resetFields();
-  }, [success]);
+  }, [success, form]);
 
   return (
     <Form

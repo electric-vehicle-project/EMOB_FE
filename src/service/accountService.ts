@@ -12,12 +12,12 @@ import type { IAccount } from "../model/Account";
 
 const BASE_URL = "/auth";
 
-/* ==================== 🔍 GET ==================== */
+
 /** ADMIN /api/auth/by-admin?page&size */
 export const useGetAccountsByAdmin = (
   page = 0,
   size = 10,
-  options?: Record<string, unknown> // ✅ cho phép enabled, tránh any
+  options?: Record<string, unknown> 
 ) => {
   const query = createQueryHook(
     `accounts-by-admin-${page}-${size}`,
@@ -32,7 +32,7 @@ export const useGetAccountsByAdmin = (
 export const useGetAccountsByManager = (
   page = 0,
   size = 10,
-  options?: Record<string, unknown> // ✅ cho phép enabled, tránh any
+  options?: Record<string, unknown> 
 ) => {
   const query = createQueryHook(
     `accounts-by-manager-${page}-${size}`,

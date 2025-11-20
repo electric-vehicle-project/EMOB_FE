@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */ 
 interface Props {
   title: string;
   value: string;

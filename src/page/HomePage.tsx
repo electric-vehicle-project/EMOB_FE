@@ -2,7 +2,6 @@ import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useCurrentUser } from "../utils/getCurrentUser";
-import { toast } from "react-toastify";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,9 +30,8 @@ const HomePage: React.FC = () => {
             className="!rounded-full font-semibold px-8 shadow-md text-[15px] tracking-wide !bg-white !text-black"
             onClick={() => {
               if (user) {
-                navigate("/" + user.role.toLowerCase())
-              }
-              else navigate("/auth/login")
+                navigate("/" + user.role.toLowerCase());
+              } else navigate("/auth/login");
             }}
           >
             Đăng nhập
@@ -43,7 +41,6 @@ const HomePage: React.FC = () => {
 
       {/* body */}
       <main className="relative z-10 flex flex-col justify-center items-center  text-center text-white">
-
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,16 +84,15 @@ const HomePage: React.FC = () => {
             Hiện đại, trực quan và kết nối thông minh
           </span>
         </motion.p>
-
       </main>
 
       {/* footer */}
       <footer className="absolute bottom-4 left-0 w-full text-center text-white/60 text-xs md:text-sm tracking-wide z-10">
-        © {new Date().getFullYear()} EMOB - Electric Mobility Manufacturer/Dealer Management System | v1.0.0
+        © {new Date().getFullYear()} EMOB - Electric Mobility
+        Manufacturer/Dealer Management System | v1.0.0
       </footer>
     </div>
   );
 };
 
 export default HomePage;
-

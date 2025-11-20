@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { Table, Button, Tag, Input, Modal, Menu, Dropdown, Select } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -63,7 +64,7 @@ const VehicleRequestList: React.FC = () => {
     useEffect(() => {
       const handler = setTimeout(() => setDebouncedValue(value), delay);
       return () => clearTimeout(handler);
-    }, [value]);
+    }, [value, delay]);
     return debouncedValue;
   }
   useDebounce(searchTerm, 300);
@@ -88,7 +89,7 @@ const VehicleRequestList: React.FC = () => {
   // DROPDOWN FILTER CONTENT
   // ============================
   const FilterContent = () => (
-    <div
+    <Card
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -144,7 +145,7 @@ const VehicleRequestList: React.FC = () => {
           <Select.Option value="desc">Giảm dần</Select.Option>
         </Select>
       </div>
-    </div>
+    </Card>
   );
 
   // ============================

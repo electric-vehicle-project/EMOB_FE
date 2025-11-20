@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect } from "react";
 import { Result, Button, Empty, Select, Space, Dropdown } from "antd";
-import type {
-  IInstallmentPlan,
-  InstallmentPlanApiModel,
-} from "../../../model/InstallmentPlan";
+import type { IInstallmentPlan } from "../../../model/InstallmentPlan";
 import { SearchBar } from "../../molecules/SearchBar";
 import { useDebounce } from "../../../hook/useDebounce";
 import { useCurrentUser } from "../../../utils/getCurrentUser";
@@ -13,16 +10,20 @@ import {
   useInstallmentPlansQuery,
 } from "../../../service/installmentPlanService";
 import { InstallmentPlanTable } from "../../molecules/installmentPlan/InstallmentPlanTable";
+import type { InstallmentPlanApiModel } from "../../../model/InstallmentPlan";
 import { Card } from "../../atoms/Card";
 import { SlidersOutlined } from "@ant-design/icons";
 
 export const InstallmentPlanList = () => {
+  // Search
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
+  // Pagination
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Filters
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [sortField, setSortField] = useState("downDate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -37,10 +38,15 @@ export const InstallmentPlanList = () => {
     role === "DEALER_STAFF" ||
     role === "MANAGER";
 
-  const isDealer = role === "DEALER_STAFF" || role === "MANAGER";
+  const isDealerRole = role === "DEALER_STAFF" || role === "MANAGER";
+  const isAdminRole = role === "ADMIN" || role === "EVM_STAFF";
 
-  useEffect(() => setCurrent(1), [debouncedSearch]);
+  // reset page khi search
+  useEffect(() => {
+    setCurrent(1);
+  }, [debouncedSearch]);
 
+  // param
   const params = useMemo(
     () => ({
       page: current - 1,
@@ -53,43 +59,51 @@ export const InstallmentPlanList = () => {
     [current, pageSize, debouncedSearch, sortField, sortDir, statusFilter]
   );
 
+  // query
   const allPlansQuery = useInstallmentPlansQuery(
-    { enabled: canView && !isDealer },
+    { enabled: canView && isAdminRole },
     params
   );
 
   const dealerPlansQuery = useCurrentDealerInstallmentPlansQuery(
-    { enabled: canView && isDealer },
+    { enabled: canView && isDealerRole },
     params
   );
 
-  const { data, refetch, isLoading, isError, error } = isDealer
+  const { data, refetch, isLoading, isError, error } = isDealerRole
     ? dealerPlansQuery
     : allPlansQuery;
 
+  // api response thành modal
   const installmentPlans: IInstallmentPlan[] = useMemo(() => {
     const raw: InstallmentPlanApiModel[] = data?.result?.data ?? [];
-    return raw.map((p) => ({
-      id: p.id,
-      downDate: p.downDate,
-      deposit: p.deposit,
-      totalAmount: p.totalAmount,
-      monthlyAmount: p.monthlyAmount,
-      interestRate: p.interestRate,
-      termMonths: p.termMonths,
-      nextDueDate: p.nextDueDate,
-      status: p.status,
+    return raw.map((plan) => ({
+      id: plan.id,
+      downDate: plan.downDate,
+      deposit: plan.deposit,
+      totalAmount: plan.totalAmount,
+      monthlyAmount: plan.monthlyAmount,
+      interestRate: plan.interestRate,
+      termMonths: plan.termMonths,
+      nextDueDate: plan.nextDueDate,
+      status: plan.status,
     }));
   }, [data]);
 
   const total = data?.result?.metadata?.totalElements ?? 0;
 
+  const handleMarkAsPaid = (id: string) => {
+    console.log("Mark as paid:", id);
+  };
+
+  // =============== FILTER DROPDOWN PANEL ===============
   const FilterContent = () => (
-    <div
+    <Card
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
-      className="p-4 bg-white rounded-xl shadow-lg w-[260px]"
+      className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
-      <Space direction="vertical" className="w-full">
+      <Space direction="vertical" style={{ width: "100%" }}>
+        {/* STATUS FILTER */}
         <div>
           <b className="text-gray-700">Trạng thái</b>
           <Select
@@ -97,10 +111,11 @@ export const InstallmentPlanList = () => {
             allowClear
             className="w-full mt-2"
             value={statusFilter}
-            onChange={(v) => {
-              setStatusFilter(v);
+            onChange={(values) => {
+              setStatusFilter(values);
               setCurrent(1);
             }}
+            placeholder="Chọn trạng thái"
           >
             <Select.Option value="PAID">Đã thanh toán hết</Select.Option>
             <Select.Option value="NOT_PAID">Chưa thanh toán</Select.Option>
@@ -109,6 +124,7 @@ export const InstallmentPlanList = () => {
           </Select>
         </div>
 
+        {/* SORT FIELD */}
         <div>
           <b className="text-gray-700">Sắp xếp theo</b>
           <Select
@@ -127,6 +143,7 @@ export const InstallmentPlanList = () => {
           </Select>
         </div>
 
+        {/* SORT DIRECTION */}
         <div>
           <b className="text-gray-700">Thứ tự</b>
           <Select
@@ -142,15 +159,22 @@ export const InstallmentPlanList = () => {
           </Select>
         </div>
       </Space>
-    </div>
+    </Card>
   );
+
+  // ============ UI RENDER ============
 
   if (!canView)
     return (
       <Result
         status="403"
         title="403"
-        subTitle="Bạn không có quyền truy cập."
+        subTitle="Bạn không có quyền truy cập trang này."
+        extra={
+          <Button type="primary" href="/dashboard">
+            Về trang tổng quan
+          </Button>
+        }
       />
     );
 
@@ -158,16 +182,20 @@ export const InstallmentPlanList = () => {
     return (
       <Result
         status="error"
-        title="Không thể tải danh sách"
-        subTitle={error?.message}
-        extra={<Button onClick={() => refetch()}>Thử lại</Button>}
+        title="Không thể tải danh sách kế hoạch trả góp"
+        subTitle={error?.message || "Vui lòng thử lại."}
+        extra={
+          <Button type="primary" onClick={() => refetch()}>
+            Thử lại
+          </Button>
+        }
       />
     );
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-[320px]">
+      <div className="flex justify-between items-center mb-3 gap-3">
+        <div className="w-full max-w-xs sm:max-w-sm">
           <SearchBar
             value={search}
             onChange={setSearch}
@@ -175,6 +203,7 @@ export const InstallmentPlanList = () => {
           />
         </div>
 
+        {/* FILTER DROPDOWN */}
         <Dropdown
           trigger={["click"]}
           open={filterOpen}
@@ -193,7 +222,7 @@ export const InstallmentPlanList = () => {
         <InstallmentPlanTable
           data={installmentPlans}
           isLoading={isLoading}
-          onMarkAsPaid={() => {}}
+          onMarkAsPaid={handleMarkAsPaid}
           pagination={{
             current,
             pageSize,

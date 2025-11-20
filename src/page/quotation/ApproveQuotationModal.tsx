@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo } from "react";
 import { Modal, Form, Button, InputNumber, Select, Switch } from "antd";
 import {
