@@ -65,7 +65,6 @@ export const DealerPointRulePage = () => {
     data: dealerRules,
     isLoading: loadingDealer,
     refetch,
-    refetch,
   } = useDealerPointRuleByDealerId(dealerId, { enabled: !!dealerId });
 
   // Chọn nguồn rules theo role

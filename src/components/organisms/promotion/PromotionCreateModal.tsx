@@ -66,6 +66,7 @@ export const PromotionCreateModal = ({ open, onClose }: Props) => {
     "createdAt",
     "desc",
     undefined,
+    undefined,
     canFetchDealers
   );
 
