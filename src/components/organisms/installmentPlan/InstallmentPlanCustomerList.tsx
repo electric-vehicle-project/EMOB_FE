@@ -59,23 +59,12 @@ export const InstallmentPlanCustomerList = () => {
   );
 
   const { data, refetch, isLoading, isError, error } = customerPlansQuery;
-
+  console.log("hi");
   const installmentPlans: IInstallmentPlan[] = useMemo(() => {
     const raw: InstallmentPlanApiModel[] = data?.result?.data ?? [];
-    return raw.map((p) => ({
-      id: p.id,
-      downDate: p.downDate,
-      deposit: p.deposit,
-      totalAmount: p.totalAmount,
-      monthlyAmount: p.monthlyAmount,
-      interestRate: p.interestRate,
-      termMonths: p.termMonths,
-      nextDueDate: p.nextDueDate,
-      status: p.status,
-      // amountPaid: p.totalAmount ?? 0,
-    }));
-  }, [data]);
 
+    return raw;
+  }, [data]);
   const total = data?.result?.metadata?.totalElements ?? 0;
 
   const FilterContent = () => (
