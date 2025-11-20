@@ -59,7 +59,6 @@ export const DealerPointRuleTable: React.FC<Props> = ({
       return;
     }
     onUpdate(editableData);
-    toast.success("Cập nhật thành công");
   };
 
   const columns: ColumnsType<IDealerPointRule> = [

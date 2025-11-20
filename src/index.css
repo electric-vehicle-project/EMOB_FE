@@ -333,3 +333,24 @@
 .animate-electric-aura-green {
   animation: electricAuraGreen 2.8s ease-in-out infinite;
 }
+
+/* Giữ Select multiple trên 1 dòng + hiện … */
+.emob-multi-select .ant-select-selector {
+  height: 40px !important;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.emob-multi-select .ant-select-selection-overflow {
+  flex-wrap: nowrap !important;
+  overflow: hidden;
+}
+
+.emob-multi-select .ant-select-selection-item {
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

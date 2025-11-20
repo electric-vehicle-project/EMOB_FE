@@ -4,7 +4,7 @@ import {
   updateMutationHook,
 } from "../hook/useApi";
 
-const BASE_URL = "/dealer-point-rules";
+const BASE_URL = "/api/dealer-point-rules";
 
 // GET all (Admin, EVM_STAFF)
 export const useDealerPointRuleList = createQueryHook(

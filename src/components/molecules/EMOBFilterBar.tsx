@@ -12,7 +12,6 @@ export const EMOBFilterBar = ({
   keyword,
   onKeywordChange,
   filterDropdown,
-  onReset,
 }: EMOBFilterBarProps) => {
   const showSearch =
     typeof keyword === "string" && typeof onKeywordChange === "function";
@@ -41,13 +40,6 @@ export const EMOBFilterBar = ({
             onClick={(e) => e.stopPropagation()}
           >
             {filterDropdown}
-
-            {/* Reset Button */}
-            <div className="flex justify-end mt-4">
-              <Button type="primary" onClick={onReset}>
-                Đặt lại
-              </Button>
-            </div>
           </div>
         )}
       >
@@ -57,7 +49,6 @@ export const EMOBFilterBar = ({
           className="text-gray-600 hover:text-black"
         />
       </Dropdown>
-      
     </div>
   );
 };

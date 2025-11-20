@@ -17,7 +17,7 @@ export interface IDealerPointRule {
 }
 
 export interface DealerPointRuleRequest {
-  level: MembershipLevel;
+  membershipLevel: MembershipLevel;
   dealerId: string;
   minPoints: number;
   price: number;

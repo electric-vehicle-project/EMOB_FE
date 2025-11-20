@@ -115,7 +115,7 @@ const SaleOrderStaffPage: React.FC = () => {
         <Select
           mode="multiple"
           allowClear
-          className="w-full mt-2"
+          className="w-full mt-2 emob-multi-select"
           placeholder="Trạng thái"
           value={statuses}
           options={STATUS_OPTIONS}

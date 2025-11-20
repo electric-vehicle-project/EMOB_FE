@@ -187,7 +187,7 @@ const DealerPromotionsPage: React.FC = () => {
                     mode="multiple"
                     allowClear
                     value={scope}
-                    className="w-full"
+                    className="w-full emob-multi-select"
                     options={[
                       { label: "Toàn hệ thống", value: "GLOBAL" },
                       { label: "Đại lý", value: "LOCAL" },
@@ -206,7 +206,7 @@ const DealerPromotionsPage: React.FC = () => {
                     mode="multiple"
                     allowClear
                     value={status}
-                    className="w-full"
+                    className="w-full emob-multi-select"
                     options={STATUS_OPTIONS}
                     placeholder="Chọn trạng thái"
                     onChange={(v) => {
