@@ -118,5 +118,6 @@ export const useGetVehicleRequestsForAdmin = (params?: {
       });
       return response.data;
     },
+    staleTime: 0,
   });
 };

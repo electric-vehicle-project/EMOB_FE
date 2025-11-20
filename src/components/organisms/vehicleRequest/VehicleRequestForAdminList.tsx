@@ -18,7 +18,6 @@ import { useDealersQuery } from "../../../service/dealerService";
 import type { IVehicleRequest } from "../../../model/VehicleRequest";
 import ViewVehicleRequestModal from "../../../page/vehicle-request/ViewVehicleRequestModal";
 import { useDebounce } from "../../../hook/useDebounce";
-import { Card } from "../../atoms/Card";
 
 const VehicleRequestForAdminList: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -87,7 +86,7 @@ const VehicleRequestForAdminList: React.FC = () => {
   //    FILTER DROPDOWN CONTENT
   // ===============================
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -141,7 +140,7 @@ const VehicleRequestForAdminList: React.FC = () => {
           <Select.Option value="asc">Giảm dần</Select.Option>
         </Select>
       </div>
-    </Card>
+    </div>
   );
 
   const columns: ColumnsType<IVehicleRequest> = [

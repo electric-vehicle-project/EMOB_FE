@@ -87,17 +87,17 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
           customMultiplier: 1.05,
         }}
       >
-        <Card className="mb-4" size="small" title="Chọn Dealers">
+        <Card className="mb-4" size="small" title="Chọn các đại lý">
           <Form.Item
             name="dealerIds"
-            label="Danh sách Dealers"
+            label="Danh sách đại lý"
             rules={[
-              { required: true, message: "Vui lòng chọn ít nhất 1 dealer!" },
+              { required: true, message: "Vui lòng chọn ít nhất 1 đại lý!" },
             ]}
           >
             <Select
               mode="multiple"
-              placeholder="Chọn dealers"
+              placeholder="Chọn đại lý"
               loading={loadingDealers}
               showSearch
               filterOption={(input, option) =>
@@ -113,17 +113,17 @@ const CreateDiscountPolicyModal: React.FC<CreateDiscountPolicyModalProps> = ({
           </Form.Item>
         </Card>
 
-        <Card className="mb-4" size="small" title="Chọn Vehicle Models">
+        <Card className="mb-4" size="small" title="Chọn các mẫu xe">
           <Form.Item
             name="vehicleModelIds"
-            label="Danh sách Vehicle Models"
+            label="Danh sách mẫu xe"
             rules={[
-              { required: true, message: "Vui lòng chọn ít nhất 1 vehicle!" },
+              { required: true, message: "Vui lòng chọn ít nhất 1 mẫu xe!" },
             ]}
           >
             <Select
               mode="multiple"
-              placeholder="Chọn vehicle models"
+              placeholder="Chọn mẫu xe"
               loading={loadingVehicles}
               showSearch
               filterOption={(input, option) =>

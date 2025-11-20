@@ -19,7 +19,6 @@ import type { IVehicleRequest } from "../../../model/VehicleRequest";
 import CreateVehicleRequestModal from "../../../page/vehicle-request/CreateVehicleRequestModal ";
 import ViewVehicleRequestModal from "../../../page/vehicle-request/ViewVehicleRequestModal";
 import UpdateVehicleRequestModal from "../../../page/vehicle-request/UpdateVehicleRequestModal";
-import { Card } from "../../atoms/Card";
 
 const DealerName: React.FC<{ dealerId: string }> = ({ dealerId }) => {
   const { data, isLoading } = useDealerByIdQuery(dealerId);
@@ -89,7 +88,7 @@ const VehicleRequestList: React.FC = () => {
   // DROPDOWN FILTER CONTENT
   // ============================
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -145,7 +144,7 @@ const VehicleRequestList: React.FC = () => {
           <Select.Option value="desc">Giảm dần</Select.Option>
         </Select>
       </div>
-    </Card>
+    </div>
   );
 
   // ============================

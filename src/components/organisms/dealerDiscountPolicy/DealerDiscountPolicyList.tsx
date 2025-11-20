@@ -36,7 +36,6 @@ import UpdateDiscountPolicyModal from "../../../page/dealer-discount-policy/Upda
 import ViewDiscountPolicyModal from "../../../page/dealer-discount-policy/ViewDiscountPolicyModal";
 import BulkUpdateDiscountPolicyModal from "../../../page/dealer-discount-policy/BulkUpdateDiscountPolicyModal";
 import BulkDeleteDiscountPolicyModal from "../../../page/dealer-discount-policy/BulkDeleteDiscountPolicyModal";
-import { Card } from "../../atoms/Card";
 
 const DealerDiscountPolicyList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -112,7 +111,7 @@ const DealerDiscountPolicyList: React.FC = () => {
   //    FILTER DROPDOWN CONTENT
   // ===============================
   const FilterContent = () => (
-    <Card
+    <div
       {...({ onClick: (e: any) => e.stopPropagation() } as any)}
       className="p-4 bg-white rounded-xl shadow-lg w-[260px] flex flex-col gap-4"
     >
@@ -165,7 +164,7 @@ const DealerDiscountPolicyList: React.FC = () => {
           </Select>
         </div>
       </Space>
-    </Card>
+    </div>
   );
 
   // Xóa chính sách (chỉ Admin mới được)
