@@ -70,6 +70,7 @@ export const PromotionForm = ({
     "createdAt",
     "desc",
     undefined,
+    undefined,
     true
   );
 

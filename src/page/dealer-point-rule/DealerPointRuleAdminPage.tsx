@@ -14,6 +14,7 @@ export const DealerPointRuleAdminPage: React.FC = () => {
     "createdAt",
     "desc",
     undefined,
+    undefined,
     true
   );
 
