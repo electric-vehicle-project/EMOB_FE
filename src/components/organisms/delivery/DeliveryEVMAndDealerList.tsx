@@ -86,8 +86,8 @@ export const DeliveryEVMAndDealerList = () => {
           allowClear
           className="w-full mt-2"
         >
-          <Option value="IN_PROGRESS">IN_PROGRESS</Option>
-          <Option value="SUCCESS">SUCCESS</Option>
+          <Option value="IN_PROGRESS">ĐANG GIAO</Option>
+          <Option value="SUCCESS">ĐÃ GIAO</Option>
         </Select>
       </div>
 
@@ -171,12 +171,6 @@ export const DeliveryEVMAndDealerList = () => {
   // ================= RENDER =================
   return (
     <div>
-      <span className="flex justify-between p-5">
-        <b className="text-lg text-[#627254]">
-          Danh sách đơn vận chuyển từ Hãng xe đến Đại lý
-        </b>
-      </span>
-
       <Card>
         {/* Toolbar */}
         <Space className="flex justify-between w-full pb-5">
