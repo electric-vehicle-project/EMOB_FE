@@ -66,7 +66,7 @@ const SaleOrderEvmPage: React.FC = () => {
         <b>Trạng thái</b>
         <Select
           mode="multiple"
-          className="w-full mt-2"
+          className="w-full mt-2 emob-multi-select"
           allowClear
           placeholder="Trạng thái"
           value={statuses}

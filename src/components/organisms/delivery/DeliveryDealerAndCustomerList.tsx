@@ -85,8 +85,8 @@ export const DeliveryDealerAndCustomerList = () => {
           allowClear
           className="w-full mt-2"
         >
-          <Option value="IN_PROGRESS">IN_PROGRESS</Option>
-          <Option value="SUCCESS">SUCCESS</Option>
+          <Option value="IN_PROGRESS">ĐANG GIAO</Option>
+          <Option value="SUCCESS">ĐÃ GIAO</Option>
         </Select>
       </div>
 

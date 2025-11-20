@@ -48,7 +48,7 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
       onSuccess?.();
       form.resetFields();
       onClose?.();
-    } catch (err: any) {
+    } catch {
       toast.error("Chưa có chính sách cho mẫu xe này");
     }
   };

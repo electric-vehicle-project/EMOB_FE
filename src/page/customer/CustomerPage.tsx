@@ -165,7 +165,7 @@ export const CustomerPage: React.FC = () => {
                     mode="multiple"
                     allowClear
                     value={status}
-                    className="w-full"
+                    className="w-full emob-multi-select"
                     placeholder="Chọn trạng thái"
                     options={STATUS_OPTIONS}
                     onChange={(vals) =>

@@ -105,7 +105,11 @@ const EvmPromotionsPage: React.FC = () => {
   };
 
   return (
-    <CardWrapper title="Khuyến mãi toàn hệ thống" variant="dashboard">
+    <CardWrapper
+      title="Khuyến mãi toàn hệ thống"
+      variant="dashboard"
+      subtitle="Theo dõi và quản lý chương trình khuyến mãi áp dụng cho nhà sản xuất"
+    >
       <div className="flex justify-between items-center gap-4 flex-wrap mb-4">
         <EMOBFilterBar
           keyword={keyword}
@@ -123,7 +127,7 @@ const EvmPromotionsPage: React.FC = () => {
                   mode="multiple"
                   allowClear
                   value={status}
-                  className="w-full"
+                  className="w-full emob-multi-select"
                   options={STATUS_OPTIONS}
                   placeholder="Chọn trạng thái"
                   onChange={(v) => {

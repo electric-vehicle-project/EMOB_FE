@@ -110,6 +110,7 @@ export default function PromotionEditModal({
     "createdAt",
     "desc",
     undefined,
+    undefined,
     canPickDealers
   );
 

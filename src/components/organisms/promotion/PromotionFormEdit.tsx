@@ -69,6 +69,7 @@ export const PromotionFormEdit = ({
     "createdAt",
     "desc",
     undefined,
+    undefined,
     true
   );
   const dealers = dealersData?.result?.data ?? [];
