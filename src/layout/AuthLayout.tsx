@@ -7,12 +7,12 @@ function AuthLayout() {
       <div className="relative flex items-center  px-5 min-h-screen">
         {/* -------- Layer 1: Fixed BG -------- */}
         <img
-          src="\Rectangle 481.png"
+          src="\Rectangle_481.png"
           alt="decor"
           className="fixed top-0 left-0 w-[100vh] h-auto"
         />
         <img
-          src="\Rectangle 480.png"
+          src="\Rectangle_480.png"
           alt="decor"
           className="fixed bottom-0 right-0 w-[100vh] h-auto"
         />
@@ -42,17 +42,17 @@ function AuthLayout() {
                   <div className="relative flex justify-center flex-1">
                     <img
                       className="absolute top-10  scale-150 left-[13%] z-1"
-                      src="/public/E-BIKE main.png"
+                      src="/public/E-BIKE.png"
                       alt=""
                     />
                     <img
                       className="absolute -top-2 -right-[40%] scale-x-[-1] rotate-25 h-35"
-                      src="/public/green leaf 2.png"
+                      src="/public/green_leaf_2.png"
                       alt=""
                     />
                     <img
                       className="absolute top-[20%] scale-70 -left-[53%]"
-                      src="/public/green battery.png"
+                      src="/public/green_battery.png"
                       alt=""
                     />
                   </div>
