@@ -5,12 +5,12 @@ export const NotFoundPage = () => (
   <div className="relative flex items-center  px-5 min-h-screen">
     {/* -------- Layer 1: Fixed BG -------- */}
     <img
-      src="\Rectangle 481.png"
+      src="\Rectangle_481.png"
       alt="decor"
       className="fixed top-0 left-0 w-[100vh] h-auto"
     />
     <img
-      src="\Rectangle 480.png"
+      src="\Rectangle_480.png"
       alt="decor"
       className="fixed bottom-0 right-0 w-[100vh] h-auto"
     />
