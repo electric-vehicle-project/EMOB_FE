@@ -88,7 +88,6 @@ export const ProcessReportModal = ({ open, onCancel, onSubmit }: Props) => {
             </Col>
           </Row>
         )}
-        //
         <div className="flex justify-end mt-6 gap-3">
           <Button onClick={onCancel}>Hủy</Button>
           <Button

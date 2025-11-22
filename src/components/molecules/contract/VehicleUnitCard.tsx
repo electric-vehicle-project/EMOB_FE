@@ -27,10 +27,12 @@ export const VehicleUnitCard = ({ vehicleUnitId }: Props) => {
   }
 
   return (
-    <li className="p-3 rounded-lg bg-white shadow-sm border text-[14px]">
-      <p><b>VIN:</b> {unit.vinNumber}</p>
-      <p><b>Loại xe/trạng thái:</b> {statusMap[unit.status]}</p>
-      <p><b>Năm sản xuất:</b> {dayjs(unit.productionYear).format("YYYY")}</p>
+    <li className="p-3 rounded-lg bg-white shadow-sm text-[14px] w-auto">
+      <p>
+        <b>VIN:</b> {unit.vinNumber} <b>Loại xe/trạng thái:</b>{" "}
+        {statusMap[unit.status]} <b>Năm sản xuất:</b>{" "}
+        {dayjs(unit.productionYear).format("YYYY")}
+      </p>
     </li>
   );
 };

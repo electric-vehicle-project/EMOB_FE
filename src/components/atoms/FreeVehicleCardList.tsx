@@ -8,7 +8,11 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
-export const FreeVehicleCardList = ({ vehicles, selectedId, onSelect }: Props) => {
+export const FreeVehicleCardList = ({
+  vehicles,
+  selectedId,
+  onSelect,
+}: Props) => {
   if (!vehicles?.length)
     return (
       <div className="text-center text-gray-500 italic mt-3">
@@ -24,13 +28,17 @@ export const FreeVehicleCardList = ({ vehicles, selectedId, onSelect }: Props) =
           <Card
             key={v.vehicleUnitId}
             onClick={() => onSelect(v.vehicleUnitId)}
-            className={`transition-all cursor-pointer border rounded-xl ${
+            className={`transition-all cursor-pointer border rounded-xl  ${
               isSelected
                 ? "border-[#627254] shadow-md bg-[#f7f9f7]"
                 : "border-gray-200 hover:shadow-sm"
             }`}
+            style={{ maxHeight: "100px !important" }}
           >
-            <div className="flex justify-between items-start">
+            <div
+              className="flex justify-between items-start"
+              style={{ maxHeight: "110px" }}
+            >
               <div>
                 <div className="font-semibold">{v.vinNumber}</div>
                 <div className="text-sm text-gray-500">
