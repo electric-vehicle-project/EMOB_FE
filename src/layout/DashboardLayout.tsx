@@ -268,7 +268,7 @@ function DashboardLayout() {
 
         {/* Logo */}
         <div className="mt-16 mb-6 flex justify-center transition-all duration-500 ease-smooth">
-          <div className="logo-glass p-2">
+          <div className="logo-glass p-2 z-10">
             <img
               src="/logo_1.png"
               alt="Logo"

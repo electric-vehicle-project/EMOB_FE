@@ -17,13 +17,11 @@ function AuthLayout() {
           className="fixed bottom-0 right-0 w-[100vh] h-auto"
         />
 
-         {/* -------- Layer 2: Floating Auth Card -------- */}
+        {/* -------- Layer 2: Floating Auth Card -------- */}
         <div className="relative w-[1000px]  h-screen mx-auto flex justify-center items-center z-10 ">
           <Row className="bg-[#627254] rounded-3xl shadow-2xl shadow-gray-950 z-10 w-full h-[550px]">
-            
             <Col span={12} className="w-full  pl-5">
-              
-               {/* -------- 2.1: Branding & Images -------- */}
+              {/* -------- 2.1: Branding & Images -------- */}
               <div className="bg-[#627254] flex h-full">
                 <div className="flex flex-col py-10 h-full w-[70%]">
                   {/* -------- Branding -------- */}
@@ -42,29 +40,32 @@ function AuthLayout() {
                   <div className="relative flex justify-center flex-1">
                     <img
                       className="absolute top-10  scale-150 left-[13%] z-1"
-                      src="/public/E-BIKE.png"
+                      src="\E-BIKE.png"
                       alt=""
                     />
                     <img
                       className="absolute -top-2 -right-[40%] scale-x-[-1] rotate-25 h-35"
-                      src="/public/green_leaf_2.png"
+                      src="\green_leaf_2.png"
                       alt=""
                     />
                     <img
                       className="absolute top-[20%] scale-70 -left-[53%]"
-                      src="/public/green_battery.png"
+                      src="\green_battery.png"
                       alt=""
                     />
                   </div>
-                </div> 
-                
+                </div>
+
                 {/* -------- 2.2 Login Card (left-side) -------- */}
                 <div className="w-[30%] bg-[var(--natural-color)] rounded-l-3xl"></div>
               </div>
             </Col>
-            
+
             {/* -------- 2.2 Login Card (remain-side ) -------- */}
-            <Col span={12} className="bg-[var(--natural-color)] pt-10 pr-5 rounded-r-3xl">
+            <Col
+              span={12}
+              className="bg-[var(--natural-color)] pt-10 pr-5 rounded-r-3xl"
+            >
               <div className="w-full h-full pl-5">
                 <Outlet />
               </div>
@@ -77,5 +78,3 @@ function AuthLayout() {
 }
 
 export default AuthLayout;
-
-

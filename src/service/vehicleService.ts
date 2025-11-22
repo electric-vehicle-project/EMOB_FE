@@ -223,26 +223,14 @@ export const useGetAIDemandForecast = () => {
     refetch: async (modelName?: string) => {
       if (!modelName) return null;
 
-      const token = localStorage.getItem("token") ?? "";
-      const url = `${
-        import.meta.env.VITE_BASE_URL
-      }/vehicle/demandForecastFromAI?model=${encodeURIComponent(modelName)}`;
+      const res = await api.get(
+        `/vehicle/demandForecastFromAI?model=${encodeURIComponent(modelName)}`
+      );
 
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      return res.json();
+      return res.data;
     },
   };
 };
-
-
-
 
 // ========== (Giữ lại, nhưng BulkPage không dùng) ==========
 export const useCreateAIDemandForecasts = (vehicleId?: string) => {

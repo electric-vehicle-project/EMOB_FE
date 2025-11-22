@@ -26,7 +26,7 @@ export const NotFoundPage = () => (
           <div className="relative flex-col h-full !pb-30 ">
             <img
               className="scale-80 z-1 rotate-355"
-              src="/public/404.png"
+              src="\404.png"
               alt=""
             />
             <div className="flex justify-center h-fit">
@@ -59,7 +59,7 @@ export const NotFoundPage = () => (
             <div className="flex flex-col justify-end h-full">
               <img
                 className="absolute scale-130 right-[3%]  z-1"
-                src="/public/404_bike.png"
+                src="\404_bike.png"
                 alt=""
               />
             </div>
