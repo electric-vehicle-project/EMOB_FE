@@ -89,6 +89,16 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
                     rules={[{ required: true, message: "Vui lòng chọn xe" }]}
                   />
 
+                  <TextInput
+                    {...restField}
+                    name={[name, "color"] as NamePath}
+                    label="Màu sắc"
+                    placeholder="Nhập màu xe"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập màu xe" },
+                    ]}
+                  />
+
                   <SelectInput
                     {...restField}
                     name={[name, "vehicleStatus"] as NamePath}
@@ -102,17 +112,33 @@ const CreateVehicleRequestModal = ({ open, onClose, onSuccess }: any) => {
                       { label: "Xe lái thử", value: "TEST_DRIVE" },
                     ]}
                     rules={[
-                      { required: true, message: "Vui lòng chọn trạng thái" },
-                    ]}
-                  />
+                      { required: true, message: "Chọn trạng thái xe" },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          const items = getFieldValue("items") || [];
+                          const current = items[name];
 
-                  <TextInput
-                    {...restField}
-                    name={[name, "color"] as NamePath}
-                    label="Màu sắc"
-                    placeholder="Nhập màu xe"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập màu xe" },
+                          if (!current?.vehicleId || !current?.color || !value)
+                            return Promise.resolve();
+
+                          const duplicates = items.filter(
+                            (item: any, idx: number) =>
+                              idx !== name &&
+                              item.vehicleId === current.vehicleId &&
+                              item.color?.trim().toLowerCase() ===
+                                current.color?.trim().toLowerCase() &&
+                              item.vehicleStatus === value
+                          );
+
+                          if (duplicates.length > 0) {
+                            return Promise.reject(
+                              "Xe + màu + trạng thái này đã tồn tại. Vui lòng chọn khác."
+                            );
+                          }
+
+                          return Promise.resolve();
+                        },
+                      }),
                     ]}
                   />
 

@@ -134,12 +134,8 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                   key={key}
                   className="border p-4 rounded-lg mb-4 bg-gray-50 relative"
                 >
-                  <Space
-                    direction="vertical"
-                    size="middle"
-                    className="w-full"
-                    key={name}
-                  >
+                  <Space direction="vertical" size="middle" className="w-full">
+                    {/* XE */}
                     <SelectInput
                       label="Xe"
                       name={[name, "vehicleId"] as NamePath}
@@ -150,6 +146,7 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                       rules={[{ required: true, message: "Chọn xe" }]}
                     />
 
+                    {/* KHUYẾN MÃI */}
                     <SelectInput
                       label="Khuyến mãi"
                       name={[name, "promotionId"] as NamePath}
@@ -158,6 +155,17 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                       loading={loadingPromotions}
                     />
 
+                    {/* MÀU SẮC */}
+                    <Form.Item
+                      {...restField}
+                      label="Màu sắc"
+                      name={[name, "color"]}
+                      rules={[{ required: true, message: "Nhập màu xe" }]}
+                    >
+                      <Input placeholder="Ví dụ: Đen, Trắng, Xanh rêu..." />
+                    </Form.Item>
+
+                    {/* TRẠNG THÁI – VALIDATOR CHẶN TRÙNG CẢ 3 */}
                     <SelectInput
                       label="Trạng thái xe"
                       name={[name, "vehicleStatus"] as NamePath}
@@ -171,25 +179,40 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                       ]}
                       rules={[
                         { required: true, message: "Chọn trạng thái xe" },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            const items = getFieldValue("items") || [];
+                            const current = items[name];
+
+                            if (
+                              !current?.vehicleId ||
+                              !current?.color ||
+                              !value
+                            )
+                              return Promise.resolve();
+
+                            const duplicates = items.filter(
+                              (item: any, idx: number) =>
+                                idx !== name &&
+                                item.vehicleId === current.vehicleId &&
+                                item.color?.trim().toLowerCase() ===
+                                  current.color?.trim().toLowerCase() &&
+                                item.vehicleStatus === value
+                            );
+
+                            if (duplicates.length > 0) {
+                              return Promise.reject(
+                                "Xe + màu + trạng thái này đã tồn tại. Vui lòng chọn khác."
+                              );
+                            }
+
+                            return Promise.resolve();
+                          },
+                        }),
                       ]}
                     />
 
-                    <Form.Item
-                      {...restField}
-                      label="Màu sắc"
-                      name={[name, "color"]}
-                      rules={[{ required: true, message: "Nhập màu xe" }]}
-                    >
-                      <Input placeholder="Ví dụ: Đen, Trắng, Xanh rêu..." />
-                    </Form.Item>
-
-                    <NumberInput
-                      label="Số lượng"
-                      name={[name, "quantity"] as NamePath}
-                      min={1}
-                      placeholder="Nhập số lượng"
-                      rules={[{ required: true, message: "Nhập số lượng" }]}
-                    />
+                    {/* XÓA */}
                     <Button
                       type="text"
                       icon={<MinusCircleOutlined />}
@@ -216,7 +239,7 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
           )}
         </Form.List>
 
-        {/* Thời hạn hiệu lực */}
+        {/* HIỆU LỰC */}
         <NumberInput
           label="Thời hạn hiệu lực (ngày)"
           name="validUntil"
@@ -225,7 +248,6 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
           rules={[{ required: true, message: "Thời hạn hiệu lực là bắt buộc" }]}
         />
 
-        {/* Nút hành động */}
         <div className="flex justify-end gap-3 mt-4">
           <Button onClick={onClose}>Hủy</Button>
           <Button type="primary" htmlType="submit" loading={isPending}>
