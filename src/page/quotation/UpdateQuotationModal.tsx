@@ -233,13 +233,6 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
                       <Input placeholder="Nhập màu xe" />
                     </Form.Item>
 
-                    <NumberInput
-                      name={[name, "quantity"] as NamePath}
-                      label="Số lượng"
-                      min={1}
-                      rules={[{ required: true, message: "Nhập số lượng" }]}
-                    />
-
                     <div className="flex items-end justify-end">
                       {fields.length > 1 && (
                         <Button

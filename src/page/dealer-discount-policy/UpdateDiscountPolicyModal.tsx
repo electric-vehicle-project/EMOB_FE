@@ -191,7 +191,7 @@ const UpdateDiscountPolicyModal: React.FC<UpdateDiscountPolicyModalProps> = ({
             <Form.Item
               label="Giá cuối cùng (VND)"
               name="finalPrice"
-              rules={[{ required: true, message: "Vui lòng nhập giá" }]}
+              rules={[{ required: false, message: "Vui lòng nhập giá" }]}
             >
               <InputNumber
                 style={{ width: "100%" }}

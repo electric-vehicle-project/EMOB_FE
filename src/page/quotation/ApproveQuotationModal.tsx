@@ -55,6 +55,7 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
           promotionId: item.promotionId ?? "",
           quantity: item.quantity ?? 1,
           approved: true,
+          color: item.color,
         })),
       });
     } else {
@@ -151,6 +152,12 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
                         </Form.Item>
                       </div>
 
+                      <div className="col-span-2">
+                        <Form.Item label="Màu sắc" style={{ marginBottom: 0 }}>
+                          <span>{originalItem.color}</span>
+                        </Form.Item>
+                      </div>
+
                       <div className="col-span-3">
                         <Form.Item
                           {...restField}
@@ -165,8 +172,9 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
                           />
                         </Form.Item>
                       </div>
+
                       {/* HÀNG 2: Số lượng */}
-                      <div className="col-span-3">
+                      <div className="col-span-2">
                         <Form.Item
                           {...restField}
                           name={[name, "quantity"]}

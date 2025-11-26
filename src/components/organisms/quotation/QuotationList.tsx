@@ -57,7 +57,7 @@ const QuotationList: React.FC = () => {
   // ADDED: Filter States
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [sortField, setSortField] = useState("totalQuantity");
+  const [sortField, setSortField] = useState("totalPrice");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   // duyệt
   const handleOpenApproveModal = (record: IQuotation) => {
@@ -141,7 +141,6 @@ const QuotationList: React.FC = () => {
         >
           <Select.Option value="totalPrice">Giá trị báo giá</Select.Option>
           <Select.Option value="createdAt">Ngày tạo</Select.Option>
-          <Select.Option value="totalQuantity">Số lượng</Select.Option>
         </Select>
       </div>
 
@@ -192,13 +191,6 @@ const QuotationList: React.FC = () => {
       key: "customerId",
       render: (customerId: string) =>
         customerId ? <CustomerName customerId={customerId} /> : "-",
-    },
-    {
-      title: "Số lượng",
-      dataIndex: "totalQuantity",
-      key: "totalQuantity",
-      align: "center",
-      sorter: (a, b) => (a.totalQuantity || 0) - (b.totalQuantity || 0),
     },
     {
       title: "Tổng thuế",
