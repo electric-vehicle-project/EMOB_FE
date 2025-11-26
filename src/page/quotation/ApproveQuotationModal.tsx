@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo } from "react";
-import { Modal, Form, Button, InputNumber, Select, Switch } from "antd";
+import { Modal, Form, Button, Select, Switch } from "antd";
 import {
   useApproveQuotation,
   useGetQuotationById,
@@ -170,19 +170,6 @@ const ApproveQuotationModal: React.FC<ApproveQuotationModalProps> = ({
                             allowClear
                             options={promotionOptions}
                           />
-                        </Form.Item>
-                      </div>
-
-                      {/* HÀNG 2: Số lượng */}
-                      <div className="col-span-2">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "quantity"]}
-                          label="Số lượng"
-                          rules={[{ required: true, message: "Nhập số lượng" }]}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <InputNumber min={1} style={{ width: "100%" }} />
                         </Form.Item>
                       </div>
                     </div>

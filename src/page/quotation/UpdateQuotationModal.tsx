@@ -220,7 +220,6 @@ const UpdateQuotationModal: React.FC<UpdateQuotationModalProps> = ({
                         { label: "Xe lái thử", value: "TEST_DRIVE" },
                         { label: "Đặt trước", value: "RESERVED" },
                         { label: "Tồn kho cũ", value: "OLD_STOCK" },
-                        { label: "Đã bán", value: "SOLD" },
                       ]}
                       rules={[{ required: true, message: "Chọn trạng thái" }]}
                     />

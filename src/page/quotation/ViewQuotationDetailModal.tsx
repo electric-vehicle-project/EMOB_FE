@@ -152,7 +152,6 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
       TEST_DRIVE: { color: "geekblue", text: "Xe lái thử" },
       RESERVED: { color: "orange", text: "Đã đặt trước" },
       OLD_STOCK: { color: "volcano", text: "Tồn kho cũ" },
-      SOLD: { color: "red", text: "Đã bán" },
     };
 
     // lấy màu status
@@ -248,12 +247,6 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                   <AccountName accountId={quotation.accountId} />
                 </Descriptions.Item>
               )}
-
-              <Descriptions.Item label="Số lượng">
-                <span className="font-semibold text-[#627254]">
-                  {quotation.totalQuantity ?? 0}
-                </span>
-              </Descriptions.Item>
 
               <Descriptions.Item label="Tổng thuế">
                 <span className="font-semibold text-[#627254]">
