@@ -175,7 +175,6 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                         { label: "Xe lái thử", value: "TEST_DRIVE" },
                         { label: "Đã đặt trước", value: "RESERVED" },
                         { label: "Tồn kho cũ", value: "OLD_STOCK" },
-                        { label: "Đã bán", value: "SOLD" },
                       ]}
                       rules={[
                         { required: true, message: "Chọn trạng thái xe" },
@@ -212,7 +211,15 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                       ]}
                     />
 
-                    {/* XÓA */}
+                    <Form.Item
+                      {...restField}
+                      label="Màu sắc"
+                      name={[name, "color"]}
+                      rules={[{ required: true, message: "Nhập màu xe" }]}
+                    >
+                      <Input placeholder="Ví dụ: Đen, Trắng, Xanh rêu..." />
+                    </Form.Item>
+
                     <Button
                       type="text"
                       icon={<MinusCircleOutlined />}
