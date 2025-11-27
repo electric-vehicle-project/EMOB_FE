@@ -28,6 +28,11 @@ export const SaleOrderItemTable = ({ items }: Props) => {
     return map;
   }, [vehicles]);
 
+  console.log(
+    "✅ vehicleId from order:",
+    items.map((i) => i.vehicleId)
+  );
+  console.log("✅ vehicles loaded:", vehicles);
   const columns: ColumnsType<SaleOrderItemResponse> = [
     {
       title: "Xe điện",
@@ -36,8 +41,12 @@ export const SaleOrderItemTable = ({ items }: Props) => {
       align: "left",
       width: 260,
       render: (_, record) => {
-        const id = record.vehicleId;
-        const label = vehicleMap[id] || record.vehicleName || "Không xác định";
+        console.log(record);
+        const vehicleId = record.vehicleId;
+        console.log(vehicleId);
+        console.log(vehicleMap);
+        console.log(vehicleMap[vehicleId]);
+        const label = vehicleMap[vehicleId] || record.brand || "Không xác định";
         return (
           <span className="font-medium text-gray-800 whitespace-nowrap">
             {label}

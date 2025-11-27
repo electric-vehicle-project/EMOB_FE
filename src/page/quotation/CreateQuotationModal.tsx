@@ -211,15 +211,6 @@ const CreateQuotationModal: React.FC<CreateQuotationPageProps> = ({
                       ]}
                     />
 
-                    <Form.Item
-                      {...restField}
-                      label="Màu sắc"
-                      name={[name, "color"]}
-                      rules={[{ required: true, message: "Nhập màu xe" }]}
-                    >
-                      <Input placeholder="Ví dụ: Đen, Trắng, Xanh rêu..." />
-                    </Form.Item>
-
                     <Button
                       type="text"
                       icon={<MinusCircleOutlined />}
