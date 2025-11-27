@@ -6,7 +6,7 @@ export type PaymentStatus = "FULL" | "INSTALLMENT";
 export interface SaleOrderItemResponse {
   id: string;
   vehicleId: string;
-  vehicleName?: string; // fallback nếu BE có map tên xe
+  brand?: string;
   vehicleUnitIds: string[];
   promotionId?: string | null;
   vehicleStatus: string;

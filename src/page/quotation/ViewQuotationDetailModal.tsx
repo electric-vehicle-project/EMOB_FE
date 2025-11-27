@@ -323,9 +323,9 @@ const ViewQuotationDetailModal: React.FC<ViewQuotationModalProps> = ({
                     <Descriptions.Item label="Màu sắc">
                       {item.color}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Số lượng">
+                    {/* <Descriptions.Item label="Số lượng">
                       {item.quantity}
-                    </Descriptions.Item>
+                    </Descriptions.Item> */}
                     <Descriptions.Item label="Đơn giá">
                       {item.unitPrice != null
                         ? `${item.unitPrice.toLocaleString("vi-VN")} ₫`

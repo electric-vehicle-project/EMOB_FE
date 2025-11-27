@@ -316,7 +316,7 @@ export const VehicleDetailPage = () => {
           </EmobButton>
 
           {/* NÚT THAO TÁC */}
-          <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
+          <Dropdown overlay={menu} trigger={["click"]}>
             <EmobButton
               className="h-10 px-4 flex items-center gap-2 
                rounded-full border border-[#d3d7c3] 
